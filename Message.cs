@@ -40,6 +40,22 @@ namespace Tempest
 			// ReSharper restore DoNotCallOverridableMethodsInConstructor
 		}
 
+		/// <summary>
+		/// Gets whether this message needs to be reliably delivered or not.
+		/// </summary>
+		public virtual bool Reliable
+		{
+			get { return true; }
+		}
+
+		/// <summary>
+		/// Gets whether this message can be received without forming a connection.
+		/// </summary>
+		public virtual bool AcceptedConnectionlessly
+		{
+			get { return false; }
+		}
+
 		public ushort MessageType
 		{
 			get;

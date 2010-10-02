@@ -1,4 +1,8 @@
-﻿// The MIT License
+﻿//
+// StreamValueWriter.cs
+//
+// Author:
+//   Eric Maupin <me@ermau.com>
 //
 // Copyright (c) 2010 Eric Maupin
 //
@@ -23,7 +27,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 
 namespace Tempest

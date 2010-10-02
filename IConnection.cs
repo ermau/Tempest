@@ -1,4 +1,8 @@
-﻿// The MIT License
+﻿//
+// IConnection.cs
+//
+// Author:
+//   Eric Maupin <me@ermau.com>
 //
 // Copyright (c) 2010 Eric Maupin
 //

@@ -48,8 +48,6 @@
     <Compile Include="IValueWriter.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StreamValueReader.cs" />
-    <Compile Include="StreamValueWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Providers\Network\" />

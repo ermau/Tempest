@@ -37,6 +37,8 @@ namespace Tempest
 		{
 			if (stream == null)
 				throw new ArgumentNullException ("stream");
+			if (!stream.CanWrite)
+				throw new ArgumentException ("Can not write to this stream", "stream");
 			if (!BitConverter.IsLittleEndian) // TODO: Support.
 				throw new NotSupportedException ("Big Endian architecture not supported");
 
@@ -108,8 +110,10 @@ namespace Tempest
 
 		public void WriteString (Encoding encoding, string value)
 		{
-			byte[] data = encoding.GetBytes (value);
-			WriteBytes (data);
+			if (encoding == null)
+				throw new ArgumentNullException ("encoding");
+
+			WriteBytes (!String.IsNullOrEmpty (value) ? encoding.GetBytes (value) : new byte[0]);
 		}
 
 		public void Flush()

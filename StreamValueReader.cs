@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -29,64 +30,91 @@ namespace Tempest
 	public class StreamValueReader
 		: IValueReader
 	{
+		private readonly Stream stream;
+
+		public StreamValueReader (Stream stream)
+		{
+			if (stream == null)
+				throw new ArgumentNullException ("stream");
+			if (!stream.CanRead)
+				throw new ArgumentException ("Can not read from this stream", "stream");
+
+			this.stream = stream;
+		}
+
 		public bool ReadBool()
 		{
-			throw new NotImplementedException();
+			return (ReadByte() == 1);
 		}
 
 		public byte[] ReadBytes()
 		{
-			throw new NotImplementedException();
+			int count = ReadInt32();
+			return ReadBytes (count);
 		}
 
-		public byte[] ReadBytes(int count)
+		public byte[] ReadBytes (int count)
 		{
-			throw new NotImplementedException();
+			byte[] buffer = new byte[count];
+
+			int i = 0;
+			int bytes;
+			while (i < buffer.Length && (bytes = this.stream.Read (buffer, i, count)) > 0)
+			{
+				i += bytes;
+				count -= bytes;
+			}
+
+			return buffer;
 		}
 
 		public sbyte ReadSByte()
 		{
-			throw new NotImplementedException();
+			return (sbyte)this.stream.ReadByte();
 		}
 
 		public short ReadInt16()
 		{
-			throw new NotImplementedException();
+			return BitConverter.ToInt16 (ReadBytes (sizeof (short)), 0);
 		}
 
 		public int ReadInt32()
 		{
-			throw new NotImplementedException();
+			return BitConverter.ToInt16 (ReadBytes (sizeof (int)), 0);
 		}
 
 		public long ReadInt64()
 		{
-			throw new NotImplementedException();
+			return BitConverter.ToInt16 (ReadBytes (sizeof (long)), 0);
 		}
 
 		public byte ReadByte()
 		{
-			throw new NotImplementedException();
+			return (byte)this.stream.ReadByte();
 		}
 
 		public ushort ReadUInt16()
 		{
-			throw new NotImplementedException();
+			return BitConverter.ToUInt16 (ReadBytes (sizeof (ushort)), 0);
 		}
 
 		public uint ReadUInt32()
 		{
-			throw new NotImplementedException();
+			return BitConverter.ToUInt32 (ReadBytes (sizeof (uint)), 0);
 		}
 
 		public ulong ReadUInt64()
 		{
-			throw new NotImplementedException();
+			return BitConverter.ToUInt64 (ReadBytes (sizeof (ulong)), 0);
 		}
 
-		public string ReadString(Encoding encoding)
+		public string ReadString (Encoding encoding)
 		{
-			throw new NotImplementedException();
+			if (encoding == null)
+				throw new ArgumentNullException ("encoding");
+
+			byte[] data = ReadBytes();
+			return (data.Length == 0) ? null : encoding.GetString (data);
 		}
 	}
 }

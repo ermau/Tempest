@@ -21,14 +21,24 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Net;
 
 namespace Tempest
 {
 	public interface IClientConnection
 		: IConnection
 	{
+		/// <summary>
+		/// Raised when the connection has connected.
+		/// </summary>
+		event EventHandler<ConnectionEventArgs> Connected;
+
+		/// <summary>
+		/// Connects to the <paramref name="endpoint"/>.
+		/// </summary>
+		/// <param name="endpoint">The endpoint to connect to.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="endpoint"/> is <c>null</c>.</exception>
+		void Connect (EndPoint endpoint);
 	}
 }

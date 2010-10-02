@@ -46,6 +46,7 @@ namespace Tempest
 		/// Reads the next <paramref name="count"/> bytes from the transport.
 		/// </summary>
 		/// <param name="count">The number of bytes to read.</param>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is &lt; 0.</exception>
 		byte[] ReadBytes (int count);
 
 		/// <summary>
@@ -94,6 +95,7 @@ namespace Tempest
 		/// Reads a string with <paramref name="encoding"/> from the transport.
 		/// </summary>
 		/// <param name="encoding">The encoding of the string.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="encoding"/> is <c>null</c>.</exception>
 		string ReadString (Encoding encoding);
 	}
 }

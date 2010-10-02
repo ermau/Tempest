@@ -59,6 +59,9 @@ namespace Tempest
 
 		public byte[] ReadBytes (int count)
 		{
+			if (count < 0)
+				throw new ArgumentOutOfRangeException ("count", count, "count must be >= 0");
+
 			byte[] buffer = new byte[count];
 
 			int i = 0;

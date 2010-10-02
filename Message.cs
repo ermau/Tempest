@@ -27,6 +27,25 @@ namespace Tempest
 {
 	public abstract class Message
 	{
+		protected Message (ushort messageType)
+		{
+			MessageType = messageType;
+		}
+
+		protected Message (ushort messageType, IValueReader reader)
+			: this (messageType)
+		{
+			// ReSharper disable DoNotCallOverridableMethodsInConstructor
+			Deserialize (reader);
+			// ReSharper restore DoNotCallOverridableMethodsInConstructor
+		}
+
+		public ushort MessageType
+		{
+			get;
+			private set;
+		}
+
 		/// <summary>
 		/// Serializes the message with <paramref name="writer"/>.
 		/// </summary>

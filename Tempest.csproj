@@ -40,11 +40,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IClientConnection.cs" />
     <Compile Include="IConnection.cs" />
     <Compile Include="IConnectionProvider.cs" />
+    <Compile Include="IServerConnection.cs" />
     <Compile Include="IValueReader.cs" />
     <Compile Include="IValueWriter.cs" />
+    <Compile Include="Message.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StreamValueReader.cs" />
+    <Compile Include="StreamValueWriter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Providers\Network\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

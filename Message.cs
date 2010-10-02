@@ -22,40 +22,23 @@
 
 using System;
 using System.Linq;
-using System.Net;
 
 namespace Tempest
 {
-	/// <summary>
-	/// Base connection contract.
-	/// </summary>
-	public interface IConnection
+	public abstract class Message
 	{
 		/// <summary>
-		/// Gets the remote endpoint for this connection.
+		/// Serializes the message with <paramref name="writer"/>.
 		/// </summary>
-		EndPoint RemoteEndPoint { get; }
+		/// <param name="writer">The writer to use for serialization.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="writer"/> is <c>null</c>.</exception>
+		public abstract void Serialize (IValueWriter writer);
 
 		/// <summary>
-		/// Gets whether the connection is alive or not.
+		/// Deserializes the message with <paramref name="reader"/>.
 		/// </summary>
-		bool IsConnected { get; }
-
-		/// <summary>
-		/// Gets whether the connection is asynchronous or not.
-		/// </summary>
-		bool IsAsync { get; }
-
-		/// <summary>
-		/// Queues a message to send to this connection.
-		/// </summary>
-		/// <param name="message">The message to send.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
-		void Send (Message message);
-
-		/// <summary>
-		/// Closes the connection.
-		/// </summary>
-		void Disconnect();
+		/// <param name="reader">The writer to use for serialization.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="reader"/> is <c>null</c>.</exception>
+		public abstract void Deserialize (IValueReader reader);
 	}
 }

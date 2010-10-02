@@ -20,42 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
 using System.Linq;
-using System.Net;
 
 namespace Tempest
 {
-	/// <summary>
-	/// Base connection contract.
-	/// </summary>
-	public interface IConnection
+	public interface IServerConnection
+		: IConnection
 	{
-		/// <summary>
-		/// Gets the remote endpoint for this connection.
-		/// </summary>
-		EndPoint RemoteEndPoint { get; }
-
-		/// <summary>
-		/// Gets whether the connection is alive or not.
-		/// </summary>
-		bool IsConnected { get; }
-
-		/// <summary>
-		/// Gets whether the connection is asynchronous or not.
-		/// </summary>
-		bool IsAsync { get; }
-
-		/// <summary>
-		/// Queues a message to send to this connection.
-		/// </summary>
-		/// <param name="message">The message to send.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
-		void Send (Message message);
-
-		/// <summary>
-		/// Closes the connection.
-		/// </summary>
-		void Disconnect();
 	}
 }

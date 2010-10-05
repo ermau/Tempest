@@ -1,4 +1,8 @@
-﻿// The MIT License
+﻿//
+// IConnectionProvider.cs
+//
+// Author:
+//   Eric Maupin <me@ermau.com>
 //
 // Copyright (c) 2010 Eric Maupin
 //
@@ -20,11 +24,132 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
 using System.Linq;
+using System.Net;
 
 namespace Tempest
 {
 	public interface IConnectionProvider
 	{
+		/// <summary>
+		/// A new connection was made.
+		/// </summary>
+		event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
+
+		/// <summary>
+		/// A connectionless message was received.
+		/// </summary>
+		/// <exception cref="NotSupportedException"><see cref="SupportsConnectionless"/> is <c>false</c>.</exception>
+		event EventHandler ConnectionlessMessageReceived;
+
+		/// <summary>
+		/// Gets whether this connection provider supports connectionless messages.
+		/// </summary>
+		/// <seealso cref="ConnectionlessMessageReceived"/>
+		/// <seealso cref="SendConnectionlessMessage"/>
+		bool SupportsConnectionless { get; }
+
+		/// <summary>
+		/// Starts the connection provider.
+		/// </summary>
+		/// <seealso cref="Stop"/>
+		void Start();
+
+		/// <summary>
+		/// Sends a connectionless <paramref name="message"/> to <paramref name="endPoint"/>.
+		/// </summary>
+		/// <param name="message"></param>
+		/// <param name="endPoint"></param>
+		/// <exception cref="NotSupportedException"><see cref="SupportsConnectionless"/> is <c>false</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="endPoint"/> is <c>null</c>.</exception>
+		/// <seealso cref="SupportsConnectionless"/>
+		void SendConnectionlessMessage (Message message, EndPoint endPoint);
+
+		/// <summary>
+		/// Stops the connection provider.
+		/// </summary>
+		/// <seealso cref="Start"/>
+		void Stop();
+	}
+
+	/// <summary>
+	/// Provides data for the <see cref="IConnectionProvider.ConnectionMade"/> event.
+	/// </summary>
+	public class ConnectionMadeEventArgs
+		: EventArgs
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ConnectionMadeEventArgs"/> class.
+		/// </summary>
+		/// <param name="connection">The newly made connection.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="connection"/> is <c>null</c>.</exception>
+		public ConnectionMadeEventArgs (IServerConnection connection)
+		{
+			if (connection == null)
+				throw new ArgumentNullException ("connection");
+
+			Connection = connection;
+		}
+
+		/// <summary>
+		/// Gets the newly formed connection.
+		/// </summary>
+		public IServerConnection Connection
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Gets or sets whether to reject this connection.
+		/// </summary>
+		public bool Rejected
+		{
+			get;
+			set;
+		}
+	}
+
+	/// <summary>
+	/// Provides data for the <see cref="IConnectionProvider.ConnectionlessMessageReceived"/> event.
+	/// </summary>
+	public class ConnectionlessMessageReceived
+		: EventArgs
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ConnectionlessMessageReceived"/> class.
+		/// </summary>
+		/// <param name="message">The message received connectionlessly.</param>
+		/// <param name="from">Where the message came from.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="from"/> is <c>null</c>.</exception>
+		public ConnectionlessMessageReceived (Message message, EndPoint from)
+		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+			if (from == null)
+				throw new ArgumentNullException ("from");
+			
+			Message = message;
+			From = from;
+		}
+
+		/// <summary>
+		/// Gets the received message.
+		/// </summary>
+		public Message Message
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Where the message came from.
+		/// </summary>
+		public EndPoint From
+		{
+			get;
+			private set;
+		}
 	}
 }

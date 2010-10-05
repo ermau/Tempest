@@ -61,6 +61,11 @@ namespace Tempest
 
 		public byte[] ReadBytes (int count)
 		{
+			if (count < 0)
+				throw new ArgumentOutOfRangeException ("count", count, "count must be >= 0");
+			if (count + this.position >= this.buffer.Length)
+				throw new ArgumentOutOfRangeException ("count", count, "Count from position is longer than buffer.");
+
 			byte[] b = new byte[count];
 			Array.Copy (this.buffer, this.position, b, 0, count);
 			this.position += count;

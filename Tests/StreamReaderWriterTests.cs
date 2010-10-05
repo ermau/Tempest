@@ -37,7 +37,7 @@ namespace Tempest.Tests
 		[SetUp]
 		public void SetUp()
 		{
-			MemoryStream stream = new MemoryStream (20480);
+			ResettingMemoryStream stream = new ResettingMemoryStream (20480);
 			Setup (new StreamValueWriter (stream), new StreamValueReader (stream));
 		}
 	}

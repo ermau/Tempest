@@ -71,5 +71,107 @@ namespace Tempest.Tests
 			Assert.Throws<ArgumentNullException> (() => this.writer.WriteBytes (null));
 			Assert.Throws<ArgumentNullException> (() => this.writer.WriteBytes (null, 0, 0));
 		}
+
+		[Test]
+		public void WriteBytesInvalidRange()
+		{
+			byte[] data = new byte[5];
+			Assert.Throws<ArgumentOutOfRangeException> (() => this.writer.WriteBytes (data, 1, 5));
+			Assert.Throws<ArgumentOutOfRangeException> (() => this.writer.WriteBytes (data, 0, 6));
+			Assert.Throws<ArgumentOutOfRangeException> (() => this.writer.WriteBytes (data, 5, 0));
+		}
+
+		[Test]
+		public void ReadWriteBool()
+		{
+			this.writer.WriteBool (true);
+			this.writer.Flush();
+			Assert.IsTrue (this.reader.ReadBool());
+			
+			this.writer.WriteBool (false);
+			this.writer.Flush();
+			Assert.IsFalse (this.reader.ReadBool());
+		}
+
+		[Test]
+		public void ReadWriteByte ()
+		{
+			this.writer.WriteByte (Byte.MaxValue);
+			this.writer.Flush();
+			Assert.AreEqual (Byte.MaxValue, this.reader.ReadByte());
+
+			this.writer.WriteByte (128);
+			this.writer.Flush();
+			Assert.AreEqual (128, this.reader.ReadByte());
+
+			this.writer.WriteByte (Byte.MinValue);
+			this.writer.Flush();
+			Assert.AreEqual (Byte.MinValue, this.reader.ReadByte());
+		}
+
+		[Test]
+		public void ReadWriteBytes()
+		{
+			byte[] data = new byte[] { 0x4, 0x8, 0xF, 0x10, 0x17, 0x2A };
+			this.writer.WriteBytes (data);
+			this.writer.Flush();
+
+			data = this.reader.ReadBytes();
+			Assert.AreEqual (6, data.Length);
+			Assert.AreEqual (0x4, data[0]);
+			Assert.AreEqual (0x8, data[1]);
+			Assert.AreEqual (0xF, data[2]);
+			Assert.AreEqual (0x10, data[3]);
+			Assert.AreEqual (0x17, data[4]);
+			Assert.AreEqual (0x2A, data[5]);
+		}
+
+		[Test]
+		public void ReadWriteBytesSubset()
+		{
+			byte[] data = new byte[] { 0x4, 0x8, 0xF, 0x10, 0x17, 0x2A };
+			this.writer.WriteBytes (data, 2, 3);
+			this.writer.Flush();
+
+			data = this.reader.ReadBytes();
+			Assert.AreEqual (3, data.Length);
+			Assert.AreEqual (0xF, data[0]);
+			Assert.AreEqual (0x10, data[1]);
+			Assert.AreEqual (0x17, data[2]);
+		}
+
+		[Test]
+		public void ReadCountWriteByte()
+		{
+			byte[] data = new byte[] { 0x4, 0x8, 0xF, 0x10, 0x17, 0x2A };
+			for (int i = 0; i < data.Length; ++i)
+				this.writer.WriteByte (data[i]);
+
+			this.writer.Flush();
+
+			data = this.reader.ReadBytes (5);
+			Assert.AreEqual (5, data.Length);
+			Assert.AreEqual (0x4, data[0]);
+			Assert.AreEqual (0x8, data[1]);
+			Assert.AreEqual (0xF, data[2]);
+			Assert.AreEqual (0x10, data[3]);
+			Assert.AreEqual (0x17, data[4]);
+		}
+
+		[Test]
+		public void ReadWriteSByte()
+		{
+			this.writer.WriteSByte (SByte.MaxValue);
+			this.writer.Flush();
+			Assert.AreEqual (SByte.MaxValue, this.reader.ReadSByte());
+
+			this.writer.WriteSByte (0);
+			this.writer.Flush();
+			Assert.AreEqual (0, this.reader.ReadByte());
+
+			this.writer.WriteSByte (SByte.MinValue);
+			this.writer.Flush();
+			Assert.AreEqual (SByte.MinValue, this.reader.ReadSByte());
+		}
 	}
 }

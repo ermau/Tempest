@@ -87,12 +87,12 @@ namespace Tempest
 
 		public int ReadInt32()
 		{
-			return BitConverter.ToInt16 (ReadBytes (sizeof (int)), 0);
+			return BitConverter.ToInt32 (ReadBytes (sizeof (int)), 0);
 		}
 
 		public long ReadInt64()
 		{
-			return BitConverter.ToInt16 (ReadBytes (sizeof (long)), 0);
+			return BitConverter.ToInt64 (ReadBytes (sizeof (long)), 0);
 		}
 
 		public byte ReadByte()

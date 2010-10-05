@@ -73,9 +73,11 @@ namespace Tempest
 		{
 			if (value == null)
 				throw new ArgumentNullException ("value");
-			if (value.Length > this.buffer.Length - this.position)
+			if (value.Length + sizeof(int) > this.buffer.Length - this.position)
 				throw new InternalBufferOverflowException();
 
+			Array.Copy (BitConverter.GetBytes (value.Length), 0, this.buffer, this.position, sizeof(int));
+			this.position += sizeof (int);
 			Array.Copy (value, 0, this.buffer, this.position, value.Length);
 			this.position += value.Length;
 		}
@@ -88,9 +90,11 @@ namespace Tempest
 				throw new ArgumentOutOfRangeException ("offset", offset, "offset can not negative or >=data.Length");
 			if (length < 0 || offset + length >= value.Length)
 				throw new ArgumentOutOfRangeException ("length", length, "length can not be negative or combined with offset longer than the array");
-			if (length - offset > this.buffer.Length - this.position)
+			if (length - offset + sizeof(int) > this.buffer.Length - this.position)
 				throw new InternalBufferOverflowException();
 
+			Array.Copy (BitConverter.GetBytes (length), 0, this.buffer, this.position, sizeof (int));
+			this.position += sizeof (int);
 			Array.Copy (value, offset, this.buffer, this.position, length);
 			this.position += length;
 		}

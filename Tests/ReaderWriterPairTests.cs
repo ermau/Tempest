@@ -26,6 +26,7 @@
 
 using System;
 using System.Linq;
+using System.Text;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -268,6 +269,24 @@ namespace Tempest.Tests
 			this.writer.WriteUInt64 (UInt64.MinValue);
 			this.writer.Flush();
 			Assert.AreEqual (UInt64.MinValue, this.reader.ReadUInt64());
+		}
+
+		[Test]
+		public void ReadWriteString()
+		{
+			const string value = "The lazy fox..\n oh forget it.\0";
+
+			this.writer.WriteString (Encoding.UTF8, value);
+			this.writer.Flush();
+			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF8));
+
+			this.writer.WriteString (Encoding.UTF32, value);
+			this.writer.Flush();
+			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF32));
+
+			this.writer.WriteString (Encoding.ASCII, value);
+			this.writer.Flush();
+			Assert.AreEqual (value, this.reader.ReadString (Encoding.ASCII));
 		}
 	}
 }

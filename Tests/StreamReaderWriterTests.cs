@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
@@ -39,6 +40,18 @@ namespace Tempest.Tests
 		{
 			ResettingMemoryStream stream = new ResettingMemoryStream (20480);
 			Setup (new StreamValueWriter (stream), new StreamValueReader (stream));
+		}
+
+		[Test]
+		public void WriterCtorNull()
+		{
+			Assert.Throws<ArgumentNullException> (() => new StreamValueWriter (null));
+		}
+
+		[Test]
+		public void ReaderCtorNull()
+		{
+			Assert.Throws<ArgumentNullException> (() => new StreamValueReader (null));
 		}
 	}
 }

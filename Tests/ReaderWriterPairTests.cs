@@ -86,11 +86,10 @@ namespace Tempest.Tests
 		public void ReadWriteBool()
 		{
 			this.writer.WriteBool (true);
-			this.writer.Flush();
-			Assert.IsTrue (this.reader.ReadBool());
-			
 			this.writer.WriteBool (false);
 			this.writer.Flush();
+
+			Assert.IsTrue (this.reader.ReadBool());
 			Assert.IsFalse (this.reader.ReadBool());
 		}
 
@@ -98,15 +97,12 @@ namespace Tempest.Tests
 		public void ReadWriteByte ()
 		{
 			this.writer.WriteByte (Byte.MaxValue);
-			this.writer.Flush();
-			Assert.AreEqual (Byte.MaxValue, this.reader.ReadByte());
-
 			this.writer.WriteByte (128);
-			this.writer.Flush();
-			Assert.AreEqual (128, this.reader.ReadByte());
-
 			this.writer.WriteByte (Byte.MinValue);
 			this.writer.Flush();
+
+			Assert.AreEqual (Byte.MaxValue, this.reader.ReadByte());
+			Assert.AreEqual (128, this.reader.ReadByte());
 			Assert.AreEqual (Byte.MinValue, this.reader.ReadByte());
 		}
 
@@ -163,15 +159,12 @@ namespace Tempest.Tests
 		public void ReadWriteSByte()
 		{
 			this.writer.WriteSByte (SByte.MaxValue);
-			this.writer.Flush();
-			Assert.AreEqual (SByte.MaxValue, this.reader.ReadSByte());
-
 			this.writer.WriteSByte (0);
-			this.writer.Flush();
-			Assert.AreEqual (0, this.reader.ReadSByte());
-
 			this.writer.WriteSByte (SByte.MinValue);
 			this.writer.Flush();
+
+			Assert.AreEqual (SByte.MaxValue, this.reader.ReadSByte());
+			Assert.AreEqual (0, this.reader.ReadSByte());
 			Assert.AreEqual (SByte.MinValue, this.reader.ReadSByte());
 		}
 
@@ -179,15 +172,12 @@ namespace Tempest.Tests
 		public void ReadWriteInt16()
 		{
 			this.writer.WriteInt16 (Int16.MaxValue);
-			this.writer.Flush();
-			Assert.AreEqual (Int16.MaxValue, this.reader.ReadInt16());
-
 			this.writer.WriteInt16 (0);
-			this.writer.Flush();
-			Assert.AreEqual (0, this.reader.ReadInt16());
-
 			this.writer.WriteInt16 (Int16.MinValue);
 			this.writer.Flush();
+
+			Assert.AreEqual (Int16.MaxValue, this.reader.ReadInt16());
+			Assert.AreEqual (0, this.reader.ReadInt16());
 			Assert.AreEqual (Int16.MinValue, this.reader.ReadInt16());
 		}
 
@@ -195,15 +185,12 @@ namespace Tempest.Tests
 		public void ReadWriteUInt16()
 		{
 			this.writer.WriteUInt16 (UInt16.MaxValue);
-			this.writer.Flush();
-			Assert.AreEqual (UInt16.MaxValue, this.reader.ReadUInt16());
-
 			this.writer.WriteUInt16 (UInt16.MaxValue / 2);
-			this.writer.Flush();
-			Assert.AreEqual (UInt16.MaxValue / 2, this.reader.ReadUInt16());
-
 			this.writer.WriteUInt16 (UInt16.MinValue);
 			this.writer.Flush();
+
+			Assert.AreEqual (UInt16.MaxValue, this.reader.ReadUInt16());
+			Assert.AreEqual (UInt16.MaxValue / 2, this.reader.ReadUInt16());
 			Assert.AreEqual (UInt16.MinValue, this.reader.ReadUInt16());
 		}
 
@@ -211,15 +198,12 @@ namespace Tempest.Tests
 		public void ReadWriteInt32()
 		{
 			this.writer.WriteInt32 (Int32.MaxValue);
-			this.writer.Flush();
-			Assert.AreEqual (Int32.MaxValue, this.reader.ReadInt32());
-
 			this.writer.WriteInt32 (0);
-			this.writer.Flush();
-			Assert.AreEqual (0, this.reader.ReadInt32());
-
 			this.writer.WriteInt32 (Int32.MinValue);
 			this.writer.Flush();
+
+			Assert.AreEqual (Int32.MaxValue, this.reader.ReadInt32());
+			Assert.AreEqual (0, this.reader.ReadInt32());
 			Assert.AreEqual (Int32.MinValue, this.reader.ReadInt32());
 		}
 
@@ -227,15 +211,12 @@ namespace Tempest.Tests
 		public void ReadWriteUInt32()
 		{
 			this.writer.WriteUInt32 (UInt32.MaxValue);
-			this.writer.Flush();
-			Assert.AreEqual (UInt32.MaxValue, this.reader.ReadUInt32());
-
 			this.writer.WriteUInt32 (UInt32.MaxValue / 2);
-			this.writer.Flush();
-			Assert.AreEqual (UInt32.MaxValue / 2, this.reader.ReadUInt32());
-
 			this.writer.WriteUInt32 (UInt32.MinValue);
-			this.writer.Flush();
+			this.writer.Flush ();
+
+			Assert.AreEqual (UInt32.MaxValue, this.reader.ReadUInt32());
+			Assert.AreEqual (UInt32.MaxValue / 2, this.reader.ReadUInt32());			
 			Assert.AreEqual (UInt32.MinValue, this.reader.ReadUInt32());
 		}
 
@@ -243,15 +224,12 @@ namespace Tempest.Tests
 		public void ReadWriteInt64()
 		{
 			this.writer.WriteInt64 (Int64.MaxValue);
-			this.writer.Flush();
-			Assert.AreEqual (Int64.MaxValue, this.reader.ReadInt64());
-
 			this.writer.WriteInt64 (0);
-			this.writer.Flush();
-			Assert.AreEqual (0, this.reader.ReadInt64());
-
 			this.writer.WriteInt64 (Int64.MinValue);
-			this.writer.Flush();
+			this.writer.Flush ();
+
+			Assert.AreEqual (Int64.MaxValue, this.reader.ReadInt64());
+			Assert.AreEqual (0, this.reader.ReadInt64());		
 			Assert.AreEqual (Int64.MinValue, this.reader.ReadInt64());
 		}
 
@@ -259,15 +237,12 @@ namespace Tempest.Tests
 		public void ReadWriteUInt64()
 		{
 			this.writer.WriteUInt64 (UInt64.MaxValue);
-			this.writer.Flush();
-			Assert.AreEqual (UInt64.MaxValue, this.reader.ReadUInt64());
-
 			this.writer.WriteUInt64 (UInt64.MaxValue / 2);
-			this.writer.Flush();
-			Assert.AreEqual (UInt64.MaxValue / 2, this.reader.ReadUInt64());
-
 			this.writer.WriteUInt64 (UInt64.MinValue);
 			this.writer.Flush();
+
+			Assert.AreEqual (UInt64.MaxValue, this.reader.ReadUInt64());
+			Assert.AreEqual (UInt64.MaxValue / 2, this.reader.ReadUInt64());
 			Assert.AreEqual (UInt64.MinValue, this.reader.ReadUInt64());
 		}
 
@@ -277,15 +252,12 @@ namespace Tempest.Tests
 			const string value = "The lazy fox..\n oh forget it.\0";
 
 			this.writer.WriteString (Encoding.UTF8, value);
-			this.writer.Flush();
-			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF8));
-
 			this.writer.WriteString (Encoding.UTF32, value);
-			this.writer.Flush();
-			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF32));
-
 			this.writer.WriteString (Encoding.ASCII, value);
-			this.writer.Flush();
+			this.writer.Flush ();
+
+			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF8));
+			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF32));
 			Assert.AreEqual (value, this.reader.ReadString (Encoding.ASCII));
 		}
 	}

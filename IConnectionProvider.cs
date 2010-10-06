@@ -30,6 +30,15 @@ using System.Net;
 
 namespace Tempest
 {
+	[Flags]
+	public enum MessageTypes
+	{
+		Reliable = 1,
+		Unreliable = 2,
+		
+		All = Reliable | Unreliable
+	}
+
 	public interface IConnectionProvider
 	{
 		/// <summary>
@@ -53,8 +62,9 @@ namespace Tempest
 		/// <summary>
 		/// Starts the connection provider.
 		/// </summary>
+		/// <param name="types">The message types to accept.</param>
 		/// <seealso cref="Stop"/>
-		void Start();
+		void Start (MessageTypes types);
 
 		/// <summary>
 		/// Sends a connectionless <paramref name="message"/> to <paramref name="endPoint"/>.

@@ -72,11 +72,11 @@ namespace Tempest.Tests
 		public void StartRepeatedly()
 		{
 			// *knock knock knock* Penny
-			Assert.DoesNotThrow (() => this.provider.Start());
+			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.All));
 			// *knock knock knock* Penny
-			Assert.DoesNotThrow (() => this.provider.Start());
+			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.All));
 			// *knock knock knock* Penny
-			Assert.DoesNotThrow (() => this.provider.Start());
+			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.All));
 		}
 
 		[Test]

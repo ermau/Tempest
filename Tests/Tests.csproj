@@ -45,6 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BufferReaderWriterTests.cs" />
+    <Compile Include="ConnectionProviderTests.cs" />
+    <Compile Include="MockMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReaderWriterPairTests.cs" />
     <Compile Include="ResettingMemoryStream.cs" />

@@ -26,7 +26,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 #if !SAFE
@@ -42,7 +41,7 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Discovers message types from <paramref name="assembly"/>.
+		/// Discovers and registers message types from <paramref name="assembly"/>.
 		/// </summary>
 		/// <param name="assembly">The assembly to discover message types from.</param>
 		/// <seealso cref="Discover()"/>
@@ -57,7 +56,7 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Discovers messages from the calling assembly.
+		/// Discovers and registers messages from the calling assembly.
 		/// </summary>
 		/// <seealso cref="Discover(System.Reflection.Assembly)"/>
 		public void Discover ()
@@ -123,6 +122,23 @@ namespace Tempest
 		}
 
 		#endif
+
+		/// <summary>
+		/// Creates a new instance of the <paramref name="messageType"/>.
+		/// </summary>
+		/// <param name="messageType"></param>
+		/// <returns>A new instance of the <paramref name="messageType"/>, or <c>null</c> if this type has not been registered.</returns>
+		public Message Create (ushort messageType)
+		{
+			Func<Message> mCtor;
+			lock (this.messageCtors)
+			{
+				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
+					return null;
+			}
+
+			return mCtor();
+		}
 
 		private readonly Dictionary<ushort, Func<Message>> messageCtors = new Dictionary<ushort, Func<Message>>();
 	}

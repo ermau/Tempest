@@ -54,6 +54,7 @@ namespace Tempest
 	/// Base connection contract.
 	/// </summary>
 	public interface IConnection
+		: IDisposable
 	{
 		/// <summary>
 		/// Gets whether the connection is alive or not.

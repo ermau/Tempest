@@ -37,10 +37,7 @@ namespace Tempest.Providers.Network
 		public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 		public event EventHandler<ConnectionEventArgs> Disconnected;
 
-		public bool IsConnected
-		{
-			get { throw new NotImplementedException(); }
-		}
+		public abstract bool IsConnected { get; }
 
 		public MessagingModes Modes
 		{
@@ -50,25 +47,33 @@ namespace Tempest.Providers.Network
 		public EndPoint RemoteEndPoint
 		{
 			get;
-			private set;
+			protected set;
 		}
-		
-		public void Send (Message message)
-		{
-			if (message == null)
-				throw new ArgumentNullException ("message");
 
-			throw new NotImplementedException();
-		}
+		public abstract void Send (Message message);
 
 		public IEnumerable<Message> Tick()
 		{
 			throw new NotSupportedException();
 		}
 
-		public void Disconnect()
+		public abstract void Disconnect();
+
+		public void Dispose()
 		{
-			throw new NotImplementedException();
+			Dispose (true);
+		}
+
+		protected bool disposed;
+
+		protected virtual void Dispose (bool disposing)
+		{
+			if (this.disposed)
+				return;
+
+			Disconnect ();
+
+			this.disposed = true;
 		}
 
 		protected void OnMessageReceived (MessageReceivedEventArgs e)

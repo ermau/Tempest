@@ -34,10 +34,25 @@ namespace Tempest.Providers.Network
 		: NetworkConnection, IClientConnection
 	{
 		public event EventHandler<ConnectionEventArgs> Connected;
-		
+
+		public override bool IsConnected
+		{
+			get { throw new NotImplementedException (); }
+		}
+
 		public void Connect (EndPoint endpoint)
 		{
 			throw new NotImplementedException();
+		}
+
+		public override void Send (Message message)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public override void Disconnect ()
+		{
+			throw new NotImplementedException ();
 		}
 	}
 }

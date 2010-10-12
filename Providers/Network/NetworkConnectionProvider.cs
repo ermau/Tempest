@@ -98,6 +98,30 @@ namespace Tempest.Providers.Network
 		{
 			if (!this.running)
 				return;
+
+			this.running = false;
+
+			if (this.reliableSocket != null)
+			{
+				this.reliableSocket.Dispose();
+				this.reliableSocket = null;
+			}
+
+			if (this.unreliableSocket != null)
+			{
+				this.unreliableSocket.Dispose();
+				this.unreliableSocket = null;
+			}
+		}
+
+		public void Dispose()
+		{
+			Dispose (true);
+		}
+
+		protected virtual void Dispose (bool disposing)
+		{
+			Stop();
 		}
 
 		private volatile bool running;
@@ -107,10 +131,23 @@ namespace Tempest.Providers.Network
 
 		private void Accept (object sender, SocketAsyncEventArgs e)
 		{
-			e.Completed -= Accept;
-			e.UserToken = new NetworkServerConnection();
+			if (!this.running)
+			{
+				e.Dispose();
+				return;
+			}
+
+			var connection = new NetworkServerConnection (e.ConnectSocket);
 
 			BeginAccepting (e);
+
+			var made = new ConnectionMadeEventArgs (connection);
+			OnConnectionMade (made);
+			
+			if (!made.Rejected)
+			{
+				
+			}
 		}
 
 		private void BeginAccepting (SocketAsyncEventArgs e)

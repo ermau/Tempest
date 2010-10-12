@@ -24,12 +24,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
 using System.Linq;
+using System.Net.Sockets;
 
 namespace Tempest.Providers.Network
 {
 	public class NetworkServerConnection
 		: NetworkConnection, IServerConnection
 	{
+		internal NetworkServerConnection (int nid)
+		{
+			NetworkId = nid;
+		}
+
+		internal NetworkServerConnection (Socket reliableSocket)
+		{
+			if (reliableSocket == null)
+				throw new ArgumentNullException ("reliableSocket");
+
+			this.reliableSocket = reliableSocket;
+
+			var asyncArgs = new SocketAsyncEventArgs();
+			asyncArgs.UserToken = this;
+			
+		}
+
+		internal NetworkServerConnection (Socket reliableSocket, int nid)
+			: this (reliableSocket)
+		{
+			NetworkId = nid;
+		}
+
+		public override bool IsConnected
+		{
+			get { return this.reliableSocket.Connected; }
+		}
+
+		public override void Send (Message message)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public override void Disconnect ()
+		{
+			throw new NotImplementedException ();
+		}
+
+		private Socket reliableSocket;
+
+		internal int NetworkId
+		{
+			get; private set;
+		}
 	}
 }

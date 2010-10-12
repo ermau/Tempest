@@ -50,6 +50,7 @@ namespace Tempest
 	}
 
 	public interface IConnectionProvider
+		: IDisposable
 	{
 		/// <summary>
 		/// A new connection was made.

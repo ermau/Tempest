@@ -52,7 +52,7 @@ namespace Tempest
 				throw new ArgumentNullException ("assembly");
 
 			Type mtype = typeof (Message);
-			Register (assembly.GetTypes().Where (t => t.IsPublic && t.IsClass && mtype.IsAssignableFrom (t)));
+			Register (assembly.GetTypes().Where (t => mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null));
 		}
 
 		/// <summary>
@@ -65,18 +65,27 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Registers types with their parameter-less constructor.
+		/// Registers types with a method of construction.
 		/// </summary>
-		/// <param name="messageTypes"></param>
+		/// <param name="messageTypes">The types to register.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="messageTypes"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentException">
+		/// <paramref name="messageTypes"/> contains non-implementations of <see cref="Message"/>
+		/// or <paramref name="messageTypes"/> contains duplicate <see cref="Message.MessageType"/>s.</exception>
 		public void Register (IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes)
 		{
 			if (messageTypes == null)
 				throw new ArgumentNullException ("messageTypes");
 
+			Type mtype = typeof (Message);
+
 			lock (messageCtors)
 			{
 				foreach (var kvp in messageTypes)
 				{
+					if (!mtype.IsAssignableFrom (kvp.Key))
+						throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
+
 					Message m = kvp.Value();
 					if (this.messageCtors.ContainsKey (m.MessageType))
 						throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
@@ -88,10 +97,14 @@ namespace Tempest
 
 		#if !SAFE
 
+		/// <summary>
+		/// Registers <paramref name="messageTypes"/> with their parameter-less constructor.
+		/// </summary>
+		/// <param name="messageTypes">The types to register.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="messageTypes"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="messageTypes"/> contains a type that is not an implementation of <see cref="Message"/>,
-		/// has no parameter-less constructor or has no <see cref="IValueReader"/> constructor.
+		/// has no parameter-less constructor or contains duplicate <see cref="Message.MessageType"/>s.
 		/// </exception>
 		public void Register (IEnumerable<Type> messageTypes)
 		{
@@ -103,7 +116,7 @@ namespace Tempest
 			Dictionary<Type, Func<Message>> types = new Dictionary<Type, Func<Message>>();
 			foreach (Type t in messageTypes)
 			{
-				if (!t.IsPublic || !t.IsClass || !mtype.IsAssignableFrom (t))
+				if (!mtype.IsAssignableFrom (t))
 					throw new ArgumentException (String.Format ("{0} is not an implementation of Message", t.Name), "messageTypes");
 
 				ConstructorInfo plessCtor = t.GetConstructor (Type.EmptyTypes);

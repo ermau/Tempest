@@ -71,5 +71,16 @@ namespace Tempest
 		/// <param name="reader">The writer to use for serialization.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="reader"/> is <c>null</c>.</exception>
 		public abstract void Deserialize (IValueReader reader);
+
+		static Message()
+		{
+			Factory = new MessageFactory();
+		}
+
+		public static MessageFactory Factory
+		{
+			get;
+			private set;
+		}
 	}
 }

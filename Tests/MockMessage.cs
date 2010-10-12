@@ -13,11 +13,6 @@ namespace Tempest.Tests
 		{
 		}
 
-		public MockMessage (IValueReader reader)
-			: base (1, reader)
-		{
-		}
-
 		public override void Serialize (IValueWriter writer)
 		{
 		}

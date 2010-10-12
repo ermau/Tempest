@@ -36,14 +36,6 @@ namespace Tempest
 			MessageType = messageType;
 		}
 
-		protected Message (ushort messageType, IValueReader reader)
-			: this (messageType)
-		{
-			// ReSharper disable DoNotCallOverridableMethodsInConstructor
-			Deserialize (reader);
-			// ReSharper restore DoNotCallOverridableMethodsInConstructor
-		}
-
 		/// <summary>
 		/// Gets whether this message needs to be reliably delivered or not.
 		/// </summary>

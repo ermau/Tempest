@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -35,6 +36,17 @@ namespace Tempest
 	{
 		private int position;
 		private readonly byte[] buffer;
+		private readonly int length;
+
+		public BufferValueReader (byte[] buffer, int offset, int length)
+		{
+			if (buffer == null)
+				throw new ArgumentNullException ("buffer");
+
+			this.buffer = buffer;
+			this.position = offset;
+			this.length = length;
+		}
 
 		public BufferValueReader (byte[] buffer)
 		{
@@ -42,19 +54,26 @@ namespace Tempest
 				throw new ArgumentNullException ("buffer");
 
 			this.buffer = buffer;
+			this.length = buffer.Length;
 		}
 
 		public bool ReadBool()
 		{
+			if (this.position == this.length)
+				throw new InternalBufferOverflowException();
+
 			return (this.buffer[this.position++] == 1);
 		}
 
 		public byte[] ReadBytes()
 		{
-			int length = ReadInt32();
-			byte[] b = new byte[length];
-			Array.Copy (this.buffer, this.position, b, 0, length);
-			this.position += length;
+			int len = ReadInt32();
+			if (this.position + len > this.length)
+				throw new InternalBufferOverflowException();
+
+			byte[] b = new byte[len];
+			Array.Copy (this.buffer, this.position, b, 0, len);
+			this.position += len;
 
 			return b;
 		}
@@ -63,7 +82,7 @@ namespace Tempest
 		{
 			if (count < 0)
 				throw new ArgumentOutOfRangeException ("count", count, "count must be >= 0");
-			if (count + this.position >= this.buffer.Length)
+			if (count + this.position >= this.length)
 				throw new ArgumentOutOfRangeException ("count", count, "Count from position is longer than buffer.");
 
 			byte[] b = new byte[count];
@@ -75,6 +94,9 @@ namespace Tempest
 
 		public sbyte ReadSByte()
 		{
+			if (this.position >= this.length)
+				throw new InternalBufferOverflowException();
+
 			return (sbyte)this.buffer[this.position++];
 		}
 
@@ -136,12 +158,12 @@ namespace Tempest
 			if (encoding == null)
 				throw new ArgumentNullException ("encoding");
 
-			int length = ReadInt32();
-			if (length == 0)
+			int len = ReadInt32();
+			if (len == 0)
 				return null;
 
-			string v = encoding.GetString (this.buffer, this.position, length);
-			this.position += length;
+			string v = encoding.GetString (this.buffer, this.position, len);
+			this.position += len;
 			
 			return v;
 		}

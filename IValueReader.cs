@@ -97,5 +97,11 @@ namespace Tempest
 		/// <param name="encoding">The encoding of the string.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="encoding"/> is <c>null</c>.</exception>
 		string ReadString (Encoding encoding);
+
+		/// <summary>
+		/// Finalizes buffer.
+		/// </summary>
+		/// <remarks>Connection providers should call this automatically when <see cref="Message.Deserialize"/> returns.</remarks>
+		void Flush();
 	}
 }

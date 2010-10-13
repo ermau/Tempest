@@ -123,5 +123,10 @@ namespace Tempest
 			byte[] data = ReadBytes();
 			return (data.Length == 0) ? null : encoding.GetString (data);
 		}
+
+		public void Flush()
+		{
+			this.stream.Flush();
+		}
 	}
 }

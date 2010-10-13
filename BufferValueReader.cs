@@ -145,5 +145,9 @@ namespace Tempest
 			
 			return v;
 		}
+
+		public void Flush()
+		{
+		}
 	}
 }

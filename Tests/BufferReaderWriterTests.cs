@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
@@ -53,6 +54,25 @@ namespace Tempest.Tests
 		public void WriterCtorNull()
 		{
 			Assert.Throws<ArgumentNullException> (() => new BufferValueWriter (null));
+		}
+
+		[Test]
+		public void BufferWriterOverflow()
+		{
+			byte[] buffer = new byte[4];
+			var writer = new BufferValueWriter (buffer, false);
+			Assert.Throws<InternalBufferOverflowException> (() => writer.WriteInt64 (1));
+		}
+
+		[Test]
+		public void BufferOverflowResize()
+		{
+			byte[] buffer = new byte[4];
+			var writer = new BufferValueWriter (buffer);
+			writer.WriteInt64 (1);
+
+			Assert.That (writer.Length, Is.EqualTo (8));
+			Assert.That (writer.Buffer.Length, Is.AtLeast (8));
 		}
 	}
 }

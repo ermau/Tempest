@@ -34,37 +34,42 @@ namespace Tempest
 	public class BufferValueWriter
 		: IValueWriter
 	{
-		private readonly byte[] buffer;
-		private int position;
-
-		public BufferValueWriter (byte[] buffer)
+		public BufferValueWriter (byte[] buffer, bool resizing = true)
 		{
 			if (buffer == null)
 				throw new ArgumentNullException ("buffer");
-			
+
 			this.buffer = buffer;
+			this.resizing = resizing;
+		}
+
+		public int Length
+		{
+			get { return this.position; }
+		}
+
+		public byte[] Buffer
+		{
+			get { return this.buffer; }
 		}
 
 		public void WriteByte (byte value)
 		{
-			if (this.position == this.buffer.Length)
-				throw new InternalBufferOverflowException();
+			EnsureAdditionalCapacity (1);
 
 			this.buffer[this.position++] = value;
 		}
 
 		public void WriteSByte (sbyte value)
 		{
-			if (this.position == this.buffer.Length)
-				throw new InternalBufferOverflowException();
+			EnsureAdditionalCapacity (1);
 
 			this.buffer[this.position++] = (byte)value;
 		}
 
 		public void WriteBool (bool value)
 		{
-			if (this.position == this.buffer.Length)
-				throw new InternalBufferOverflowException();
+			EnsureAdditionalCapacity (1);
 
 			this.buffer[this.position++] = (byte)((value) ? 1 : 0);
 		}
@@ -73,8 +78,8 @@ namespace Tempest
 		{
 			if (value == null)
 				throw new ArgumentNullException ("value");
-			if (value.Length + sizeof(int) > this.buffer.Length - this.position)
-				throw new InternalBufferOverflowException();
+			
+			EnsureAdditionalCapacity (sizeof(int) + value.Length);
 
 			Array.Copy (BitConverter.GetBytes (value.Length), 0, this.buffer, this.position, sizeof(int));
 			this.position += sizeof (int);
@@ -90,8 +95,8 @@ namespace Tempest
 				throw new ArgumentOutOfRangeException ("offset", offset, "offset can not negative or >=data.Length");
 			if (length < 0 || offset + length >= value.Length)
 				throw new ArgumentOutOfRangeException ("length", length, "length can not be negative or combined with offset longer than the array");
-			if (length - offset + sizeof(int) > this.buffer.Length - this.position)
-				throw new InternalBufferOverflowException();
+			
+			EnsureAdditionalCapacity (sizeof(int) + length);
 
 			Array.Copy (BitConverter.GetBytes (length), 0, this.buffer, this.position, sizeof (int));
 			this.position += sizeof (int);
@@ -101,8 +106,7 @@ namespace Tempest
 
 		public void WriteInt16 (short value)
 		{
-			if (this.position + sizeof(short) >= this.buffer.Length)
-				throw new InternalBufferOverflowException();
+			EnsureAdditionalCapacity (sizeof (short));
 
 			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof(short));
 			this.position += sizeof (short);
@@ -110,8 +114,7 @@ namespace Tempest
 
 		public void WriteInt32 (int value)
 		{
-			if (this.position + sizeof (int) >= this.buffer.Length)
-				throw new InternalBufferOverflowException ();
+			EnsureAdditionalCapacity (sizeof (int));
 
 			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (int));
 			this.position += sizeof (int);
@@ -119,8 +122,7 @@ namespace Tempest
 
 		public void WriteInt64 (long value)
 		{
-			if (this.position + sizeof (long) >= this.buffer.Length)
-				throw new InternalBufferOverflowException ();
+			EnsureAdditionalCapacity (sizeof (long));
 
 			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (long));
 			this.position += sizeof (long);
@@ -128,8 +130,7 @@ namespace Tempest
 
 		public void WriteUInt16 (ushort value)
 		{
-			if (this.position + sizeof (ushort) >= this.buffer.Length)
-				throw new InternalBufferOverflowException ();
+			EnsureAdditionalCapacity (sizeof (ushort));
 
 			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ushort));
 			this.position += sizeof (ushort);
@@ -137,8 +138,7 @@ namespace Tempest
 
 		public void WriteUInt32 (uint value)
 		{
-			if (this.position + sizeof (uint) >= this.buffer.Length)
-				throw new InternalBufferOverflowException ();
+			EnsureAdditionalCapacity (sizeof (uint));
 
 			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (uint));
 			this.position += sizeof (uint);
@@ -146,8 +146,7 @@ namespace Tempest
 
 		public void WriteUInt64 (ulong value)
 		{
-			if (this.position + sizeof (ulong) >= this.buffer.Length)
-				throw new InternalBufferOverflowException ();
+			EnsureAdditionalCapacity (sizeof(ulong));
 
 			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ulong));
 			this.position += sizeof (ulong);
@@ -159,8 +158,7 @@ namespace Tempest
 				throw new ArgumentNullException ("encoding");
 
 			byte[] data = encoding.GetBytes (value);
-			if (data.Length + sizeof(int) + this.position >= this.buffer.Length)
-				throw new InternalBufferOverflowException();
+			EnsureAdditionalCapacity (sizeof(int) + data.Length);
 
 			Array.Copy (BitConverter.GetBytes (data.Length), 0, this.buffer, this.position, sizeof(int));
 			this.position += sizeof (int);
@@ -171,6 +169,27 @@ namespace Tempest
 		public void Flush()
 		{
 			this.position = 0;
+		}
+
+		private byte[] buffer;
+		private int position;
+		private readonly bool resizing;
+
+		private void EnsureAdditionalCapacity (int additionalCapacity)
+		{
+			if (this.position + additionalCapacity < this.buffer.Length)
+				return;
+			if (!this.resizing)
+				throw new InternalBufferOverflowException();
+
+			int curLength = this.buffer.Length;
+			int newLength = curLength * 2;
+			while (newLength <= curLength + additionalCapacity)
+				newLength *= 2;
+
+			byte[] newbuffer = new byte[newLength];
+			Array.Copy (this.buffer, 0, newbuffer, 0, Length);
+			this.buffer = newbuffer;
 		}
 	}
 }

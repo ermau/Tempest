@@ -34,12 +34,13 @@ namespace Tempest.Providers.Network
 	public class NetworkConnectionProvider
 		: IConnectionProvider
 	{
-		public NetworkConnectionProvider (int port)
+		public NetworkConnectionProvider (int port, byte appId)
 		{
 			if (port < IPEndPoint.MinPort || port > IPEndPoint.MaxPort)
 				throw new ArgumentOutOfRangeException ("port");
 
 			Port = port;
+			sanityByte = appId;
 		}
 
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
@@ -79,9 +80,7 @@ namespace Tempest.Providers.Network
 			}
 
 			if ((types & MessageTypes.Unreliable) == MessageTypes.Unreliable)
-			{
-				// TODO
-			}
+				throw new NotSupportedException();
 		}
 
 		public void SendConnectionlessMessage (Message message, EndPoint endPoint)
@@ -128,6 +127,7 @@ namespace Tempest.Providers.Network
 		private Socket reliableSocket;
 		private Socket unreliableSocket;
 		private MessageTypes mtypes;
+		private readonly byte sanityByte;
 
 		private void Accept (object sender, SocketAsyncEventArgs e)
 		{
@@ -137,17 +137,15 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			var connection = new NetworkServerConnection (e.ConnectSocket);
+			var connection = new NetworkServerConnection (e.ConnectSocket, this.sanityByte);
 
 			BeginAccepting (e);
 
 			var made = new ConnectionMadeEventArgs (connection);
 			OnConnectionMade (made);
 			
-			if (!made.Rejected)
-			{
-				
-			}
+			if (made.Rejected)
+				connection.Dispose();
 		}
 
 		private void BeginAccepting (SocketAsyncEventArgs e)

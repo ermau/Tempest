@@ -39,14 +39,14 @@ namespace Tempest.Tests
 	{
 		protected override IConnectionProvider SetUp()
 		{
-			return new NetworkConnectionProvider (42000);
+			return new NetworkConnectionProvider (42000, 0x2A);
 		}
 
 		[Test]
 		public void InvalidPort()
 		{
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (IPEndPoint.MinPort - 1));
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (IPEndPoint.MaxPort + 1));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (IPEndPoint.MinPort - 1, 0x1));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (IPEndPoint.MaxPort + 1, 0x1));
 		}
 	}
 }

@@ -33,27 +33,20 @@ namespace Tempest.Providers.Network
 	public class NetworkServerConnection
 		: NetworkConnection, IServerConnection
 	{
-		internal NetworkServerConnection (int nid)
-		{
-			NetworkId = nid;
-		}
-
-		internal NetworkServerConnection (Socket reliableSocket)
+		internal NetworkServerConnection (Socket reliableSocket, byte sanityByte)
 		{
 			if (reliableSocket == null)
 				throw new ArgumentNullException ("reliableSocket");
 
 			this.reliableSocket = reliableSocket;
+			this.sanityByte = sanityByte;
 
 			var asyncArgs = new SocketAsyncEventArgs();
 			asyncArgs.UserToken = this;
-			
-		}
+			asyncArgs.SetBuffer (messageBuffer, 0, 20480);
+			asyncArgs.Completed += ReliableIOCompleted;
 
-		internal NetworkServerConnection (Socket reliableSocket, int nid)
-			: this (reliableSocket)
-		{
-			NetworkId = nid;
+			this.reliableSocket.ReceiveAsync (asyncArgs);
 		}
 
 		public override bool IsConnected
@@ -63,19 +56,45 @@ namespace Tempest.Providers.Network
 
 		public override void Send (Message message)
 		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+
 			throw new NotImplementedException ();
 		}
 
 		public override void Disconnect ()
 		{
-			throw new NotImplementedException ();
+			if (this.reliableSocket != null)
+				this.reliableSocket.Disconnect (true);
 		}
 
-		private Socket reliableSocket;
+		private readonly Socket reliableSocket;
+		private readonly byte sanityByte;
+		private bool midMessage;
+		private readonly byte[] messageBuffer = new byte[20480];
 
 		internal int NetworkId
 		{
 			get; private set;
+		}
+
+		private void ReliableIOCompleted (object sender, SocketAsyncEventArgs e)
+		{
+			if (this.midMessage)
+			{
+				
+			}
+			else if (this.sanityByte == this.messageBuffer[0])
+			{
+				
+			}
+			else
+			{
+				// TODO: Log sanity failure
+			}
+
+			if (!this.reliableSocket.ReceiveAsync (e))
+				ReliableIOCompleted (sender, e);
 		}
 	}
 }

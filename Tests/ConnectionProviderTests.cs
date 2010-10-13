@@ -58,6 +58,7 @@ namespace Tempest.Tests
 			{
 				Assert.Throws<NotSupportedException> (() => this.provider.ConnectionlessMessageReceived += cmr);
 				Assert.Throws<NotSupportedException> (() => this.provider.SendConnectionlessMessage (new MockMessage(), new IPEndPoint (IPAddress.Loopback, 42)));
+				Assert.Throws<NotSupportedException> (() => this.provider.Start (MessageTypes.Unreliable));
 			}
 		}
 
@@ -72,11 +73,11 @@ namespace Tempest.Tests
 		public void StartRepeatedly()
 		{
 			// *knock knock knock* Penny
-			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.All));
+			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.Reliable)); // TODO: Determine available message types
 			// *knock knock knock* Penny
-			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.All));
+			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.Reliable));
 			// *knock knock knock* Penny
-			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.All));
+			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.Reliable));
 		}
 
 		[Test]

@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -41,6 +42,7 @@ namespace Tempest.Providers.Network
 
 			Port = port;
 			sanityByte = appId;
+			MaxMessageLength = 104857600; // 100MB
 		}
 
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
@@ -55,6 +57,18 @@ namespace Tempest.Providers.Network
 		{
 			get;
 			private set;
+		}
+
+		/// <summary>
+		/// Gets or sets the maximum length of a message in bytes.
+		/// </summary>
+		/// <remarks>
+		/// Defaults to 100MB.
+		/// </remarks>
+		public int MaxMessageLength
+		{
+			get;
+			set;
 		}
 
 		public bool SupportsConnectionless
@@ -137,7 +151,7 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			var connection = new NetworkServerConnection (e.ConnectSocket, this.sanityByte);
+			var connection = new NetworkServerConnection (this, e.ConnectSocket, this.sanityByte);
 
 			BeginAccepting (e);
 
@@ -152,11 +166,17 @@ namespace Tempest.Providers.Network
 		{
 			if (e == null)
 			{
-				e = new SocketAsyncEventArgs();
+				e = new SocketAsyncEventArgs ();
 				e.Completed += Accept;
 			}
 			else
-				e.AcceptSocket = null;
+			{
+				Socket s;
+				if (!ReliableSockets.TryPop (out s))
+					s = null;
+
+				e.AcceptSocket = s;
+			}
 
 			if (!this.reliableSocket.AcceptAsync (e))
 				Accept (this, e);
@@ -168,5 +188,7 @@ namespace Tempest.Providers.Network
 			if (cmade != null)
 				cmade (this, e);
 		}
+
+		internal static readonly ConcurrentStack<Socket> ReliableSockets = new ConcurrentStack<Socket>();
 	}
 }

@@ -141,7 +141,7 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			var connection = new NetworkServerConnection (this, e.ConnectSocket, this.sanityByte);
+			var connection = new NetworkServerConnection (e.ConnectSocket, this.sanityByte);
 
 			BeginAccepting (e);
 

@@ -41,7 +41,15 @@ namespace Tempest.Tests
 			this.provider = SetUp();
 		}
 
+		[TearDown]
+		protected void TearDown()
+		{
+			if (this.provider != null)
+				this.provider.Dispose();
+		}
+
 		protected abstract IConnectionProvider SetUp();
+		protected abstract IClientConnection Connect();
 
 		[Test]
 		public void ConnectionlessSupport()
@@ -89,6 +97,19 @@ namespace Tempest.Tests
 			Assert.DoesNotThrow (() => this.provider.Stop());
 			// *knock knock knock* Sheldon
 			Assert.DoesNotThrow (() => this.provider.Stop());
+		}
+
+		[Test]
+		public void Connection()
+		{
+			this.provider.ConnectionMade += AssertConnectedHandler;
+			Connect();
+		}
+
+		private void AssertConnectedHandler (object sender, ConnectionMadeEventArgs e)
+		{
+			((IConnectionProvider)sender).ConnectionMade -= AssertConnectedHandler;
+			Assert.Pass ();
 		}
 	}
 }

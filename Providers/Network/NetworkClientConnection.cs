@@ -54,11 +54,12 @@ namespace Tempest.Providers.Network
 				throw new NotSupportedException();
 
 			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+			args.RemoteEndPoint = endpoint;
 			args.Completed += ConnectCompleted;
 
 			this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-			if (!this.reliableSocket.AcceptAsync (args))
+			if (!this.reliableSocket.ConnectAsync (args))
 				ConnectCompleted (this.reliableSocket, args);
 		}
 

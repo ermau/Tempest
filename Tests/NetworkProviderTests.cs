@@ -42,6 +42,14 @@ namespace Tempest.Tests
 			return new NetworkConnectionProvider (42000, 0x2A);
 		}
 
+		protected override IClientConnection Connect ()
+		{
+			var c = new NetworkClientConnection (0x2A);
+			c.Connect (new IPEndPoint (IPAddress.Loopback, 42000), MessageTypes.Reliable);
+
+			return c;
+		}
+
 		[Test]
 		public void InvalidPort()
 		{

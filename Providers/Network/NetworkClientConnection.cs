@@ -39,7 +39,7 @@ namespace Tempest.Providers.Network
 		{
 		}
 
-		public event EventHandler<ConnectionEventArgs> Connected;
+		public event EventHandler<ClientConnectionEventArgs> Connected;
 
 		public override bool IsConnected
 		{
@@ -90,7 +90,7 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			OnConnected (new ConnectionEventArgs (this));
+			OnConnected (new ClientConnectionEventArgs (this));
 
 			e.Completed -= ConnectCompleted;
 			e.Completed += ReliableIOCompleted;
@@ -99,7 +99,7 @@ namespace Tempest.Providers.Network
 				ReliableIOCompleted (this.reliableSocket, e);
 		}
 
-		private void OnConnected (ConnectionEventArgs e)
+		private void OnConnected (ClientConnectionEventArgs e)
 		{
 			var connected = Connected;
 			if (connected != null)

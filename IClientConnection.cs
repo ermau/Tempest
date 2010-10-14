@@ -36,7 +36,7 @@ namespace Tempest
 		/// <summary>
 		/// Raised when the connection has connected.
 		/// </summary>
-		event EventHandler<ConnectionEventArgs> Connected;
+		event EventHandler<ClientConnectionEventArgs> Connected;
 
 		/// <summary>
 		/// Connects to the <paramref name="endpoint"/>.
@@ -45,5 +45,33 @@ namespace Tempest
 		/// <param name="messageTypes"></param>
 		/// <exception cref="ArgumentNullException"><paramref name="endpoint"/> is <c>null</c>.</exception>
 		void Connect (EndPoint endpoint, MessageTypes messageTypes);
+	}
+
+	/// <summary>
+	/// Holds data for client-connection based events.
+	/// </summary>
+	public class ClientConnectionEventArgs
+		: EventArgs
+	{
+		/// <summary>
+		/// Creates a new instance of the <see cref="ClientConnectionEventArgs"/> class.
+		/// </summary>
+		/// <param name="connection">The connection for the event.</param>
+		public ClientConnectionEventArgs (IClientConnection connection)
+		{
+			if (connection == null)
+				throw new ArgumentNullException ("connection");
+
+			Connection = connection;
+		}
+
+		/// <summary>
+		/// Gets the connection for the event.
+		/// </summary>
+		public IClientConnection Connection
+		{
+			get;
+			private set;
+		}
 	}
 }

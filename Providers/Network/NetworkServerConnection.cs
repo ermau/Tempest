@@ -83,13 +83,10 @@ namespace Tempest.Providers.Network
 
 			e.SetBuffer (writer.Buffer, 0, writer.Length);
 
-			lock (sync)
+			if (IsConnected)
 			{
-				if (IsConnected)
-				{
-					if (!this.reliableSocket.SendAsync (e))
-						ReliableSendCompleted (this.reliableSocket, e);
-				}
+				if (!this.reliableSocket.SendAsync (e))
+					ReliableSendCompleted (this.reliableSocket, e);
 			}
 
 			writerAsyncArgs.Push (e);
@@ -106,7 +103,6 @@ namespace Tempest.Providers.Network
 			OnDisconnected (new ConnectionEventArgs (this));
 		}
 
-		private readonly object sync = new object();
 		private readonly byte sanityByte;
 
 		private readonly NetworkConnectionProvider provider;

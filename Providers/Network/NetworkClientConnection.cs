@@ -64,14 +64,6 @@ namespace Tempest.Providers.Network
 				ConnectCompleted (this.reliableSocket, args);
 		}
 
-		public override void Send (Message message)
-		{
-			if (message == null)
-				throw new ArgumentNullException ("message");
-
-			throw new NotImplementedException ();
-		}
-
 		private void ConnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
 			if (e.SocketError != SocketError.Success)
@@ -84,11 +76,11 @@ namespace Tempest.Providers.Network
 			OnConnected (new ClientConnectionEventArgs (this));
 
 			e.Completed -= ConnectCompleted;
-			e.Completed += ReliableIOCompleted;
+			e.Completed += ReliableReceiveCompleted;
 			e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
 
 			if (!this.reliableSocket.ReceiveAsync (e))
-				ReliableIOCompleted (this.reliableSocket, e);
+				ReliableReceiveCompleted (this.reliableSocket, e);
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

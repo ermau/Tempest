@@ -73,8 +73,12 @@ namespace Tempest.Providers.Network
 			if (!writers.TryPop (out writer))
 				writer = new BufferValueWriter (new byte[20480]);
 
-			message.Serialize (writer);
+			writer.WriteByte (sanityByte);
+			writer.WriteUInt16 (message.MessageType);
+			writer.WriteInt32 (0); // Length placeholder
 
+			message.Serialize (writer);
+			
 			SocketAsyncEventArgs e;
 			if (!writerAsyncArgs.TryPop (out e))
 			{
@@ -84,6 +88,8 @@ namespace Tempest.Providers.Network
 			else
 				e.AcceptSocket = null;
 
+			// Copy length in
+			Array.Copy (BitConverter.GetBytes (writer.Length - BaseHeaderLength), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
 			e.SetBuffer (writer.Buffer, 0, writer.Length);
 
 			if (IsConnected)
@@ -91,8 +97,6 @@ namespace Tempest.Providers.Network
 				if (!this.reliableSocket.SendAsync (e))
 					ReliableSendCompleted (this.reliableSocket, e);
 			}
-
-			writerAsyncArgs.Push (e);
 		}
 
 		public virtual void Disconnect()
@@ -149,7 +153,7 @@ namespace Tempest.Providers.Network
 				dc (this, e);
 		}
 
-		protected void ReliableIOCompleted (object sender, SocketAsyncEventArgs e)
+		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
 		{
 			int bytesTransferred = e.BytesTransferred;
 
@@ -248,7 +252,7 @@ namespace Tempest.Providers.Network
 			}
 
 			if (!this.reliableSocket.ReceiveAsync (e))
-				ReliableIOCompleted (sender, e);
+				ReliableReceiveCompleted (sender, e);
 		}
 
 		private void DeliverMessage (byte[] buffer, int offset, int length)

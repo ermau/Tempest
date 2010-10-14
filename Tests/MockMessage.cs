@@ -13,12 +13,19 @@ namespace Tempest.Tests
 		{
 		}
 
+		public string Content
+		{
+			get; set;
+		}
+
 		public override void Serialize (IValueWriter writer)
 		{
+			writer.WriteString (Encoding.UTF8, Content);
 		}
 
 		public override void Deserialize (IValueReader reader)
 		{
+			Content = reader.ReadString (Encoding.UTF8);
 		}
 	}
 }

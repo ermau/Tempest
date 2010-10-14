@@ -45,7 +45,7 @@ namespace Tempest.Providers.Network
 			var asyncArgs = new SocketAsyncEventArgs();
 			asyncArgs.UserToken = this;
 			asyncArgs.SetBuffer (this.rmessageBuffer, 0, 20480);
-			asyncArgs.Completed += ReliableIOCompleted;
+			asyncArgs.Completed += ReliableReceiveCompleted;
 
 			this.reliableSocket.ReceiveAsync (asyncArgs);
 			this.rreader = new BufferValueReader (this.rmessageBuffer);

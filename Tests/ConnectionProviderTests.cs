@@ -130,5 +130,42 @@ namespace Tempest.Tests
 
 			test.Assert (10000);
 		}
+
+		[Test]
+		public void ClientSendMessage()
+		{
+			const string content = "Oh, hello there.";
+
+			IServerConnection connection = null;
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageReceivedEventArgs);
+				if (me == null)
+					return false;
+
+				if (me.Connection != connection)
+					return false;
+
+				var msg = (me.Message as MockMessage);
+				if (msg == null)
+					return false;
+
+				return content == msg.Content;
+			});
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) =>
+			{
+				connection = e.Connection;
+				e.Connection.MessageReceived += test.PassHandler;
+			};
+
+			var c = GetNewClientConnection();
+			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
 	}
 }

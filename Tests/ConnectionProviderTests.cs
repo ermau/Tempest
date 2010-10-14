@@ -27,6 +27,7 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -48,8 +49,11 @@ namespace Tempest.Tests
 				this.provider.Dispose();
 		}
 
+		protected abstract EndPoint EndPoint { get; }
+		protected abstract MessageTypes MessageTypes { get; }
+
 		protected abstract IConnectionProvider SetUp();
-		protected abstract IClientConnection Connect();
+		protected abstract IClientConnection GetNewClientConnection();
 
 		[Test]
 		public void ConnectionlessSupport()
@@ -81,11 +85,11 @@ namespace Tempest.Tests
 		public void StartRepeatedly()
 		{
 			// *knock knock knock* Penny
-			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.Reliable)); // TODO: Determine available message types
+			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes));
 			// *knock knock knock* Penny
-			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.Reliable));
+			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes));
 			// *knock knock knock* Penny
-			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes.Reliable));
+			Assert.DoesNotThrow (() => this.provider.Start (MessageTypes));
 		}
 
 		[Test]
@@ -100,16 +104,31 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void Connection()
+		public void ConnectionMade()
 		{
-			this.provider.ConnectionMade += AssertConnectedHandler;
-			Connect();
+			this.provider.Start (MessageTypes);
+
+			var test = new AsyncTest();
+			this.provider.ConnectionMade += test.PassHandler;
+			var c = GetNewClientConnection();
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
 		}
 
-		private void AssertConnectedHandler (object sender, ConnectionMadeEventArgs e)
+		[Test]
+		public void Connected()
 		{
-			((IConnectionProvider)sender).ConnectionMade -= AssertConnectedHandler;
-			Assert.Pass ();
+			this.provider.Start (MessageTypes);
+
+			var c = GetNewClientConnection();
+
+			var test = new AsyncTest();
+			c.Connected += test.PassHandler;
+			c.ConnectionFailed += test.FailHandler;
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
 		}
 	}
 }

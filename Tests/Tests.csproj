@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncTest.cs" />
     <Compile Include="BufferReaderWriterTests.cs" />
     <Compile Include="ConnectionProviderTests.cs" />
     <Compile Include="MessageFactoryTests.cs" />

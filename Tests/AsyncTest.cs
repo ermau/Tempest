@@ -1,5 +1,5 @@
 ﻿//
-// NetworkProviderTests.cs
+// AsyncTest.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -25,43 +25,41 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using NUnit.Framework;
-using Tempest.Providers.Network;
+using System.Threading;
+using NAssert = NUnit.Framework.Assert;
 
 namespace Tempest.Tests
 {
-	[TestFixture]
-	public class NetworkProviderTests
-		: ConnectionProviderTests
+	public class AsyncTest
 	{
-		protected override EndPoint EndPoint
+		public void PassHandler (object sender, EventArgs e)
 		{
-			get { return new IPEndPoint (IPAddress.Loopback, 42000); }
+			passed = true;
 		}
 
-		protected override MessageTypes MessageTypes
+		public void FailHandler (object sender, EventArgs e)
 		{
-			get { return MessageTypes.Reliable; }
+			failed = true;
 		}
 
-		protected override IConnectionProvider SetUp()
+		public void Assert (int timeout)
 		{
-			return new NetworkConnectionProvider (42000, 0x2A);
+			DateTime start = DateTime.Now;
+			while (DateTime.Now.Subtract (start).TotalMilliseconds < timeout)
+			{
+				if (failed)
+					NAssert.Fail ();
+				else if (passed)
+					return;
+
+				Thread.Sleep (1);
+			}
+
+			NAssert.Fail ();
 		}
 
-		protected override IClientConnection GetNewClientConnection ()
-		{
-			return new NetworkClientConnection (0x2A);
-		}
-
-		[Test]
-		public void InvalidPort()
-		{
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (IPEndPoint.MinPort - 1, 0x1));
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (IPEndPoint.MaxPort + 1, 0x1));
-		}
+		private volatile bool passed = false;
+		private volatile bool failed = false;
 	}
 }

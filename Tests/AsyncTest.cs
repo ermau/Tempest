@@ -33,9 +33,27 @@ namespace Tempest.Tests
 {
 	public class AsyncTest
 	{
+		private readonly Func<EventArgs, bool> passPredicate;
+
+		public AsyncTest()
+		{
+			this.passPredicate = e => true;
+		}
+
+		public AsyncTest (Func<EventArgs, bool> passPredicate)
+		{
+			if (passPredicate == null)
+				throw new ArgumentNullException ("passPredicate");
+
+			this.passPredicate = passPredicate;
+		}
+
 		public void PassHandler (object sender, EventArgs e)
 		{
-			passed = true;
+			if (passPredicate (e))
+				passed = true;
+			else
+				failed = true;
 		}
 
 		public void FailHandler (object sender, EventArgs e)
@@ -56,7 +74,7 @@ namespace Tempest.Tests
 				Thread.Sleep (1);
 			}
 
-			NAssert.Fail ();
+			NAssert.Fail ("Asynchronous operation timed out.");
 		}
 
 		private volatile bool passed = false;

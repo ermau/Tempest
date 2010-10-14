@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -42,7 +43,6 @@ namespace Tempest.Providers.Network
 
 			Port = port;
 			sanityByte = appId;
-			MaxMessageLength = 104857600; // 100MB
 		}
 
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
@@ -57,18 +57,6 @@ namespace Tempest.Providers.Network
 		{
 			get;
 			private set;
-		}
-
-		/// <summary>
-		/// Gets or sets the maximum length of a message in bytes.
-		/// </summary>
-		/// <remarks>
-		/// Defaults to 100MB.
-		/// </remarks>
-		public int MaxMessageLength
-		{
-			get;
-			set;
 		}
 
 		public bool SupportsConnectionless
@@ -143,6 +131,8 @@ namespace Tempest.Providers.Network
 		private MessageTypes mtypes;
 		private readonly byte sanityByte;
 
+		private readonly List<NetworkServerConnection> serverConnections = new List<NetworkServerConnection> (100);
+
 		private void Accept (object sender, SocketAsyncEventArgs e)
 		{
 			if (!this.running)
@@ -160,6 +150,11 @@ namespace Tempest.Providers.Network
 			
 			if (made.Rejected)
 				connection.Dispose();
+			else
+			{
+				lock (this.serverConnections)
+					this.serverConnections.Add (connection);
+			}
 		}
 
 		private void BeginAccepting (SocketAsyncEventArgs e)

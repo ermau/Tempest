@@ -42,7 +42,8 @@ namespace Tempest
 		/// Connects to the <paramref name="endpoint"/>.
 		/// </summary>
 		/// <param name="endpoint">The endpoint to connect to.</param>
+		/// <param name="messageTypes"></param>
 		/// <exception cref="ArgumentNullException"><paramref name="endpoint"/> is <c>null</c>.</exception>
-		void Connect (EndPoint endpoint);
+		void Connect (EndPoint endpoint, MessageTypes messageTypes);
 	}
 }

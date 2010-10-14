@@ -27,32 +27,82 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 
 namespace Tempest.Providers.Network
 {
 	public class NetworkClientConnection
 		: NetworkConnection, IClientConnection
 	{
+		public NetworkClientConnection (byte appId)
+			: base (appId)
+		{
+		}
+
 		public event EventHandler<ConnectionEventArgs> Connected;
 
 		public override bool IsConnected
 		{
-			get { throw new NotImplementedException (); }
+			get { return (this.reliableSocket != null && this.reliableSocket.Connected); }
 		}
 
-		public void Connect (EndPoint endpoint)
+		public void Connect (EndPoint endpoint, MessageTypes messageTypes)
 		{
-			throw new NotImplementedException();
+			if (endpoint == null)
+				throw new ArgumentNullException ("endpoint");
+			if (messageTypes.HasFlag (MessageTypes.Unreliable))
+				throw new NotSupportedException();
+
+			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+			args.Completed += ConnectCompleted;
+
+			this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+			if (!this.reliableSocket.AcceptAsync (args))
+				ConnectCompleted (this.reliableSocket, args);
 		}
 
 		public override void Send (Message message)
 		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+
 			throw new NotImplementedException ();
 		}
 
 		public override void Disconnect ()
 		{
-			throw new NotImplementedException ();
+			if (this.reliableSocket != null)
+			{
+				this.reliableSocket.Dispose();
+				this.reliableSocket = null;
+			}
+		}
+
+		private volatile bool running;
+
+		private void ConnectCompleted (object sender, SocketAsyncEventArgs e)
+		{
+			if (e.SocketError != SocketError.Success)
+			{
+				Disconnect();
+				return;
+			}
+
+			OnConnected (new ConnectionEventArgs (this));
+
+			e.Completed -= ConnectCompleted;
+			e.Completed += ReliableIOCompleted;
+
+			if (!this.reliableSocket.ReceiveAsync (e))
+				ReliableIOCompleted (this.reliableSocket, e);
+		}
+
+		private void OnConnected (ConnectionEventArgs e)
+		{
+			var connected = Connected;
+			if (connected != null)
+				connected (this, e);
 		}
 	}
 }

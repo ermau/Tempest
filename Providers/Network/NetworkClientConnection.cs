@@ -40,6 +40,7 @@ namespace Tempest.Providers.Network
 		}
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
+		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
 
 		public override bool IsConnected
 		{
@@ -86,6 +87,7 @@ namespace Tempest.Providers.Network
 		{
 			if (e.SocketError != SocketError.Success)
 			{
+				OnConnectionFailed (new ClientConnectionEventArgs (this));
 				Disconnect();
 				return;
 			}
@@ -104,6 +106,13 @@ namespace Tempest.Providers.Network
 			var connected = Connected;
 			if (connected != null)
 				connected (this, e);
+		}
+
+		private void OnConnectionFailed (ClientConnectionEventArgs e)
+		{
+			var handler = this.ConnectionFailed;
+			if (handler != null)
+				handler (this, e);
 		}
 	}
 }

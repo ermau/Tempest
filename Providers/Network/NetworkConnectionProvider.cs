@@ -113,6 +113,14 @@ namespace Tempest.Providers.Network
 				this.unreliableSocket.Dispose();
 				this.unreliableSocket = null;
 			}
+
+			lock (this.serverConnections)
+			{
+				foreach (NetworkServerConnection c in this.serverConnections)
+					c.Dispose();
+
+				this.serverConnections.Clear();
+			}
 		}
 
 		public void Dispose()
@@ -141,7 +149,7 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			var connection = new NetworkServerConnection (e.ConnectSocket, this.sanityByte);
+			var connection = new NetworkServerConnection (e.AcceptSocket, this.sanityByte);
 
 			BeginAccepting (e);
 

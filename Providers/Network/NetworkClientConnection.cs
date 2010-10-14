@@ -72,17 +72,6 @@ namespace Tempest.Providers.Network
 			throw new NotImplementedException ();
 		}
 
-		public override void Disconnect ()
-		{
-			if (this.reliableSocket != null)
-			{
-				this.reliableSocket.Dispose();
-				this.reliableSocket = null;
-			}
-		}
-
-		private volatile bool running;
-
 		private void ConnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
 			if (e.SocketError != SocketError.Success)
@@ -96,6 +85,7 @@ namespace Tempest.Providers.Network
 
 			e.Completed -= ConnectCompleted;
 			e.Completed += ReliableIOCompleted;
+			e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
 
 			if (!this.reliableSocket.ReceiveAsync (e))
 				ReliableIOCompleted (this.reliableSocket, e);

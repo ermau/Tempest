@@ -60,7 +60,7 @@ namespace Tempest.Providers.Network
 		{
 			if (this.reliableSocket != null)
 			{
-				this.reliableSocket.Disconnect (true);
+				this.reliableSocket.Shutdown (SocketShutdown.Both);
 				NetworkConnectionProvider.ReliableSockets.Push (this.reliableSocket);
 			}
 

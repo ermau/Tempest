@@ -78,6 +78,7 @@ namespace Tempest.Providers.Network
 			e.Completed -= ConnectCompleted;
 			e.Completed += ReliableReceiveCompleted;
 			e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
+			this.rreader = new BufferValueReader (this.rmessageBuffer);
 
 			if (!this.reliableSocket.ReceiveAsync (e))
 				ReliableReceiveCompleted (this.reliableSocket, e);

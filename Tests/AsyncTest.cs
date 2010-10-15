@@ -25,19 +25,30 @@
 // THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
+using NUnit.Framework;
 using NAssert = NUnit.Framework.Assert;
 
 namespace Tempest.Tests
 {
 	public class AsyncTest
 	{
-		private readonly Func<EventArgs, bool> passPredicate;
+		private readonly Action<EventArgs> passTest;
 
 		public AsyncTest()
 		{
-			this.passPredicate = e => true;
+			this.passTest = e => NAssert.Pass();
+		}
+
+		public AsyncTest (Action<EventArgs> passTest)
+		{
+			if (passTest == null)
+				throw new ArgumentNullException ("passTest");
+			
+			this.passTest = passTest;
 		}
 
 		public AsyncTest (Func<EventArgs, bool> passPredicate)
@@ -45,15 +56,26 @@ namespace Tempest.Tests
 			if (passPredicate == null)
 				throw new ArgumentNullException ("passPredicate");
 
-			this.passPredicate = passPredicate;
+			this.passTest = e =>
+			{
+				if (passPredicate (e))
+					this.passed = true;
+				else
+					NAssert.Fail();
+			};
 		}
 
 		public void PassHandler (object sender, EventArgs e)
 		{
-			if (passPredicate (e))
-				passed = true;
-			else
-				failed = true;
+			try
+			{
+				passTest (e);
+				this.passed = true;
+			}
+			catch (Exception ex)
+			{
+				this.exception = ex;
+			}
 		}
 
 		public void FailHandler (object sender, EventArgs e)
@@ -68,16 +90,21 @@ namespace Tempest.Tests
 			{
 				if (failed)
 					NAssert.Fail ();
-				else if (passed)
+				else if (passed || (exception as SuccessException) != null)
 					return;
+				else if (exception != null)
+					throw new TargetInvocationException (exception);
 
 				Thread.Sleep (1);
 			}
 
-			NAssert.Fail ("Asynchronous operation timed out.");
+			if (!Debugger.IsAttached)
+				NAssert.Fail ("Asynchronous operation timed out.");
 		}
 
 		private volatile bool passed = false;
 		private volatile bool failed = false;
+
+		private Exception exception;
 	}
 }

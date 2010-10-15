@@ -142,17 +142,12 @@ namespace Tempest.Tests
 			var test = new AsyncTest (e =>
 			{
 				var me = (e as MessageReceivedEventArgs);
-				if (me == null)
-					return false;
-
-				if (me.Connection != connection)
-					return false;
+				Assert.IsNotNull (me);
+				Assert.AreSame (me.Connection, connection);
 
 				var msg = (me.Message as MockMessage);
-				if (msg == null)
-					return false;
-
-				return content == msg.Content;
+				Assert.IsNotNull (msg);
+				Assert.AreEqual (content, msg.Content);
 			});
 
 			this.provider.Start (MessageTypes);
@@ -179,17 +174,12 @@ namespace Tempest.Tests
 			var test = new AsyncTest (e =>
 			{
 				var me = (e as MessageReceivedEventArgs);
-				if (me == null)
-					return false;
-
-				if (me.Connection != connection)
-					return false;
+				Assert.IsNotNull (me);
+				Assert.AreSame (connection, me.Connection);
 
 				var msg = (me.Message as MockMessage);
-				if (msg == null)
-					return false;
-
-				return content == msg.Content;
+				Assert.IsNotNull (msg);
+				Assert.AreEqual (content, msg.Content);
 			});
 
 			this.provider.Start (MessageTypes);

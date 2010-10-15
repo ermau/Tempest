@@ -39,6 +39,7 @@ namespace Tempest.Tests
 		[SetUp]
 		protected void Setup()
 		{
+			Message.Factory.Discover();
 			this.provider = SetUp();
 		}
 

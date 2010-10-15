@@ -257,10 +257,9 @@ namespace Tempest.Providers.Network
 
 		private void DeliverMessage (byte[] buffer, int offset, int length)
 		{
-			byte[] payload = new byte[length];
-			Array.Copy (buffer, offset + BaseHeaderLength, payload, 0, length);
-
 			ushort mtype = BitConverter.ToUInt16 (buffer, offset + 1);
+
+			this.rreader.Position = offset + BaseHeaderLength;
 
 			Message m = Message.Factory.Create (mtype);
 			m.Deserialize (this.rreader);

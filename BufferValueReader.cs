@@ -34,7 +34,6 @@ namespace Tempest
 	public class BufferValueReader
 		: IValueReader
 	{
-		private int position;
 		private readonly byte[] buffer;
 		private readonly int length;
 
@@ -44,8 +43,14 @@ namespace Tempest
 				throw new ArgumentNullException ("buffer");
 
 			this.buffer = buffer;
-			this.position = offset;
+			this.Position = offset;
 			this.length = length;
+		}
+
+		public int Position
+		{
+			get;
+			set;
 		}
 
 		public BufferValueReader (byte[] buffer)
@@ -59,21 +64,21 @@ namespace Tempest
 
 		public bool ReadBool()
 		{
-			if (this.position == this.length)
+			if (this.Position == this.length)
 				throw new InternalBufferOverflowException();
 
-			return (this.buffer[this.position++] == 1);
+			return (this.buffer[this.Position++] == 1);
 		}
 
 		public byte[] ReadBytes()
 		{
 			int len = ReadInt32();
-			if (this.position + len > this.length)
+			if (this.Position + len > this.length)
 				throw new InternalBufferOverflowException();
 
 			byte[] b = new byte[len];
-			Array.Copy (this.buffer, this.position, b, 0, len);
-			this.position += len;
+			Array.Copy (this.buffer, this.Position, b, 0, len);
+			this.Position += len;
 
 			return b;
 		}
@@ -82,73 +87,73 @@ namespace Tempest
 		{
 			if (count < 0)
 				throw new ArgumentOutOfRangeException ("count", count, "count must be >= 0");
-			if (count + this.position >= this.length)
+			if (count + this.Position >= this.length)
 				throw new ArgumentOutOfRangeException ("count", count, "Count from position is longer than buffer.");
 
 			byte[] b = new byte[count];
-			Array.Copy (this.buffer, this.position, b, 0, count);
-			this.position += count;
+			Array.Copy (this.buffer, this.Position, b, 0, count);
+			this.Position += count;
 
 			return b;
 		}
 
 		public sbyte ReadSByte()
 		{
-			if (this.position >= this.length)
+			if (this.Position >= this.length)
 				throw new InternalBufferOverflowException();
 
-			return (sbyte)this.buffer[this.position++];
+			return (sbyte)this.buffer[this.Position++];
 		}
 
 		public short ReadInt16()
 		{
-			short v = BitConverter.ToInt16 (this.buffer, this.position);
-			this.position += sizeof (short);
+			short v = BitConverter.ToInt16 (this.buffer, this.Position);
+			this.Position += sizeof (short);
 			
 			return v;
 		}
 
 		public int ReadInt32()
 		{
-			int v = BitConverter.ToInt32 (this.buffer, this.position);
-			this.position += sizeof (int);
+			int v = BitConverter.ToInt32 (this.buffer, this.Position);
+			this.Position += sizeof (int);
 			
 			return v;
 		}
 
 		public long ReadInt64()
 		{
-			long v = BitConverter.ToInt64 (this.buffer, this.position);
-			this.position += sizeof (long);
+			long v = BitConverter.ToInt64 (this.buffer, this.Position);
+			this.Position += sizeof (long);
 			
 			return v;
 		}
 
 		public byte ReadByte()
 		{
-			return this.buffer[this.position++];
+			return this.buffer[this.Position++];
 		}
 
 		public ushort ReadUInt16()
 		{
-			ushort v = BitConverter.ToUInt16 (this.buffer, this.position);
-			this.position += sizeof (ushort);
+			ushort v = BitConverter.ToUInt16 (this.buffer, this.Position);
+			this.Position += sizeof (ushort);
 			
 			return v;
 		}
 
 		public uint ReadUInt32()
 		{
-			uint v = BitConverter.ToUInt32 (this.buffer, this.position);
-			this.position += sizeof (uint);
+			uint v = BitConverter.ToUInt32 (this.buffer, this.Position);
+			this.Position += sizeof (uint);
 			
 			return v;
 		}
 
 		public ulong ReadUInt64()
 		{
-			ulong v = BitConverter.ToUInt64 (this.buffer, this.position);
-			this.position += sizeof (ulong);
+			ulong v = BitConverter.ToUInt64 (this.buffer, this.Position);
+			this.Position += sizeof (ulong);
 			
 			return v;
 		}
@@ -162,8 +167,8 @@ namespace Tempest
 			if (len == 0)
 				return null;
 
-			string v = encoding.GetString (this.buffer, this.position, len);
-			this.position += len;
+			string v = encoding.GetString (this.buffer, this.Position, len);
+			this.Position += len;
 			
 			return v;
 		}

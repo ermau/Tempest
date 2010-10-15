@@ -52,7 +52,7 @@ namespace Tempest
 				throw new ArgumentNullException ("assembly");
 
 			Type mtype = typeof (Message);
-			Register (assembly.GetTypes().Where (t => mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null));
+			RegisterTypes (assembly.GetTypes().Where (t => mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
 		}
 
 		/// <summary>
@@ -74,25 +74,7 @@ namespace Tempest
 		/// or <paramref name="messageTypes"/> contains duplicate <see cref="Message.MessageType"/>s.</exception>
 		public void Register (IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes)
 		{
-			if (messageTypes == null)
-				throw new ArgumentNullException ("messageTypes");
-
-			Type mtype = typeof (Message);
-
-			lock (messageCtors)
-			{
-				foreach (var kvp in messageTypes)
-				{
-					if (!mtype.IsAssignableFrom (kvp.Key))
-						throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
-
-					Message m = kvp.Value();
-					if (this.messageCtors.ContainsKey (m.MessageType))
-						throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
-
-					this.messageCtors.Add (m.MessageType, kvp.Value);
-				}
-			}
+			RegisterTypesWithCtors (messageTypes, false);
 		}
 
 		#if !SAFE
@@ -107,6 +89,32 @@ namespace Tempest
 		/// has no parameter-less constructor or contains duplicate <see cref="Message.MessageType"/>s.
 		/// </exception>
 		public void Register (IEnumerable<Type> messageTypes)
+		{
+			RegisterTypes (messageTypes, false);
+		}
+
+		#endif
+
+		/// <summary>
+		/// Creates a new instance of the <paramref name="messageType"/>.
+		/// </summary>
+		/// <param name="messageType"></param>
+		/// <returns>A new instance of the <paramref name="messageType"/>, or <c>null</c> if this type has not been registered.</returns>
+		public Message Create (ushort messageType)
+		{
+			Func<Message> mCtor;
+			lock (this.messageCtors)
+			{
+				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
+					return null;
+			}
+
+			return mCtor();
+		}
+
+		private readonly Dictionary<ushort, Func<Message>> messageCtors = new Dictionary<ushort, Func<Message>>();
+
+		private void RegisterTypes (IEnumerable<Type> messageTypes, bool ignoreDupes)
 		{
 			if (messageTypes == null)
 				throw new ArgumentNullException ("messageTypes");
@@ -131,28 +139,35 @@ namespace Tempest
 				types.Add (t, (Func<Message>)dplessCtor.CreateDelegate (typeof (Func<Message>)));
 			}
 
-			Register (types);
+			RegisterTypesWithCtors (types, ignoreDupes);
 		}
 
-		#endif
-
-		/// <summary>
-		/// Creates a new instance of the <paramref name="messageType"/>.
-		/// </summary>
-		/// <param name="messageType"></param>
-		/// <returns>A new instance of the <paramref name="messageType"/>, or <c>null</c> if this type has not been registered.</returns>
-		public Message Create (ushort messageType)
+		private void RegisterTypesWithCtors (IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes, bool ignoreDupes)
 		{
-			Func<Message> mCtor;
-			lock (this.messageCtors)
+			if (messageTypes == null)
+				throw new ArgumentNullException ("messageTypes");
+
+			Type mtype = typeof (Message);
+
+			lock (messageCtors)
 			{
-				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
-					return null;
+				foreach (var kvp in messageTypes)
+				{
+					if (!mtype.IsAssignableFrom (kvp.Key))
+						throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
+
+					Message m = kvp.Value();
+					if (this.messageCtors.ContainsKey (m.MessageType))
+					{
+						if (ignoreDupes)
+							continue;
+
+						throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
+					}
+
+					this.messageCtors.Add (m.MessageType, kvp.Value);
+				}
 			}
-
-			return mCtor();
 		}
-
-		private readonly Dictionary<ushort, Func<Message>> messageCtors = new Dictionary<ushort, Func<Message>>();
 	}
 }

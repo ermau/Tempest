@@ -133,9 +133,48 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void ClientSendMessage()
+		public void InlineSupport()
+		{
+			var c = GetNewClientConnection();
+			
+			if (c.Modes.HasFlag (MessagingModes.Inline))
+			{
+				Assert.DoesNotThrow (() => c.Tick());
+			}
+			else
+			{
+				Assert.Throws<NotSupportedException> (() => c.Tick());
+			}
+		}
+
+		[Test]
+		public void ClientSendMessageInline()
+		{
+			var c = GetNewClientConnection();
+			if (!c.Modes.HasFlag (MessagingModes.Inline))
+				Assert.Ignore();
+
+			throw new NotImplementedException();
+		}
+
+		[Test]
+		public void ServerSendMessageInline()
+		{
+			var c = GetNewClientConnection();
+			if (!c.Modes.HasFlag (MessagingModes.Inline))
+				Assert.Ignore();
+
+			throw new NotImplementedException();
+		}
+
+		[Test]
+		public void ClientSendMessageAsync()
 		{
 			const string content = "Oh, hello there.";
+
+			var c = GetNewClientConnection();
+			if (!c.Modes.HasFlag (MessagingModes.Async))
+				Assert.Ignore();
 
 			IServerConnection connection = null;
 
@@ -156,8 +195,7 @@ namespace Tempest.Tests
 				connection = e.Connection;
 				e.Connection.MessageReceived += test.PassHandler;
 			};
-
-			var c = GetNewClientConnection();
+			
 			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
 			c.Connect (EndPoint, MessageTypes);
 
@@ -165,17 +203,19 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void ServerSendMessage()
+		public void ServerSendMessageAsync()
 		{
 			const string content = "Oh, hello there.";
 
-			IClientConnection connection = null;
+			var c = GetNewClientConnection();
+			if (!c.Modes.HasFlag (MessagingModes.Async))
+				Assert.Ignore();
 
 			var test = new AsyncTest (e =>
 			{
 				var me = (e as MessageReceivedEventArgs);
 				Assert.IsNotNull (me);
-				Assert.AreSame (connection, me.Connection);
+				Assert.AreSame (c, me.Connection);
 
 				var msg = (me.Message as MockMessage);
 				Assert.IsNotNull (msg);
@@ -185,10 +225,78 @@ namespace Tempest.Tests
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
 
-			connection = GetNewClientConnection();
-			connection.ConnectionFailed += test.FailHandler;
-			connection.MessageReceived += test.PassHandler;
-			connection.Connect (EndPoint, MessageTypes);
+			c.ConnectionFailed += test.FailHandler;
+			c.MessageReceived += test.PassHandler;
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void DisconnectFromClientOnClient()
+		{
+			this.provider.Start (MessageTypes);
+
+			var test = new AsyncTest();
+			var c = GetNewClientConnection();
+
+			c.Disconnected += test.PassHandler;
+			c.Connected += (sender, e) => c.Disconnect (true);
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void DisconnectFromClientOnServer()
+		{
+			var test = new AsyncTest();
+
+			var c = GetNewClientConnection();
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) =>
+			{
+				e.Connection.Disconnected += test.PassHandler;
+				c.Disconnect (true);
+			};
+			
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void DisconnectFromServerOnClient()
+		{
+			var test = new AsyncTest();
+
+			var c = GetNewClientConnection();
+			c.Disconnected += test.PassHandler;
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) => e.Connection.Disconnect (true);
+			
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void DisconnectFromServerOnServer()
+		{
+			var test = new AsyncTest();
+
+			var c = GetNewClientConnection();
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) =>
+			{
+				e.Connection.Disconnected += test.PassHandler;
+				e.Connection.Disconnect (true);
+			};
+			
+			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}

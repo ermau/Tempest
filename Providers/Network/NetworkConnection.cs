@@ -104,7 +104,7 @@ namespace Tempest.Providers.Network
 			if (this.reliableSocket != null)
 			{
 				this.reliableSocket.Shutdown (SocketShutdown.Both);
-				this.reliableSocket.Dispose();
+				this.reliableSocket.Close();
 				this.reliableSocket = null;
 			}
 

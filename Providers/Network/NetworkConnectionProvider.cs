@@ -104,13 +104,13 @@ namespace Tempest.Providers.Network
 
 			if (this.reliableSocket != null)
 			{
-				this.reliableSocket.Dispose();
+				this.reliableSocket.Close();
 				this.reliableSocket = null;
 			}
 
 			if (this.unreliableSocket != null)
 			{
-				this.unreliableSocket.Dispose();
+				this.unreliableSocket.Close();
 				this.unreliableSocket = null;
 			}
 

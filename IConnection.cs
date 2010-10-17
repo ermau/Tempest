@@ -92,14 +92,15 @@ namespace Tempest
 		/// <summary>
 		/// Sends and receives all pending messages.
 		/// </summary>
-		/// <returns>An enumerable of pending messages, <c>Enumerable.Empty&lt;Message&gt;()</c> if none.</returns>
+		/// <returns>An enumerable of pending message events, <c>Enumerable.Empty&lt;MessageReceivedEventArgs&gt;()</c> if none (or not connected).</returns>
 		/// <exception cref="NotSupportedException"><see cref="Modes"/> is not <see cref="MessagingModes.Inline"/>.</exception>
-		IEnumerable<Message> Tick();
+		IEnumerable<MessageReceivedEventArgs> Tick();
 
 		/// <summary>
 		/// Closes the connection.
 		/// </summary>
-		void Disconnect();
+		/// <param name="now">Determines whether the connection is severed immediately or if pending messages are allowed to be sent.</param>
+		void Disconnect (bool now);
 	}
 
 	/// <summary>

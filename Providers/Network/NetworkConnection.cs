@@ -57,7 +57,7 @@ namespace Tempest.Providers.Network
 			protected set;
 		}
 
-		public IEnumerable<Message> Tick()
+		public IEnumerable<MessageReceivedEventArgs> Tick()
 		{
 			throw new NotSupportedException();
 		}
@@ -78,7 +78,9 @@ namespace Tempest.Providers.Network
 			writer.WriteInt32 (0); // Length placeholder
 
 			message.Serialize (writer);
-			
+			// Copy length in
+			Array.Copy (BitConverter.GetBytes (writer.Length - BaseHeaderLength), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
+
 			SocketAsyncEventArgs e;
 			if (!writerAsyncArgs.TryPop (out e))
 			{
@@ -88,8 +90,6 @@ namespace Tempest.Providers.Network
 			else
 				e.AcceptSocket = null;
 
-			// Copy length in
-			Array.Copy (BitConverter.GetBytes (writer.Length - BaseHeaderLength), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
 			e.SetBuffer (writer.Buffer, 0, writer.Length);
 
 			if (IsConnected)
@@ -99,7 +99,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		public virtual void Disconnect()
+		public virtual void Disconnect (bool now)
 		{
 			if (this.reliableSocket != null)
 			{
@@ -128,13 +128,14 @@ namespace Tempest.Providers.Network
 		private int rmessageOffset = 0;
 		private int rmessageLoaded = 0;
 		private int currentRMessageLength = 0;
+		private bool disconnecting;
 
 		protected virtual void Dispose (bool disposing)
 		{
 			if (this.disposed)
 				return;
 
-			Disconnect ();
+			Disconnect (true);
 
 			this.disposed = true;
 		}
@@ -159,7 +160,7 @@ namespace Tempest.Providers.Network
 
 			if (bytesTransferred == 0 || e.SocketError != SocketError.Success)
 			{
-				Disconnect();
+				Disconnect (true);
 				return;
 			}
 
@@ -180,7 +181,7 @@ namespace Tempest.Providers.Network
 
 			if (messageLength >= this.maxMessageLength)
 			{
-				Disconnect();
+				Disconnect (true);
 				return;
 			}
 
@@ -188,7 +189,7 @@ namespace Tempest.Providers.Network
 
 			if (buffer[this.rmessageOffset] != this.sanityByte)
 			{
-				Disconnect();
+				Disconnect (true);
 				return;
 			}
 
@@ -216,7 +217,7 @@ namespace Tempest.Providers.Network
 
 						if (buffer[offset] != this.sanityByte)
 						{
-							Disconnect();
+							Disconnect (true);
 							return;
 						}
 
@@ -271,7 +272,7 @@ namespace Tempest.Providers.Network
 		{
 			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 			{
-				Disconnect();
+				Disconnect (true);
 				return;
 			}
 

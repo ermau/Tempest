@@ -56,7 +56,7 @@ namespace Tempest.Providers.Network
 			get { return this.reliableSocket.Connected; }
 		}
 
-		public override void Disconnect ()
+		public override void Disconnect (bool now)
 		{
 			if (this.reliableSocket != null)
 			{

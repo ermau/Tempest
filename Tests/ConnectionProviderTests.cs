@@ -34,7 +34,7 @@ namespace Tempest.Tests
 {
 	public abstract class ConnectionProviderTests
 	{
-		private IConnectionProvider provider;
+		protected IConnectionProvider provider;
 
 		[SetUp]
 		protected void Setup()
@@ -296,6 +296,25 @@ namespace Tempest.Tests
 				e.Connection.Disconnect (true);
 			};
 			
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void DisconnectAndReconnect()
+		{
+			int times = 0;
+			var test = new AsyncTest (e => (++times > 5), true);
+
+			var c = GetNewClientConnection();
+			c.Connected += test.PassHandler;
+			c.Connected += (sender, e) => c.Disconnect (true);
+			c.Disconnected += (sender, e) => c.Connect (EndPoint, MessageTypes);
+			c.ConnectionFailed += test.FailHandler;
+
+			this.provider.Start (MessageTypes);
+
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);

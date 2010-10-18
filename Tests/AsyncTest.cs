@@ -36,6 +36,7 @@ namespace Tempest.Tests
 {
 	public class AsyncTest
 	{
+		private readonly bool multiple;
 		private readonly Action<EventArgs> passTest;
 
 		public AsyncTest()
@@ -51,16 +52,18 @@ namespace Tempest.Tests
 			this.passTest = passTest;
 		}
 
-		public AsyncTest (Func<EventArgs, bool> passPredicate)
+		public AsyncTest (Func<EventArgs, bool> passPredicate, bool multiple = false)
 		{
 			if (passPredicate == null)
 				throw new ArgumentNullException ("passPredicate");
+
+			this.multiple = multiple;
 
 			this.passTest = e =>
 			{
 				if (passPredicate (e))
 					this.passed = true;
-				else
+				else if (!this.multiple)
 					NAssert.Fail();
 			};
 		}
@@ -70,7 +73,8 @@ namespace Tempest.Tests
 			try
 			{
 				passTest (e);
-				this.passed = true;
+				if (!this.multiple)
+					this.passed = true;
 			}
 			catch (Exception ex)
 			{

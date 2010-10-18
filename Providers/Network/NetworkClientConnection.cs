@@ -42,26 +42,27 @@ namespace Tempest.Providers.Network
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
 
-		public override bool IsConnected
-		{
-			get { return (this.reliableSocket != null && this.reliableSocket.Connected); }
-		}
-
 		public void Connect (EndPoint endpoint, MessageTypes messageTypes)
 		{
 			if (endpoint == null)
 				throw new ArgumentNullException ("endpoint");
 			if (messageTypes.HasFlag (MessageTypes.Unreliable))
 				throw new NotSupportedException();
+			
+			lock (this.stateSync)
+			{
+				if (IsConnected)
+					throw new InvalidOperationException ("Already connected");
 
-			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-			args.RemoteEndPoint = endpoint;
-			args.Completed += ConnectCompleted;
+				SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+				args.RemoteEndPoint = endpoint;
+				args.Completed += ConnectCompleted;
 
-			this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-			if (!this.reliableSocket.ConnectAsync (args))
-				ConnectCompleted (this.reliableSocket, args);
+				if (!this.reliableSocket.ConnectAsync (args))
+					ConnectCompleted (this.reliableSocket, args);
+			}
 		}
 
 		private void ConnectCompleted (object sender, SocketAsyncEventArgs e)
@@ -75,12 +76,21 @@ namespace Tempest.Providers.Network
 
 			OnConnected (new ClientConnectionEventArgs (this));
 
-			e.Completed -= ConnectCompleted;
-			e.Completed += ReliableReceiveCompleted;
-			e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
-			this.rreader = new BufferValueReader (this.rmessageBuffer);
+			bool pending;
+			lock (this.stateSync)
+			{
+				if (!IsConnected)
+					return;
 
-			if (!this.reliableSocket.ReceiveAsync (e))
+				e.Completed -= ConnectCompleted;
+				e.Completed += ReliableReceiveCompleted;
+				e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
+				this.rreader = new BufferValueReader (this.rmessageBuffer);
+
+				pending = this.reliableSocket.ReceiveAsync (e);
+			}
+
+			if (!pending)
 				ReliableReceiveCompleted (this.reliableSocket, e);
 		}
 

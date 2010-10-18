@@ -51,20 +51,19 @@ namespace Tempest.Providers.Network
 			this.rreader = new BufferValueReader (this.rmessageBuffer);
 		}
 
-		public override bool IsConnected
-		{
-			get { return this.reliableSocket.Connected; }
-		}
-
 		public override void Disconnect (bool now)
 		{
-			if (this.reliableSocket != null)
+			lock (this.stateSync)
 			{
-				this.reliableSocket.Shutdown (SocketShutdown.Both);
-				NetworkConnectionProvider.ReliableSockets.Push (this.reliableSocket);
-			}
+				if (this.reliableSocket != null)
+				{
+					this.reliableSocket.Shutdown (SocketShutdown.Both);
+					NetworkConnectionProvider.ReliableSockets.Push (this.reliableSocket);
+					this.reliableSocket = null;
+				}
 
-			OnDisconnected (new ConnectionEventArgs (this));
+				OnDisconnected (new ConnectionEventArgs (this));
+			}
 		}
 
 		internal int NetworkId

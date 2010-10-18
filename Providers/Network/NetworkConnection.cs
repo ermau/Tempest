@@ -44,7 +44,10 @@ namespace Tempest.Providers.Network
 		public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 		public event EventHandler<ConnectionEventArgs> Disconnected;
 
-		public abstract bool IsConnected { get; }
+		public bool IsConnected
+		{
+			get { return (this.reliableSocket != null && this.reliableSocket.Connected); }
+		}
 
 		public MessagingModes Modes
 		{
@@ -91,24 +94,38 @@ namespace Tempest.Providers.Network
 				e.AcceptSocket = null;
 
 			e.SetBuffer (writer.Buffer, 0, writer.Length);
+			e.UserToken = writer;
 
-			if (IsConnected)
+			bool pending;
+			lock (this.stateSync)
 			{
-				if (!this.reliableSocket.SendAsync (e))
-					ReliableSendCompleted (this.reliableSocket, e);
+				if (!IsConnected)
+				{
+					writerAsyncArgs.Push (e);
+					writers.Push (writer);
+					return;
+				}
+
+				pending = this.reliableSocket.SendAsync (e);
 			}
+
+			if (!pending)
+				ReliableSendCompleted (this.reliableSocket, e);
 		}
 
 		public virtual void Disconnect (bool now)
 		{
-			if (this.reliableSocket != null)
+			lock (this.stateSync)
 			{
-				this.reliableSocket.Shutdown (SocketShutdown.Both);
-				this.reliableSocket.Close();
-				this.reliableSocket = null;
-			}
+				if (this.reliableSocket != null)
+				{
+					this.reliableSocket.Shutdown (SocketShutdown.Both);
+					this.reliableSocket.Close();
+					this.reliableSocket = null;
+				}
 
-			OnDisconnected (new ConnectionEventArgs (this));
+				OnDisconnected (new ConnectionEventArgs (this));
+			}
 		}
 
 		public void Dispose()
@@ -117,6 +134,7 @@ namespace Tempest.Providers.Network
 		}
 
 		protected bool disposed;
+		protected readonly object stateSync = new object();
 
 		private const int BaseHeaderLength = 7;
 		private int maxMessageLength = 104857600;
@@ -252,7 +270,16 @@ namespace Tempest.Providers.Network
 				this.rmessageOffset = 0;
 			}
 
-			if (!this.reliableSocket.ReceiveAsync (e))
+			bool pending;
+			lock (this.stateSync)
+			{
+				if (!IsConnected)
+					return;
+
+				pending = this.reliableSocket.ReceiveAsync (e);
+			}
+
+			if (!pending)
 				ReliableReceiveCompleted (sender, e);
 		}
 
@@ -276,6 +303,7 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
+			writers.Push ((BufferValueWriter)e.UserToken);
 			writerAsyncArgs.Push (e);
 		}
 

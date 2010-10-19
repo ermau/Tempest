@@ -26,6 +26,7 @@
 
 using System;
 using System.Linq;
+using System.Net;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -33,10 +34,68 @@ namespace Tempest.Tests
 	[TestFixture]
 	public class ClientTests
 	{
+		private MockClient client;
+		private MockConnectionProvider provider;
+		private MockClientConnection connection;
+
+		[SetUp]
+		public void Setup()
+		{
+			provider = new MockConnectionProvider();
+			connection = new MockClientConnection (provider);
+			client = new MockClient (connection, false);
+		}
+
 		[Test]
 		public void CtorNull()
 		{
 			Assert.Throws<ArgumentNullException> (() => new MockClient (null, true));
+		}
+
+		[Test]
+		public void ConnectNull()
+		{
+			Assert.Throws<ArgumentNullException> (() => client.Connect (null));
+		}
+
+		[Test]
+		public void Connected()
+		{
+			var test = new AsyncTest();
+
+			client.Connected += test.PassHandler;
+			client.ConnectionFailed += test.FailHandler;
+
+			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void Disconneted()
+		{
+			var test = new AsyncTest();
+
+			client.Connected += (sender, e) => client.Disconnect (true);
+			client.Disconnected += test.PassHandler;
+
+			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void MessageHandling()
+		{
+			var test = new AsyncTest();
+
+			Action<MessageReceivedEventArgs> handler = e => test.PassHandler (test, EventArgs.Empty);
+
+			((IContext)client).RegisterMessageHandler (1, handler);
+			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			connection.Receive (new MessageReceivedEventArgs (connection, new MockMessage()));
+
+			test.Assert (10000);
 		}
 	}
 }

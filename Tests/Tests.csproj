@@ -50,6 +50,8 @@
     <Compile Include="ConnectionProviderTests.cs" />
     <Compile Include="MessageFactoryTests.cs" />
     <Compile Include="MockClient.cs" />
+    <Compile Include="MockConnectionProvider.cs" />
+    <Compile Include="MockConnectionProviderTests.cs" />
     <Compile Include="MockMessage.cs" />
     <Compile Include="MutableLookupTest.cs" />
     <Compile Include="NetworkProviderTests.cs" />

@@ -26,6 +26,7 @@
 
 using System;
 using System.Linq;
+using System.Net;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -89,6 +90,31 @@ namespace Tempest.Tests
 
 			server.RemoveConnectionProvider (p);
 			Assert.IsTrue (p.IsRunning);
+		}
+
+		[Test]
+		public void MessageHandling()
+		{
+			IServerConnection connection = null;
+
+			var test = new AsyncTest(e =>
+			{
+				var me = (MessageReceivedEventArgs)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
+				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
+			});
+
+			Action<MessageReceivedEventArgs> handler = e => test.PassHandler (test, e);
+			((IContext)server).RegisterMessageHandler (1, handler);
+			
+			provider.ConnectionMade += (sender, e) => connection = e.Connection;
+			
+			var c = provider.GetClientConnection();
+			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.Send (new MockMessage { Content = "hi" });
+
+			test.Assert (10000);
 		}
 	}
 }

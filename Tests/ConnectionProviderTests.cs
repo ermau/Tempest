@@ -309,8 +309,8 @@ namespace Tempest.Tests
 
 			var c = GetNewClientConnection();
 			c.Connected += test.PassHandler;
-			c.Connected += (sender, e) => c.Disconnect (true);
-			c.Disconnected += (sender, e) => c.Connect (EndPoint, MessageTypes);
+			c.Connected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Disconnect (true));
+			c.Disconnected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Connect (EndPoint, MessageTypes));
 			c.ConnectionFailed += test.FailHandler;
 
 			this.provider.Start (MessageTypes);

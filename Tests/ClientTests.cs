@@ -87,13 +87,19 @@ namespace Tempest.Tests
 		[Test]
 		public void MessageHandling()
 		{
-			var test = new AsyncTest();
+			var test = new AsyncTest (e =>
+			{
+				var me = (MessageReceivedEventArgs)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
+				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
+			});
 
-			Action<MessageReceivedEventArgs> handler = e => test.PassHandler (test, EventArgs.Empty);
+			Action<MessageReceivedEventArgs> handler = e => test.PassHandler (test, e);
 
 			((IContext)client).RegisterMessageHandler (1, handler);
 			client.Connect (new IPEndPoint (IPAddress.Any, 0));
-			connection.Receive (new MessageReceivedEventArgs (connection, new MockMessage()));
+			connection.Receive (new MessageReceivedEventArgs (connection, new MockMessage { Content = "hi" }));
 
 			test.Assert (10000);
 		}

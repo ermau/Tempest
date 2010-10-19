@@ -44,6 +44,11 @@ namespace Tempest.Tests
 			remove { throw new NotSupportedException(); }
 		}
 		
+		public bool IsRunning
+		{
+			get { return this.running; }
+		}
+
 		public bool SupportsConnectionless
 		{
 			get { return false; }

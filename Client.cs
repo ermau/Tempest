@@ -34,7 +34,7 @@ using Cadenza.Collections;
 namespace Tempest
 {
 	public abstract class Client
-		: IContext
+		: MessageHandling
 	{
 		protected Client (IClientConnection connection, bool poll)
 		{
@@ -143,7 +143,6 @@ namespace Tempest
 		private readonly MessagingModes mode;
 		private readonly bool polling;
 
-		private readonly MutableLookup<ushort, Action<MessageReceivedEventArgs>> handlers = new MutableLookup<ushort, Action<MessageReceivedEventArgs>>();
 		private readonly Queue<MessageReceivedEventArgs> mqueue;
 		private readonly AutoResetEvent mwait;
 		private Thread messageRunner;
@@ -155,12 +154,6 @@ namespace Tempest
 				throw new ArgumentNullException ("endPoint");
 
 			this.connection.Connect (endPoint, types);
-		}
-
-		void IContext.RegisterMessageHandler (ushort messageType, Action<MessageReceivedEventArgs> handler)
-		{
-			lock (this.handlers)
-				this.handlers.Add (messageType, handler);
 		}
 
 		private void ConnectionOnMessageReceived (object sender, MessageReceivedEventArgs e)
@@ -238,19 +231,6 @@ namespace Tempest
 				if (q.Count == 0)
 					this.mwait.WaitOne();
 			}
-		}
-
-		private List<Action<MessageReceivedEventArgs>> GetHandlers (ushort messageType)
-		{
-			List<Action<MessageReceivedEventArgs>> mhandlers = null;
-			lock (this.handlers)
-			{
-				IEnumerable<Action<MessageReceivedEventArgs>> thandlers;
-				if (this.handlers.TryGetValues (messageType, out thandlers))
-					mhandlers = thandlers.ToList();
-			}
-
-			return mhandlers;
 		}
 
 		private void OnConnectionConnectionFailed (object sender, ClientConnectionEventArgs e)

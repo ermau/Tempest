@@ -69,8 +69,8 @@ namespace Tempest.Providers.Network
 		{
 			if (e.SocketError != SocketError.Success)
 			{
-				OnConnectionFailed (new ClientConnectionEventArgs (this));
 				Disconnect (true);
+				OnConnectionFailed (new ClientConnectionEventArgs (this));
 				return;
 			}
 

@@ -212,7 +212,12 @@ namespace Tempest
 
 					MessageReceivedEventArgs e;
 					lock (q)
+					{
+						if (q.Count == 0)
+							continue;
+
 						e = q.Dequeue();
+					}
 
 					var mhandlers = GetHandlers (e.Message.MessageType);
 					if (mhandlers == null)

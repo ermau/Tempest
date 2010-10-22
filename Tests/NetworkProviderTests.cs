@@ -49,7 +49,7 @@ namespace Tempest.Tests
 
 		protected override IConnectionProvider SetUp()
 		{
-			return new NetworkConnectionProvider (42000, 0x2A);
+			return new NetworkConnectionProvider (new IPEndPoint (IPAddress.Any, 42000), 0x2A);
 		}
 
 		protected override IClientConnection GetNewClientConnection ()
@@ -58,10 +58,9 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void InvalidPort()
+		public void CtorNull()
 		{
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (IPEndPoint.MinPort - 1, 0x1));
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (IPEndPoint.MaxPort + 1, 0x1));
+			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider (null, 0x1));
 		}
 	}
 }

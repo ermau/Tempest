@@ -33,18 +33,26 @@ using System.Net.Sockets;
 
 namespace Tempest.Providers.Network
 {
+	/// <summary>
+	/// High performance socket based <see cref="IConnectionProvider"/>.
+	/// </summary>
 	public class NetworkConnectionProvider
 		: IConnectionProvider
 	{
-		public NetworkConnectionProvider (int port, byte appId)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to listen to.</param>
+		/// <param name="appId">The application identifier (used as a sanity byte).</param>
+		public NetworkConnectionProvider (IPEndPoint endPoint, byte appId)
 		{
-			if (port < IPEndPoint.MinPort || port > IPEndPoint.MaxPort)
-				throw new ArgumentOutOfRangeException ("port");
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
 
-			Port = port;
-			sanityByte = appId;
+			this.sanityByte = appId;
+			this.endPoint = endPoint;
 		}
-
+		
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
 		
 		public event EventHandler<ConnectionlessMessageReceivedEventArgs> ConnectionlessMessageReceived
@@ -53,10 +61,9 @@ namespace Tempest.Providers.Network
 			remove { throw new NotSupportedException(); }
 		}
 
-		public int Port
+		public IPEndPoint EndPoint
 		{
-			get;
-			private set;
+			get { return this.endPoint; }
 		}
 
 		public bool SupportsConnectionless
@@ -75,7 +82,7 @@ namespace Tempest.Providers.Network
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{
 				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				this.reliableSocket.Bind (new IPEndPoint (IPAddress.Any, Port));
+				this.reliableSocket.Bind (this.endPoint);
 				this.reliableSocket.Listen ((int)SocketOptionName.MaxConnections);
 				
 				BeginAccepting (null);
@@ -138,6 +145,7 @@ namespace Tempest.Providers.Network
 		private Socket unreliableSocket;
 		private MessageTypes mtypes;
 		private readonly byte sanityByte;
+		private IPEndPoint endPoint;
 
 		private readonly List<NetworkServerConnection> serverConnections = new List<NetworkServerConnection> (100);
 

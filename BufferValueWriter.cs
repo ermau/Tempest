@@ -34,7 +34,12 @@ namespace Tempest
 	public class BufferValueWriter
 		: IValueWriter
 	{
-		public BufferValueWriter (byte[] buffer, bool resizing = true)
+		public BufferValueWriter (byte[] buffer)
+			: this (buffer, true)
+		{
+		}
+
+		public BufferValueWriter (byte[] buffer, bool resizing)
 		{
 			if (buffer == null)
 				throw new ArgumentNullException ("buffer");

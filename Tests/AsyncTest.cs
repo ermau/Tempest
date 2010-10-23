@@ -52,7 +52,12 @@ namespace Tempest.Tests
 			this.passTest = passTest;
 		}
 
-		public AsyncTest (Func<EventArgs, bool> passPredicate, bool multiple = false)
+		public AsyncTest (Func<EventArgs, bool> passPredicate)
+			: this (passPredicate, false)
+		{
+		}
+
+		public AsyncTest (Func<EventArgs, bool> passPredicate, bool multiple)
 		{
 			if (passPredicate == null)
 				throw new ArgumentNullException ("passPredicate");

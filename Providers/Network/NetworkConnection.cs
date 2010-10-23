@@ -141,38 +141,37 @@ namespace Tempest.Providers.Network
 			e.SetBuffer (writer.Buffer, 0, writer.Length);
 			e.UserToken = writer;
 
-			bool pending;
-			lock (this.stateSync)
+			if (!IsConnected)
 			{
-				if (!IsConnected)
-				{
-					writerAsyncArgs.Push (e);
-					writers.Push (writer);
-					return;
-				}
-
-				pending = this.reliableSocket.SendAsync (e);
+				writerAsyncArgs.Push (e);
+				writers.Push (writer);
+				return;
 			}
 
-			if (!pending)
+			if (!this.reliableSocket.SendAsync (e))
 				ReliableSendCompleted (this.reliableSocket, e);
 		}
 
 		public virtual void Disconnect (bool now)
 		{
-			lock (this.stateSync)
+			if (this.reliableSocket != null && !this.reliableSocket.Connected)
 			{
-				if (this.reliableSocket != null)
-				{
-					if (this.reliableSocket.Connected)
-						this.reliableSocket.Shutdown (SocketShutdown.Both);
-
-					this.reliableSocket.Close();
-					this.reliableSocket = null;
-				}
-
-				OnDisconnected (new ConnectionEventArgs (this));
+				var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
+				args.Completed += OnDisconnectCompleted;
+				if (!this.reliableSocket.DisconnectAsync (args))
+					OnDisconnectCompleted (this.reliableSocket, args);
 			}
+			else
+			{
+				OnDisconnected (new ConnectionEventArgs (this));
+				this.reliableSocket = null;
+			}
+		}
+
+		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
+		{
+			OnDisconnected (new ConnectionEventArgs (this));
+			this.reliableSocket = null;
 		}
 
 		public void Dispose()
@@ -181,7 +180,6 @@ namespace Tempest.Providers.Network
 		}
 
 		protected bool disposed;
-		protected readonly object stateSync = new object();
 
 		private const int BaseHeaderLength = 7;
 		private int maxMessageLength = 104857600;
@@ -317,16 +315,10 @@ namespace Tempest.Providers.Network
 				this.rmessageOffset = 0;
 			}
 
-			bool pending;
-			lock (this.stateSync)
-			{
-				if (!IsConnected)
-					return;
+			if (!IsConnected)
+				return;
 
-				pending = this.reliableSocket.ReceiveAsync (e);
-			}
-
-			if (!pending)
+			if (!this.reliableSocket.ReceiveAsync (e))
 				ReliableReceiveCompleted (sender, e);
 		}
 

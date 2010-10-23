@@ -49,20 +49,17 @@ namespace Tempest.Providers.Network
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 			
-			lock (this.stateSync)
-			{
-				if (IsConnected)
-					throw new InvalidOperationException ("Already connected");
+			if (IsConnected)
+				throw new InvalidOperationException ("Already connected");
 
-				SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-				args.RemoteEndPoint = endpoint;
-				args.Completed += ConnectCompleted;
+			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+			args.RemoteEndPoint = endpoint;
+			args.Completed += ConnectCompleted;
 
-				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-				if (!this.reliableSocket.ConnectAsync (args))
-					ConnectCompleted (this.reliableSocket, args);
-			}
+			if (!this.reliableSocket.ConnectAsync (args))
+				ConnectCompleted (this.reliableSocket, args);
 		}
 
 		private void ConnectCompleted (object sender, SocketAsyncEventArgs e)
@@ -76,21 +73,15 @@ namespace Tempest.Providers.Network
 
 			OnConnected (new ClientConnectionEventArgs (this));
 
-			bool pending;
-			lock (this.stateSync)
-			{
-				if (!IsConnected)
-					return;
+			if (!IsConnected)
+				return;
 
-				e.Completed -= ConnectCompleted;
-				e.Completed += ReliableReceiveCompleted;
-				e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
-				this.rreader = new BufferValueReader (this.rmessageBuffer);
+			e.Completed -= ConnectCompleted;
+			e.Completed += ReliableReceiveCompleted;
+			e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
+			this.rreader = new BufferValueReader (this.rmessageBuffer);
 
-				pending = this.reliableSocket.ReceiveAsync (e);
-			}
-
-			if (!pending)
+			if (!this.reliableSocket.ReceiveAsync (e))
 				ReliableReceiveCompleted (this.reliableSocket, e);
 		}
 

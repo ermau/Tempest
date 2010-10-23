@@ -25,11 +25,14 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+
+#if NET_4
+using System.Collections.Concurrent;
+#endif
 
 namespace Tempest.Providers.Network
 {
@@ -182,9 +185,20 @@ namespace Tempest.Providers.Network
 			}
 			else
 			{
-				Socket s;
+				Socket s = null;
+				#if NET_4
 				if (!ReliableSockets.TryPop (out s))
 					s = null;
+				#else
+				if (ReliableSockets.Count != 0)
+				{
+					lock (ReliableSockets)
+					{
+						if (ReliableSockets.Count != 0)
+							s = ReliableSockets.Pop();
+					}
+				}
+				#endif
 
 				e.AcceptSocket = s;
 			}
@@ -200,6 +214,10 @@ namespace Tempest.Providers.Network
 				cmade (this, e);
 		}
 
+		#if NET_4
 		internal static readonly ConcurrentStack<Socket> ReliableSockets = new ConcurrentStack<Socket>();
+		#else
+		internal static readonly Stack<Socket> ReliableSockets = new Stack<Socket>();
+		#endif
 	}
 }

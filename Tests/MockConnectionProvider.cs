@@ -25,12 +25,9 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading;
 
 namespace Tempest.Tests
 {
@@ -56,7 +53,7 @@ namespace Tempest.Tests
 
 		public void Start (MessageTypes types)
 		{
-			if (types.HasFlag (MessageTypes.Unreliable))
+			if ((types & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
 			this.running = true;

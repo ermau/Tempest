@@ -137,7 +137,7 @@ namespace Tempest.Tests
 		{
 			var c = GetNewClientConnection();
 			
-			if (c.Modes.HasFlag (MessagingModes.Inline))
+			if ((c.Modes & MessagingModes.Inline) == MessagingModes.Inline)
 			{
 				Assert.DoesNotThrow (() => c.Tick());
 			}
@@ -151,7 +151,7 @@ namespace Tempest.Tests
 		public void ClientSendMessageInline()
 		{
 			var c = GetNewClientConnection();
-			if (!c.Modes.HasFlag (MessagingModes.Inline))
+			if ((c.Modes & MessagingModes.Inline) != MessagingModes.Inline)
 				Assert.Ignore();
 
 			throw new NotImplementedException();
@@ -161,7 +161,7 @@ namespace Tempest.Tests
 		public void ServerSendMessageInline()
 		{
 			var c = GetNewClientConnection();
-			if (!c.Modes.HasFlag (MessagingModes.Inline))
+			if ((c.Modes & MessagingModes.Inline) != MessagingModes.Inline)
 				Assert.Ignore();
 
 			throw new NotImplementedException();
@@ -173,7 +173,7 @@ namespace Tempest.Tests
 			const string content = "Oh, hello there.";
 
 			var c = GetNewClientConnection();
-			if (!c.Modes.HasFlag (MessagingModes.Async))
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
 				Assert.Ignore();
 
 			IServerConnection connection = null;
@@ -208,7 +208,7 @@ namespace Tempest.Tests
 			const string content = "Oh, hello there.";
 
 			var c = GetNewClientConnection();
-			if (!c.Modes.HasFlag (MessagingModes.Async))
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
 				Assert.Ignore();
 
 			var test = new AsyncTest (e =>

@@ -46,7 +46,7 @@ namespace Tempest
 			this.connection.Disconnected += OnConnectionDisconnected;
 			this.connection.ConnectionFailed += OnConnectionConnectionFailed;
 
-			if (this.connection.Modes.HasFlag (MessagingModes.Inline) && (Environment.ProcessorCount == 1 || !this.connection.Modes.HasFlag (MessagingModes.Async)))
+			if ((this.connection.Modes & MessagingModes.Inline) == MessagingModes.Inline && (Environment.ProcessorCount == 1 || (this.connection.Modes & MessagingModes.Async) != MessagingModes.Async))
 				this.mode = MessagingModes.Inline;
 			else
 			{
@@ -166,37 +166,45 @@ namespace Tempest
 
 		private void InlineMessageRunner()
 		{
-			SpinWait wait = new SpinWait();
+			#if NET_4
+			SpinWait wait = new SpinWait();			
+			#endif
 
-			while (this.running)
-			{
-				IEnumerable<MessageReceivedEventArgs> messages = this.connection.Tick();
-				while (this.running && messages.Any())
-				{
+		    while (this.running)
+		    {
+		        IEnumerable<MessageReceivedEventArgs> messages = this.connection.Tick();
+		        while (this.running && messages.Any())
+		        {
+					#if NET_4
 					wait.Reset();
+					#endif
 
-					foreach (MessageReceivedEventArgs e in messages)
-					{
-						if (!this.running)
-							break;
+		            foreach (MessageReceivedEventArgs e in messages)
+		            {
+		                if (!this.running)
+		                    break;
 
-						var mhandlers = GetHandlers (e.Message.MessageType);
-						if (mhandlers == null)
-							continue;
+		                var mhandlers = GetHandlers (e.Message.MessageType);
+		                if (mhandlers == null)
+		                    continue;
 
-						for (int i = 0; i < mhandlers.Count; ++i)
-							mhandlers[i] (e);
-					}
-				}
+		                for (int i = 0; i < mhandlers.Count; ++i)
+		                    mhandlers[i] (e);
+		            }
+		        }
 
-				if (this.disconnecting)
-				{
-					ThreadPool.QueueUserWorkItem (now => Disconnect ((bool)now), true);
-					return;
-				}
+		        if (this.disconnecting)
+		        {
+		            ThreadPool.QueueUserWorkItem (now => Disconnect ((bool)now), true);
+		            return;
+		        }
 
+				#if NET_4
 				wait.SpinOnce();
-			}
+				#else
+				Thread.Sleep (1);
+				#endif
+		    }
 		}
 
 		private void AsyncMessageRunner ()

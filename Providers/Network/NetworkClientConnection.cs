@@ -46,7 +46,7 @@ namespace Tempest.Providers.Network
 		{
 			if (endpoint == null)
 				throw new ArgumentNullException ("endpoint");
-			if (messageTypes.HasFlag (MessageTypes.Unreliable))
+			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 			
 			lock (this.stateSync)

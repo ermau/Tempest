@@ -25,11 +25,14 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+
+#if NET_4
+using System.Collections.Concurrent;
+#endif
 
 namespace Tempest.Providers.Network
 {
@@ -41,7 +44,14 @@ namespace Tempest.Providers.Network
 			this.sanityByte = appId;
 		}
 
+		/// <summary>
+		/// Raised when a message is received.
+		/// </summary>
 		public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+
+		/// <summary>
+		/// Raised when the connection is lost or manually disconnected.
+		/// </summary>
 		public event EventHandler<ConnectionEventArgs> Disconnected;
 
 		public bool IsConnected
@@ -72,9 +82,24 @@ namespace Tempest.Providers.Network
 			if (!IsConnected)
 				return;
 
-			BufferValueWriter writer;
+			BufferValueWriter writer = null;
+			#if NET_4
 			if (!writers.TryPop (out writer))
 				writer = new BufferValueWriter (new byte[20480]);
+			#else
+			if (writers.Count != 0)
+			{
+				lock (writers)
+				{
+					if (writers.Count != 0)
+						writer = writers.Pop();
+				}
+			}
+
+			if (writer == null)
+				writer = new BufferValueWriter (new byte[20480]);
+			#endif
+			
 
 			writer.WriteByte (sanityByte);
 			writer.WriteUInt16 (message.MessageType);
@@ -84,7 +109,8 @@ namespace Tempest.Providers.Network
 			// Copy length in
 			Array.Copy (BitConverter.GetBytes (writer.Length - BaseHeaderLength), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
 
-			SocketAsyncEventArgs e;
+			SocketAsyncEventArgs e = null;
+			#if NET_4
 			if (!writerAsyncArgs.TryPop (out e))
 			{
 				e = new SocketAsyncEventArgs ();
@@ -92,6 +118,25 @@ namespace Tempest.Providers.Network
 			}
 			else
 				e.AcceptSocket = null;
+			#else
+			if (writerAsyncArgs.Count != 0)
+			{
+				lock (writerAsyncArgs)
+				{
+					if (writerAsyncArgs.Count != 0)
+					{
+						e = writerAsyncArgs.Pop();
+						e.AcceptSocket = null;
+					}
+				}
+			}
+
+			if (e == null)
+			{
+				e = new SocketAsyncEventArgs();
+				e.Completed += ReliableSendCompleted;
+			}
+			#endif
 
 			e.SetBuffer (writer.Buffer, 0, writer.Length);
 			e.UserToken = writer;
@@ -304,12 +349,24 @@ namespace Tempest.Providers.Network
 				Disconnect (true);
 				return;
 			}
-
+			
+			#if !NET_4
+			lock (writers)
+			#endif
 			writers.Push ((BufferValueWriter)e.UserToken);
+
+			#if !NET_4
+			lock (writerAsyncArgs)
+			#endif
 			writerAsyncArgs.Push (e);
 		}
 
+		#if NET_4
 		private static readonly ConcurrentStack<BufferValueWriter> writers = new ConcurrentStack<BufferValueWriter>();
 		private static readonly ConcurrentStack<SocketAsyncEventArgs> writerAsyncArgs = new ConcurrentStack<SocketAsyncEventArgs>();
+		#else
+		private static readonly Stack<BufferValueWriter> writers = new Stack<BufferValueWriter>();
+		private static readonly Stack<SocketAsyncEventArgs> writerAsyncArgs = new Stack<SocketAsyncEventArgs>();
+		#endif
 	}
 }

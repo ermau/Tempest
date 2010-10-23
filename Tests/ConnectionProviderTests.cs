@@ -304,20 +304,24 @@ namespace Tempest.Tests
 		[Test]
 		public void DisconnectAndReconnect()
 		{
-			int times = 0;
-			var test = new AsyncTest (e => (++times > 5), true);
+			AutoResetEvent wait = new AutoResetEvent (false);
 
 			var c = GetNewClientConnection();
-			c.Connected += test.PassHandler;
-			c.Connected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Disconnect (true));
-			c.Disconnected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Connect (EndPoint, MessageTypes));
-			c.ConnectionFailed += test.FailHandler;
+			c.Connected += (sender, e) => wait.Set();
+			c.Disconnected += (sender, e) => wait.Set();
 
 			this.provider.Start (MessageTypes);
 
-			c.Connect (EndPoint, MessageTypes);
+			for (int i = 0; i < 5; ++i)
+			{
+				c.Connect (EndPoint, MessageTypes);
+				if (!wait.WaitOne (10000))
+					Assert.Fail ("Failed to connect.");
 
-			test.Assert (10000);
+				c.Disconnect (true);
+				if (!wait.WaitOne (10000))
+					Assert.Fail ("Failed to disconnect.");
+			}
 		}
 	}
 }

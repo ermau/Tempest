@@ -154,7 +154,7 @@ namespace Tempest.Providers.Network
 
 		public virtual void Disconnect (bool now)
 		{
-			if (this.reliableSocket != null && !this.reliableSocket.Connected)
+			if (this.reliableSocket != null && this.reliableSocket.Connected)
 			{
 				var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
 				args.Completed += OnDisconnectCompleted;

@@ -106,6 +106,24 @@ namespace Tempest
 		void WriteUInt64 (UInt64 value);
 
 		/// <summary>
+		/// Writes a decimal to the transport.
+		/// </summary>
+		/// <param name="value">The value to write</param>
+		void WriteDecimal (Decimal value);
+
+		/// <summary>
+		/// Writes a single to the transport.
+		/// </summary>
+		/// <param name="value">The value to write</param>
+		void WriteSingle (Single value);
+
+		/// <summary>
+		/// Writes a double to the transport.
+		/// </summary>
+		/// <param name="value">The value to write</param>
+		void WriteDouble (Double value);
+
+		/// <summary>
 		/// Writes a string with <paramref name="encoding"/> to the transport.
 		/// </summary>
 		/// <param name="encoding">The encoding to use.</param>

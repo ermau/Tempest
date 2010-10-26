@@ -115,6 +115,24 @@ namespace Tempest
 			Write (BitConverter.GetBytes (value));
 		}
 
+		public void WriteDecimal (decimal value)
+		{
+			int[] bits = Decimal.GetBits (value);
+			WriteInt32 (bits.Length);
+			for (int i = 0; i < bits.Length; ++i)
+				WriteInt32 (bits[i]);
+		}
+
+		public void WriteSingle (float value)
+		{
+			Write (BitConverter.GetBytes (value));
+		}
+
+		public void WriteDouble (double value)
+		{
+			Write (BitConverter.GetBytes (value));
+		}
+
 		public void WriteString (Encoding encoding, string value)
 		{
 			if (encoding == null)

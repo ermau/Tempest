@@ -157,6 +157,30 @@ namespace Tempest
 			this.position += sizeof (ulong);
 		}
 
+		public void WriteDecimal (decimal value)
+		{
+			int[] parts = Decimal.GetBits (value);
+			WriteInt32 (parts.Length);
+			for (int i = 0; i < parts.Length; ++i)
+				WriteInt32 (parts[i]);
+		}
+
+		public void WriteSingle (float value)
+		{
+			EnsureAdditionalCapacity (sizeof(float));
+
+			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (float));
+			this.position += sizeof (float);
+		}
+
+		public void WriteDouble (double value)
+		{
+			EnsureAdditionalCapacity (sizeof (double));
+
+			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (double));
+			this.position += sizeof (double);
+		}
+
 		public void WriteString (Encoding encoding, string value)
 		{
 			if (encoding == null)

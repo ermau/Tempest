@@ -260,5 +260,44 @@ namespace Tempest.Tests
 			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF32));
 			Assert.AreEqual (value, this.reader.ReadString (Encoding.ASCII));
 		}
+
+		[Test]
+		public void ReadWriteDecimal()
+		{
+			this.writer.WriteDecimal (Decimal.MaxValue);
+			this.writer.WriteDecimal (Decimal.MaxValue / 2);
+			this.writer.WriteDecimal (Decimal.MinValue);
+			this.writer.Flush();
+
+			Assert.AreEqual (Decimal.MaxValue, this.reader.ReadDecimal());
+			Assert.AreEqual (Decimal.MaxValue / 2, this.reader.ReadDecimal());
+			Assert.AreEqual (Decimal.MinValue, this.reader.ReadDecimal());
+		}
+
+		[Test]
+		public void ReadWriteDouble()
+		{
+			this.writer.WriteDouble (Double.MaxValue);
+			this.writer.WriteDouble (Double.MaxValue / 2);
+			this.writer.WriteDouble (Double.MinValue);
+			this.writer.Flush ();
+
+			Assert.AreEqual (Double.MaxValue, this.reader.ReadDouble ());
+			Assert.AreEqual (Double.MaxValue / 2, this.reader.ReadDouble ());
+			Assert.AreEqual (Double.MinValue, this.reader.ReadDouble ());
+		}
+
+		[Test]
+		public void ReadWriteSingle ()
+		{
+			this.writer.WriteSingle (Single.MaxValue);
+			this.writer.WriteSingle (Single.MaxValue / 2);
+			this.writer.WriteSingle (Single.MinValue);
+			this.writer.Flush ();
+
+			Assert.AreEqual (Single.MaxValue, this.reader.ReadSingle ());
+			Assert.AreEqual (Single.MaxValue / 2, this.reader.ReadSingle ());
+			Assert.AreEqual (Single.MinValue, this.reader.ReadSingle ());
+		}
 	}
 }

@@ -158,6 +158,32 @@ namespace Tempest
 			return v;
 		}
 
+		public decimal ReadDecimal()
+		{
+			int len = ReadInt32 ();
+			int[] parts = new int[len];
+			for (int i = 0; i < parts.Length; ++i)
+				parts[i] = ReadInt32 ();
+
+			return new decimal (parts);
+		}
+
+		public float ReadSingle()
+		{
+			float v = BitConverter.ToSingle (this.buffer, this.Position);
+			this.Position += sizeof (float);
+
+			return v;
+		}
+
+		public double ReadDouble ()
+		{
+			double v = BitConverter.ToDouble (this.buffer, this.Position);
+			this.Position += sizeof (double);
+
+			return v;
+		}
+
 		public string ReadString (Encoding encoding)
 		{
 			if (encoding == null)

@@ -124,6 +124,26 @@ namespace Tempest
 			return (data.Length == 0) ? null : encoding.GetString (data);
 		}
 
+		public decimal ReadDecimal()
+		{
+			int len = ReadInt32();
+			int[] bits = new int[len];
+			for (int i = 0; i < bits.Length; ++i)
+				bits[i] = ReadInt32();
+
+			return new decimal (bits);
+		}
+
+		public float ReadSingle()
+		{
+			return BitConverter.ToSingle (ReadBytes (sizeof (float)), 0);
+		}
+
+		public double ReadDouble()
+		{
+			return BitConverter.ToDouble (ReadBytes (sizeof (double)), 0);
+		}
+
 		public void Flush()
 		{
 			this.stream.Flush();

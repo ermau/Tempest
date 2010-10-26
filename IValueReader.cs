@@ -90,6 +90,21 @@ namespace Tempest
 		/// Reads an unsigned long (UInt64) from the transport.
 		/// </summary>
 		UInt64 ReadUInt64 ();
+
+		/// <summary>
+		/// Reads a decimal from the transport.
+		/// </summary>
+		Decimal ReadDecimal ();
+
+		/// <summary>
+		/// Reads a single from the transport.
+		/// </summary>
+		Single ReadSingle();
+
+		/// <summary>
+		/// Reads a double from the transport.
+		/// </summary>
+		Double ReadDouble();
 		
 		/// <summary>
 		/// Reads a string with <paramref name="encoding"/> from the transport.

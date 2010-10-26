@@ -74,5 +74,20 @@ namespace Tempest.Tests
 			Assert.That (writer.Length, Is.EqualTo (8));
 			Assert.That (writer.Buffer.Length, Is.AtLeast (8));
 		}
+
+		[Test]
+		public void ReadWriteLongSet()
+		{
+			var writer = new BufferValueWriter (new byte[1]);
+
+			for (int i = 0; i < 20480; ++i)
+				writer.WriteInt32(i);
+
+			writer.Flush();
+
+			var reader = new BufferValueReader (writer.Buffer);
+			for (int i = 0; i < 20480; ++i)
+				Assert.AreEqual(i, reader.ReadInt32());
+		}
 	}
 }

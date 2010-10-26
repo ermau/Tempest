@@ -160,8 +160,7 @@ namespace Tempest
 
 		public decimal ReadDecimal()
 		{
-			int len = ReadInt32 ();
-			int[] parts = new int[len];
+			int[] parts = new int[4];
 			for (int i = 0; i < parts.Length; ++i)
 				parts[i] = ReadInt32 ();
 

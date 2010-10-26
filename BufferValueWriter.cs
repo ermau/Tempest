@@ -160,7 +160,6 @@ namespace Tempest
 		public void WriteDecimal (decimal value)
 		{
 			int[] parts = Decimal.GetBits (value);
-			WriteInt32 (parts.Length);
 			for (int i = 0; i < parts.Length; ++i)
 				WriteInt32 (parts[i]);
 		}

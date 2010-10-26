@@ -140,6 +140,7 @@ namespace Tempest.Providers.Network
 
 			e.SetBuffer (writer.Buffer, 0, writer.Length);
 			e.UserToken = writer;
+			writer.Flush();
 
 			if (!IsConnected)
 			{

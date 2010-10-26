@@ -312,6 +312,7 @@ namespace Tempest.Providers.Network
 				Array.Copy (buffer, this.rmessageOffset, newBuffer, 0, this.rmessageLoaded);
 				this.rreader = new BufferValueReader (newBuffer, BaseHeaderLength, newBuffer.Length);
 				this.rmessageBuffer = newBuffer;
+				e.SetBuffer (newBuffer, this.rmessageLoaded, newBuffer.Length - this.rmessageLoaded);
 				this.rmessageOffset = 0;
 			}
 

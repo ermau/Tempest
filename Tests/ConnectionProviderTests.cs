@@ -27,6 +27,7 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using NUnit.Framework;
 
@@ -230,6 +231,41 @@ namespace Tempest.Tests
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
+		}
+
+		[Test]
+		public void SendLongMessageAsync()
+		{
+			StringBuilder contentBuilder = new StringBuilder();
+			Random r = new Random (42);
+			for (int i = 0; i < 20480; ++i)
+				contentBuilder.Append ((char)r.Next (0, 128));
+
+			string content = contentBuilder.ToString();
+
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageReceivedEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (c, me.Connection);
+
+				var msg = (me.Message as MockMessage);
+				Assert.IsNotNull (msg);
+				Assert.AreEqual (content, msg.Content);
+			});
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
+
+			c.ConnectionFailed += test.FailHandler;
+			c.MessageReceived += test.PassHandler;
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000000);
 		}
 
 		[Test]

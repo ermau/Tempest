@@ -47,6 +47,11 @@ namespace Tempest
 			this.length = length;
 		}
 
+		public byte[] Buffer
+		{
+			get { return this.buffer; }
+		}
+
 		public int Position
 		{
 			get;

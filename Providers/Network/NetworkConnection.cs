@@ -144,7 +144,14 @@ namespace Tempest.Providers.Network
 
 			if (!IsConnected)
 			{
+				#if !NET_4
+				lock (writerAsyncArgs)
+				#endif
 				writerAsyncArgs.Push (e);
+
+				#if !NET_4
+				lock (writers)
+				#endif
 				writers.Push (writer);
 				return;
 			}

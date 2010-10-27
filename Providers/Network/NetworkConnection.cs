@@ -259,13 +259,13 @@ namespace Tempest.Providers.Network
 
 			if (loaded)
 			{
-				DeliverMessage (buffer, this.rmessageOffset, messageLength);
-				
+				DeliverMessage(buffer, this.rmessageOffset, messageLength);
+
 				int remaining = this.rmessageLoaded - messageAndHeaderLength;
 
 				if (remaining == 0)
 				{
-					e.SetBuffer (0, buffer.Length);
+					e.SetBuffer(0, buffer.Length);
 					this.rmessageOffset = 0;
 					this.rmessageLoaded = 0;
 				}
@@ -307,14 +307,21 @@ namespace Tempest.Providers.Network
 					this.rmessageLoaded = remaining;
 				}
 			}
-			else if (messageAndHeaderLength > buffer.Length - this.rmessageOffset)
+			else
 			{
-				byte[] newBuffer = new byte[messageAndHeaderLength];
-				Array.Copy (buffer, this.rmessageOffset, newBuffer, 0, this.rmessageLoaded);
-				this.rreader = new BufferValueReader (newBuffer, BaseHeaderLength, newBuffer.Length);
-				this.rmessageBuffer = newBuffer;
-				e.SetBuffer (newBuffer, this.rmessageLoaded, newBuffer.Length - this.rmessageLoaded);
-				this.rmessageOffset = 0;
+				if (messageAndHeaderLength > buffer.Length - this.rmessageOffset)
+				{
+					byte[] newBuffer = new byte[messageAndHeaderLength];
+					Array.Copy (buffer, this.rmessageOffset, newBuffer, 0, this.rmessageLoaded);
+					this.rreader = new BufferValueReader (newBuffer, BaseHeaderLength, newBuffer.Length);
+					this.rmessageBuffer = newBuffer;
+
+					                                newBuffer.Length - this.rmessageLoaded));
+					
+					this.rmessageOffset = 0;
+				}
+
+				e.SetBuffer (this.rmessageBuffer, this.rmessageLoaded, this.rmessageBuffer.Length - this.rmessageLoaded);
 			}
 
 			if (!IsConnected)

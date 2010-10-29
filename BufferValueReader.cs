@@ -37,6 +37,15 @@ namespace Tempest
 		private readonly byte[] buffer;
 		private readonly int length;
 
+		public BufferValueReader (byte[] buffer)
+		{
+			if (buffer == null)
+				throw new ArgumentNullException ("buffer");
+
+			this.buffer = buffer;
+			this.length = buffer.Length;
+		}
+
 		public BufferValueReader (byte[] buffer, int offset, int length)
 		{
 			if (buffer == null)
@@ -47,24 +56,21 @@ namespace Tempest
 			this.length = length;
 		}
 
+		/// <summary>
+		/// Gets the underlying buffer.
+		/// </summary>
 		public byte[] Buffer
 		{
 			get { return this.buffer; }
 		}
 
+		/// <summary>
+		/// Gets or sets the position of the reader in the buffer.
+		/// </summary>
 		public int Position
 		{
 			get;
 			set;
-		}
-
-		public BufferValueReader (byte[] buffer)
-		{
-			if (buffer == null)
-				throw new ArgumentNullException ("buffer");
-
-			this.buffer = buffer;
-			this.length = buffer.Length;
 		}
 
 		public bool ReadBool()

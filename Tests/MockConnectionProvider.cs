@@ -115,7 +115,8 @@ namespace Tempest.Tests
 			if (message == null)
 				throw new ArgumentNullException ("message");
 
-			connection.Receive (new MessageReceivedEventArgs (connection, message));
+			connection.Receive (new MessageEventArgs (connection, message));
+			base.Send (message);
 		}
 
 		public override void Disconnect(bool now)
@@ -162,7 +163,8 @@ namespace Tempest.Tests
 			if (message == null)
 				throw new ArgumentNullException ("message");
 			
-			connection.Receive (new MessageReceivedEventArgs (connection, message));
+			connection.Receive (new MessageEventArgs (connection, message));
+			base.Send (message);
 		}
 
 		public override void Disconnect(bool now)
@@ -219,12 +221,16 @@ namespace Tempest.Tests
 			private set;
 		}
 
-		public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+		public event EventHandler<MessageEventArgs> MessageReceived;
+		public event EventHandler<MessageEventArgs> MessageSent;
 		public event EventHandler<ConnectionEventArgs> Disconnected;
 		
-		public abstract void Send (Message message);
+		public virtual void Send (Message message)
+		{
+			OnMessageSent (new MessageEventArgs (this, message));
+		}
 
-		public IEnumerable<MessageReceivedEventArgs> Tick()
+		public IEnumerable<MessageEventArgs> Tick()
 		{
 			throw new NotSupportedException();
 		}
@@ -236,7 +242,7 @@ namespace Tempest.Tests
 			OnDisconnected (new ConnectionEventArgs (this));
 		}
 
-		internal void Receive (MessageReceivedEventArgs e)
+		internal void Receive (MessageEventArgs e)
 		{
 			OnMessageReceived (e);
 		}
@@ -248,9 +254,16 @@ namespace Tempest.Tests
 				handler (this, e);
 		}
 
-		protected void OnMessageReceived (MessageReceivedEventArgs e)
+		protected void OnMessageReceived (MessageEventArgs e)
 		{
-			EventHandler<MessageReceivedEventArgs> handler = MessageReceived;
+			EventHandler<MessageEventArgs> handler = MessageReceived;
+			if (handler != null)
+				handler (this, e);
+		}
+
+		protected void OnMessageSent (MessageEventArgs e)
+		{
+			EventHandler<MessageEventArgs> handler = MessageSent;
 			if (handler != null)
 				handler (this, e);
 		}

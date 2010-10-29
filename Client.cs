@@ -50,7 +50,7 @@ namespace Tempest
 				this.mode = MessagingModes.Inline;
 			else
 			{
-				this.mqueue = new Queue<MessageReceivedEventArgs>();
+				this.mqueue = new Queue<MessageEventArgs>();
 				this.mwait = new AutoResetEvent (false);
 				this.connection.MessageReceived += ConnectionOnMessageReceived;
 				this.mode = MessagingModes.Async;
@@ -109,10 +109,10 @@ namespace Tempest
 			if (!IsConnected)
 				return;
 
-			List<MessageReceivedEventArgs> messages;
+			List<MessageEventArgs> messages;
 			if (this.mode == MessagingModes.Async)
 			{
-				messages = new List<MessageReceivedEventArgs> (mqueue.Count);
+				messages = new List<MessageEventArgs> (mqueue.Count);
 
 				lock (this.mqueue)
 				{
@@ -143,7 +143,7 @@ namespace Tempest
 		private readonly MessagingModes mode;
 		private readonly bool polling;
 
-		private readonly Queue<MessageReceivedEventArgs> mqueue;
+		private readonly Queue<MessageEventArgs> mqueue;
 		private readonly AutoResetEvent mwait;
 		private Thread messageRunner;
 		protected volatile bool running;	
@@ -156,7 +156,7 @@ namespace Tempest
 			this.connection.Connect (endPoint, types);
 		}
 
-		private void ConnectionOnMessageReceived (object sender, MessageReceivedEventArgs e)
+		private void ConnectionOnMessageReceived (object sender, MessageEventArgs e)
 		{
 			lock (this.mqueue)
 				this.mqueue.Enqueue (e);
@@ -172,14 +172,14 @@ namespace Tempest
 
 		    while (this.running)
 		    {
-		        IEnumerable<MessageReceivedEventArgs> messages = this.connection.Tick();
+		        IEnumerable<MessageEventArgs> messages = this.connection.Tick();
 		        while (this.running && messages.Any())
 		        {
 					#if NET_4
 					wait.Reset();
 					#endif
 
-		            foreach (MessageReceivedEventArgs e in messages)
+		            foreach (MessageEventArgs e in messages)
 		            {
 		                if (!this.running)
 		                    break;
@@ -209,7 +209,7 @@ namespace Tempest
 
 		private void AsyncMessageRunner ()
 		{
-			Queue<MessageReceivedEventArgs> q = this.mqueue;
+			Queue<MessageEventArgs> q = this.mqueue;
 
 			while (this.running)
 			{
@@ -218,7 +218,7 @@ namespace Tempest
 					if (!this.running)
 						break;
 
-					MessageReceivedEventArgs e;
+					MessageEventArgs e;
 					lock (q)
 					{
 						if (q.Count == 0)

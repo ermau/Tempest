@@ -37,6 +37,6 @@ namespace Tempest
 		/// <param name="messageType">The message type to register a handler for.</param>
 		/// <param name="handler">The handler to register for the message type.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="handler"/> is <c>null</c>.</exception>
-		void RegisterMessageHandler (ushort messageType, Action<MessageReceivedEventArgs> handler);
+		void RegisterMessageHandler (ushort messageType, Action<MessageEventArgs> handler);
 	}
 }

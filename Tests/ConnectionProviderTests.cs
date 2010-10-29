@@ -181,7 +181,7 @@ namespace Tempest.Tests
 
 			var test = new AsyncTest (e =>
 			{
-				var me = (e as MessageReceivedEventArgs);
+				var me = (e as MessageEventArgs);
 				Assert.IsNotNull (me);
 				Assert.AreSame (me.Connection, connection);
 
@@ -204,6 +204,35 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void ClientMessageSent()
+		{
+			const string content = "Oh, hello there.";
+
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+			
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (me.Connection, c);
+
+				var msg = (me.Message as MockMessage);
+				Assert.IsNotNull (msg);
+				Assert.AreEqual (content, msg.Content);
+			});
+
+			this.provider.Start (MessageTypes);
+
+			c.MessageSent += test.PassHandler;
+			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test]
 		public void ServerSendMessageAsync()
 		{
 			const string content = "Oh, hello there.";
@@ -214,7 +243,7 @@ namespace Tempest.Tests
 
 			var test = new AsyncTest (e =>
 			{
-				var me = (e as MessageReceivedEventArgs);
+				var me = (e as MessageEventArgs);
 				Assert.IsNotNull (me);
 				Assert.AreSame (c, me.Connection);
 
@@ -249,7 +278,7 @@ namespace Tempest.Tests
 
 			var test = new AsyncTest (e =>
 			{
-				var me = (e as MessageReceivedEventArgs);
+				var me = (e as MessageEventArgs);
 				Assert.IsNotNull (me);
 				Assert.AreSame (c, me.Connection);
 

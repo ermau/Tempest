@@ -34,20 +34,20 @@ namespace Tempest
 	public class MessageHandling
 		: IContext
 	{
-		private readonly MutableLookup<ushort, Action<MessageReceivedEventArgs>> handlers = new MutableLookup<ushort, Action<MessageReceivedEventArgs>>();
+		private readonly MutableLookup<ushort, Action<MessageEventArgs>> handlers = new MutableLookup<ushort, Action<MessageEventArgs>>();
 
-		void IContext.RegisterMessageHandler (ushort messageType, Action<MessageReceivedEventArgs> handler)
+		void IContext.RegisterMessageHandler (ushort messageType, Action<MessageEventArgs> handler)
 		{
 			lock (this.handlers)
 				this.handlers.Add (messageType, handler);
 		}
 
-		protected List<Action<MessageReceivedEventArgs>> GetHandlers (ushort messageType)
+		protected List<Action<MessageEventArgs>> GetHandlers (ushort messageType)
 		{
-			List<Action<MessageReceivedEventArgs>> mhandlers = null;
+			List<Action<MessageEventArgs>> mhandlers = null;
 			lock (this.handlers)
 			{
-				IEnumerable<Action<MessageReceivedEventArgs>> thandlers;
+				IEnumerable<Action<MessageEventArgs>> thandlers;
 				if (this.handlers.TryGetValues (messageType, out thandlers))
 					mhandlers = thandlers.ToList();
 			}

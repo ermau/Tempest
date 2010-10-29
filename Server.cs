@@ -106,7 +106,7 @@ namespace Tempest
 			e.Connection.Disconnected -= OnConnectionDisconnected;
 		}
 
-		protected virtual void OnConnectionMessageReceived (object sender, MessageReceivedEventArgs e)
+		protected virtual void OnConnectionMessageReceived (object sender, MessageEventArgs e)
 		{
 			lock (this.connections)
 			{

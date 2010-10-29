@@ -47,7 +47,12 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Raised when a message is received.
 		/// </summary>
-		public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+		public event EventHandler<MessageEventArgs> MessageReceived;
+
+		/// <summary>
+		/// Raised when a message has completed sending.
+		/// </summary>
+		public event EventHandler<MessageEventArgs> MessageSent;
 
 		/// <summary>
 		/// Raised when the connection is lost or manually disconnected.
@@ -70,7 +75,7 @@ namespace Tempest.Providers.Network
 			protected set;
 		}
 
-		public IEnumerable<MessageReceivedEventArgs> Tick()
+		public IEnumerable<MessageEventArgs> Tick()
 		{
 			throw new NotSupportedException();
 		}
@@ -139,7 +144,7 @@ namespace Tempest.Providers.Network
 			#endif
 
 			e.SetBuffer (writer.Buffer, 0, writer.Length);
-			e.UserToken = writer;
+			e.UserToken = new SendHolder { Writer = writer, Message = message };
 			writer.Flush();
 
 			if (!IsConnected)
@@ -187,6 +192,12 @@ namespace Tempest.Providers.Network
 			Dispose (true);
 		}
 
+		private class SendHolder
+		{
+			public BufferValueWriter Writer;
+			public Message Message;
+		}
+
 		protected bool disposed;
 
 		private const int BaseHeaderLength = 7;
@@ -211,7 +222,7 @@ namespace Tempest.Providers.Network
 			this.disposed = true;
 		}
 
-		protected void OnMessageReceived (MessageReceivedEventArgs e)
+		protected void OnMessageReceived (MessageEventArgs e)
 		{
 			var mr = this.MessageReceived;
 			if (mr != null)
@@ -223,6 +234,13 @@ namespace Tempest.Providers.Network
 			var dc = this.Disconnected;
 			if (dc != null)
 				dc (this, e);
+		}
+
+		protected void OnMessageSent (MessageEventArgs e)
+		{
+			var sent = this.MessageSent;
+			if (sent != null)
+				sent (this, e);
 		}
 
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
@@ -344,7 +362,7 @@ namespace Tempest.Providers.Network
 			Message m = Message.Factory.Create (mtype);
 			m.Deserialize (this.rreader);
 
-			OnMessageReceived (new MessageReceivedEventArgs (this, m));
+			OnMessageReceived (new MessageEventArgs (this, m));
 		}
 
 		private void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
@@ -354,16 +372,20 @@ namespace Tempest.Providers.Network
 				Disconnect (true);
 				return;
 			}
+
+			SendHolder holder = (SendHolder)e.UserToken;
 			
 			#if !NET_4
 			lock (writers)
 			#endif
-			writers.Push ((BufferValueWriter)e.UserToken);
+			writers.Push (holder.Writer);
 
 			#if !NET_4
 			lock (writerAsyncArgs)
 			#endif
 			writerAsyncArgs.Push (e);
+
+			OnMessageSent (new MessageEventArgs (this, holder.Message));
 		}
 
 		#if NET_4

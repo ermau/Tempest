@@ -99,13 +99,13 @@ namespace Tempest.Tests
 
 			var test = new AsyncTest(e =>
 			{
-				var me = (MessageReceivedEventArgs)e;
+				var me = (MessageEventArgs)e;
 				Assert.AreSame (connection, me.Connection);
 				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
 				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
 			});
 
-			Action<MessageReceivedEventArgs> handler = e => test.PassHandler (test, e);
+			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
 			((IContext)server).RegisterMessageHandler (1, handler);
 			
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;

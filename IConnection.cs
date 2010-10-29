@@ -75,7 +75,13 @@ namespace Tempest
 		/// A message was received on the transport.
 		/// </summary>
 		/// <exception cref="NotSupportedException"><see cref="Modes"/> is not <see cref="MessagingModes.Async"/>.</exception>
-		event EventHandler<MessageReceivedEventArgs> MessageReceived;
+		event EventHandler<MessageEventArgs> MessageReceived;
+
+		/// <summary>
+		/// A message completed sending on the transport.
+		/// </summary>
+		/// <exception cref="NotSupportedException"><see cref="Modes"/> is not <see cref="MessagingModes.Async"/>.</exception>
+		event EventHandler<MessageEventArgs> MessageSent;
 
 		/// <summary>
 		/// The connection was lost.
@@ -92,9 +98,9 @@ namespace Tempest
 		/// <summary>
 		/// Sends and receives all pending messages.
 		/// </summary>
-		/// <returns>An enumerable of pending message events, <c>Enumerable.Empty&lt;MessageReceivedEventArgs&gt;()</c> if none (or not connected).</returns>
+		/// <returns>An enumerable of pending message events, <c>Enumerable.Empty&lt;MessageEventArgs&gt;()</c> if none (or not connected).</returns>
 		/// <exception cref="NotSupportedException"><see cref="Modes"/> is not <see cref="MessagingModes.Inline"/>.</exception>
-		IEnumerable<MessageReceivedEventArgs> Tick();
+		IEnumerable<MessageEventArgs> Tick();
 
 		/// <summary>
 		/// Closes the connection.
@@ -135,16 +141,16 @@ namespace Tempest
 	/// <summary>
 	/// Holds event data for the <see cref="IConnection.MessageReceived"/> event.
 	/// </summary>
-	public class MessageReceivedEventArgs
+	public class MessageEventArgs
 		: ConnectionEventArgs
 	{
 		/// <summary>
-		/// Creates a new instance of <see cref="MessageReceivedEventArgs"/>.
+		/// Creates a new instance of <see cref="MessageEventArgs"/>.
 		/// </summary>
 		/// <param name="connection">The connection of the event.</param>
 		/// <param name="message">The message received.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="connection"/> or <paramref name="message"/> is <c>null</c>.</exception>
-		public MessageReceivedEventArgs(IConnection connection, Message message)
+		public MessageEventArgs (IConnection connection, Message message)
 			: base (connection)
 		{
 			if (message == null)

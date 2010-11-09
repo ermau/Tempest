@@ -111,21 +111,74 @@ namespace Tempest
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
 
+			ProtocolMessageKey key = new ProtocolMessageKey (protocol, messageType);
+
 			Func<Message> mCtor;
 			#if !NET_4
 			lock (this.messageCtors)
 			#endif
-				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
+				if (!this.messageCtors.TryGetValue (key, out mCtor))
 					return null;
 
 			return mCtor();
 		}
 
 		#if !NET_4
-		private readonly Dictionary<ushort, Func<Message>> messageCtors = new Dictionary<ushort, Func<Message>>();
+		private readonly Dictionary<ProtocolMessageKey, Func<Message>> messageCtors = new Dictionary<ProtocolMessageKey, Func<Message>>();
 		#else
-		private readonly ConcurrentDictionary<ushort, Func<Message>> messageCtors = new ConcurrentDictionary<ushort, Func<Message>>();
+		private readonly ConcurrentDictionary<ProtocolMessageKey, Func<Message>> messageCtors = new ConcurrentDictionary<ProtocolMessageKey, Func<Message>>();
 		#endif
+
+		private class ProtocolMessageKey
+			: IEquatable<ProtocolMessageKey>
+		{
+			private readonly Protocol protocol;
+			private readonly ushort messageId;
+
+			public ProtocolMessageKey (Protocol protocol, ushort messageId)
+			{
+				this.protocol = protocol;
+				this.messageId = messageId;
+			}
+
+			public override bool Equals(object obj)
+			{
+				if (ReferenceEquals (null, obj))
+					return false;
+				if (ReferenceEquals (this, obj))
+					return true;
+				if (obj.GetType() != typeof (ProtocolMessageKey))
+					return false;
+				return Equals ((ProtocolMessageKey)obj);
+			}
+
+			public bool Equals (ProtocolMessageKey other)
+			{
+				if (ReferenceEquals (null, other))
+					return false;
+				if (ReferenceEquals (this, other))
+					return true;
+				return Equals (other.protocol, protocol) && other.messageId == messageId;
+			}
+
+			public override int GetHashCode()
+			{
+				unchecked
+				{
+					return (protocol.GetHashCode() * 397) ^ messageId.GetHashCode();
+				}
+			}
+
+			public static bool operator == (ProtocolMessageKey left, ProtocolMessageKey right)
+			{
+				return Equals (left, right);
+			}
+
+			public static bool operator != (ProtocolMessageKey left, ProtocolMessageKey right)
+			{
+				return !Equals (left, right);
+			}
+		}
 
 		private void RegisterTypes (Protocol protocol, IEnumerable<Type> messageTypes, bool ignoreDupes)
 		{
@@ -175,7 +228,8 @@ namespace Tempest
 						throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
 
 					Message m = kvp.Value();
-					if (this.messageCtors.ContainsKey (m.MessageType))
+					ProtocolMessageKey key = new ProtocolMessageKey (protocol, m.MessageType);
+					if (this.messageCtors.ContainsKey (key))
 					{
 						if (ignoreDupes)
 							continue;
@@ -183,7 +237,7 @@ namespace Tempest
 						throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
 					}
 
-					this.messageCtors.Add (m.MessageType, kvp.Value);
+					this.messageCtors.Add (key, kvp.Value);
 				}
 		}
 	}

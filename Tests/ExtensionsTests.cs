@@ -51,6 +51,7 @@ namespace Tempest.Tests
 			};
 
 			writer.Write (value);
+			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
 

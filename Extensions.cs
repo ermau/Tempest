@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -60,55 +61,59 @@ namespace Tempest
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
 
-			writer.WriteBool (value == null);
 			if (value == null)
+			{
+				writer.WriteBool (false);
 				return;
-
+			}
+			
 			// TODO: Circular reference handling (hashset passing down the rabit hole?)
 			// TODO: Reflection caching optimization
-			Type t = value.GetType();
+			Type type = value.GetType();
 
-			if (t.IsPrimitive)
+			if (type.IsClass)
+				writer.WriteBool (true);
+
+			if (type.IsPrimitive)
 			{
-				if (t == typeof (bool))
+				if (type == typeof (bool))
 					writer.WriteBool ((bool)value);
-				if (t == typeof (byte))
+				if (type == typeof (byte))
 					writer.WriteByte ((byte)value);
-				else if (t == typeof (sbyte))
+				else if (type == typeof (sbyte))
 					writer.WriteSByte ((sbyte)value);
-				else if (t == typeof (short))
+				else if (type == typeof (short))
 					writer.WriteInt16 ((short)value);
-				else if (t == typeof (ushort))
+				else if (type == typeof (ushort))
 					writer.WriteUInt16 ((ushort)value);
-				else if (t == typeof (int))
+				else if (type == typeof (int))
 					writer.WriteInt32 ((int)value);
-				else if (t == typeof (uint))
+				else if (type == typeof (uint))
 					writer.WriteUInt32 ((uint)value);
-				else if (t == typeof (long))
+				else if (type == typeof (long))
 					writer.WriteInt64 ((long)value);
-				else if (t == typeof (ulong))
+				else if (type == typeof (ulong))
 					writer.WriteUInt64 ((ulong)value);
-
-				else if (t == typeof (float))
+				else if (type == typeof (float))
 					writer.WriteSingle ((float)value);
-				else if (t == typeof (double))
+				else if (type == typeof (double))
 					writer.WriteDouble ((double)value);
-				else if (t == typeof (decimal))
+				else if (type == typeof (decimal))
 					writer.WriteDecimal ((decimal)value);
 
 				return;
 			}
-			else if (t == typeof (DateTime))
+			else if (type == typeof (DateTime))
 			{
 				writer.WriteDate ((DateTime)(object)value);
 				return;
 			}
-			else if (t == typeof (string))
+			else if (type == typeof (string))
 			{
 				writer.WriteString (Encoding.UTF8, (string)value);
 				return;
 			}
-			else if (t.IsArray)
+			else if (type.IsArray)
 			{
 				Array a = (Array)value;
 				writer.WriteInt32 (a.Length);
@@ -118,7 +123,7 @@ namespace Tempest
 			else
 			{
 				MemberInfo[] props =
-					t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
+					type.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
 						.OrderBy (mi => mi.Name)
 						.ToArray();
 
@@ -135,7 +140,7 @@ namespace Tempest
 					else if (props[i].MemberType == MemberTypes.Property)
 					{
 						var p = (PropertyInfo)props[i];
-						if (!p.CanRead || !p.CanWrite)
+						if (p.GetSetMethod() == null || p.GetIndexParameters().Length != 0)
 							continue;
 
 						Write (writer, p.GetValue (value, null));
@@ -155,7 +160,7 @@ namespace Tempest
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			if (reader.ReadBool())
+			if (type.IsClass && !reader.ReadBool())
 				return null;
 
 			if (type.IsPrimitive)
@@ -228,7 +233,7 @@ namespace Tempest
 					else if (props[i].MemberType == MemberTypes.Property)
 					{
 						var p = (PropertyInfo)props[i];
-						if (p.GetSetMethod() == null ||p.GetIndexParameters().Length != 0)
+						if (p.GetSetMethod() == null || p.GetIndexParameters().Length != 0)
 							continue;
 
 						p.SetValue (value, reader.Read (p.PropertyType), null);

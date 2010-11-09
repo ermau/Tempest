@@ -34,6 +34,12 @@ namespace Tempest.Tests
 	[TestFixture]
 	public class ClientTests
 	{
+		private static Protocol protocol;
+		static ClientTests()
+		{
+			protocol = ProtocolTests.GetTestProtocol();
+		}
+
 		private MockClient client;
 		private MockConnectionProvider provider;
 		private MockClientConnection connection;
@@ -99,7 +105,7 @@ namespace Tempest.Tests
 
 			((IContext)client).RegisterMessageHandler (1, handler);
 			client.Connect (new IPEndPoint (IPAddress.Any, 0));
-			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
+			connection.Receive (new MessageEventArgs (connection, new MockMessage () { Content = "hi" }));
 
 			test.Assert (10000);
 		}

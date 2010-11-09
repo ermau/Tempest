@@ -49,18 +49,18 @@ namespace Tempest.Tests
 
 		protected override IConnectionProvider SetUp()
 		{
-			return new NetworkConnectionProvider (new IPEndPoint (IPAddress.Any, 42000), protocol.Id);
+			return new NetworkConnectionProvider (new IPEndPoint (IPAddress.Any, 42000));
 		}
 
 		protected override IClientConnection GetNewClientConnection ()
 		{
-			return new NetworkClientConnection (protocol.Id);
+			return new NetworkClientConnection ();
 		}
 
 		[Test]
 		public void CtorNull()
 		{
-			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider (null, 0x1));
+			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider (null));
 		}
 	}
 }

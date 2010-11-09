@@ -34,11 +34,6 @@ namespace Tempest.Providers.Network
 	public class NetworkClientConnection
 		: NetworkConnection, IClientConnection
 	{
-		public NetworkClientConnection (byte appId)
-			: base (appId)
-		{
-		}
-
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
 

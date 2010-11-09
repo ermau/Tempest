@@ -39,11 +39,6 @@ namespace Tempest.Providers.Network
 	public abstract class NetworkConnection
 		: IConnection
 	{
-		protected NetworkConnection (byte appId)
-		{
-			this.sanityByte = appId;
-		}
-
 		/// <summary>
 		/// Raised when a message is received.
 		/// </summary>
@@ -106,7 +101,7 @@ namespace Tempest.Providers.Network
 			#endif
 			
 
-			writer.WriteByte (sanityByte);
+			writer.WriteByte (message.Protocol.Id);
 			writer.WriteUInt16 (message.MessageType);
 			writer.WriteInt32 (0); // Length placeholder
 
@@ -203,7 +198,6 @@ namespace Tempest.Providers.Network
 		private const int BaseHeaderLength = 7;
 		private int maxMessageLength = 104857600;
 
-		protected byte sanityByte;
 		protected Socket reliableSocket;
 		protected byte[] rmessageBuffer = new byte[20480];
 		protected BufferValueReader rreader;

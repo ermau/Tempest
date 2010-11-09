@@ -46,13 +46,11 @@ namespace Tempest.Providers.Network
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
 		/// </summary>
 		/// <param name="endPoint">The endpoint to listen to.</param>
-		/// <param name="appId">The application identifier (used as a sanity byte).</param>
-		public NetworkConnectionProvider (IPEndPoint endPoint, byte appId)
+		public NetworkConnectionProvider (IPEndPoint endPoint)
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
 
-			this.sanityByte = appId;
 			this.endPoint = endPoint;
 		}
 		
@@ -160,7 +158,7 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			var connection = new NetworkServerConnection (e.AcceptSocket, this.sanityByte);
+			var connection = new NetworkServerConnection (e.AcceptSocket);
 
 			BeginAccepting (e);
 

@@ -33,14 +33,12 @@ namespace Tempest.Providers.Network
 	public class NetworkServerConnection
 		: NetworkConnection, IServerConnection
 	{
-		internal NetworkServerConnection (Socket reliableSocket, byte sanityByte)
-			: base (sanityByte)
+		internal NetworkServerConnection (Socket reliableSocket)
 		{
 			if (reliableSocket == null)
 				throw new ArgumentNullException ("reliableSocket");
 
 			this.reliableSocket = reliableSocket;
-			this.sanityByte = sanityByte;
 
 			var asyncArgs = new SocketAsyncEventArgs();
 			asyncArgs.UserToken = this;

@@ -8,8 +8,10 @@ namespace Tempest.Tests
 	public class MockMessage
 		: Message
 	{
+		public static readonly Protocol MockProtocol = ProtocolTests.GetTestProtocol();
+
 		public MockMessage ()
-			: base (1)
+			: base (MockProtocol, 1)
 		{
 		}
 

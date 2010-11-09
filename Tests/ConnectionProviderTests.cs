@@ -36,12 +36,10 @@ namespace Tempest.Tests
 	public abstract class ConnectionProviderTests
 	{
 		protected IConnectionProvider provider;
-		protected static Protocol protocol;
 
 		static ConnectionProviderTests()
 		{
-			protocol = ProtocolTests.GetTestProtocol();
-			Message.Factory.Register (protocol, new[] { typeof(MockMessage) });
+			Message.Factory.Register (MockMessage.MockProtocol, new[] { typeof(MockMessage) });
 		}
 
 		[SetUp]
@@ -72,12 +70,12 @@ namespace Tempest.Tests
 			{
 				Assert.DoesNotThrow (() => this.provider.ConnectionlessMessageReceived += cmr);
 				Assert.DoesNotThrow (() => this.provider.ConnectionlessMessageReceived -= cmr);
-				Assert.DoesNotThrow (() => this.provider.SendConnectionlessMessage (new MockMessage(), new IPEndPoint (IPAddress.Loopback, 42)));
+				Assert.DoesNotThrow (() => this.provider.SendConnectionlessMessage (new MockMessage (), new IPEndPoint (IPAddress.Loopback, 42)));
 			}
 			else
 			{
 				Assert.Throws<NotSupportedException> (() => this.provider.ConnectionlessMessageReceived += cmr);
-				Assert.Throws<NotSupportedException> (() => this.provider.SendConnectionlessMessage (new MockMessage(), new IPEndPoint (IPAddress.Loopback, 42)));
+				Assert.Throws<NotSupportedException> (() => this.provider.SendConnectionlessMessage (new MockMessage (), new IPEndPoint (IPAddress.Loopback, 42)));
 				Assert.Throws<NotSupportedException> (() => this.provider.Start (MessageTypes.Unreliable));
 			}
 		}
@@ -86,7 +84,7 @@ namespace Tempest.Tests
 		public void SendConnectionlessMessageNull()
 		{
 			Assert.Throws<ArgumentNullException> (() => this.provider.SendConnectionlessMessage (null, new IPEndPoint (IPAddress.Loopback, 42)));
-			Assert.Throws<ArgumentNullException> (() => this.provider.SendConnectionlessMessage (new MockMessage(), null));
+			Assert.Throws<ArgumentNullException> (() => this.provider.SendConnectionlessMessage (new MockMessage (), null));
 		}
 
 		[Test]
@@ -203,7 +201,7 @@ namespace Tempest.Tests
 				e.Connection.MessageReceived += test.PassHandler;
 			};
 			
-			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
+			c.Connected += (sender, e) => c.Send (new MockMessage () { Content = content });
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -232,7 +230,7 @@ namespace Tempest.Tests
 			this.provider.Start (MessageTypes);
 
 			c.MessageSent += test.PassHandler;
-			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
+			c.Connected += (sender, e) => c.Send (new MockMessage () { Content = content });
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -259,7 +257,7 @@ namespace Tempest.Tests
 			});
 
 			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
+			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage () { Content = content });
 
 			c.ConnectionFailed += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
@@ -294,7 +292,7 @@ namespace Tempest.Tests
 			});
 
 			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
+			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage () { Content = content });
 
 			c.ConnectionFailed += test.FailHandler;
 			c.MessageReceived += test.PassHandler;

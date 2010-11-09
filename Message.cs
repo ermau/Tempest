@@ -31,8 +31,12 @@ namespace Tempest
 {
 	public abstract class Message
 	{
-		protected Message (ushort messageType)
+		protected Message (Protocol protocol, ushort messageType)
 		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
+
+			Protocol = protocol;
 			MessageType = messageType;
 		}
 
@@ -52,6 +56,18 @@ namespace Tempest
 			get { return false; }
 		}
 
+		/// <summary>
+		/// Gets the protocol this message belongs to.
+		/// </summary>
+		public Protocol Protocol
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Gets the unique identifier for this message within its protocol.
+		/// </summary>
 		public ushort MessageType
 		{
 			get;

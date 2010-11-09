@@ -36,11 +36,17 @@ namespace Tempest.Tests
 	public abstract class ConnectionProviderTests
 	{
 		protected IConnectionProvider provider;
+		protected static Protocol protocol;
+
+		static ConnectionProviderTests()
+		{
+			protocol = ProtocolTests.GetTestProtocol();
+			Message.Factory.Register (protocol, new[] { typeof(MockMessage) });
+		}
 
 		[SetUp]
 		protected void Setup()
 		{
-			Message.Factory.Discover();
 			this.provider = SetUp();
 		}
 

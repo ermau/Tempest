@@ -276,7 +276,8 @@ namespace Tempest.Providers.Network
 
 			bool loaded = (messageLength != 0 && this.rmessageLoaded >= messageAndHeaderLength);
 
-			if (buffer[this.rmessageOffset] != this.sanityByte)
+			Protocol p = Protocol.Get (buffer[this.rmessageOffset]);
+			if (p == null)
 			{
 				Disconnect (true);
 				return;
@@ -284,7 +285,7 @@ namespace Tempest.Providers.Network
 
 			if (loaded)
 			{
-				DeliverMessage(buffer, this.rmessageOffset, messageLength);
+				DeliverMessage (p, buffer, this.rmessageOffset, messageLength);
 
 				int remaining = this.rmessageLoaded - messageAndHeaderLength;
 
@@ -304,7 +305,8 @@ namespace Tempest.Providers.Network
 						if (remaining <= BaseHeaderLength)
 							break;
 
-						if (buffer[offset] != this.sanityByte)
+						p = Protocol.Get (buffer[offset]);
+						if (p == null)
 						{
 							Disconnect (true);
 							return;
@@ -315,7 +317,7 @@ namespace Tempest.Providers.Network
 
 						if (remaining > messageAndHeaderLength)
 						{
-							DeliverMessage (buffer, offset, messageLength);
+							DeliverMessage (p, buffer, offset, messageLength);
 							offset += messageAndHeaderLength;
 							remaining -= messageAndHeaderLength;
 						}
@@ -353,13 +355,13 @@ namespace Tempest.Providers.Network
 				ReliableReceiveCompleted (sender, e);
 		}
 
-		private void DeliverMessage (byte[] buffer, int offset, int length)
+		private void DeliverMessage (Protocol protocol, byte[] buffer, int offset, int length)
 		{
 			ushort mtype = BitConverter.ToUInt16 (buffer, offset + 1);
 
 			this.rreader.Position = offset + BaseHeaderLength;
 
-			Message m = Message.Factory.Create (mtype);
+			Message m = Message.Factory.Create (protocol, mtype);
 			m.Deserialize (this.rreader);
 
 			OnMessageReceived (new MessageEventArgs (this, m));

@@ -13,7 +13,7 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in
+// The above copyright notice and permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -36,10 +36,17 @@ namespace Tempest.Tests
 	public class MessageFactoryTests
 	{
 		private MessageFactory factory;
+		private static Protocol p;
 
+		static MessageFactoryTests()
+		{
+			p = ProtocolTests.GetTestProtocol();
+		}
+		
 		[SetUp]
 		public void Setup()
 		{
+			
 			this.factory = new MessageFactory();
 		}
 
@@ -52,9 +59,9 @@ namespace Tempest.Tests
 		[Test]
 		public void Discover()
 		{
-			this.factory.Discover();
+			this.factory.Discover (p);
 
-			Message m = this.factory.Create (1);
+			Message m = this.factory.Create (p, 1);
 			Assert.IsNotNull (m);
 			Assert.That (m, Is.TypeOf<MockMessage>());
 		}
@@ -62,9 +69,9 @@ namespace Tempest.Tests
 		[Test]
 		public void DiscoverAssembly()
 		{
-			this.factory.Discover (typeof(MessageFactoryTests).Assembly);
+			this.factory.Discover (p, typeof(MessageFactoryTests).Assembly);
 
-			Message m = this.factory.Create (1);
+			Message m = this.factory.Create (p, 1);
 			Assert.IsNotNull (m);
 			Assert.That (m, Is.TypeOf<MockMessage>());
 		}
@@ -72,9 +79,9 @@ namespace Tempest.Tests
 		[Test]
 		public void DiscoverAssemblyNothing()
 		{
-			this.factory.Discover (typeof(string).Assembly);
+			this.factory.Discover (p, typeof(string).Assembly);
 
-			Message m = this.factory.Create (1);
+			Message m = this.factory.Create (p, 1);
 			Assert.IsNull (m);
 		}
 
@@ -82,10 +89,12 @@ namespace Tempest.Tests
 		public void RegisterNull()
 		{
 			#if !SAFE
-			Assert.Throws<ArgumentNullException> (() => this.factory.Register ((IEnumerable<Type>)null));
+			Assert.Throws<ArgumentNullException> (() => this.factory.Register (p, (IEnumerable<Type>)null));
+			Assert.Throws<ArgumentNullException> (() => this.factory.Register (null, Enumerable.Empty<Type>()));
 			#endif
 
-			Assert.Throws<ArgumentNullException> (() => this.factory.Register ((IEnumerable<KeyValuePair<Type, Func<Message>>>)null));
+			Assert.Throws<ArgumentNullException> (() => this.factory.Register (null, Enumerable.Empty<KeyValuePair<Type, Func<Message>>>()));
+			Assert.Throws<ArgumentNullException> (() => this.factory.Register (p, (IEnumerable<KeyValuePair<Type, Func<Message>>>)null));
 		}
 
 		private class PrivateMessage
@@ -108,31 +117,31 @@ namespace Tempest.Tests
 		[Test]
 		public void RegisterTypeInvalid()
 		{
-			Assert.Throws<ArgumentException> (() => this.factory.Register (new[] { typeof (PrivateMessage) }));
-			Assert.Throws<ArgumentException> (() => this.factory.Register (new[] { typeof (int) }));
-			Assert.Throws<ArgumentException> (() => this.factory.Register (new[] { typeof (string) }));
+			Assert.Throws<ArgumentException> (() => this.factory.Register (p, new[] { typeof (PrivateMessage) }));
+			Assert.Throws<ArgumentException> (() => this.factory.Register (p, new[] { typeof (int) }));
+			Assert.Throws<ArgumentException> (() => this.factory.Register (p, new[] { typeof (string) }));
 		}
 
 		[Test]
 		public void RegisterTypeDuplicates()
 		{
-			Assert.Throws<ArgumentException> (() => this.factory.Register (new[] { typeof (MockMessage), typeof (MockMessage) }));
+			Assert.Throws<ArgumentException> (() => this.factory.Register (p, new[] { typeof (MockMessage), typeof (MockMessage) }));
 		}
 
 		[Test]
 		public void RegisterTypeAndCtorsInvalid()
 		{
 			Assert.Throws<ArgumentException> (() =>
-				this.factory.Register (new[] { new KeyValuePair<Type, Func<Message>> (typeof (string), () => new MockMessage()) }));
+				this.factory.Register (p, new[] { new KeyValuePair<Type, Func<Message>> (typeof (string), () => new MockMessage()) }));
 			Assert.Throws<ArgumentException> (() =>
-				this.factory.Register (new[] { new KeyValuePair<Type, Func<Message>> (typeof (int), () => new MockMessage()) }));
+				this.factory.Register (p, new[] { new KeyValuePair<Type, Func<Message>> (typeof (int), () => new MockMessage()) }));
 		}
 
 		[Test]
 		public void RegisterTypeAndCtorsDuplicates()
 		{
 			Assert.Throws<ArgumentException> (() =>
-				this.factory.Register (new[]
+				this.factory.Register (p, new[]
 				{
 					new KeyValuePair<Type, Func<Message>> (typeof (MockMessage), () => new MockMessage()),
 					new KeyValuePair<Type, Func<Message>> (typeof (MockMessage), () => new MockMessage()),
@@ -142,9 +151,9 @@ namespace Tempest.Tests
 		[Test]
 		public void RegisterType()
 		{
-			this.factory.Register (new[] { typeof(MockMessage) });
+			this.factory.Register (p, new[] { typeof(MockMessage) });
 
-			Message m = this.factory.Create (1);
+			Message m = this.factory.Create (p, 1);
 			Assert.IsNotNull (m);
 			Assert.That (m, Is.TypeOf<MockMessage>());
 		}
@@ -152,23 +161,23 @@ namespace Tempest.Tests
 		[Test]
 		public void RegisterTypeWithCtor()
 		{
-			this.factory.Register (new []
+			this.factory.Register (p, new []
 			{
 				new KeyValuePair<Type, Func<Message>> (typeof(MockMessage), () => new MockMessage()), 
 				new KeyValuePair<Type, Func<Message>> (typeof(PrivateMessage), () => new PrivateMessage (2)), 
 				new KeyValuePair<Type, Func<Message>> (typeof(PrivateMessage), () => new PrivateMessage (3)), 
 			});
 
-			Message m = this.factory.Create (1);
+			Message m = this.factory.Create (p, 1);
 			Assert.IsNotNull (m);
 			Assert.That (m, Is.TypeOf<MockMessage>());
 
-			m = this.factory.Create (2);
+			m = this.factory.Create (p, 2);
 			Assert.IsNotNull (m);
 			Assert.AreEqual (2, m.MessageType);
 			Assert.That (m, Is.TypeOf<PrivateMessage>());
 
-			m = this.factory.Create (3);
+			m = this.factory.Create (p, 3);
 			Assert.IsNotNull (m);
 			Assert.AreEqual (3, m.MessageType);
 			Assert.That (m, Is.TypeOf<PrivateMessage>());

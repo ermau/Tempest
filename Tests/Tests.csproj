@@ -58,6 +58,7 @@
     <Compile Include="MutableLookupTest.cs" />
     <Compile Include="NetworkProviderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ProtocolTests.cs" />
     <Compile Include="ReaderWriterPairTests.cs" />
     <Compile Include="ResettingMemoryStream.cs" />
     <Compile Include="ServerTests.cs" />

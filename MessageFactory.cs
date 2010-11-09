@@ -43,38 +43,43 @@ namespace Tempest
 		/// <summary>
 		/// Discovers and registers message types from <paramref name="assembly"/>.
 		/// </summary>
+		/// <param name="protocol">The protocol to discover messages for.</param>
 		/// <param name="assembly">The assembly to discover message types from.</param>
 		/// <seealso cref="Discover()"/>
-		/// <exception cref="ArgumentNullException"><paramref name="assembly"/> is <c>null</c>.</exception>
-		public void Discover (Assembly assembly)
+		/// <exception cref="ArgumentNullException"><paramref name="assembly"/> or <paramref name="protocol"/> is <c>null</c>.</exception>
+		public void Discover (Protocol protocol, Assembly assembly)
 		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
 			if (assembly == null)
 				throw new ArgumentNullException ("assembly");
-
+			
 			Type mtype = typeof (Message);
-			RegisterTypes (assembly.GetTypes().Where (t => mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
+			RegisterTypes (protocol, assembly.GetTypes().Where (t => mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
 		}
 
 		/// <summary>
 		/// Discovers and registers messages from the calling assembly.
 		/// </summary>
-		/// <seealso cref="Discover(System.Reflection.Assembly)"/>
-		public void Discover ()
+		/// <seealso cref="Discover(Tempest.Protocol,System.Reflection.Assembly)"/>
+		/// <exception cref="ArgumentNullException"><paramref name="protocol"/> is <c>null</c>.</exception>
+		public void Discover (Protocol protocol)
 		{
-			Discover (Assembly.GetCallingAssembly());
+			Discover (protocol, Assembly.GetCallingAssembly());
 		}
 
 		/// <summary>
 		/// Registers types with a method of construction.
 		/// </summary>
+		/// <param name="protocol">Protocol to register messages for.</param>
 		/// <param name="messageTypes">The types to register.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="messageTypes"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="messageTypes"/> or <paramref name="protocol"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="messageTypes"/> contains non-implementations of <see cref="Message"/>
 		/// or <paramref name="messageTypes"/> contains duplicate <see cref="Message.MessageType"/>s.</exception>
-		public void Register (IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes)
+		public void Register (Protocol protocol, IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes)
 		{
-			RegisterTypesWithCtors (messageTypes, false);
+			RegisterTypesWithCtors (protocol, messageTypes, false);
 		}
 
 		#if !SAFE
@@ -82,40 +87,50 @@ namespace Tempest
 		/// <summary>
 		/// Registers <paramref name="messageTypes"/> with their parameter-less constructor.
 		/// </summary>
+		/// <param name="protocol">Protocol to register messages for.</param>
 		/// <param name="messageTypes">The types to register.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="messageTypes"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="protocol"/> or <paramref name="messageTypes"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="messageTypes"/> contains a type that is not an implementation of <see cref="Message"/>,
 		/// has no parameter-less constructor or contains duplicate <see cref="Message.MessageType"/>s.
 		/// </exception>
-		public void Register (IEnumerable<Type> messageTypes)
+		public void Register (Protocol protocol, IEnumerable<Type> messageTypes)
 		{
-			RegisterTypes (messageTypes, false);
+			RegisterTypes (protocol, messageTypes, false);
 		}
-
 		#endif
 
 		/// <summary>
 		/// Creates a new instance of the <paramref name="messageType"/>.
 		/// </summary>
-		/// <param name="messageType"></param>
+		/// <param name="protocol">The protocol to create a message for.</param>
+		/// <param name="messageType">The unique message identifier in the protocol for the desired message.</param>
 		/// <returns>A new instance of the <paramref name="messageType"/>, or <c>null</c> if this type has not been registered.</returns>
-		public Message Create (ushort messageType)
+		public Message Create (Protocol protocol, ushort messageType)
 		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
+
 			Func<Message> mCtor;
+			#if !NET_4
 			lock (this.messageCtors)
-			{
+			#endif
 				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
 					return null;
-			}
 
 			return mCtor();
 		}
 
+		#if !NET_4
 		private readonly Dictionary<ushort, Func<Message>> messageCtors = new Dictionary<ushort, Func<Message>>();
+		#else
+		private readonly ConcurrentDictionary<ushort, Func<Message>> messageCtors = new ConcurrentDictionary<ushort, Func<Message>>();
+		#endif
 
-		private void RegisterTypes (IEnumerable<Type> messageTypes, bool ignoreDupes)
+		private void RegisterTypes (Protocol protocol, IEnumerable<Type> messageTypes, bool ignoreDupes)
 		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
 			if (messageTypes == null)
 				throw new ArgumentNullException ("messageTypes");
 			
@@ -139,18 +154,21 @@ namespace Tempest
 				types.Add (t, (Func<Message>)dplessCtor.CreateDelegate (typeof (Func<Message>)));
 			}
 
-			RegisterTypesWithCtors (types, ignoreDupes);
+			RegisterTypesWithCtors (protocol, types, ignoreDupes);
 		}
 
-		private void RegisterTypesWithCtors (IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes, bool ignoreDupes)
+		private void RegisterTypesWithCtors (Protocol protocol, IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes, bool ignoreDupes)
 		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
 			if (messageTypes == null)
 				throw new ArgumentNullException ("messageTypes");
 
 			Type mtype = typeof (Message);
 
+			#if !NET_4
 			lock (messageCtors)
-			{
+			#endif
 				foreach (var kvp in messageTypes)
 				{
 					if (!mtype.IsAssignableFrom (kvp.Key))
@@ -167,7 +185,6 @@ namespace Tempest
 
 					this.messageCtors.Add (m.MessageType, kvp.Value);
 				}
-			}
 		}
 	}
 }

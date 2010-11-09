@@ -1,5 +1,5 @@
 ﻿//
-// NetworkProviderTests.cs
+// ProtocolTests.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -27,40 +27,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using NUnit.Framework;
-using Tempest.Providers.Network;
+using System.Text;
+using System.Threading;
 
 namespace Tempest.Tests
 {
-	[TestFixture]
-	public class NetworkProviderTests
-		: ConnectionProviderTests
+	public class ProtocolTests
 	{
-		protected override EndPoint EndPoint
+		private static int id;
+		public static Protocol GetTestProtocol()
 		{
-			get { return new IPEndPoint (IPAddress.Loopback, 42000); }
-		}
-
-		protected override MessageTypes MessageTypes
-		{
-			get { return MessageTypes.Reliable; }
-		}
-
-		protected override IConnectionProvider SetUp()
-		{
-			return new NetworkConnectionProvider (new IPEndPoint (IPAddress.Any, 42000), protocol.Id);
-		}
-
-		protected override IClientConnection GetNewClientConnection ()
-		{
-			return new NetworkClientConnection (protocol.Id);
-		}
-
-		[Test]
-		public void CtorNull()
-		{
-			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider (null, 0x1));
+			return Protocol.Register ((byte)Interlocked.Increment (ref id));
 		}
 	}
 }

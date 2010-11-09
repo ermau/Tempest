@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Protocol.cs" />
     <Compile Include="BufferValueReader.cs" />
     <Compile Include="BufferValueWriter.cs" />
     <Compile Include="Client.cs" />

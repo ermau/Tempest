@@ -31,6 +31,9 @@ using System.Reflection;
 #if !SAFE
 using System.Reflection.Emit;
 #endif
+#if NET_4
+using System.Collections.Concurrent;
+#endif
 
 namespace Tempest
 {
@@ -229,6 +232,7 @@ namespace Tempest
 
 					Message m = kvp.Value();
 					ProtocolMessageKey key = new ProtocolMessageKey (protocol, m.MessageType);
+					#if !NET_4
 					if (this.messageCtors.ContainsKey (key))
 					{
 						if (ignoreDupes)
@@ -236,8 +240,17 @@ namespace Tempest
 
 						throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
 					}
-
+					
 					this.messageCtors.Add (key, kvp.Value);
+					#else
+					if (!this.messageCtors.TryAdd (key, kvp.Value))
+					{
+						if (ignoreDupes)
+							continue;
+
+						throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
+					}
+					#endif
 				}
 		}
 	}

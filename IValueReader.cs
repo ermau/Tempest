@@ -116,7 +116,7 @@ namespace Tempest
 		/// <summary>
 		/// Finalizes buffer.
 		/// </summary>
-		/// <remarks>Connection providers should call this automatically when <see cref="Message.Deserialize"/> returns.</remarks>
+		/// <remarks>Connection providers should call this automatically when <see cref="Message.ReadPayload"/> returns.</remarks>
 		void Flush();
 	}
 }

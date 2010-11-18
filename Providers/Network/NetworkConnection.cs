@@ -105,7 +105,7 @@ namespace Tempest.Providers.Network
 			writer.WriteUInt16 (message.MessageType);
 			writer.WriteInt32 (0); // Length placeholder
 
-			message.Serialize (writer);
+			message.WritePayload (writer);
 			// Copy length in
 			Array.Copy (BitConverter.GetBytes (writer.Length - BaseHeaderLength), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
 
@@ -356,7 +356,7 @@ namespace Tempest.Providers.Network
 			this.rreader.Position = offset + BaseHeaderLength;
 
 			Message m = Message.Factory.Create (protocol, mtype);
-			m.Deserialize (this.rreader);
+			m.ReadPayload (this.rreader);
 
 			OnMessageReceived (new MessageEventArgs (this, m));
 		}

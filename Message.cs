@@ -75,18 +75,18 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Serializes the message with <paramref name="writer"/>.
+		/// Writes the message payload with <paramref name="writer"/>.
 		/// </summary>
-		/// <param name="writer">The writer to use for serialization.</param>
+		/// <param name="writer">The writer to use for writing the payload.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="writer"/> is <c>null</c>.</exception>
-		public abstract void Serialize (IValueWriter writer);
+		public abstract void WritePayload (IValueWriter writer);
 
 		/// <summary>
-		/// Deserializes the message with <paramref name="reader"/>.
+		/// Reads the message payload with <paramref name="reader"/>.
 		/// </summary>
-		/// <param name="reader">The writer to use for serialization.</param>
+		/// <param name="reader">The reader to use for reading the payload.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="reader"/> is <c>null</c>.</exception>
-		public abstract void Deserialize (IValueReader reader);
+		public abstract void ReadPayload (IValueReader reader);
 
 		static Message()
 		{

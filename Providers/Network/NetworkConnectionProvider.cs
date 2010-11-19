@@ -46,12 +46,19 @@ namespace Tempest.Providers.Network
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
 		/// </summary>
 		/// <param name="endPoint">The endpoint to listen to.</param>
-		public NetworkConnectionProvider (IPEndPoint endPoint)
+		/// <param name="maxConnections">Maximum number of connections to allow.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
+		public NetworkConnectionProvider (IPEndPoint endPoint, int maxConnections)
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
+			if (maxConnections <= 0)
+				throw new ArgumentOutOfRangeException ("maxConnections");
 
 			this.endPoint = endPoint;
+			MaxConnections = maxConnections;
+			this.serverConnections = new List<NetworkServerConnection> (maxConnections);
 		}
 		
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
@@ -60,6 +67,12 @@ namespace Tempest.Providers.Network
 		{
 			add { throw new NotSupportedException(); }
 			remove { throw new NotSupportedException(); }
+		}
+
+		public int MaxConnections
+		{
+			get;
+			private set;
 		}
 
 		public IPEndPoint EndPoint
@@ -148,7 +161,17 @@ namespace Tempest.Providers.Network
 		private readonly byte sanityByte;
 		private IPEndPoint endPoint;
 
-		private readonly List<NetworkServerConnection> serverConnections = new List<NetworkServerConnection> (100);
+		private readonly List<NetworkServerConnection> serverConnections;
+
+		internal void Disconnect (NetworkServerConnection connection)
+		{
+			lock (this.serverConnections)
+			{
+				bool atMax = (this.serverConnections.Count == MaxConnections);
+				if (this.serverConnections.Remove (connection) && atMax)
+					BeginAccepting (null);
+			}
+		}
 
 		private void Accept (object sender, SocketAsyncEventArgs e)
 		{
@@ -158,18 +181,24 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			var connection = new NetworkServerConnection (e.AcceptSocket);
+			var connection = new NetworkServerConnection (e.AcceptSocket, this);
 
-			BeginAccepting (e);
-
-			var made = new ConnectionMadeEventArgs (connection);
-			OnConnectionMade (made);
-			
-			if (made.Rejected)
-				connection.Dispose();
-			else
+			lock (this.serverConnections)
 			{
-				lock (this.serverConnections)
+				if (this.serverConnections.Count == MaxConnections)
+				{
+					connection.Dispose();
+					return;
+				}
+
+				BeginAccepting (e);
+
+				var made = new ConnectionMadeEventArgs (connection);
+				OnConnectionMade (made);
+
+				if (made.Rejected)
+					connection.Dispose();
+				else
 					this.serverConnections.Add (connection);
 			}
 		}

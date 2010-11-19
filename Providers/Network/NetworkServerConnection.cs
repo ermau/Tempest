@@ -33,10 +33,15 @@ namespace Tempest.Providers.Network
 	public class NetworkServerConnection
 		: NetworkConnection, IServerConnection
 	{
-		internal NetworkServerConnection (Socket reliableSocket)
+		
+
+		internal NetworkServerConnection (Socket reliableSocket, NetworkConnectionProvider provider)
 		{
+			this.provider = provider;
 			if (reliableSocket == null)
 				throw new ArgumentNullException ("reliableSocket");
+			if (provider == null)
+				throw new ArgumentNullException ("provider");
 
 			this.reliableSocket = reliableSocket;
 
@@ -65,8 +70,12 @@ namespace Tempest.Providers.Network
 			}
 		}
 
+		private readonly NetworkConnectionProvider provider;
+
 		private void Recycle()
 		{
+			this.provider.Disconnect (this);
+
 			if (this.reliableSocket == null)
 				return;
 

@@ -44,6 +44,11 @@ namespace Tempest.Tests
 			this.passTest = e => NAssert.Pass();
 		}
 
+		public AsyncTest (bool multiple)
+			: this (e => true, multiple)
+		{
+		}
+
 		public AsyncTest (Action<EventArgs> passTest)
 		{
 			if (passTest == null)

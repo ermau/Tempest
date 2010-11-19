@@ -33,8 +33,6 @@ namespace Tempest.Providers.Network
 	public class NetworkServerConnection
 		: NetworkConnection, IServerConnection
 	{
-		
-
 		internal NetworkServerConnection (Socket reliableSocket, NetworkConnectionProvider provider)
 		{
 			this.provider = provider;

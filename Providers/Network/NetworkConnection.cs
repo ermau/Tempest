@@ -196,7 +196,7 @@ namespace Tempest.Providers.Network
 		protected bool disposed;
 
 		private const int BaseHeaderLength = 7;
-		private int maxMessageLength = 104857600;
+		private int maxMessageLength = 1048576;
 
 		protected Socket reliableSocket;
 		protected byte[] rmessageBuffer = new byte[20480];

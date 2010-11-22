@@ -20,12 +20,12 @@ namespace Tempest.Tests
 			get; set;
 		}
 
-		public override void Serialize (IValueWriter writer)
+		public override void WritePayload (IValueWriter writer)
 		{
 			writer.WriteString (Encoding.UTF8, Content);
 		}
 
-		public override void Deserialize (IValueReader reader)
+		public override void ReadPayload (IValueReader reader)
 		{
 			Content = reader.ReadString (Encoding.UTF8);
 		}

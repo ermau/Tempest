@@ -105,11 +105,11 @@ namespace Tempest.Tests
 			{
 			}
 
-			public override void Serialize(IValueWriter writer)
+			public override void WritePayload(IValueWriter writer)
 			{
 			}
 
-			public override void Deserialize(IValueReader reader)
+			public override void ReadPayload(IValueReader reader)
 			{
 			}
 		}

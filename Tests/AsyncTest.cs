@@ -97,7 +97,7 @@ namespace Tempest.Tests
 			failed = true;
 		}
 
-		public void Assert (int timeout)
+		public void Assert (int timeout, bool failIfNotPassed = true)
 		{
 			DateTime start = DateTime.Now;
 			while (DateTime.Now.Subtract (start).TotalMilliseconds < timeout)
@@ -112,7 +112,7 @@ namespace Tempest.Tests
 				Thread.Sleep (1);
 			}
 
-			if (!Debugger.IsAttached)
+			if (failIfNotPassed)
 				NAssert.Fail ("Asynchronous operation timed out.");
 		}
 

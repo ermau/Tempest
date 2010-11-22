@@ -54,17 +54,29 @@ namespace Tempest.Providers.Network
 
 		public override void Disconnect (bool now)
 		{
-			if (this.reliableSocket != null && this.reliableSocket.Connected)
+			if (this.disconnecting)
+				return;
+
+			this.disconnecting = true;
+
+			if (this.reliableSocket == null || !this.reliableSocket.Connected)
+				return;
+
+			if (now)
 			{
-				var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
-				args.Completed += OnDisconnectCompleted;
-				if (!this.reliableSocket.DisconnectAsync (args))
-					OnDisconnectCompleted (this.reliableSocket, args);
+				this.reliableSocket.Shutdown (SocketShutdown.Both);
+				this.reliableSocket.Disconnect (true);
+
+				OnDisconnected (new ConnectionEventArgs(this));
+				this.disconnecting = false;
+				Recycle();
 			}
 			else
 			{
-				Recycle();
-				OnDisconnected (new ConnectionEventArgs (this));
+				var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
+				args.Completed += OnDisconnectCompleted;
+				if (!this.reliableSocket.DisconnectAsync(args))
+					OnDisconnectCompleted (this.reliableSocket, args);
 			}
 		}
 
@@ -87,10 +99,11 @@ namespace Tempest.Providers.Network
 
 		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
+			this.disconnecting = false;
 			Recycle();
 			OnDisconnected (new ConnectionEventArgs (this));
 		}
-
+		
 		internal int NetworkId
 		{
 			get; private set;

@@ -162,24 +162,36 @@ namespace Tempest.Providers.Network
 
 		public virtual void Disconnect (bool now)
 		{
-			if (this.reliableSocket != null && this.reliableSocket.Connected)
+			if (this.disconnecting)
+				return;
+
+			this.disconnecting = true;
+
+			if (this.reliableSocket == null || !this.reliableSocket.Connected)
+				return;
+
+			if (now)
+			{
+				this.reliableSocket.Shutdown (SocketShutdown.Both);
+				this.reliableSocket.Disconnect (true);
+				this.reliableSocket = null;
+				OnDisconnected (new ConnectionEventArgs(this));
+				this.disconnecting = false;
+			}
+			else
 			{
 				var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
 				args.Completed += OnDisconnectCompleted;
 				if (!this.reliableSocket.DisconnectAsync (args))
 					OnDisconnectCompleted (this.reliableSocket, args);
 			}
-			else
-			{
-				OnDisconnected (new ConnectionEventArgs (this));
-				this.reliableSocket = null;
-			}
 		}
 
 		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
-			OnDisconnected (new ConnectionEventArgs (this));
+			this.disconnecting = false;
 			this.reliableSocket = null;
+			OnDisconnected (new ConnectionEventArgs (this));
 		}
 
 		public void Dispose()
@@ -198,13 +210,14 @@ namespace Tempest.Providers.Network
 		private const int BaseHeaderLength = 7;
 		private int maxMessageLength = 1048576;
 
+		protected volatile bool disconnecting;
+		private readonly object socketStateSync = new object();
 		protected Socket reliableSocket;
+
 		protected byte[] rmessageBuffer = new byte[20480];
 		protected BufferValueReader rreader;
 		private int rmessageOffset = 0;
 		private int rmessageLoaded = 0;
-		private int currentRMessageLength = 0;
-		private bool disconnecting;
 
 		protected virtual void Dispose (bool disposing)
 		{

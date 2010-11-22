@@ -82,30 +82,15 @@ namespace Tempest.Tests
 				client.ConnectionFailed += test.FailHandler;
 				client.Connect (EndPoint, MessageTypes);
 
-				test.Assert (2000);
+				test.Assert (3000);
 			}
 
 			test = new AsyncTest();
+			provider.ConnectionMade += test.FailHandler;
 			client = GetNewClientConnection();
-			client.Disconnected += test.PassHandler;
 			client.Connect (EndPoint, MessageTypes);
 
-			test.Assert (2000);
-		}
-
-		[Test]
-		public void ConnectionLimitRejectingNewConnections()
-		{
-			ConnectionLimit();
-
-			AsyncTest test = new AsyncTest();
-
-			IClientConnection client = GetNewClientConnection();
-			client.Connected += test.FailHandler;
-			client.ConnectionFailed += test.PassHandler;
-			client.Connect (EndPoint, MessageTypes);
-
-			test.Assert (2000);
+			test.Assert (3000, false);
 		}
 
 		[Test]
@@ -118,18 +103,18 @@ namespace Tempest.Tests
 					connection = e.Connection;
 			};
 
-			ConnectionLimitRejectingNewConnections();
+			ConnectionLimit();
 
 			connection.Disconnect (true);
 
 			AsyncTest test  = new AsyncTest();
+			provider.ConnectionMade += test.PassHandler;
 
 			IClientConnection client = GetNewClientConnection();
-			client.Connected += test.PassHandler;
-			client.ConnectionFailed += test.FailHandler;
+			client.Disconnected += test.FailHandler;
 			client.Connect (EndPoint, MessageTypes);
 
-			test.Assert (2000);
+			test.Assert (3000);
 		}
 	}
 }

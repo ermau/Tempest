@@ -211,7 +211,6 @@ namespace Tempest.Providers.Network
 		private int maxMessageLength = 1048576;
 
 		protected volatile bool disconnecting;
-		private readonly object socketStateSync = new object();
 		protected Socket reliableSocket;
 
 		protected byte[] rmessageBuffer = new byte[20480];
@@ -263,6 +262,12 @@ namespace Tempest.Providers.Network
 				}
 
 				length = BitConverter.ToInt32 (buffer, messageOffset + 3) + BaseHeaderLength;
+				if (length > maxMessageLength)
+				{
+					Disconnect (true);
+					return;
+				}
+
 				if (remainingData < length)
 					break;
 

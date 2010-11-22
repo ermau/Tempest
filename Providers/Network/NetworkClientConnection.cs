@@ -66,11 +66,6 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			OnConnected (new ClientConnectionEventArgs (this));
-
-			if (!IsConnected)
-				return;
-
 			e.Completed -= ConnectCompleted;
 			e.Completed += ReliableReceiveCompleted;
 			e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
@@ -78,6 +73,8 @@ namespace Tempest.Providers.Network
 
 			if (!this.reliableSocket.ReceiveAsync (e))
 				ReliableReceiveCompleted (this.reliableSocket, e);
+
+			OnConnected (new ClientConnectionEventArgs(this));
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

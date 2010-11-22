@@ -201,7 +201,7 @@ namespace Tempest.Tests
 				e.Connection.MessageReceived += test.PassHandler;
 			};
 
-			c.Connected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Send (new MockMessage {Content = content}));
+			c.Connected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Send (new MockMessage { Content = content }));
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -221,15 +221,15 @@ namespace Tempest.Tests
 			var test = new AsyncTest(e =>
 			{
 				var me = (e as MessageEventArgs);
-				Assert.IsNotNull(me);
-				Assert.AreSame(me.Connection, connection);
+				Assert.IsNotNull (me);
+				Assert.AreSame (me.Connection, connection);
 
 				var msg = (me.Message as MockMessage);
-				Assert.IsNotNull(msg);
-				Assert.AreEqual(content, msg.Content);
+				Assert.IsNotNull (msg);
+				Assert.AreEqual (content, msg.Content);
 			});
 
-			this.provider.Start(MessageTypes);
+			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) =>
 			{
 				connection = e.Connection;
@@ -237,9 +237,9 @@ namespace Tempest.Tests
 			};
 
 			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
-			c.Connect(EndPoint, MessageTypes);
+			c.Connect (EndPoint, MessageTypes);
 
-			test.Assert(10000);
+			test.Assert (10000);
 		}
 
 		[Test]
@@ -457,6 +457,29 @@ namespace Tempest.Tests
 
 				c.Disconnect (true);
 				if (!wait.WaitOne (10000))
+					Assert.Fail ("Failed to disconnect.");
+			}
+		}
+
+		[Test]
+		public void DisconnectAndReconnectAsync()
+		{
+			AutoResetEvent wait = new AutoResetEvent (false);
+
+			var c = GetNewClientConnection();
+			c.Connected += (sender, e) => wait.Set();
+			c.Disconnected += (sender, e) => wait.Set();
+
+			this.provider.Start (MessageTypes);
+
+			for (int i = 0; i < 5; ++i)
+			{
+				c.Connect (EndPoint, MessageTypes);
+				if (!wait.WaitOne (10000))
+					Assert.Fail ("Failed to connect.");
+
+				c.Disconnect (false);
+				if (!wait.WaitOne(10000))
 					Assert.Fail ("Failed to disconnect.");
 			}
 		}

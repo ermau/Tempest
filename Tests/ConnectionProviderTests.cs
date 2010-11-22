@@ -323,7 +323,7 @@ namespace Tempest.Tests
 			this.provider.Start(MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
 			{
-				for (int i = 0; i < 10000000; ++i)
+				for (long i = 0; i < 100000000000; ++i)
 					e.Connection.Send (new MockMessage { Content = i.ToString() });
 			})).Start();
 

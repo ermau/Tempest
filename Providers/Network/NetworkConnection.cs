@@ -316,6 +316,12 @@ namespace Tempest.Providers.Network
 			this.rreader.Position = offset + BaseHeaderLength;
 
 			Message m = Message.Factory.Create (protocol, mtype);
+			if (m == null)
+			{
+				Disconnect (true);
+				return;
+			}
+
 			m.ReadPayload (this.rreader);
 
 			OnMessageReceived (new MessageEventArgs (this, m));

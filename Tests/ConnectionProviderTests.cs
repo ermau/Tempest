@@ -292,13 +292,46 @@ namespace Tempest.Tests
 			});
 
 			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage () { Content = content });
+			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
 
 			c.ConnectionFailed += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000000);
+		}
+
+		[Test]
+		public void StressServer()
+		{
+
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+
+			int message = -1;
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull(me);
+				Assert.AreSame (c, me.Connection);
+
+				Assert.AreEqual (Interlocked.Increment (ref message).ToString(), ((MockMessage)me.Message).Content);
+			});
+
+			this.provider.Start(MessageTypes);
+			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
+			{
+				for (int i = 0; i < 10000000; ++i)
+					e.Connection.Send (new MockMessage { Content = i.ToString() });
+			})).Start();
+
+			c.ConnectionFailed += test.FailHandler;
+			c.MessageReceived += test.PassHandler;
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (60000);
 		}
 
 		[Test]

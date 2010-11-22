@@ -135,13 +135,15 @@ namespace Tempest.Providers.Network
 				this.unreliableSocket = null;
 			}
 
+			List<NetworkServerConnection> connections;
 			lock (this.serverConnections)
 			{
-				foreach (NetworkServerConnection c in this.serverConnections)
-					c.Dispose();
-
+				connections = this.serverConnections.ToList();
 				this.serverConnections.Clear();
 			}
+			
+			foreach (NetworkServerConnection c in connections)
+				c.Dispose();
 		}
 
 		public void Dispose()
@@ -187,7 +189,7 @@ namespace Tempest.Providers.Network
 			{
 				if (this.serverConnections.Count == MaxConnections)
 				{
-					connection.Dispose();
+					connection.Disconnect (true);
 					return;
 				}
 

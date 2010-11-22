@@ -279,7 +279,7 @@ namespace Tempest.Providers.Network
 
 			if (loaded)
 			{
-				DeliverMessage (p, buffer, this.rmessageOffset, messageLength);
+				DeliverMessage (p, buffer, this.rmessageOffset);
 
 				int remaining = this.rmessageLoaded - messageAndHeaderLength;
 
@@ -311,7 +311,7 @@ namespace Tempest.Providers.Network
 
 						if (remaining > messageAndHeaderLength)
 						{
-							DeliverMessage (p, buffer, offset, messageLength);
+							DeliverMessage (p, buffer, offset);
 							offset += messageAndHeaderLength;
 							remaining -= messageAndHeaderLength;
 						}
@@ -349,7 +349,7 @@ namespace Tempest.Providers.Network
 				ReliableReceiveCompleted (sender, e);
 		}
 
-		private void DeliverMessage (Protocol protocol, byte[] buffer, int offset, int length)
+		private void DeliverMessage (Protocol protocol, byte[] buffer, int offset)
 		{
 			ushort mtype = BitConverter.ToUInt16 (buffer, offset + 1);
 

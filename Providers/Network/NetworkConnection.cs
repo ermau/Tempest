@@ -237,114 +237,56 @@ namespace Tempest.Providers.Network
 				sent (this, e);
 		}
 
+		private void BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader)
+		{
+			int length = 0;
+			while (remainingData > BaseHeaderLength)
+			{
+				Protocol p = Protocol.Get (buffer[messageOffset]);
+				if (p == null)
+				{
+					Disconnect (true);
+					return;
+				}
+
+				length = BitConverter.ToInt32 (buffer, messageOffset + 3) + BaseHeaderLength;
+				if (remainingData < length)
+					break;
+
+				DeliverMessage (p, buffer, messageOffset);
+				messageOffset += length;
+				bufferOffset += length;
+				remainingData -= length;
+			}
+
+			if ((buffer.Length - messageOffset) < length)
+			{
+				byte[] newBuffer = new byte[length];
+				Buffer.BlockCopy (buffer, messageOffset, newBuffer, 0, remainingData);
+				buffer = newBuffer;
+
+				bufferOffset = remainingData;
+				messageOffset = 0;
+				reader = new BufferValueReader (buffer, 0, buffer.Length);
+			}
+		}
+
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
 		{
-			int bytesTransferred = e.BytesTransferred;
-
-			if (bytesTransferred == 0 || e.SocketError != SocketError.Success)
+			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 			{
 				Disconnect (true);
 				return;
 			}
 
-			byte[] buffer = this.rmessageBuffer;
-			this.rmessageLoaded += bytesTransferred;
+			this.rmessageLoaded += e.BytesTransferred;
 
-			int messageLength = 0;
-			
-			if (this.currentRMessageLength == 0)
-			{
-				if (this.rmessageLoaded >= BaseHeaderLength)
-					this.currentRMessageLength = messageLength = BitConverter.ToInt32 (buffer, this.rmessageOffset + 3);
-			}
-			else
-				messageLength = this.currentRMessageLength;
-
-			int messageAndHeaderLength = messageLength + BaseHeaderLength;
-
-			if (messageLength >= this.maxMessageLength)
-			{
-				Disconnect (true);
-				return;
-			}
-
-			bool loaded = (messageLength != 0 && this.rmessageLoaded >= messageAndHeaderLength);
-
-			Protocol p = Protocol.Get (buffer[this.rmessageOffset]);
-			if (p == null)
-			{
-				Disconnect (true);
-				return;
-			}
-
-			if (loaded)
-			{
-				DeliverMessage (p, buffer, this.rmessageOffset);
-
-				int remaining = this.rmessageLoaded - messageAndHeaderLength;
-
-				if (remaining == 0)
-				{
-					e.SetBuffer(0, buffer.Length);
-					this.rmessageOffset = 0;
-					this.rmessageLoaded = 0;
-				}
-				else
-				{
-					int offset = 0;
-					while (remaining > 0)
-					{
-						offset = e.Offset + bytesTransferred - remaining;
-
-						if (remaining <= BaseHeaderLength)
-							break;
-
-						p = Protocol.Get (buffer[offset]);
-						if (p == null)
-						{
-							Disconnect (true);
-							return;
-						}
-
-						messageLength = BitConverter.ToInt16 (buffer, offset + 1);
-						messageAndHeaderLength = BaseHeaderLength + messageLength;
-
-						if (remaining > messageAndHeaderLength)
-						{
-							DeliverMessage (p, buffer, offset);
-							offset += messageAndHeaderLength;
-							remaining -= messageAndHeaderLength;
-						}
-					}
-
-					if (messageAndHeaderLength >= buffer.Length - offset)
-					{
-						Array.Copy (buffer, offset, buffer, 0, remaining);
-						this.rmessageOffset = 0;
-					}
-					else
-						this.rmessageOffset = offset;
-
-					this.rmessageLoaded = remaining;
-				}
-			}
-			else
-			{
-				if (messageAndHeaderLength > buffer.Length - this.rmessageOffset)
-				{
-					byte[] newBuffer = new byte[messageAndHeaderLength];
-					Array.Copy (buffer, this.rmessageOffset, newBuffer, 0, this.rmessageLoaded);
-					this.rreader = new BufferValueReader (newBuffer, BaseHeaderLength, newBuffer.Length);
-					this.rmessageBuffer = newBuffer;
-					this.rmessageOffset = 0;
-				}
-
-				e.SetBuffer (this.rmessageBuffer, this.rmessageLoaded, this.rmessageBuffer.Length - this.rmessageLoaded);
-			}
+			int bufferOffset = e.Offset;
+			BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader);
+			e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
 
 			if (!IsConnected)
 				return;
-
 			if (!this.reliableSocket.ReceiveAsync (e))
 				ReliableReceiveCompleted (sender, e);
 		}

@@ -279,13 +279,18 @@ namespace Tempest.Providers.Network
 
 			if ((buffer.Length - messageOffset) < length)
 			{
-				byte[] newBuffer = new byte[length];
+				byte[] newBuffer = buffer;
+				if (buffer.Length < length)
+				{
+					newBuffer = new byte[length];
+					reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);
+				}
+
 				Buffer.BlockCopy (buffer, messageOffset, newBuffer, 0, remainingData);
 				buffer = newBuffer;
 
 				bufferOffset = remainingData;
 				messageOffset = 0;
-				reader = new BufferValueReader (buffer, 0, buffer.Length);
 			}
 		}
 

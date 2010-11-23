@@ -337,14 +337,15 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void StressServer()
+		public void Stress()
 		{
 
 			var c = GetNewClientConnection();
 			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
 				Assert.Ignore();
 
-			int message = -1;
+			const int messages = 1000000;
+			int message = 0;
 
 			var test = new AsyncTest (e =>
 			{
@@ -352,21 +353,36 @@ namespace Tempest.Tests
 				Assert.IsNotNull(me);
 				Assert.AreSame (c, me.Connection);
 
-				Assert.AreEqual (Interlocked.Increment (ref message).ToString(), ((MockMessage)me.Message).Content);
-			});
+				Assert.AreEqual ((message++).ToString(), ((MockMessage)me.Message).Content);
+
+				if (message == messages)
+					Assert.Pass();
+			}, true);
 
 			this.provider.Start(MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
 			{
-				for (long i = 0; i < 100000000000; ++i)
-					e.Connection.Send (new MockMessage { Content = i.ToString() });
+				try
+				{
+					for (int i = 0; i < messages; ++i)
+					{
+						if (i > Int32.MaxValue)
+							System.Diagnostics.Debugger.Break();
+
+						e.Connection.Send (new MockMessage { Content = i.ToString() });
+					}
+				}
+				catch (Exception ex)
+				{
+					test.FailWith (ex);
+				}
 			})).Start();
 
 			c.ConnectionFailed += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
 			c.Connect (EndPoint, MessageTypes);
 
-			test.Assert (60000);
+			test.Assert (30000);
 		}
 
 		[Test]

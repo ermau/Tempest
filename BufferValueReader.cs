@@ -26,8 +26,8 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
+using Buff = System.Buffer;
 
 namespace Tempest
 {
@@ -88,7 +88,7 @@ namespace Tempest
 				throw new InternalBufferOverflowException();
 
 			byte[] b = new byte[len];
-			Array.Copy (this.buffer, this.Position, b, 0, len);
+			Buff.BlockCopy (this.buffer, this.Position, b, 0, len);
 			this.Position += len;
 
 			return b;
@@ -102,7 +102,7 @@ namespace Tempest
 				throw new ArgumentOutOfRangeException ("count", count, "Count from position is longer than buffer.");
 
 			byte[] b = new byte[count];
-			Array.Copy (this.buffer, this.Position, b, 0, count);
+			Buff.BlockCopy (this.buffer, this.Position, b, 0, count);
 			this.Position += count;
 
 			return b;

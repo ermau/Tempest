@@ -26,8 +26,8 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
+using Buff = System.Buffer;
 
 namespace Tempest
 {
@@ -86,9 +86,9 @@ namespace Tempest
 			
 			EnsureAdditionalCapacity (sizeof(int) + value.Length);
 
-			Array.Copy (BitConverter.GetBytes (value.Length), 0, this.buffer, this.position, sizeof(int));
+			Buff.BlockCopy (BitConverter.GetBytes (value.Length), 0, this.buffer, this.position, sizeof(int));
 			this.position += sizeof (int);
-			Array.Copy (value, 0, this.buffer, this.position, value.Length);
+			Buff.BlockCopy (value, 0, this.buffer, this.position, value.Length);
 			this.position += value.Length;
 		}
 
@@ -103,9 +103,9 @@ namespace Tempest
 			
 			EnsureAdditionalCapacity (sizeof(int) + length);
 
-			Array.Copy (BitConverter.GetBytes (length), 0, this.buffer, this.position, sizeof (int));
+			Buff.BlockCopy (BitConverter.GetBytes (length), 0, this.buffer, this.position, sizeof (int));
 			this.position += sizeof (int);
-			Array.Copy (value, offset, this.buffer, this.position, length);
+			Buff.BlockCopy (value, offset, this.buffer, this.position, length);
 			this.position += length;
 		}
 
@@ -113,7 +113,7 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (short));
 
-			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof(short));
+			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof(short));
 			this.position += sizeof (short);
 		}
 
@@ -121,7 +121,7 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (int));
 
-			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (int));
+			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (int));
 			this.position += sizeof (int);
 		}
 
@@ -129,7 +129,7 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (long));
 
-			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (long));
+			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (long));
 			this.position += sizeof (long);
 		}
 
@@ -137,7 +137,7 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (ushort));
 
-			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ushort));
+			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ushort));
 			this.position += sizeof (ushort);
 		}
 
@@ -145,7 +145,7 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (uint));
 
-			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (uint));
+			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (uint));
 			this.position += sizeof (uint);
 		}
 
@@ -153,7 +153,7 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof(ulong));
 
-			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ulong));
+			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ulong));
 			this.position += sizeof (ulong);
 		}
 
@@ -168,7 +168,7 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof(float));
 
-			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (float));
+			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (float));
 			this.position += sizeof (float);
 		}
 
@@ -176,7 +176,7 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (double));
 
-			Array.Copy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (double));
+			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (double));
 			this.position += sizeof (double);
 		}
 
@@ -188,9 +188,9 @@ namespace Tempest
 			byte[] data = encoding.GetBytes (value);
 			EnsureAdditionalCapacity (sizeof(int) + data.Length);
 
-			Array.Copy (BitConverter.GetBytes (data.Length), 0, this.buffer, this.position, sizeof(int));
+			Buff.BlockCopy (BitConverter.GetBytes (data.Length), 0, this.buffer, this.position, sizeof(int));
 			this.position += sizeof (int);
-			Array.Copy (data, 0, this.buffer, this.position, data.Length);
+			Buff.BlockCopy (data, 0, this.buffer, this.position, data.Length);
 			this.position += data.Length;
 		}
 
@@ -216,7 +216,7 @@ namespace Tempest
 				newLength *= 2;
 
 			byte[] newbuffer = new byte[newLength];
-			Array.Copy (this.buffer, 0, newbuffer, 0, Length);
+			Buff.BlockCopy (this.buffer, 0, newbuffer, 0, Length);
 			this.buffer = newbuffer;
 		}
 	}

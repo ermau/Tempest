@@ -107,7 +107,7 @@ namespace Tempest.Providers.Network
 
 			message.WritePayload (writer);
 			// Copy length in
-			Array.Copy (BitConverter.GetBytes (writer.Length - BaseHeaderLength), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
+			Buffer.BlockCopy (BitConverter.GetBytes (writer.Length - BaseHeaderLength), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
 
 			SocketAsyncEventArgs e = null;
 			#if NET_4

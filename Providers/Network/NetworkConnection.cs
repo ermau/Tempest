@@ -269,11 +269,14 @@ namespace Tempest.Providers.Network
 				}
 
 				if (remainingData < length)
+				{
+					bufferOffset += remainingData;
 					break;
+				}
 
 				DeliverMessage (p, buffer, messageOffset);
 				messageOffset += length;
-				bufferOffset += length;
+				bufferOffset = messageOffset;
 				remainingData -= length;
 			}
 

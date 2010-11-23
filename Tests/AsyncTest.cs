@@ -57,6 +57,12 @@ namespace Tempest.Tests
 			this.passTest = passTest;
 		}
 
+		public AsyncTest (Action<EventArgs> passTest, bool multiple)
+			: this (passTest)
+		{
+			this.multiple = multiple;
+		}
+
 		public AsyncTest (Func<EventArgs, bool> passPredicate)
 			: this (passPredicate, false)
 		{
@@ -95,6 +101,14 @@ namespace Tempest.Tests
 		public void FailHandler (object sender, EventArgs e)
 		{
 			failed = true;
+		}
+
+		public void FailWith (Exception ex)
+		{
+			if (ex == null)
+				ex = new ArgumentNullException ("ex");
+
+			this.exception = ex;
 		}
 
 		public void Assert (int timeout, bool failIfNotPassed = true)

@@ -469,11 +469,11 @@ namespace Tempest.Tests
 			{
 				c.Connect (EndPoint, MessageTypes);
 				if (!wait.WaitOne (10000))
-					Assert.Fail ("Failed to connect.");
+					Assert.Fail ("Failed to connect. Attempt {0}.", i);
 
 				c.Disconnect (true);
 				if (!wait.WaitOne (10000))
-					Assert.Fail ("Failed to disconnect.");
+					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
 			}
 		}
 
@@ -492,11 +492,11 @@ namespace Tempest.Tests
 			{
 				c.Connect (EndPoint, MessageTypes);
 				if (!wait.WaitOne (10000))
-					Assert.Fail ("Failed to connect.");
+					Assert.Fail ("Failed to connect. Attempt {0}.", i);
 
 				c.Disconnect (false);
 				if (!wait.WaitOne(10000))
-					Assert.Fail ("Failed to disconnect.");
+					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
 			}
 		}
 	}

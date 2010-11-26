@@ -51,6 +51,13 @@ namespace Tempest
 		public int Length
 		{
 			get { return this.position; }
+			set
+			{
+				if (value > this.position)
+					EnsureAdditionalCapacity (value - this.position);
+
+				this.position = value;
+			}
 		}
 
 		public byte[] Buffer

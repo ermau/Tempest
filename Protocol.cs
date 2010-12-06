@@ -151,8 +151,8 @@ namespace Tempest
 			if (protocol.id != 0)
 			{
 				#if !NET_4
-				lock (Protocols)
-					Protocols.Add (protocol.id, protocol);
+				lock (TempestProtocols)
+					TempestProtocols.Add (protocol.id, protocol);
 				#else
 				if (!TempestProtocols.TryAdd (protocol.id, protocol))
 					throw new InvalidOperationException ("Protocol already registered.");

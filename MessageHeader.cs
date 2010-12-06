@@ -1,5 +1,5 @@
 ﻿//
-// ProtocolTests.cs
+// MessageHeader.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -28,18 +28,39 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 
-namespace Tempest.Tests
+namespace Tempest
 {
-	public class ProtocolTests
+	public class MessageHeader
 	{
-		private static int id;
-		public static Protocol GetTestProtocol()
+		internal MessageHeader (Protocol protocol, Message message, int length)
 		{
-			var p = new Protocol ((byte)Interlocked.Increment (ref id));
-			Protocol.Register (p);
-			return p;
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
+			if (message == null)
+				throw new ArgumentNullException ("message");
+
+			Protocol = protocol;
+			Message = message;
+			Length = length;
+		}
+
+		public Protocol Protocol
+		{
+			get;
+			private set;
+		}
+
+		public Message Message
+		{
+			get;
+			private set;
+		}
+
+		public int Length
+		{
+			get;
+			private set;
 		}
 	}
 }

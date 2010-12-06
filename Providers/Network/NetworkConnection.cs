@@ -82,33 +82,24 @@ namespace Tempest.Providers.Network
 			if (!IsConnected)
 				return;
 
-			BufferValueWriter writer = null;
+			byte[] buffer = null;
 			#if NET_4
-			if (!writers.TryPop (out writer))
-				writer = new BufferValueWriter (new byte[20480]);
+			if (!buffers.TryPop (out buffer))
+				buffer = new byte[1024];
 			#else
-			if (writers.Count != 0)
+			if (buffers.Count != 0)
 			{
-				lock (writers)
+				lock (buffers)
 				{
-					if (writers.Count != 0)
-						writer = writers.Pop();
+					if (buffers.Count != 0)
+						buffer = buffers.Pop();
 				}
 			}
 
-			if (writer == null)
-				writer = new BufferValueWriter (new byte[20480]);
+			if (buffer == null)
+				buffer = new byte[1024];
 			#endif
 			
-
-			writer.WriteByte (message.Protocol.Id);
-			writer.WriteUInt16 (message.MessageType);
-			writer.WriteInt32 (0); // Length placeholder
-
-			message.WritePayload (writer);
-			// Copy length in
-			Buffer.BlockCopy (BitConverter.GetBytes (writer.Length - BaseHeaderLength), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
-
 			SocketAsyncEventArgs e = null;
 			#if NET_4
 			if (!writerAsyncArgs.TryPop (out e))
@@ -138,9 +129,11 @@ namespace Tempest.Providers.Network
 			}
 			#endif
 
-			e.SetBuffer (writer.Buffer, 0, writer.Length);
-			e.UserToken = new SendHolder { Writer = writer, Message = message };
-			writer.Flush();
+			int length;
+			buffer = message.Protocol.GetBytes (message, out length, buffer);
+
+			e.SetBuffer (buffer, 0, buffer.Length);
+			e.UserToken = new SendHolder { Buffer = buffer, Message = message };
 
 			if (!IsConnected)
 			{
@@ -150,9 +143,9 @@ namespace Tempest.Providers.Network
 				writerAsyncArgs.Push (e);
 
 				#if !NET_4
-				lock (writers)
+				lock (buffers)
 				#endif
-				writers.Push (writer);
+				buffers.Push (buffer);
 				return;
 			}
 
@@ -201,7 +194,7 @@ namespace Tempest.Providers.Network
 
 		private class SendHolder
 		{
-			public BufferValueWriter Writer;
+			public byte[] Buffer;
 			public Message Message;
 		}
 
@@ -254,14 +247,14 @@ namespace Tempest.Providers.Network
 			int length = 0;
 			while (remainingData > BaseHeaderLength)
 			{
-				Protocol p = Protocol.Get (buffer[messageOffset]);
-				if (p == null)
+				MessageHeader header = Protocol.FindHeader (buffer, bufferOffset, remainingData);
+				if (header == null)
 				{
 					Disconnect (true);
 					return;
 				}
 
-				length = BitConverter.ToInt32 (buffer, messageOffset + 3) + BaseHeaderLength;
+				length = header.Length;
 				if (length > maxMessageLength)
 				{
 					Disconnect (true);
@@ -274,7 +267,7 @@ namespace Tempest.Providers.Network
 					break;
 				}
 
-				DeliverMessage (p, buffer, messageOffset);
+				DeliverMessage (header, messageOffset);
 				messageOffset += length;
 				bufferOffset = messageOffset;
 				remainingData -= length;
@@ -283,30 +276,28 @@ namespace Tempest.Providers.Network
 			if (remainingData > 0)
 			{
 				byte[] newBuffer = new byte[buffer.Length];
-				reader = new BufferValueReader(newBuffer, 0, newBuffer.Length);
-				Buffer.BlockCopy(buffer, messageOffset, newBuffer, 0, remainingData);
-				buffer = newBuffer;
-				bufferOffset = remainingData;
-				messageOffset = 0;
-			}
-
-			return;
-
-			if ((buffer.Length - messageOffset) < length)
-			{
-				byte[] newBuffer = buffer;
-				if (buffer.Length < length)
-				{
-					newBuffer = new byte[length];
-					reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);
-				}
-
+				reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);
 				Buffer.BlockCopy (buffer, messageOffset, newBuffer, 0, remainingData);
 				buffer = newBuffer;
-
 				bufferOffset = remainingData;
 				messageOffset = 0;
 			}
+
+//			if ((buffer.Length - messageOffset) < length)
+//			{
+//				byte[] newBuffer = buffer;
+//				if (buffer.Length < length)
+//				{
+//					newBuffer = new byte[length];
+//					reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);
+//				}
+//
+//				Buffer.BlockCopy (buffer, messageOffset, newBuffer, 0, remainingData);
+//				buffer = newBuffer;
+//
+//				bufferOffset = remainingData;
+//				messageOffset = 0;
+//			}
 		}
 
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
@@ -329,22 +320,13 @@ namespace Tempest.Providers.Network
 				ReliableReceiveCompleted (sender, e);
 		}
 
-		private void DeliverMessage (Protocol protocol, byte[] buffer, int offset)
+		private void DeliverMessage (MessageHeader header, int offset)
 		{
-			ushort mtype = BitConverter.ToUInt16 (buffer, offset + 1);
-
 			this.rreader.Position = offset + BaseHeaderLength;
 
-			Message m = Message.Factory.Create (protocol, mtype);
-			if (m == null)
-			{
-				Disconnect (true);
-				return;
-			}
+			header.Message.ReadPayload (this.rreader);
 
-			m.ReadPayload (this.rreader);
-
-			OnMessageReceived (new MessageEventArgs (this, m));
+			OnMessageReceived (new MessageEventArgs (this, header.Message));
 		}
 
 		private void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
@@ -358,9 +340,9 @@ namespace Tempest.Providers.Network
 			SendHolder holder = (SendHolder)e.UserToken;
 			
 			#if !NET_4
-			lock (writers)
+			lock (buffers)
 			#endif
-			writers.Push (holder.Writer);
+			buffers.Push (holder.Buffer);
 
 			#if !NET_4
 			lock (writerAsyncArgs)
@@ -371,10 +353,10 @@ namespace Tempest.Providers.Network
 		}
 
 		#if NET_4
-		private static readonly ConcurrentStack<BufferValueWriter> writers = new ConcurrentStack<BufferValueWriter>();
+		private static readonly ConcurrentStack<byte[]> buffers = new ConcurrentStack<byte[]>();
 		private static readonly ConcurrentStack<SocketAsyncEventArgs> writerAsyncArgs = new ConcurrentStack<SocketAsyncEventArgs>();
 		#else
-		private static readonly Stack<BufferValueWriter> writers = new Stack<BufferValueWriter>();
+		private static readonly Stack<byte[]> buffers = new Stack<byte[]>();
 		private static readonly Stack<SocketAsyncEventArgs> writerAsyncArgs = new Stack<SocketAsyncEventArgs>();
 		#endif
 	}

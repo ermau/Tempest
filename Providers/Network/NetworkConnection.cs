@@ -32,6 +32,8 @@ using System.Net.Sockets;
 
 #if NET_4
 using System.Collections.Concurrent;
+using System.Threading;
+
 #endif
 
 namespace Tempest.Providers.Network
@@ -82,75 +84,73 @@ namespace Tempest.Providers.Network
 			if (!IsConnected)
 				return;
 
-			byte[] buffer = null;
+			SocketAsyncEventArgs eargs = null;
 			#if NET_4
-			if (!buffers.TryPop (out buffer))
-				buffer = new byte[1024];
-			#else
-			if (buffers.Count != 0)
+			if (!writerAsyncArgs.TryPop (out eargs))
 			{
-				lock (buffers)
+				while (eargs == null)
 				{
-					if (buffers.Count != 0)
-						buffer = buffers.Pop();
+					int count = bufferCount;
+					if (count == BufferLimit)
+					{
+						SpinWait wait = new SpinWait();
+						while (!writerAsyncArgs.TryPop (out eargs))
+							wait.SpinOnce();
+
+						eargs.AcceptSocket = null;
+					}
+					else if (count == Interlocked.CompareExchange (ref bufferCount, count + 1, count))
+					{
+						eargs = new SocketAsyncEventArgs();
+						eargs.Completed += ReliableSendCompleted;
+						eargs.SetBuffer (new byte[1024], 0, 1024);
+					}
 				}
 			}
-
-			if (buffer == null)
-				buffer = new byte[1024];
-			#endif
-			
-			SocketAsyncEventArgs e = null;
-			#if NET_4
-			if (!writerAsyncArgs.TryPop (out e))
-			{
-				e = new SocketAsyncEventArgs ();
-				e.Completed += ReliableSendCompleted;
-			}
 			else
-				e.AcceptSocket = null;
+				eargs.AcceptSocket = null;
 			#else
-			if (writerAsyncArgs.Count != 0)
+			while (eargs == null)
 			{
 				lock (writerAsyncArgs)
 				{
 					if (writerAsyncArgs.Count != 0)
 					{
-						e = writerAsyncArgs.Pop();
-						e.AcceptSocket = null;
+						eargs = writerAsyncArgs.Pop();
+						eargs.AcceptSocket = null;
+					}
+					else
+					{
+						if (bufferCount != BufferLimit)
+						{
+							bufferCount++;
+							eargs = new SocketAsyncEventArgs();
+							eargs.Completed += ReliableSendCompleted;
+							eargs.SetBuffer (new byte[1024], 0, 1024);
+						}
 					}
 				}
-			}
-
-			if (e == null)
-			{
-				e = new SocketAsyncEventArgs();
-				e.Completed += ReliableSendCompleted;
 			}
 			#endif
 
 			int length;
-			buffer = message.Protocol.GetBytes (message, out length, buffer);
+			byte[] buffer = message.Protocol.GetBytes (message, out length, eargs.Buffer);
 
-			e.SetBuffer (buffer, 0, length);
-			e.UserToken = new SendHolder { Buffer = buffer, Message = message };
+			eargs.SetBuffer (buffer, 0, length);
+			eargs.UserToken = message;
 
 			if (!IsConnected)
 			{
 				#if !NET_4
 				lock (writerAsyncArgs)
 				#endif
-				writerAsyncArgs.Push (e);
+				writerAsyncArgs.Push (eargs);
 
-				#if !NET_4
-				lock (buffers)
-				#endif
-				buffers.Push (buffer);
 				return;
 			}
 
-			if (!this.reliableSocket.SendAsync (e))
-				ReliableSendCompleted (this.reliableSocket, e);
+			if (!this.reliableSocket.SendAsync (eargs))
+				ReliableSendCompleted (this.reliableSocket, eargs);
 		}
 
 		public virtual void Disconnect (bool now)
@@ -190,12 +190,6 @@ namespace Tempest.Providers.Network
 		public void Dispose()
 		{
 			Dispose (true);
-		}
-
-		private class SendHolder
-		{
-			public byte[] Buffer;
-			public Message Message;
 		}
 
 		protected bool disposed;
@@ -337,26 +331,21 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			SendHolder holder = (SendHolder)e.UserToken;
-			
-			#if !NET_4
-			lock (buffers)
-			#endif
-			buffers.Push (holder.Buffer);
-
 			#if !NET_4
 			lock (writerAsyncArgs)
 			#endif
 			writerAsyncArgs.Push (e);
 
-			OnMessageSent (new MessageEventArgs (this, holder.Message));
+			OnMessageSent (new MessageEventArgs (this, (Message)e.UserToken));
 		}
 
+		// TODO: Better buffer limit
+		private static readonly int BufferLimit = Environment.ProcessorCount * 4;
+		private static int bufferCount = 0;
+
 		#if NET_4
-		private static readonly ConcurrentStack<byte[]> buffers = new ConcurrentStack<byte[]>();
 		private static readonly ConcurrentStack<SocketAsyncEventArgs> writerAsyncArgs = new ConcurrentStack<SocketAsyncEventArgs>();
 		#else
-		private static readonly Stack<byte[]> buffers = new Stack<byte[]>();
 		private static readonly Stack<SocketAsyncEventArgs> writerAsyncArgs = new Stack<SocketAsyncEventArgs>();
 		#endif
 	}

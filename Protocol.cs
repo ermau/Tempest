@@ -44,7 +44,7 @@ namespace Tempest
 	/// </remarks>
 	public class Protocol
 	{
-		private readonly byte id;
+		internal readonly byte id;
 
 		public Protocol (byte id)
 		{
@@ -66,6 +66,8 @@ namespace Tempest
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
+			if (buffer == null)
+				throw new ArgumentNullException ("buffer");
 
 			var writer = new BufferValueWriter (buffer);
 			writer.WriteByte (this.id);
@@ -83,6 +85,10 @@ namespace Tempest
 
 		public virtual MessageHeader GetHeader (byte[] buffer, int offset, int length)
 		{
+			if (buffer == null)
+				throw new ArgumentNullException ("buffer");
+			if (offset < 0 || length + offset > buffer.Length)
+				throw new ArgumentOutOfRangeException("offset and length must be within the size of the array");
 			if (length < TempestHeaderLength)
 				return null;
 			if (buffer[offset] != id)
@@ -109,6 +115,9 @@ namespace Tempest
 
 		public static MessageHeader FindHeader (byte[] buffer)
 		{
+			if (buffer == null)
+				throw new ArgumentNullException ("buffer");
+
 			return FindHeader (buffer, 0, buffer.Length);
 		}
 

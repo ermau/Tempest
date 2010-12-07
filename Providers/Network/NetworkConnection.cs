@@ -341,7 +341,7 @@ namespace Tempest.Providers.Network
 
 		// TODO: Better buffer limit
 		private static readonly int BufferLimit = Environment.ProcessorCount * 4;
-		private static int bufferCount = 0;
+		private static volatile int bufferCount = 0;
 
 		#if NET_4
 		private static readonly ConcurrentStack<SocketAsyncEventArgs> writerAsyncArgs = new ConcurrentStack<SocketAsyncEventArgs>();

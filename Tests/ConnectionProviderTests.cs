@@ -333,7 +333,7 @@ namespace Tempest.Tests
 			c.MessageReceived += test.PassHandler;
 			c.Connect (EndPoint, MessageTypes);
 
-			test.Assert (10000000);
+			test.Assert (30000);
 		}
 
 		[Test]
@@ -495,7 +495,7 @@ namespace Tempest.Tests
 					Assert.Fail ("Failed to connect. Attempt {0}.", i);
 
 				c.Disconnect (false);
-				if (!wait.WaitOne(10000))
+				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
 			}
 		}

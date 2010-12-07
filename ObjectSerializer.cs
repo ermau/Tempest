@@ -110,7 +110,7 @@ namespace Tempest
 				return reader.ReadDate();
 			else if (t == typeof(string))
 				return reader.ReadString (Encoding.UTF8);
-			else if (t.IsArray)
+			else if (t.IsArray || t == typeof(Array))
 			{
 				Type etype = t.GetElementType();
 				Array a = Array.CreateInstance (etype, reader.ReadInt32());
@@ -213,7 +213,7 @@ namespace Tempest
 				writer.WriteString (Encoding.UTF8, (string)value);
 				return;
 			}
-			else if (t.IsArray)
+			else if (t.IsArray || t == typeof(Array))
 			{
 				Array a = (Array)value;
 				writer.WriteInt32 (a.Length);

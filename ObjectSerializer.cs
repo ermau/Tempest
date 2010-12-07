@@ -95,8 +95,6 @@ namespace Tempest
 					return reader.ReadInt64();
 				if (t == typeof(ulong))
 					return reader.ReadUInt64();
-				if (t == typeof(short))
-					return reader.ReadString (Encoding.UTF8);
 				if (t == typeof(float))
 					return reader.ReadSingle();
 				if (t == typeof(double))

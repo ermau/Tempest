@@ -132,7 +132,7 @@ namespace Tempest.Providers.Network
 			int length;
 			buffer = message.Protocol.GetBytes (message, out length, buffer);
 
-			e.SetBuffer (buffer, 0, buffer.Length);
+			e.SetBuffer (buffer, 0, length);
 			e.UserToken = new SendHolder { Buffer = buffer, Message = message };
 
 			if (!IsConnected)

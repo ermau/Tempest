@@ -44,28 +44,22 @@ namespace Tempest.Tests
 			return p;
 		}
 
-		private static readonly Protocol Protocol = GetTestProtocol();
-		static ProtocolTests()
-		{
-			Message.Factory.Register (Protocol, new[] { typeof(MockMessage) });
-		}
-
 		[Test]
 		public void GetBytesNull()
 		{
 			int len;
-			Assert.Throws<ArgumentNullException> (() => Protocol.GetBytes (null, out len, new byte[10]));
-			Assert.Throws<ArgumentNullException> (() => Protocol.GetBytes (new MockMessage(), out len, null));
-			Assert.Throws<ArgumentNullException> (() => Protocol.GetBytes (null, out len));
+			Assert.Throws<ArgumentNullException> (() => MockProtocol.Instance.GetBytes (null, out len, new byte[10]));
+			Assert.Throws<ArgumentNullException> (() => MockProtocol.Instance.GetBytes (new MockMessage(), out len, null));
+			Assert.Throws<ArgumentNullException> (() => MockProtocol.Instance.GetBytes (null, out len));
 		}
 
 		[Test]
 		public void GetHeaderInvalid()
 		{
-			Assert.Throws<ArgumentNullException> (() => Protocol.GetHeader (null, 0, 10));
-			Assert.Throws<ArgumentOutOfRangeException> (() => Protocol.GetHeader (new byte[10], -1, 5));
-			Assert.Throws<ArgumentOutOfRangeException> (() => Protocol.GetHeader (new byte[10], 0, 11));
-			Assert.Throws<ArgumentOutOfRangeException> (() => Protocol.GetHeader (new byte[10], 6, 5));
+			Assert.Throws<ArgumentNullException> (() => MockProtocol.Instance.GetHeader (null, 0, 10));
+			Assert.Throws<ArgumentOutOfRangeException> (() => MockProtocol.Instance.GetHeader (new byte[10], -1, 5));
+			Assert.Throws<ArgumentOutOfRangeException> (() => MockProtocol.Instance.GetHeader (new byte[10], 0, 11));
+			Assert.Throws<ArgumentOutOfRangeException> (() => MockProtocol.Instance.GetHeader (new byte[10], 6, 5));
 		}
 
 		[Test]
@@ -75,15 +69,15 @@ namespace Tempest.Tests
 
 			BufferValueWriter writer = new BufferValueWriter (buffer);
 			writer.Length = 2;
-			writer.WriteByte (Protocol.id);
+			writer.WriteByte (MockProtocol.Instance.id);
 			writer.WriteUInt16 (new MockMessage().MessageType);
 			writer.WriteInt32 (8);
 			
-			Assert.IsNull (Protocol.GetHeader (buffer, 0, 5));
-			Assert.IsNull (Protocol.GetHeader (buffer, 1, 8));
+			Assert.IsNull (MockProtocol.Instance.GetHeader (buffer, 0, 5));
+			Assert.IsNull (MockProtocol.Instance.GetHeader (buffer, 1, 8));
 
 			Array.Clear (buffer, 0, 10);
-			Assert.IsNull (Protocol.GetHeader (buffer, 2, 8));
+			Assert.IsNull (MockProtocol.Instance.GetHeader (buffer, 2, 8));
 		}
 
 		[Test]
@@ -93,14 +87,14 @@ namespace Tempest.Tests
 
 			BufferValueWriter writer = new BufferValueWriter (buffer);
 			writer.Length = 2;
-			writer.WriteByte (Protocol.id);
+			writer.WriteByte (MockProtocol.Instance.id);
 			writer.WriteUInt16 (new MockMessage().MessageType);
 			writer.WriteInt32 (8);
 			writer.WriteByte (1);
 
-			MessageHeader header = Protocol.GetHeader (buffer, 2, 8);
+			MessageHeader header = MockProtocol.Instance.GetHeader (buffer, 2, 8);
 			Assert.IsNotNull (header);
-			Assert.AreEqual (Protocol, header.Protocol);
+			Assert.AreEqual (MockProtocol.Instance, header.Protocol);
 			Assert.AreEqual (8, header.Length);
 			Assert.AreEqual (typeof(MockMessage), header.Message.GetType());
 		}
@@ -110,7 +104,7 @@ namespace Tempest.Tests
 		{
 			Assert.Throws<ArgumentNullException> (() => Tempest.Protocol.FindHeader (null));
 			Assert.Throws<ArgumentNullException> (() => Tempest.Protocol.FindHeader (null, 0, 10));
-			Assert.Throws<ArgumentOutOfRangeException> (() => Tempest.Protocol.FindHeader (new byte[10], 0, 11));
+			Assert.Throws<ArgumentOutOfRangeException> (() => Protocol.FindHeader (new byte[10], 0, 11));
 			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocol.FindHeader (new byte[10], -1, 10));
 			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocol.FindHeader (new byte[10], 6, 5));
 		}

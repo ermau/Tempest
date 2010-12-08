@@ -43,6 +43,7 @@ namespace Tempest
 	/// receive the correct messages.
 	/// </remarks>
 	public class Protocol
+		: MessageFactory, IEquatable<Protocol>
 	{
 		internal readonly byte id;
 
@@ -106,13 +107,44 @@ namespace Tempest
 				return null;
 			}
 
-			Message msg = Message.Factory.Create (this, type);
+			Message msg = Create (type);
 			if (msg == null)
 				return null;
 
 			return new MessageHeader (this, msg, mlen);
 		}
 
+		public override bool Equals (object obj)
+		{
+			return Equals (obj as Protocol);
+		}
+
+		public bool Equals (Protocol other)
+		{
+			if (ReferenceEquals (null, other))
+				return false;
+			if (ReferenceEquals (this, other))
+				return true;
+
+			return (GetType() == other.GetType() && other.id == id);
+		}
+
+		public override int GetHashCode()
+		{
+			return (id != 0) ? id.GetHashCode() ^ GetType().GetHashCode() : GetType().GetHashCode();
+		}
+
+		public static bool operator == (Protocol left, Protocol right)
+		{
+			return Equals (left, right);
+		}
+
+		public static bool operator != (Protocol left, Protocol right)
+		{
+			return !Equals (left, right);
+		}
+
+		#region Statics
 		public static MessageHeader FindHeader (byte[] buffer)
 		{
 			if (buffer == null)
@@ -203,5 +235,6 @@ namespace Tempest
 			return p;
 		}
 		#endif
+		#endregion
 	}
 }

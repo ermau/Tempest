@@ -46,147 +46,81 @@ namespace Tempest
 		/// <summary>
 		/// Discovers and registers message types from <paramref name="assembly"/>.
 		/// </summary>
-		/// <param name="protocol">The protocol to discover messages for.</param>
 		/// <param name="assembly">The assembly to discover message types from.</param>
 		/// <seealso cref="Discover()"/>
 		/// <exception cref="ArgumentNullException"><paramref name="assembly"/> or <paramref name="protocol"/> is <c>null</c>.</exception>
-		public void Discover (Protocol protocol, Assembly assembly)
+		public void Discover (Assembly assembly)
 		{
-			if (protocol == null)
-				throw new ArgumentNullException ("protocol");
 			if (assembly == null)
 				throw new ArgumentNullException ("assembly");
 			
 			Type mtype = typeof (Message);
-			RegisterTypes (protocol, assembly.GetTypes().Where (t => mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
+			RegisterTypes (assembly.GetTypes().Where (t => mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
 		}
 
 		/// <summary>
 		/// Discovers and registers messages from the calling assembly.
 		/// </summary>
 		/// <seealso cref="Discover(Tempest.Protocol,System.Reflection.Assembly)"/>
-		/// <exception cref="ArgumentNullException"><paramref name="protocol"/> is <c>null</c>.</exception>
-		public void Discover (Protocol protocol)
+		public void Discover()
 		{
-			Discover (protocol, Assembly.GetCallingAssembly());
+			Discover (Assembly.GetCallingAssembly());
 		}
 
 		/// <summary>
 		/// Registers types with a method of construction.
 		/// </summary>
-		/// <param name="protocol">Protocol to register messages for.</param>
 		/// <param name="messageTypes">The types to register.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="messageTypes"/> or <paramref name="protocol"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="messageTypes"/> contains non-implementations of <see cref="Message"/>
 		/// or <paramref name="messageTypes"/> contains duplicate <see cref="Message.MessageType"/>s.</exception>
-		public void Register (Protocol protocol, IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes)
+		public void Register (IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes)
 		{
-			RegisterTypesWithCtors (protocol, messageTypes, false);
+			RegisterTypesWithCtors (messageTypes, false);
 		}
 
 		#if !SAFE
-
 		/// <summary>
 		/// Registers <paramref name="messageTypes"/> with their parameter-less constructor.
 		/// </summary>
-		/// <param name="protocol">Protocol to register messages for.</param>
 		/// <param name="messageTypes">The types to register.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="protocol"/> or <paramref name="messageTypes"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="messageTypes"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="messageTypes"/> contains a type that is not an implementation of <see cref="Message"/>,
 		/// has no parameter-less constructor or contains duplicate <see cref="Message.MessageType"/>s.
 		/// </exception>
-		public void Register (Protocol protocol, IEnumerable<Type> messageTypes)
+		public void Register (IEnumerable<Type> messageTypes)
 		{
-			RegisterTypes (protocol, messageTypes, false);
+			RegisterTypes (messageTypes, false);
 		}
 		#endif
 
 		/// <summary>
 		/// Creates a new instance of the <paramref name="messageType"/>.
 		/// </summary>
-		/// <param name="protocol">The protocol to create a message for.</param>
 		/// <param name="messageType">The unique message identifier in the protocol for the desired message.</param>
 		/// <returns>A new instance of the <paramref name="messageType"/>, or <c>null</c> if this type has not been registered.</returns>
-		public Message Create (Protocol protocol, ushort messageType)
+		public Message Create (ushort messageType)
 		{
-			if (protocol == null)
-				throw new ArgumentNullException ("protocol");
-
-			ProtocolMessageKey key = new ProtocolMessageKey (protocol, messageType);
-
 			Func<Message> mCtor;
 			#if !NET_4
 			lock (this.messageCtors)
 			#endif
-				if (!this.messageCtors.TryGetValue (key, out mCtor))
+				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
 					return null;
 
 			return mCtor();
 		}
 
 		#if !NET_4
-		private readonly Dictionary<ProtocolMessageKey, Func<Message>> messageCtors = new Dictionary<ProtocolMessageKey, Func<Message>>();
+		private readonly Dictionary<ushort, Func<Message>> messageCtors = new Dictionary<ushort, Func<Message>>();
 		#else
-		private readonly ConcurrentDictionary<ProtocolMessageKey, Func<Message>> messageCtors = new ConcurrentDictionary<ProtocolMessageKey, Func<Message>>();
+		private readonly ConcurrentDictionary<ushort, Func<Message>> messageCtors = new ConcurrentDictionary<ushort, Func<Message>>();
 		#endif
 
-		private class ProtocolMessageKey
-			: IEquatable<ProtocolMessageKey>
+		private void RegisterTypes (IEnumerable<Type> messageTypes, bool ignoreDupes)
 		{
-			private readonly Protocol protocol;
-			private readonly ushort messageId;
-
-			public ProtocolMessageKey (Protocol protocol, ushort messageId)
-			{
-				this.protocol = protocol;
-				this.messageId = messageId;
-			}
-
-			public override bool Equals(object obj)
-			{
-				if (ReferenceEquals (null, obj))
-					return false;
-				if (ReferenceEquals (this, obj))
-					return true;
-				if (obj.GetType() != typeof (ProtocolMessageKey))
-					return false;
-				return Equals ((ProtocolMessageKey)obj);
-			}
-
-			public bool Equals (ProtocolMessageKey other)
-			{
-				if (ReferenceEquals (null, other))
-					return false;
-				if (ReferenceEquals (this, other))
-					return true;
-				return Equals (other.protocol, protocol) && other.messageId == messageId;
-			}
-
-			public override int GetHashCode()
-			{
-				unchecked
-				{
-					return (protocol.GetHashCode() * 397) ^ messageId.GetHashCode();
-				}
-			}
-
-			public static bool operator == (ProtocolMessageKey left, ProtocolMessageKey right)
-			{
-				return Equals (left, right);
-			}
-
-			public static bool operator != (ProtocolMessageKey left, ProtocolMessageKey right)
-			{
-				return !Equals (left, right);
-			}
-		}
-
-		private void RegisterTypes (Protocol protocol, IEnumerable<Type> messageTypes, bool ignoreDupes)
-		{
-			if (protocol == null)
-				throw new ArgumentNullException ("protocol");
 			if (messageTypes == null)
 				throw new ArgumentNullException ("messageTypes");
 			
@@ -210,13 +144,11 @@ namespace Tempest
 				types.Add (t, (Func<Message>)dplessCtor.CreateDelegate (typeof (Func<Message>)));
 			}
 
-			RegisterTypesWithCtors (protocol, types, ignoreDupes);
+			RegisterTypesWithCtors (types, ignoreDupes);
 		}
 
-		private void RegisterTypesWithCtors (Protocol protocol, IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes, bool ignoreDupes)
+		private void RegisterTypesWithCtors (IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes, bool ignoreDupes)
 		{
-			if (protocol == null)
-				throw new ArgumentNullException ("protocol");
 			if (messageTypes == null)
 				throw new ArgumentNullException ("messageTypes");
 
@@ -231,9 +163,11 @@ namespace Tempest
 						throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
 
 					Message m = kvp.Value();
-					ProtocolMessageKey key = new ProtocolMessageKey (protocol, m.MessageType);
+					if (m.Protocol != (Protocol)this)
+						continue;
+
 					#if !NET_4
-					if (this.messageCtors.ContainsKey (key))
+					if (this.messageCtors.ContainsKey (m.MessageType))
 					{
 						if (ignoreDupes)
 							continue;
@@ -243,7 +177,7 @@ namespace Tempest
 					
 					this.messageCtors.Add (key, kvp.Value);
 					#else
-					if (!this.messageCtors.TryAdd (key, kvp.Value))
+					if (!this.messageCtors.TryAdd (m.MessageType, kvp.Value))
 					{
 						if (ignoreDupes)
 							continue;

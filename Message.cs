@@ -87,16 +87,5 @@ namespace Tempest
 		/// <param name="reader">The reader to use for reading the payload.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="reader"/> is <c>null</c>.</exception>
 		public abstract void ReadPayload (IValueReader reader);
-
-		static Message()
-		{
-			Factory = new MessageFactory();
-		}
-
-		public static MessageFactory Factory
-		{
-			get;
-			private set;
-		}
 	}
 }

@@ -157,11 +157,10 @@ namespace Tempest.Providers.Network
 		{
 			if (this.disconnecting)
 				return;
-
-			this.disconnecting = true;
-
 			if (this.reliableSocket == null || !this.reliableSocket.Connected)
 				return;
+
+			this.disconnecting = true;
 
 			if (now)
 			{

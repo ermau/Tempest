@@ -5,13 +5,21 @@ using System.Text;
 
 namespace Tempest.Tests
 {
+	public class MockProtocol
+	{
+		public static readonly Protocol Instance = ProtocolTests.GetTestProtocol();
+
+		static MockProtocol()
+		{
+			Message.Factory.Register (Instance, new[] { typeof(MockMessage) });
+		}
+	}
+
 	public class MockMessage
 		: Message
 	{
-		public static readonly Protocol MockProtocol = ProtocolTests.GetTestProtocol();
-
 		public MockMessage ()
-			: base (MockProtocol, 1)
+			: base (MockProtocol.Instance, 1)
 		{
 		}
 

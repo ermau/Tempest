@@ -37,11 +37,6 @@ namespace Tempest.Tests
 	{
 		protected IConnectionProvider provider;
 
-		static ConnectionProviderTests()
-		{
-			Message.Factory.Register (MockMessage.MockProtocol, new[] { typeof(MockMessage) });
-		}
-
 		[SetUp]
 		protected void Setup()
 		{
@@ -201,7 +196,7 @@ namespace Tempest.Tests
 				e.Connection.MessageReceived += test.PassHandler;
 			};
 
-			c.Connected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Send (new MockMessage { Content = content }));
+			c.Connected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Send (new MockMessage() { Content = content }));
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -236,7 +231,7 @@ namespace Tempest.Tests
 				e.Connection.MessageReceived += test.PassHandler;
 			};
 
-			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
+			c.Connected += (sender, e) => c.Send (new MockMessage() { Content = content });
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -265,7 +260,7 @@ namespace Tempest.Tests
 			this.provider.Start (MessageTypes);
 
 			c.MessageSent += test.PassHandler;
-			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
+			c.Connected += (sender, e) => c.Send (new MockMessage() { Content = content });
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -292,7 +287,7 @@ namespace Tempest.Tests
 			});
 
 			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
+			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage() { Content = content });
 
 			c.ConnectionFailed += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
@@ -327,7 +322,7 @@ namespace Tempest.Tests
 			});
 
 			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
+			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage() { Content = content });
 
 			c.ConnectionFailed += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
@@ -339,12 +334,11 @@ namespace Tempest.Tests
 		[Test]
 		public void Stress()
 		{
-
 			var c = GetNewClientConnection();
 			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
 				Assert.Ignore();
 
-			const int messages = 1000000;
+			const int messages = 10000;
 			int message = 0;
 
 			var test = new AsyncTest (e =>

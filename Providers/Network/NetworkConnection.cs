@@ -240,7 +240,7 @@ namespace Tempest.Providers.Network
 			int length = 0;
 			while (remainingData > BaseHeaderLength)
 			{
-				MessageHeader header = Protocol.FindHeader (buffer, bufferOffset, remainingData);
+				MessageHeader header = Protocol.FindHeader (buffer, messageOffset, remainingData);
 				if (header == null)
 				{
 					Disconnect (true);
@@ -268,7 +268,7 @@ namespace Tempest.Providers.Network
 
 			if (remainingData > 0)
 			{
-				byte[] newBuffer = new byte[buffer.Length];
+				byte[] newBuffer = new byte[(length > buffer.Length) ? length : buffer.Length];
 				reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);
 				Buffer.BlockCopy (buffer, messageOffset, newBuffer, 0, remainingData);
 				buffer = newBuffer;

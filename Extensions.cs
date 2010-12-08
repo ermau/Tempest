@@ -26,10 +26,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 
 namespace Tempest
 {
@@ -78,7 +74,7 @@ namespace Tempest
 			serializer.Serialize (writer, value);
 		}
 
-		private static ObjectSerializer GetSerializer(Type type)
+		private static ObjectSerializer GetSerializer (Type type)
 		{
 			ObjectSerializer serializer;
 			#if NET_4

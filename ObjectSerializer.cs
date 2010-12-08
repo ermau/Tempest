@@ -32,7 +32,7 @@ using System.Text;
 
 namespace Tempest
 {
-	public class ObjectSerializer
+	internal class ObjectSerializer
 	{
 		private readonly Type type;
 
@@ -42,6 +42,8 @@ namespace Tempest
 				throw new ArgumentNullException ("type");
 
 			this.type = type;
+
+			GenerateSerialization();
 		}
 
 		public void Serialize (IValueWriter writer, object obj)
@@ -49,7 +51,7 @@ namespace Tempest
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
 
-			SafeSerializer (writer, obj);
+			serializer (writer, obj);
 		}
 
 		public T Deserialize<T> (IValueReader reader)
@@ -65,7 +67,18 @@ namespace Tempest
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			return SafeDeserialize (reader);
+			return deserializer (reader);
+		}
+
+		private Func<IValueReader, object> deserializer;
+		private Action<IValueWriter, object> serializer;
+
+		private void GenerateSerialization()
+		{
+			//#if SAFE
+			deserializer = SafeDeserialize;
+			serializer = SafeSerializer;
+			//#endif
 		}
 
 		private object SafeDeserialize (IValueReader reader)

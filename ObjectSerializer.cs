@@ -30,6 +30,10 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
+#if !SAFE
+using System.Reflection.Emit;
+#endif
+
 namespace Tempest
 {
 	internal class ObjectSerializer
@@ -81,12 +85,27 @@ namespace Tempest
 			//#endif
 		}
 
+//		#if !SAFE
+//		private Func<IValueReader, object> CreateUnsafeSerializer()
+//		{
+//			
+//		}
+//		#endif
+
 		private object SafeDeserialize (IValueReader reader)
 		{
 			var t = this.type;
 
-			if (t.IsClass && !reader.ReadBool())
-				return null;
+			if (t.IsClass)
+			{
+				if (!reader.ReadBool())
+					return null;
+
+				string typeName = reader.ReadString (Encoding.UTF8);
+				t = Type.GetType (typeName);
+				if (!this.type.IsAssignableFrom (t))
+					return null;
+			}
 
 			if (t.IsPrimitive)
 			{
@@ -183,7 +202,10 @@ namespace Tempest
 			Type t = this.type;
 
 			if (t.IsClass)
+			{
 				writer.WriteBool (true);
+				writer.WriteString (Encoding.UTF8, String.Format ("{0}, {1}", t.FullName, t.Assembly.GetName().Name));
+			}
 
 			if (t.IsPrimitive)
 			{

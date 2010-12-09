@@ -85,6 +85,47 @@ namespace Tempest.Tests
 			Assert.IsNull (readvalue.Child);
 		}
 
+		[Test]
+		public void MostDerived()
+		{
+			object[] values = new object[2];
+			values[0] = new SerializingTester {Text = "text", Number = 5};
+			values[1] = new MoreDerivedSerializingTester {Text = "text2", Extra = "extra", Number = 42};
+
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter(buffer);
+			
+			writer.Write (values);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			object[] values2 = reader.Read<object[]>();
+
+			Assert.IsNotNull (values2);
+			Assert.AreEqual (values.Length, values2.Length);
+
+			Assert.IsInstanceOf (typeof(SerializingTester), values2[0]);
+			Assert.IsInstanceOf (typeof(MoreDerivedSerializingTester), values2[1]);
+
+			SerializingTester tester = (SerializingTester)values2[0];
+			Assert.AreEqual ("text", tester.Text);
+			Assert.AreEqual (5, tester.Number);
+
+			MoreDerivedSerializingTester tester2 = (MoreDerivedSerializingTester)values2[1];
+			Assert.AreEqual ("text2", tester2.Text);
+			Assert.AreEqual ("extra", tester2.Extra);
+			Assert.AreEqual (42, tester2.Number);
+		}
+
+		public class MoreDerivedSerializingTester
+			: SerializingTester
+		{
+			public string Extra
+			{
+				get; set;
+			}
+		}
+
 		public class SerializingTester
 		{
 			public SerializingTester()

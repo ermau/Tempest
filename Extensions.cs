@@ -104,12 +104,11 @@ namespace Tempest
 		}
 
 		public static T Read<T> (this IValueReader reader)
-			where T : new()
 		{
 			return (T)reader.Read (typeof (T));
 		}
 
-		internal static object Read (this IValueReader reader, Type type)
+		public static object Read (this IValueReader reader, Type type)
 		{
 			if (reader == null)
 				throw new ArgumentNullException ("reader");

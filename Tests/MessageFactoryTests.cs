@@ -43,6 +43,7 @@ namespace Tempest.Tests
 			protocol = MockProtocol.Instance;
 		}
 
+		#if !SAFE
 		[Test]
 		public void DiscoverNull()
 		{
@@ -77,6 +78,7 @@ namespace Tempest.Tests
 			Message m = protocol.Create (1);
 			Assert.IsNull (m);
 		}
+		#endif
 
 		[Test]
 		public void RegisterNull()

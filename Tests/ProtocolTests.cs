@@ -66,7 +66,7 @@ namespace Tempest.Tests
 		public void GetHeaderNoMatch()
 		{
 			Protocol p = MockProtocol.Instance;
-			p.Discover();
+			p.Register (new [] { new KeyValuePair<Type, Func<Message>> (typeof(MockMessage), () => new MockMessage()) });
 
 			byte[] buffer = new byte[10];
 
@@ -87,7 +87,7 @@ namespace Tempest.Tests
 		public void GetHeader()
 		{
 			Protocol p = MockProtocol.Instance;
-			p.Discover();
+			p.Register (new [] { new KeyValuePair<Type, Func<Message>> (typeof(MockMessage), () => new MockMessage()) });
 
 			byte[] buffer = new byte[10];
 

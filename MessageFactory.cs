@@ -43,6 +43,7 @@ namespace Tempest
 		{
 		}
 
+		#if !SAFE
 		/// <summary>
 		/// Discovers and registers message types from <paramref name="assembly"/>.
 		/// </summary>
@@ -66,6 +67,7 @@ namespace Tempest
 		{
 			Discover (Assembly.GetCallingAssembly());
 		}
+		#endif
 
 		/// <summary>
 		/// Registers types with a method of construction.
@@ -119,33 +121,35 @@ namespace Tempest
 		private readonly ConcurrentDictionary<ushort, Func<Message>> messageCtors = new ConcurrentDictionary<ushort, Func<Message>>();
 		#endif
 
+		#if !SAFE
 		private void RegisterTypes (IEnumerable<Type> messageTypes, bool ignoreDupes)
 		{
-			if (messageTypes == null)
-				throw new ArgumentNullException ("messageTypes");
+		    if (messageTypes == null)
+		        throw new ArgumentNullException ("messageTypes");
 			
-			Type mtype = typeof (Message);
+		    Type mtype = typeof (Message);
 
-			Dictionary<Type, Func<Message>> types = new Dictionary<Type, Func<Message>>();
-			foreach (Type t in messageTypes)
-			{
-				if (!mtype.IsAssignableFrom (t))
-					throw new ArgumentException (String.Format ("{0} is not an implementation of Message", t.Name), "messageTypes");
+		    Dictionary<Type, Func<Message>> types = new Dictionary<Type, Func<Message>>();
+		    foreach (Type t in messageTypes)
+		    {
+		        if (!mtype.IsAssignableFrom (t))
+		            throw new ArgumentException (String.Format ("{0} is not an implementation of Message", t.Name), "messageTypes");
 
-				ConstructorInfo plessCtor = t.GetConstructor (Type.EmptyTypes);
-				if (plessCtor == null)
-					throw new ArgumentException (String.Format ("{0} has no parameter-less constructor", t.Name), "messageTypes");
+		        ConstructorInfo plessCtor = t.GetConstructor (Type.EmptyTypes);
+		        if (plessCtor == null)
+		            throw new ArgumentException (String.Format ("{0} has no parameter-less constructor", t.Name), "messageTypes");
 
-				var dplessCtor = new DynamicMethod ("plessCtor", mtype, Type.EmptyTypes);
-				var il = dplessCtor.GetILGenerator();
-				il.Emit (OpCodes.Newobj, plessCtor);
-				il.Emit (OpCodes.Ret);
+		        var dplessCtor = new DynamicMethod ("plessCtor", mtype, Type.EmptyTypes);
+		        var il = dplessCtor.GetILGenerator();
+		        il.Emit (OpCodes.Newobj, plessCtor);
+		        il.Emit (OpCodes.Ret);
 
-				types.Add (t, (Func<Message>)dplessCtor.CreateDelegate (typeof (Func<Message>)));
-			}
+		        types.Add (t, (Func<Message>)dplessCtor.CreateDelegate (typeof (Func<Message>)));
+		    }
 
-			RegisterTypesWithCtors (types, ignoreDupes);
+		    RegisterTypesWithCtors (types, ignoreDupes);
 		}
+		#endif
 
 		private void RegisterTypesWithCtors (IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes, bool ignoreDupes)
 		{

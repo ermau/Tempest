@@ -240,7 +240,7 @@ namespace Tempest.Providers.Network
 			int length = 0;
 			while (remainingData > BaseHeaderLength)
 			{
-				MessageHeader header = Protocol.FindHeader (buffer, messageOffset, remainingData);
+				MessageHeader header = Protocols.FindHeader (buffer, messageOffset, remainingData);
 				if (header == null)
 				{
 					Disconnect (true);

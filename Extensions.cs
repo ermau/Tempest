@@ -25,7 +25,12 @@
 // THE SOFTWARE.
 
 using System;
+
+#if NET_4
 using System.Collections.Concurrent;
+#else
+using System.Collections.Generic;
+#endif
 
 namespace Tempest
 {

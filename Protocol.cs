@@ -27,10 +27,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-#if NET_4
-using System.Collections.Concurrent;
-#endif
-
 namespace Tempest
 {
 	/// <summary>
@@ -43,6 +39,7 @@ namespace Tempest
 	/// receive the correct messages.
 	/// </remarks>
 	public class Protocol
+		: MessageFactory, IEquatable<Protocol>
 	{
 		internal readonly byte id;
 
@@ -106,102 +103,43 @@ namespace Tempest
 				return null;
 			}
 
-			Message msg = Message.Factory.Create (this, type);
+			Message msg = Create (type);
 			if (msg == null)
 				return null;
 
 			return new MessageHeader (this, msg, mlen);
 		}
 
-		public static MessageHeader FindHeader (byte[] buffer)
+		public override bool Equals (object obj)
 		{
-			if (buffer == null)
-				throw new ArgumentNullException ("buffer");
-
-			return FindHeader (buffer, 0, buffer.Length);
+			return Equals (obj as Protocol);
 		}
 
-		public static MessageHeader FindHeader (byte[] buffer, int offset, int length)
+		public bool Equals (Protocol other)
 		{
-			if (buffer == null)
-				throw new ArgumentNullException ("buffer");
-			if (offset + length > buffer.Length || offset < 0)
-				throw new ArgumentOutOfRangeException ("Offset and length fall within the size of the buffer");
+			if (ReferenceEquals (null, other))
+				return false;
+			if (ReferenceEquals (this, other))
+				return true;
 
-			Protocol p = Get (buffer[offset]);
-			if (p != null)
-			{
-				MessageHeader header = p.GetHeader (buffer, offset, length);
-				if (header != null)
-					return header;
-			}
-
-			lock (CustomProtocols)
-			{
-				for (int i = 0; i < CustomProtocols.Count; ++i)
-				{
-					MessageHeader header = CustomProtocols[i].GetHeader (buffer, offset, length);
-					if (header != null)
-						return header;
-				}
-			}
-
-			return null;
+			return (GetType() == other.GetType() && other.id == id);
 		}
 
-		/// <summary>
-		/// Registers <paramref name="protocol"/>.
-		/// </summary>
-		public static void Register (Protocol protocol)
+		public override int GetHashCode()
 		{
-			if (protocol == null)
-				throw new ArgumentNullException ("protocol");
+			return (id != 0) ? id.GetHashCode() ^ GetType().GetHashCode() : GetType().GetHashCode();
+		}
 
-			if (protocol.id != 0)
-			{
-				#if !NET_4
-				lock (TempestProtocols)
-					TempestProtocols.Add (protocol.id, protocol);
-				#else
-				if (!TempestProtocols.TryAdd (protocol.id, protocol))
-					throw new InvalidOperationException ("Protocol already registered.");
-				#endif
-			}
-			else
-			{
-				lock (CustomProtocols)
-					CustomProtocols.Add (protocol);
-			}
+		public static bool operator == (Protocol left, Protocol right)
+		{
+			return Equals (left, right);
+		}
+
+		public static bool operator != (Protocol left, Protocol right)
+		{
+			return !Equals (left, right);
 		}
 		
 		private const int TempestHeaderLength = 7;
-
-		private static readonly List<Protocol> CustomProtocols = new List<Protocol>();
-		#if !NET_4
-		private static readonly Dictionary<byte, Protocol> TempestProtocols = new Dictionary<byte, Protocol>();
-
-		public static Protocol Get (byte id)
-		{
-			Protocol p;
-			lock (TempestProtocols)
-			{
-				if (!TempestProtocols.TryGetValue (id, out p))
-					return null;
-			}
-
-			return p;
-		}
-		#else
-		private static readonly ConcurrentDictionary<byte, Protocol> TempestProtocols = new ConcurrentDictionary<byte, Protocol>();
-
-		public static Protocol Get (byte id)
-		{
-			Protocol p;
-			if (!TempestProtocols.TryGetValue (id, out p))
-				return null;
-
-			return p;
-		}
-		#endif
 	}
 }

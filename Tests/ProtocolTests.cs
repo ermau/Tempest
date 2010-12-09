@@ -36,11 +36,11 @@ namespace Tempest.Tests
 	[TestFixture]
 	public class ProtocolTests
 	{
-		private static int id;
+		private static int id = 2;
 		public static Protocol GetTestProtocol()
 		{
 			var p = new Protocol ((byte)Interlocked.Increment (ref id));
-			Protocol.Register (p);
+			Protocols.Register (p);
 			return p;
 		}
 
@@ -65,36 +65,42 @@ namespace Tempest.Tests
 		[Test]
 		public void GetHeaderNoMatch()
 		{
+			Protocol p = MockProtocol.Instance;
+			p.Register (new [] { new KeyValuePair<Type, Func<Message>> (typeof(MockMessage), () => new MockMessage()) });
+
 			byte[] buffer = new byte[10];
 
 			BufferValueWriter writer = new BufferValueWriter (buffer);
 			writer.Length = 2;
-			writer.WriteByte (MockProtocol.Instance.id);
+			writer.WriteByte (p.id);
 			writer.WriteUInt16 (new MockMessage().MessageType);
 			writer.WriteInt32 (8);
 			
-			Assert.IsNull (MockProtocol.Instance.GetHeader (buffer, 0, 5));
-			Assert.IsNull (MockProtocol.Instance.GetHeader (buffer, 1, 8));
+			Assert.IsNull (p.GetHeader (buffer, 0, 5));
+			Assert.IsNull (p.GetHeader (buffer, 1, 8));
 
 			Array.Clear (buffer, 0, 10);
-			Assert.IsNull (MockProtocol.Instance.GetHeader (buffer, 2, 8));
+			Assert.IsNull (p.GetHeader (buffer, 2, 8));
 		}
 
 		[Test]
 		public void GetHeader()
 		{
+			Protocol p = MockProtocol.Instance;
+			p.Register (new [] { new KeyValuePair<Type, Func<Message>> (typeof(MockMessage), () => new MockMessage()) });
+
 			byte[] buffer = new byte[10];
 
 			BufferValueWriter writer = new BufferValueWriter (buffer);
 			writer.Length = 2;
-			writer.WriteByte (MockProtocol.Instance.id);
+			writer.WriteByte (p.id);
 			writer.WriteUInt16 (new MockMessage().MessageType);
 			writer.WriteInt32 (8);
 			writer.WriteByte (1);
-
-			MessageHeader header = MockProtocol.Instance.GetHeader (buffer, 2, 8);
+			
+			MessageHeader header = p.GetHeader (buffer, 2, 8);
 			Assert.IsNotNull (header);
-			Assert.AreEqual (MockProtocol.Instance, header.Protocol);
+			Assert.AreEqual (p, header.Protocol);
 			Assert.AreEqual (8, header.Length);
 			Assert.AreEqual (typeof(MockMessage), header.Message.GetType());
 		}
@@ -102,11 +108,11 @@ namespace Tempest.Tests
 		[Test]
 		public void FindHeaderInvalid()
 		{
-			Assert.Throws<ArgumentNullException> (() => Tempest.Protocol.FindHeader (null));
-			Assert.Throws<ArgumentNullException> (() => Tempest.Protocol.FindHeader (null, 0, 10));
-			Assert.Throws<ArgumentOutOfRangeException> (() => Protocol.FindHeader (new byte[10], 0, 11));
-			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocol.FindHeader (new byte[10], -1, 10));
-			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocol.FindHeader (new byte[10], 6, 5));
+			Assert.Throws<ArgumentNullException> (() => Tempest.Protocols.FindHeader (null));
+			Assert.Throws<ArgumentNullException> (() => Tempest.Protocols.FindHeader (null, 0, 10));
+			Assert.Throws<ArgumentOutOfRangeException> (() => Protocols.FindHeader (new byte[10], 0, 11));
+			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocols.FindHeader (new byte[10], -1, 10));
+			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocols.FindHeader (new byte[10], 6, 5));
 		}
 	}
 }

@@ -40,8 +40,8 @@ namespace Tempest.Tests
 		static MockProtocol()
 		{
 			var p = Instance;
-			((MessageFactory)p).Register (new[] { typeof(MockMessage) });
-			Protocol.Register (p);
+			p.Register (new [] { typeof(MockMessage) });
+			Protocols.Register (p);
 		}
 	}
 

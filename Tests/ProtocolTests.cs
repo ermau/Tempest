@@ -40,7 +40,7 @@ namespace Tempest.Tests
 		public static Protocol GetTestProtocol()
 		{
 			var p = new Protocol ((byte)Interlocked.Increment (ref id));
-			Protocol.Register (p);
+			Protocols.Register (p);
 			return p;
 		}
 
@@ -108,11 +108,11 @@ namespace Tempest.Tests
 		[Test]
 		public void FindHeaderInvalid()
 		{
-			Assert.Throws<ArgumentNullException> (() => Tempest.Protocol.FindHeader (null));
-			Assert.Throws<ArgumentNullException> (() => Tempest.Protocol.FindHeader (null, 0, 10));
-			Assert.Throws<ArgumentOutOfRangeException> (() => Protocol.FindHeader (new byte[10], 0, 11));
-			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocol.FindHeader (new byte[10], -1, 10));
-			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocol.FindHeader (new byte[10], 6, 5));
+			Assert.Throws<ArgumentNullException> (() => Tempest.Protocols.FindHeader (null));
+			Assert.Throws<ArgumentNullException> (() => Tempest.Protocols.FindHeader (null, 0, 10));
+			Assert.Throws<ArgumentOutOfRangeException> (() => Protocols.FindHeader (new byte[10], 0, 11));
+			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocols.FindHeader (new byte[10], -1, 10));
+			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocols.FindHeader (new byte[10], 6, 5));
 		}
 	}
 }

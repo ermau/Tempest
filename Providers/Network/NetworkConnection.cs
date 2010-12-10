@@ -240,7 +240,15 @@ namespace Tempest.Providers.Network
 			int length = 0;
 			while (remainingData > BaseHeaderLength)
 			{
-				MessageHeader header = Protocols.FindHeader (buffer, messageOffset, remainingData);
+				MessageHeader header = null;
+				try
+				{
+					header = Protocols.FindHeader (buffer, messageOffset, remainingData);
+				}
+				catch
+				{
+				}
+
 				if (header == null)
 				{
 					Disconnect (true);
@@ -266,6 +274,7 @@ namespace Tempest.Providers.Network
 				remainingData -= length;
 			}
 
+			// TODO: Optimize allocation every chunk out
 			if (remainingData > 0)
 			{
 				byte[] newBuffer = new byte[(length > buffer.Length) ? length : buffer.Length];
@@ -275,22 +284,6 @@ namespace Tempest.Providers.Network
 				bufferOffset = remainingData;
 				messageOffset = 0;
 			}
-
-//			if ((buffer.Length - messageOffset) < length)
-//			{
-//				byte[] newBuffer = buffer;
-//				if (buffer.Length < length)
-//				{
-//					newBuffer = new byte[length];
-//					reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);
-//				}
-//
-//				Buffer.BlockCopy (buffer, messageOffset, newBuffer, 0, remainingData);
-//				buffer = newBuffer;
-//
-//				bufferOffset = remainingData;
-//				messageOffset = 0;
-//			}
 		}
 
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
@@ -317,7 +310,15 @@ namespace Tempest.Providers.Network
 		{
 			this.rreader.Position = offset + BaseHeaderLength;
 
-			header.Message.ReadPayload (this.rreader);
+			try
+			{
+				header.Message.ReadPayload (this.rreader);
+			}
+			catch
+			{
+				Disconnect (true);
+				return;
+			}
 
 			OnMessageReceived (new MessageEventArgs (this, header.Message));
 		}

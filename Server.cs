@@ -119,7 +119,7 @@ namespace Tempest
 				provider.ConnectionMade -= OnConnectionMade;
 			else
 			{
-				provider.ConnectionMade -= OnConnectionMadeGlobal;
+				provider.ConnectionMade -= OnConnectionMadeGlobalEvent;
 				
 				if (!others)
 				{
@@ -147,7 +147,7 @@ namespace Tempest
 			e.Connection.Disconnected += OnConnectionDisconnected;
 		}
 
-		protected void OnConnectionMadeGlobal (object sender, ConnectionMadeEventArgs e)
+		protected virtual void OnConnectionMadeGlobal (object sender, ConnectionMadeEventArgs e)
 		{
 			if (e.Rejected)
 				return;
@@ -168,23 +168,49 @@ namespace Tempest
 			e.Connection.Disconnected -= OnConnectionDisconnected;
 		}
 
+		private void OnConnectionMadeGlobalEvent (object sender, ConnectionMadeEventArgs e)
+		{
+			#if !NET_4
+			lock (this.mqueue)
+			#endif
+			this.mqueue.Enqueue (e);
+		}
+
+		private void OnGlobalMessageReceived (object sender, MessageEventArgs e)
+		{
+			#if !NET_4
+			lock (this.mqueue)
+			#endif
+			this.mqueue.Enqueue (e);
+		}
+
 		private Thread messageRunnerThread;
 		private readonly AutoResetEvent wait = new AutoResetEvent (false);
 		#if NET_4
-		private readonly ConcurrentQueue<MessageEventArgs>  mqueue = new ConcurrentQueue<MessageEventArgs>();
+		private readonly ConcurrentQueue<EventArgs>  mqueue = new ConcurrentQueue<EventArgs>();
 		private void MessageRunner()
 		{
 			while (this.running)
 			{
 				this.wait.WaitOne();
 
-				MessageEventArgs e;
+				EventArgs e;
 				while (this.mqueue.TryDequeue (out e))
-					OnConnectionMessageReceived (this, e);
+				{
+					var margs = (e as MessageEventArgs);
+					if (margs != null)
+						OnConnectionMessageReceived (this, margs);
+					else
+					{
+						var cargs = (e as ConnectionMadeEventArgs);
+						if (cargs != null)
+							OnConnectionMadeGlobal (this, cargs);
+					}
+				}
 			}
 		}
 		#else
-		private readonly Queue<MessageEventArgs> mqueue = new Queue<MessageEventArgs>();
+		private readonly Queue<EventArgs> mqueue = new Queue<EventArgs>();
 		private void MessageRunner()
 		{
 			while (this.running)
@@ -193,27 +219,26 @@ namespace Tempest
 
 				while (this.mqueue.Count > 0)
 				{
-					MessageEventArgs e = null;
+					EventArgs e = null;
 					lock (this.mqueue)
 					{
 						if (this.mqueue.Count != 0)
 							e = this.mqueue.Dequeue();
 					}
 
-					if (e != null)
-						OnConnectionMessageReceived (this, e);
+					var margs = (e as MessageEventArgs);
+					if (margs != null)
+						OnConnectionMessageReceived (this, margs);
+					else
+					{
+						var cargs = (e as ConnectionMadeEventArgs);
+						if (cargs != null)
+							OnConnectionMadeGlobal (this, cargs);
+					}
 				}
 			}
 		}
 		#endif
-
-		protected virtual void OnGlobalMessageReceived (object sender, MessageEventArgs e)
-		{
-			#if !NET_4
-			lock (this.mqueue)
-			#endif
-			this.mqueue.Enqueue (e);
-		}
 
 		protected virtual void OnConnectionMessageReceived (object sender, MessageEventArgs e)
 		{

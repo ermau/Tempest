@@ -81,8 +81,14 @@ namespace Tempest
 				case ExecutionMode.GlobalOrder:
 					provider.ConnectionMade += OnConnectionMadeGlobal;
 
-					if (!this.running)
-						(this.messageRunnerThread = new Thread (MessageRunner) { IsBackground = true }).Start();
+					lock (this.providers)
+					{
+						if (!this.running)
+						{
+							this.running = true;
+							(this.messageRunnerThread = new Thread (MessageRunner) { IsBackground = true }).Start();
+						}
+					}
 
 					break;
 			}
@@ -124,6 +130,7 @@ namespace Tempest
 				if (!others)
 				{
 					this.running = false;
+					this.wait.Set();
 					if (this.messageRunnerThread != null)
 						this.messageRunnerThread.Join();
 				}
@@ -161,8 +168,14 @@ namespace Tempest
 
 		protected virtual void OnConnectionDisconnected (object sender, ConnectionEventArgs e)
 		{
+			ExecutionMode mode;
 			lock (this.connections)
+			{
+				if (!this.connections.TryGetValue (e.Connection, out mode))
+					return;
+
 				this.connections.Remove (e.Connection);
+			}
 
 			e.Connection.MessageReceived -= OnConnectionMessageReceived;
 			e.Connection.Disconnected -= OnConnectionDisconnected;
@@ -174,6 +187,8 @@ namespace Tempest
 			lock (this.mqueue)
 			#endif
 			this.mqueue.Enqueue (e);
+
+			this.wait.Set();
 		}
 
 		private void OnGlobalMessageReceived (object sender, MessageEventArgs e)
@@ -182,12 +197,33 @@ namespace Tempest
 			lock (this.mqueue)
 			#endif
 			this.mqueue.Enqueue (e);
+
+			this.wait.Set();
 		}
 
 		private Thread messageRunnerThread;
 		private readonly AutoResetEvent wait = new AutoResetEvent (false);
 		#if NET_4
 		private readonly ConcurrentQueue<EventArgs>  mqueue = new ConcurrentQueue<EventArgs>();
+		private void HandleInlineEvent (EventArgs e)
+		{
+			var margs = (e as MessageEventArgs);
+			if (margs != null)
+				OnConnectionMessageReceived (this, margs);
+			else
+			{
+				var cmargs = (e as ConnectionMadeEventArgs);
+				if (cmargs != null)
+					OnConnectionMadeGlobal (this, cmargs);
+				else
+				{
+					var cdargs = (e as ConnectionEventArgs);
+					if (cdargs != null)
+						OnConnectionDisconnected (this, cdargs);
+				}
+			}
+		}
+		
 		private void MessageRunner()
 		{
 			while (this.running)
@@ -196,17 +232,7 @@ namespace Tempest
 
 				EventArgs e;
 				while (this.mqueue.TryDequeue (out e))
-				{
-					var margs = (e as MessageEventArgs);
-					if (margs != null)
-						OnConnectionMessageReceived (this, margs);
-					else
-					{
-						var cargs = (e as ConnectionMadeEventArgs);
-						if (cargs != null)
-							OnConnectionMadeGlobal (this, cargs);
-					}
-				}
+					HandleInlineEvent (e);
 			}
 		}
 		#else
@@ -226,15 +252,7 @@ namespace Tempest
 							e = this.mqueue.Dequeue();
 					}
 
-					var margs = (e as MessageEventArgs);
-					if (margs != null)
-						OnConnectionMessageReceived (this, margs);
-					else
-					{
-						var cargs = (e as ConnectionMadeEventArgs);
-						if (cargs != null)
-							OnConnectionMadeGlobal (this, cargs);
-					}
+					HandleInlineEvent (e);
 				}
 			}
 		}

@@ -40,14 +40,12 @@ namespace Tempest.Tests
 			protocol = ProtocolTests.GetTestProtocol();
 		}
 
-		private MockServer server;
 		private MockConnectionProvider provider;
 
 		[SetUp]
 		public void Setup()
 		{
 			provider = new MockConnectionProvider();
-			server = new MockServer (provider, MessageTypes.Reliable);
 		}
 
 		[Test]
@@ -59,12 +57,14 @@ namespace Tempest.Tests
 		[Test]
 		public void AddConnectionProviderNull()
 		{
+			var server = new MockServer (provider, MessageTypes.Reliable);
 			Assert.Throws<ArgumentNullException> (() => server.AddConnectionProvider (null));
 		}
 
 		[Test]
 		public void RemoveConnectionProviderNull()
 		{
+			var server = new MockServer (provider, MessageTypes.Reliable);
 			Assert.Throws<ArgumentNullException> (() => server.RemoveConnectionProvider (null));
 		}
 
@@ -74,6 +74,7 @@ namespace Tempest.Tests
 			var p = new MockConnectionProvider();
 			Assert.IsFalse (p.IsRunning);
 
+			var server = new MockServer (provider, MessageTypes.Reliable);
 			server.AddConnectionProvider (p);
 			Assert.IsTrue (p.IsRunning);
 		}
@@ -81,6 +82,18 @@ namespace Tempest.Tests
 		[Test]
 		public void RemoveConnectionProvider()
 		{
+			var server = new MockServer (provider, MessageTypes.Reliable);
+			Assert.IsTrue (provider.IsRunning);
+
+			server.RemoveConnectionProvider (provider);
+			Assert.IsFalse (provider.IsRunning);
+		}
+
+		[Test]
+		public void RemoveConnectionProviderGlobalOrder()
+		{
+			var server = new MockServer (MessageTypes.Reliable);
+			server.AddConnectionProvider (provider, ExecutionMode.GlobalOrder);
 			Assert.IsTrue (provider.IsRunning);
 
 			server.RemoveConnectionProvider (provider);
@@ -94,6 +107,7 @@ namespace Tempest.Tests
 			p.Start (MessageTypes.Reliable);
 			Assert.IsTrue (p.IsRunning);
 
+			var server = new MockServer (provider, MessageTypes.Reliable);
 			server.RemoveConnectionProvider (p);
 			Assert.IsTrue (p.IsRunning);
 		}
@@ -110,6 +124,35 @@ namespace Tempest.Tests
 				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
 				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
 			});
+
+			var server = new MockServer (provider, MessageTypes.Reliable);
+			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
+			((IContext)server).RegisterMessageHandler (1, handler);
+			
+			provider.ConnectionMade += (sender, e) => connection = e.Connection;
+			
+			var c = provider.GetClientConnection();
+			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.Send (new MockMessage () { Content = "hi" });
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void MessageHandlingGlobalOrder()
+		{
+			IServerConnection connection = null;
+
+			var test = new AsyncTest(e =>
+			{
+				var me = (MessageEventArgs)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
+				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
+			});
+
+			var server = new MockServer (MessageTypes.Reliable);
+			server.AddConnectionProvider (provider, ExecutionMode.GlobalOrder);
 
 			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
 			((IContext)server).RegisterMessageHandler (1, handler);

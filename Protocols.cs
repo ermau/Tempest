@@ -76,7 +76,9 @@ namespace Tempest
 		/// <summary>
 		/// Registers <paramref name="protocol"/>.
 		/// </summary>
-		public static void Register (Protocol protocol)
+		/// <param name="protocol">The protocol to register.</param>
+		/// <returns>The registered protocol.</returns>
+		public static Protocol Register (Protocol protocol)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
@@ -96,6 +98,8 @@ namespace Tempest
 				lock (CustomProtocols)
 					CustomProtocols.Add (protocol);
 			}
+
+			return protocol;
 		}
 
 		private static readonly List<Protocol> CustomProtocols = new List<Protocol>();

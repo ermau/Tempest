@@ -107,6 +107,7 @@ namespace Tempest.Tests
 			}
 		}
 
+		#if !SAFE
 		[Test]
 		public void RegisterTypeInvalid()
 		{
@@ -120,6 +121,7 @@ namespace Tempest.Tests
 		{
 			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (MockMessage), typeof (MockMessage) }));
 		}
+		#endif
 
 		[Test]
 		public void RegisterTypeAndCtorsInvalid()
@@ -141,6 +143,7 @@ namespace Tempest.Tests
 				}));
 		}
 
+		#if !SAFE
 		[Test]
 		public void RegisterType()
 		{
@@ -150,6 +153,7 @@ namespace Tempest.Tests
 			Assert.IsNotNull (m);
 			Assert.That (m, Is.TypeOf<MockMessage>());
 		}
+		#endif
 
 		[Test]
 		public void RegisterTypeWithCtor()

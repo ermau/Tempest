@@ -28,6 +28,8 @@ using System;
 
 #if NET_4
 using System.Collections.Concurrent;
+using System.Text;
+
 #else
 using System.Collections.Generic;
 #endif
@@ -58,7 +60,23 @@ namespace Tempest
 			return DateTime.FromBinary (reader.ReadInt64());
 		}
 
-		#if NET_4
+		public static void WriteString (this IValueWriter writer, string value)
+		{
+			if (value == null)
+				throw new ArgumentNullException ("value");
+
+			writer.WriteString (Encoding.UTF8, value);
+		}
+
+		public static string ReadString (this IValueReader reader)
+		{
+			if (reader == null)
+				throw new ArgumentNullException ("reader");
+
+			return reader.ReadString (Encoding.UTF8);
+		}
+
+#if NET_4
 		private static readonly ConcurrentDictionary<Type, ObjectSerializer> Serializers = new ConcurrentDictionary<Type, ObjectSerializer>();
 		#else
 		private static readonly Dictionary<Type, ObjectSerializer> Serializers = new Dictionary<Type, ObjectSerializer> ();

@@ -179,7 +179,7 @@ namespace Tempest
 						throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
 					}
 					
-					this.messageCtors.Add (key, kvp.Value);
+					this.messageCtors.Add (m.MessageType, kvp.Value);
 					#else
 					if (!this.messageCtors.TryAdd (m.MessageType, kvp.Value))
 					{

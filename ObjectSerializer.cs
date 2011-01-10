@@ -25,9 +25,13 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
 #if !SAFE
@@ -80,12 +84,20 @@ namespace Tempest
 		private void GenerateSerialization()
 		{
 			//#if SAFE
-			deserializer = SafeDeserialize;
-			serializer = SafeSerializer;
+			if (this.type.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
+			{
+				deserializer = SerializableDeserializer;
+				serializer = SerializableSerializer;
+			}
+			else
+			{
+				deserializer = SafeDeserialize;
+				serializer = SafeSerializer;
+			}
 			//#endif
 		}
 
-//		#if !SAFE
+		//		#if !SAFE
 //		private Func<IValueReader, object> CreateUnsafeSerializer()
 //		{
 //			
@@ -101,8 +113,7 @@ namespace Tempest
 				if (!reader.ReadBool())
 					return null;
 
-				string typeName = reader.ReadString (Encoding.UTF8);
-				t = Type.GetType (typeName);
+				t = Type.GetType (reader.ReadString (Encoding.UTF8));
 				if (!this.type.IsAssignableFrom (t))
 					return null;
 			}
@@ -170,7 +181,7 @@ namespace Tempest
 						if (f.IsInitOnly)
 							continue;
 
-						f.SetValue (value, reader.Read (f.FieldType));
+						f.SetValue (value, GetSerializer (f.FieldType).Deserialize (reader));
 					}
 					else if (props[i].MemberType == MemberTypes.Property)
 					{
@@ -178,11 +189,37 @@ namespace Tempest
 						if (p.GetSetMethod() == null || p.GetIndexParameters().Length != 0)
 							continue;
 
-						p.SetValue (value, reader.Read (p.PropertyType), null);
+						p.SetValue (value, GetSerializer (p.PropertyType).Deserialize (reader), null);
 					}
 				}
 
 				return value;
+			}
+		}
+
+		private object SerializableDeserializer (IValueReader reader)
+		{
+			bool isNull = false;
+			if (this.type.IsClass)
+				isNull = reader.ReadBool();
+
+			if (isNull)
+				return null;
+
+			byte[] data = reader.ReadBytes();
+			using (MemoryStream stream = new MemoryStream (data))
+				return new BinaryFormatter().Deserialize (stream, null);
+		}
+		
+		private void SerializableSerializer (IValueWriter writer, object value)
+		{
+			if (this.type.IsClass)
+				writer.WriteBool (value == null);
+
+			using (MemoryStream stream = new MemoryStream())
+			{
+				new BinaryFormatter().Serialize (stream, value);
+				writer.WriteBytes (stream.ToArray());
 			}
 		}
 
@@ -255,31 +292,63 @@ namespace Tempest
 			}
 			else
 			{
-				MemberInfo[] props =
+				MemberInfo[] members =
 					t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
 						.OrderBy (mi => mi.Name)
 						.ToArray();
 
-				for (int i = 0; i < props.Length; ++i)
+				for (int i = 0; i < members.Length; ++i)
 				{
-					if (props[i].MemberType == MemberTypes.Field)
+					var m = members[i];
+					if (m.MemberType == MemberTypes.Field)
 					{
-						var f = (FieldInfo)props[i];
+						var f = (FieldInfo)m;
 						if (f.IsInitOnly)
 							continue;
 
-						writer.Write (f.GetValue (value));
+						GetSerializer (f.FieldType).Serialize (writer, f.GetValue (value));
 					}
-					else if (props[i].MemberType == MemberTypes.Property)
+					else if (m.MemberType == MemberTypes.Property)
 					{
-						var p = (PropertyInfo)props[i];
-						if (p.GetSetMethod() == null || p.GetIndexParameters().Length != 0)
+						var p = (PropertyInfo)m;
+						var setter = p.GetSetMethod();
+						if (setter == null || p.GetIndexParameters().Length != 0)
 							continue;
 
-						writer.Write (p.GetValue (value, null));
+						GetSerializer (setter.GetParameters()[0].ParameterType).Serialize (writer, p.GetValue (value, null));
 					}
 				}
 			}
+		}
+
+		#if NET_4
+		private static readonly ConcurrentDictionary<Type, ObjectSerializer> Serializers = new ConcurrentDictionary<Type, ObjectSerializer>();
+		#else
+		private static readonly Dictionary<Type, ObjectSerializer> Serializers = new Dictionary<Type, ObjectSerializer> ();
+		#endif
+
+		internal static ObjectSerializer GetSerializer (Type type)
+		{
+			ObjectSerializer serializer;
+			#if NET_4
+			serializer = Serializers.GetOrAdd (type, t => new ObjectSerializer (t));
+			#else
+			bool exists;
+			lock (Serializers)
+				exists = Serializers.TryGetValue (type, out serializer);
+
+			if (!exists)
+			{
+				serializer = new ObjectSerializer (type);
+				lock (Serializers)
+				{
+					if (!Serializers.ContainsKey (type))
+						Serializers.Add (type, serializer);
+				}
+			}
+			#endif
+
+			return serializer;
 		}
 	}
 }

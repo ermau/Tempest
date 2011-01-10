@@ -76,12 +76,6 @@ namespace Tempest
 			return reader.ReadString (Encoding.UTF8);
 		}
 
-#if NET_4
-		private static readonly ConcurrentDictionary<Type, ObjectSerializer> Serializers = new ConcurrentDictionary<Type, ObjectSerializer>();
-		#else
-		private static readonly Dictionary<Type, ObjectSerializer> Serializers = new Dictionary<Type, ObjectSerializer> ();
-		#endif
-
 		public static void Write (this IValueWriter writer, object value)
 		{
 			if (writer == null)
@@ -93,32 +87,8 @@ namespace Tempest
 				return;
 			}
 
-			ObjectSerializer serializer = GetSerializer (value.GetType());
+			ObjectSerializer serializer = ObjectSerializer.GetSerializer (value.GetType());
 			serializer.Serialize (writer, value);
-		}
-
-		private static ObjectSerializer GetSerializer (Type type)
-		{
-			ObjectSerializer serializer;
-			#if NET_4
-			serializer = Serializers.GetOrAdd (type, t => new ObjectSerializer (t));
-			#else
-			bool exists;
-			lock (Serializers)
-				exists = Serializers.TryGetValue (type, out serializer);
-
-			if (!exists)
-			{
-				serializer = new ObjectSerializer (type);
-				lock (Serializers)
-				{
-					if (!Serializers.ContainsKey (type))
-						Serializers.Add (type, serializer);
-				}
-			}
-			#endif
-
-			return serializer;
 		}
 
 		public static T Read<T> (this IValueReader reader)
@@ -131,7 +101,7 @@ namespace Tempest
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			return GetSerializer (type).Deserialize (reader);
+			return ObjectSerializer.GetSerializer (type).Deserialize (reader);
 		}
 	}
 }

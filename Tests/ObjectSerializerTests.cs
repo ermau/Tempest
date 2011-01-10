@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -115,6 +116,33 @@ namespace Tempest.Tests
 			Assert.AreEqual ("text2", tester2.Text);
 			Assert.AreEqual ("extra", tester2.Extra);
 			Assert.AreEqual (42, tester2.Number);
+		}
+
+		[Test]
+		public void Serializable()
+		{
+			var inner = new Exception ("Inner exception");
+			var ex = new InvalidOperationException ("Don't do this, fool.", inner);
+
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+			
+			writer.Write (ex);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+
+			InvalidOperationException ioex = reader.Read<InvalidOperationException>();
+
+			Assert.IsNotNull (ioex);
+			Assert.AreEqual (ex.Message, ioex.Message);
+			Assert.AreEqual (ex.Source, ioex.Source);
+			Assert.AreEqual (ex.StackTrace, ioex.StackTrace);
+
+			Assert.IsNotNull (ioex.InnerException);
+			Assert.AreEqual (inner.Message, ioex.InnerException.Message);
+			Assert.AreEqual (inner.Source, ioex.InnerException.Source);
+			Assert.AreEqual (inner.StackTrace, ioex.InnerException.StackTrace);
 		}
 
 		public class MoreDerivedSerializingTester

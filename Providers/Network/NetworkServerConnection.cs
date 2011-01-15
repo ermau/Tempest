@@ -41,6 +41,8 @@ namespace Tempest.Providers.Network
 			if (provider == null)
 				throw new ArgumentNullException ("provider");
 
+			RemoteEndPoint = reliableSocket.RemoteEndPoint;
+
 			this.reliableSocket = reliableSocket;
 
 			var asyncArgs = new SocketAsyncEventArgs();
@@ -52,32 +54,10 @@ namespace Tempest.Providers.Network
 			this.rreader = new BufferValueReader (this.rmessageBuffer);
 		}
 
-		public override void Disconnect (bool now)
+		protected override void OnDisconnected (ConnectionEventArgs e)
 		{
-			if (this.disconnecting)
-				return;
-
-			this.disconnecting = true;
-
-			if (this.reliableSocket == null || !this.reliableSocket.Connected)
-				return;
-
-			if (now)
-			{
-				this.reliableSocket.Shutdown (SocketShutdown.Both);
-				this.reliableSocket.Disconnect (true);
-
-				OnDisconnected (new ConnectionEventArgs(this));
-				this.disconnecting = false;
-				Recycle();
-			}
-			else
-			{
-				var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
-				args.Completed += OnDisconnectCompleted;
-				if (!this.reliableSocket.DisconnectAsync(args))
-					OnDisconnectCompleted (this.reliableSocket, args);
-			}
+			Recycle();
+			base.OnDisconnected(e);
 		}
 
 		private readonly NetworkConnectionProvider provider;

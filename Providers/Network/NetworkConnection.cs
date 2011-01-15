@@ -58,7 +58,13 @@ namespace Tempest.Providers.Network
 
 		public bool IsConnected
 		{
-			get { return (this.reliableSocket != null && this.reliableSocket.Connected); }
+			get
+			{
+				if (this.reliableSocket != null && !this.reliableSocket.Connected && !this.disconnecting)
+					Disconnect (false);
+
+				return (this.reliableSocket != null && this.reliableSocket.Connected);
+			}
 		}
 
 		public MessagingModes Modes
@@ -153,21 +159,27 @@ namespace Tempest.Providers.Network
 				ReliableSendCompleted (this.reliableSocket, eargs);
 		}
 
-		public virtual void Disconnect (bool now)
+		public void Disconnect (bool now)
 		{
 			if (this.disconnecting)
 				return;
-			if (this.reliableSocket == null || !this.reliableSocket.Connected)
+			if (this.reliableSocket == null)
 				return;
 
 			this.disconnecting = true;
 
-			if (now)
+			if (!this.reliableSocket.Connected)
+			{
+				this.reliableSocket = null;
+				OnDisconnected (new ConnectionEventArgs (this));
+				this.disconnecting = false;
+			}
+			else if (now)
 			{
 				this.reliableSocket.Shutdown (SocketShutdown.Both);
 				this.reliableSocket.Disconnect (true);
 				this.reliableSocket = null;
-				OnDisconnected (new ConnectionEventArgs(this));
+				OnDisconnected (new ConnectionEventArgs (this));
 				this.disconnecting = false;
 			}
 			else
@@ -221,7 +233,7 @@ namespace Tempest.Providers.Network
 				mr (this, e);
 		}
 
-		protected void OnDisconnected (ConnectionEventArgs e)
+		protected virtual void OnDisconnected (ConnectionEventArgs e)
 		{
 			var dc = this.Disconnected;
 			if (dc != null)

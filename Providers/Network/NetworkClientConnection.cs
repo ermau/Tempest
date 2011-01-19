@@ -43,9 +43,10 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("endpoint");
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
-			
 			if (IsConnected)
 				throw new InvalidOperationException ("Already connected");
+
+			RemoteEndPoint = endpoint;
 
 			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
 			args.RemoteEndPoint = endpoint;

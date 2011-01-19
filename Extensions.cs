@@ -81,12 +81,6 @@ namespace Tempest
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
 
-			if (value == null)
-			{
-				writer.WriteBool (false);
-				return;
-			}
-
 			ObjectSerializer serializer = ObjectSerializer.GetSerializer (value.GetType());
 			serializer.Serialize (writer, value);
 		}

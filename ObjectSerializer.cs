@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -59,6 +60,8 @@ namespace Tempest
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
 
+			Trace.WriteLine ("Serializing " + ((obj != null) ? obj.GetType().ToString() : "null"));
+
 			serializer (writer, obj);
 		}
 
@@ -75,122 +78,215 @@ namespace Tempest
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			return deserializer (reader);
+			return deserializer (reader, false);
 		}
 
-		private Func<IValueReader, object> deserializer;
+		private Func<IValueReader, bool, object> deserializer;
 		private Action<IValueWriter, object> serializer;
 
 		private void GenerateSerialization()
 		{
-			//#if SAFE
-			if (this.type.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
-			{
-				deserializer = SerializableDeserializer;
-				serializer = SerializableSerializer;
-			}
-			else
-			{
-				deserializer = SafeDeserialize;
-				serializer = SafeSerializer;
-			}
-			//#endif
+			deserializer = GetDeserializer (this.type, this);
+			serializer = GetSerializer();
 		}
 
-		//		#if !SAFE
-//		private Func<IValueReader, object> CreateUnsafeSerializer()
-//		{
-//			
-//		}
-//		#endif
+		private class SerializationPair
+		{
+			public readonly Func<IValueReader, bool, object> Deserializer;
+			public readonly Action<IValueWriter, object> Serializer;
+
+			public SerializationPair (Func<IValueReader, bool, object> des, Action<IValueWriter, object> ser)
+			{
+				Deserializer = des;
+				Serializer = ser;
+			}
+		}
 
 		private ConstructorInfo ctor;
-		private MemberInfo[] members;
+		private Dictionary<MemberInfo, SerializationPair> members;
+		private Type elementType;
 
-		private object SafeDeserialize (IValueReader reader)
+		private static Func<IValueReader, bool, object> GetDeserializer (Type t, ObjectSerializer oserializer)
 		{
-			var t = this.type;
-
-			if (t.IsClass)
-			{
-				if (!reader.ReadBool())
-					return null;
-
-				t = Type.GetType (reader.ReadString (Encoding.UTF8));
-				if (!this.type.IsAssignableFrom (t))
-					return null;
-			}
-
 			if (t.IsPrimitive)
 			{
 				if (t == typeof(bool))
-					return reader.ReadBool();
+					return (r, sh) => r.ReadBool();
 				if (t == typeof(byte))
-					return reader.ReadByte();
+					return (r, sh) => r.ReadByte();
 				if (t == typeof(sbyte))
-					return reader.ReadSByte();
+					return (r, sh) => r.ReadSByte();
 				if (t == typeof(short))
-					return reader.ReadInt16();
+					return (r, sh) => r.ReadInt16();
 				if (t == typeof(ushort))
-					return reader.ReadUInt16();
+					return (r, sh) => r.ReadUInt16();
 				if (t == typeof(int))
-					return reader.ReadInt32 ();
+					return (r, sh) => r.ReadInt32 ();
 				if (t == typeof(uint))
-					return reader.ReadUInt32();
+					return (r, sh) => r.ReadUInt32();
 				if (t == typeof(long))
-					return reader.ReadInt64();
+					return (r, sh) => r.ReadInt64();
 				if (t == typeof(ulong))
-					return reader.ReadUInt64();
+					return (r, sh) => r.ReadUInt64();
 				if (t == typeof(float))
-					return reader.ReadSingle();
+					return (r, sh) => r.ReadSingle();
 				if (t == typeof(double))
-					return reader.ReadDouble();
+					return (r, sh) => r.ReadDouble();
 				if (t == typeof(decimal))
-					return reader.ReadDecimal ();
+					return (r, sh) => r.ReadDecimal ();
 
 				throw new ArgumentOutOfRangeException ("type"); // Shouldn't happen.
 			}
 			else if (t == typeof(DateTime))
-				return reader.ReadDate();
+				return (r, sh) => r.ReadDate();
 			else if (t == typeof(string))
-				return reader.ReadString (Encoding.UTF8);
+				return (r, sh) => !r.ReadBool() ? null : r.ReadString (Encoding.UTF8);
 			else if (t.IsArray || t == typeof(Array))
 			{
 				Type etype = t.GetElementType();
-				Array a = Array.CreateInstance (etype, reader.ReadInt32());
-				for (int i = 0; i < a.Length; ++i)
-					a.SetValue (reader.Read (etype), i);
 
-				return a;
+				return (r, sh) =>
+				{
+					if (!r.ReadBool())
+						return null;
+
+					Array a = Array.CreateInstance (etype, r.ReadInt32());
+					for (int i = 0; i < a.Length; ++i)
+						a.SetValue (r.Read (etype), i);
+
+					return a;
+				};
+			}
+			else
+			{
+				oserializer.LoadMembers (t);
+
+				return (r, skipHeader) =>
+				{
+					if (!skipHeader)
+					{
+						if (!r.ReadBool())
+							return null;
+					
+						Type actualType = Type.GetType (r.ReadString());
+						if (actualType == null || !t.IsAssignableFrom (actualType))
+							return null;
+
+						if (actualType != t)
+							return GetSerializer (actualType).deserializer (r, true);
+					}
+
+					if (t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
+						return oserializer.SerializableDeserializer (r);
+					
+					object value = oserializer.ctor.Invoke (null);
+					
+					foreach (var kvp in oserializer.members)
+					{
+						object mvalue = kvp.Value.Deserializer (r, false);
+						if (kvp.Key.MemberType == MemberTypes.Field)
+							((FieldInfo)kvp.Key).SetValue (value, mvalue);
+						else if (kvp.Key.MemberType == MemberTypes.Property)
+							((PropertyInfo)kvp.Key).SetValue (value, mvalue, null);
+					}
+
+					return value;
+				};
+			}
+		}
+
+		private Action<IValueWriter, object> GetSerializer()
+		{
+			var t = this.type;
+
+			if (t.IsPrimitive)
+			{
+				if (t == typeof (bool))
+					return (w, v) => w.WriteBool ((bool)v);
+				if (t == typeof (byte))
+					return (w, v) => w.WriteByte ((byte)v);
+				else if (t == typeof (sbyte))
+					return (w, v) => w.WriteSByte ((sbyte)v);
+				else if (t == typeof (short))
+					return (w, v) => w.WriteInt16 ((short)v);
+				else if (t == typeof (ushort))
+					return (w, v) => w.WriteUInt16 ((ushort)v);
+				else if (t == typeof (int))
+					return (w, v) => w.WriteInt32 ((int)v);
+				else if (t == typeof (uint))
+					return (w, v) => w.WriteUInt32 ((uint)v);
+				else if (t == typeof (long))
+					return (w, v) => w.WriteInt64 ((long)v);
+				else if (t == typeof (ulong))
+					return (w, v) => w.WriteUInt64 ((ulong)v);
+				else if (t == typeof (float))
+					return (w, v) => w.WriteSingle ((float)v);
+				else if (t == typeof (double))
+					return (w, v) => w.WriteDouble ((double)v);
+				else if (t == typeof (decimal))
+					return (w, v) => w.WriteDecimal ((decimal)v);
+
+				throw new ArgumentOutOfRangeException ("type"); // Shouldn't happen.
+			}
+			else if (t == typeof (DateTime))
+				return (w, v) => w.WriteDate ((DateTime)(object)v);
+			else if (t == typeof (string))
+			{
+				return (w, v) =>
+				{
+					w.WriteBool (v != null);
+					if (v != null)
+						w.WriteString (Encoding.UTF8, (string)v);
+				};
+			}
+			else if (t.IsArray || t == typeof(Array))
+			{
+				return (w, v) =>
+				{
+					if (v == null)
+					{
+						w.WriteBool (false);
+						return;
+					}
+
+					w.WriteBool (true);
+
+					Array a = (Array)v;
+					w.WriteInt32 (a.Length);
+					for (int i = 0; i < a.Length; ++i)
+						w.Write (a.GetValue (i));
+				};
 			}
 			else
 			{
 				LoadMembers (t);
-
-				object value = this.ctor.Invoke (null);
-				MemberInfo[] props = this.members;
-
-				for (int i = 0; i < props.Length; ++i)
+				return (w, v) =>
 				{
-					if (props[i].MemberType == MemberTypes.Field)
+					if (v == null)
 					{
-						var f = (FieldInfo)props[i];
-						if (f.IsInitOnly)
-							continue;
-
-						f.SetValue (value, GetSerializer (f.FieldType).Deserialize (reader));
+						w.WriteBool (false);
+						return;
 					}
-					else if (props[i].MemberType == MemberTypes.Property)
+					
+					w.WriteBool (true);
+					w.WriteString (String.Format ("{0}, {1}", t.FullName, t.Assembly.GetName().Name));
+
+					if (t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
 					{
-						var p = (PropertyInfo)props[i];
-						if (p.GetSetMethod() == null || p.GetIndexParameters().Length != 0)
-							continue;
-
-						p.SetValue (value, GetSerializer (p.PropertyType).Deserialize (reader), null);
+						SerializableSerializer (w, v);
+						return;
 					}
-				}
 
-				return value;
+					var props = this.members;
+
+					foreach (var kvp in props)
+					{
+						if (kvp.Key.MemberType == MemberTypes.Field)
+							kvp.Value.Serializer (w, ((FieldInfo)kvp.Key).GetValue (v));
+						else if (kvp.Key.MemberType == MemberTypes.Property)
+							kvp.Value.Serializer (w, ((PropertyInfo)kvp.Key).GetValue (v, null));
+					}
+				};
 			}
 		}
 
@@ -204,8 +300,31 @@ namespace Tempest
 				throw new ArgumentException ("Type must have an empty constructor.", "type");
 
 			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
-							.OrderBy (mi => mi.Name)
-							.ToArray();
+							.Where (mi =>
+							{
+								if (mi.MemberType == MemberTypes.Field)
+									return !((FieldInfo)mi).IsInitOnly;
+								else if (mi.MemberType == MemberTypes.Property)
+								{
+									var p = (PropertyInfo)mi;
+									return (p.GetSetMethod() != null && p.GetIndexParameters().Length == 0);
+								}
+
+								return false;
+							})
+							.ToDictionary (mi => mi, mi =>
+							{
+								Func<IValueReader, bool, object> des;
+								Action<IValueWriter, object> ser;
+
+								ObjectSerializer os = null;
+								if (mi.MemberType == MemberTypes.Field)
+									os = GetSerializerInternal (((FieldInfo)mi).FieldType);
+								else if (mi.MemberType == MemberTypes.Property)
+									os = GetSerializerInternal (((PropertyInfo)mi).PropertyType);
+
+								return new SerializationPair (os.Deserialize, os.Serialize);
+							});
 		}
 
 		private object SerializableDeserializer (IValueReader reader)
@@ -234,100 +353,9 @@ namespace Tempest
 			}
 		}
 
-		private void SafeSerializer (IValueWriter writer, object value)
+		private object Deserialize (IValueReader reader, bool skipHeader)
 		{
-			if (writer == null)
-				throw new ArgumentNullException ("writer");
-
-			if (value == null)
-			{
-				writer.WriteBool (false);
-				return;
-			}
-			
-			// TODO: Circular reference handling (hashset passing down the rabit hole?)
-			// TODO: Reflection caching optimization
-			Type t = this.type;
-
-			if (t.IsClass)
-			{
-				writer.WriteBool (true);
-				writer.WriteString (Encoding.UTF8, String.Format ("{0}, {1}", t.FullName, t.Assembly.GetName().Name));
-			}
-
-			if (t.IsPrimitive)
-			{
-				if (t == typeof (bool))
-					writer.WriteBool ((bool)value);
-				if (t == typeof (byte))
-					writer.WriteByte ((byte)value);
-				else if (t == typeof (sbyte))
-					writer.WriteSByte ((sbyte)value);
-				else if (t == typeof (short))
-					writer.WriteInt16 ((short)value);
-				else if (t == typeof (ushort))
-					writer.WriteUInt16 ((ushort)value);
-				else if (t == typeof (int))
-					writer.WriteInt32 ((int)value);
-				else if (t == typeof (uint))
-					writer.WriteUInt32 ((uint)value);
-				else if (t == typeof (long))
-					writer.WriteInt64 ((long)value);
-				else if (t == typeof (ulong))
-					writer.WriteUInt64 ((ulong)value);
-				else if (t == typeof (float))
-					writer.WriteSingle ((float)value);
-				else if (t == typeof (double))
-					writer.WriteDouble ((double)value);
-				else if (t == typeof (decimal))
-					writer.WriteDecimal ((decimal)value);
-
-				return;
-			}
-			else if (t == typeof (DateTime))
-			{
-				writer.WriteDate ((DateTime)(object)value);
-				return;
-			}
-			else if (t == typeof (string))
-			{
-				writer.WriteString (Encoding.UTF8, (string)value);
-				return;
-			}
-			else if (t.IsArray || t == typeof(Array))
-			{
-				Array a = (Array)value;
-				writer.WriteInt32 (a.Length);
-				for (int i = 0; i < a.Length; ++i)
-					writer.Write (a.GetValue (i));
-			}
-			else
-			{
-				LoadMembers (t);
-				MemberInfo[] props = this.members;
-
-				for (int i = 0; i < props.Length; ++i)
-				{
-					var m = props[i];
-					if (m.MemberType == MemberTypes.Field)
-					{
-						var f = (FieldInfo)m;
-						if (f.IsInitOnly)
-							continue;
-
-						GetSerializer (f.FieldType).Serialize (writer, f.GetValue (value));
-					}
-					else if (m.MemberType == MemberTypes.Property)
-					{
-						var p = (PropertyInfo)m;
-						var setter = p.GetSetMethod();
-						if (setter == null || p.GetIndexParameters().Length != 0)
-							continue;
-
-						GetSerializer (setter.GetParameters()[0].ParameterType).Serialize (writer, p.GetValue (value, null));
-					}
-				}
-			}
+			return this.deserializer (reader, skipHeader);
 		}
 
 		#if NET_4
@@ -335,6 +363,14 @@ namespace Tempest
 		#else
 		private static readonly Dictionary<Type, ObjectSerializer> Serializers = new Dictionary<Type, ObjectSerializer> ();
 		#endif
+
+		internal ObjectSerializer GetSerializerInternal (Type stype)
+		{
+			if (this.type == stype)
+				return this;
+
+			return GetSerializer (stype);
+		}
 
 		internal static ObjectSerializer GetSerializer (Type type)
 		{

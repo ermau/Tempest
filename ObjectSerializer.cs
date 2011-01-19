@@ -104,6 +104,9 @@ namespace Tempest
 //		}
 //		#endif
 
+		private ConstructorInfo ctor;
+		private MemberInfo[] members;
+
 		private object SafeDeserialize (IValueReader reader)
 		{
 			var t = this.type;
@@ -162,16 +165,10 @@ namespace Tempest
 			}
 			else
 			{
-				ConstructorInfo c = t.GetConstructor (Type.EmptyTypes);
-				if (c == null)
-					throw new ArgumentException ("Type must have an empty constructor.", "type");
+				LoadMembers (t);
 
-				object value = c.Invoke (null);
-
-				MemberInfo[] props =
-					t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
-						.OrderBy (mi => mi.Name)
-						.ToArray();
+				object value = this.ctor.Invoke (null);
+				MemberInfo[] props = this.members;
 
 				for (int i = 0; i < props.Length; ++i)
 				{
@@ -195,6 +192,20 @@ namespace Tempest
 
 				return value;
 			}
+		}
+
+		private void LoadMembers (Type t)
+		{
+			if (this.members != null)
+				return;
+
+			this.ctor = t.GetConstructor (Type.EmptyTypes);
+			if (this.ctor == null)
+				throw new ArgumentException ("Type must have an empty constructor.", "type");
+
+			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
+							.OrderBy (mi => mi.Name)
+							.ToArray();
 		}
 
 		private object SerializableDeserializer (IValueReader reader)
@@ -292,14 +303,12 @@ namespace Tempest
 			}
 			else
 			{
-				MemberInfo[] members =
-					t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
-						.OrderBy (mi => mi.Name)
-						.ToArray();
+				LoadMembers (t);
+				MemberInfo[] props = this.members;
 
-				for (int i = 0; i < members.Length; ++i)
+				for (int i = 0; i < props.Length; ++i)
 				{
-					var m = members[i];
+					var m = props[i];
 					if (m.MemberType == MemberTypes.Field)
 					{
 						var f = (FieldInfo)m;

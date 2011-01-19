@@ -87,6 +87,13 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void RepeatedSerialization()
+		{
+			Serializing();
+			Serializing();
+		}
+
+		[Test]
 		public void MostDerived()
 		{
 			object[] values = new object[2];

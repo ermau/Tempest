@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,13 +33,8 @@ namespace Tempest.Tests
 		: Client
 	{
 		public MockClient (IClientConnection connection, bool poll)
-			: base(connection, poll)
+			: base(connection, MessageTypes.Reliable, poll)
 		{
-		}
-
-		public override void Connect (EndPoint endPoint)
-		{
-			Connect (endPoint, MessageTypes.Reliable);
 		}
 	}
 }

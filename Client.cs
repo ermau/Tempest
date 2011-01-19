@@ -36,10 +36,12 @@ namespace Tempest
 	public abstract class Client
 		: MessageHandling
 	{
-		protected Client (IClientConnection connection, bool poll)
+		protected Client (IClientConnection connection, MessageTypes mtypes, bool poll)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
+
+			this.messageTypes = mtypes;
 
 			this.connection = connection;
 			this.connection.Connected += OnConnectionConnected;
@@ -71,7 +73,13 @@ namespace Tempest
 			get { return this.connection.IsConnected; }
 		}
 
-		public abstract void Connect (EndPoint endPoint);
+		public void Connect (EndPoint endPoint)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
+
+			this.connection.Connect (endPoint, this.messageTypes);
+		}
 
 		/// <summary>
 		/// Disconnects from the server.
@@ -146,15 +154,8 @@ namespace Tempest
 		private readonly Queue<MessageEventArgs> mqueue;
 		private readonly AutoResetEvent mwait;
 		private Thread messageRunner;
-		protected volatile bool running;	
-
-		protected void Connect (EndPoint endPoint, MessageTypes types)
-		{
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
-
-			this.connection.Connect (endPoint, types);
-		}
+		protected volatile bool running;
+		private MessageTypes messageTypes;
 
 		private void ConnectionOnMessageReceived (object sender, MessageEventArgs e)
 		{

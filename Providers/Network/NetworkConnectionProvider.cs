@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,8 @@ namespace Tempest.Providers.Network
 			MaxConnections = maxConnections;
 			this.serverConnections = new List<NetworkServerConnection> (maxConnections);
 		}
-		
+
+		public event EventHandler PingFrequencyChanged;
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
 		
 		public event EventHandler<ConnectionlessMessageReceivedEventArgs> ConnectionlessMessageReceived
@@ -69,12 +70,18 @@ namespace Tempest.Providers.Network
 			remove { throw new NotSupportedException(); }
 		}
 
+		/// <summary>
+		/// Gets the maximum number of connections allowed on this provider.
+		/// </summary>
 		public int MaxConnections
 		{
 			get;
 			private set;
 		}
 
+		/// <summary>
+		/// Gets the end point that this provider listens to for connections.
+		/// </summary>
 		public IPEndPoint EndPoint
 		{
 			get { return this.endPoint; }
@@ -83,6 +90,22 @@ namespace Tempest.Providers.Network
 		public bool SupportsConnectionless
 		{
 			get { return false; }
+		}
+
+		/// <summary>
+		/// Gets or sets the frequency (in milliseconds) that the server pings the client.
+		/// </summary>
+		public int PingFrequency
+		{
+			get { return this.pingFrequency; }
+			set
+			{
+				this.pingFrequency = value;
+
+				var changed = PingFrequencyChanged;
+				if (changed != null)
+					changed (this, EventArgs.Empty);
+			}
 		}
 
 		public void Start (MessageTypes types)
@@ -155,6 +178,8 @@ namespace Tempest.Providers.Network
 		{
 			Stop();
 		}
+
+		private int pingFrequency = 15000;
 
 		private volatile bool running;
 		private Socket reliableSocket;

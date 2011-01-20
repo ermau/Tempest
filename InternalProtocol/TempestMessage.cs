@@ -1,10 +1,10 @@
 ﻿//
-// MockMessage.cs
+// TempestMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,49 +23,54 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace Tempest.Tests
+namespace Tempest.InternalProtocol
 {
-	public class MockProtocol
+	/// <summary>
+	/// Internal Tempest protocol message type.
+	/// </summary>
+	public enum TempestMessageType
+		: ushort
 	{
-		public static Protocol Instance
-		{
-			get { return new Protocol (2); }
-		}
+		/// <summary>
+		/// Ping.
+		/// </summary>
+		Ping = 1,
 
-		static MockProtocol()
-		{
-			var p = Instance;
-			p.Register (new[] { new KeyValuePair<Type, Func<Message>> (typeof (MockMessage), () => new MockMessage()) });
-			Protocols.Register (p);
-		}
+		/// <summary>
+		/// Pong.
+		/// </summary>
+		Pong = 2,
+
+		/// <summary>
+		/// Disconnect with reason.
+		/// </summary>
+		Disconnect = 3,
 	}
 
-	public class MockMessage
+	/// <summary>
+	/// Base class for all internal Tempest protocol messages.
+	/// </summary>
+	public abstract class TempestMessage
 		: Message
 	{
-		public MockMessage ()
-			: base (MockProtocol.Instance, 1)
+		protected TempestMessage (TempestMessageType type)
+			: base (InternalProtocol, (ushort)type)
 		{
 		}
 
-		public string Content
+		internal static readonly Protocol InternalProtocol = Protocols.Register (new Protocol (0) { id = 1 });
+		static TempestMessage()
 		{
-			get; set;
-		}
-
-		public override void WritePayload (IValueWriter writer)
-		{
-			writer.WriteString (Encoding.UTF8, Content);
-		}
-
-		public override void ReadPayload (IValueReader reader)
-		{
-			Content = reader.ReadString (Encoding.UTF8);
+			InternalProtocol.Register (new []
+			{
+				new KeyValuePair<Type, Func<Message>> (typeof(PingMessage), () => new PingMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(PongMessage), () => new PongMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof(DisconnectMessage), () => new DisconnectMessage()), 
+			});
 		}
 	}
 }

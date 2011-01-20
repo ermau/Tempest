@@ -36,7 +36,7 @@ namespace Tempest.Tests
 	[TestFixture]
 	public class ProtocolTests
 	{
-		private static int id = 2;
+		private static int id = 3;
 		public static Protocol GetTestProtocol()
 		{
 			var p = new Protocol ((byte)Interlocked.Increment (ref id));

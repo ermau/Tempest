@@ -196,7 +196,7 @@ namespace Tempest.Tests
 				e.Connection.MessageReceived += test.PassHandler;
 			};
 
-			c.Connected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Send (new MockMessage() { Content = content }));
+			c.Connected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Send (new MockMessage { Content = content }));
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -213,7 +213,7 @@ namespace Tempest.Tests
 
 			IServerConnection connection = null;
 
-			var test = new AsyncTest(e =>
+			var test = new AsyncTest (e =>
 			{
 				var me = (e as MessageEventArgs);
 				Assert.IsNotNull (me);
@@ -231,7 +231,7 @@ namespace Tempest.Tests
 				e.Connection.MessageReceived += test.PassHandler;
 			};
 
-			c.Connected += (sender, e) => c.Send (new MockMessage() { Content = content });
+			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -260,7 +260,7 @@ namespace Tempest.Tests
 			this.provider.Start (MessageTypes);
 
 			c.MessageSent += test.PassHandler;
-			c.Connected += (sender, e) => c.Send (new MockMessage() { Content = content });
+			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -287,7 +287,7 @@ namespace Tempest.Tests
 			});
 
 			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage() { Content = content });
+			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
 
 			c.ConnectionFailed += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
@@ -322,7 +322,7 @@ namespace Tempest.Tests
 			});
 
 			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage() { Content = content });
+			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
 
 			c.ConnectionFailed += test.FailHandler;
 			c.MessageReceived += test.PassHandler;

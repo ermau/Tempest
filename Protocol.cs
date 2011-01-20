@@ -41,10 +41,13 @@ namespace Tempest
 	public class Protocol
 		: MessageFactory, IEquatable<Protocol>
 	{
-		internal readonly byte id;
+		internal byte id;
 
 		public Protocol (byte id)
 		{
+			if (id == 1)
+				throw new ArgumentException ("ID 1 is reserved for Tempest use.", "id");
+
 			this.id = id;
 		}
 

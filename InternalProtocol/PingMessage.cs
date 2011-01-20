@@ -1,10 +1,10 @@
 ﻿//
-// MockMessage.cs
+// PingMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,49 +23,57 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace Tempest.Tests
+namespace Tempest.InternalProtocol
 {
-	public class MockProtocol
+	/// <summary>
+	/// Internal Tempest protocol ping message.
+	/// </summary>
+	public class PingMessage
+		: TempestMessage
 	{
-		public static Protocol Instance
-		{
-			get { return new Protocol (2); }
-		}
-
-		static MockProtocol()
-		{
-			var p = Instance;
-			p.Register (new[] { new KeyValuePair<Type, Func<Message>> (typeof (MockMessage), () => new MockMessage()) });
-			Protocols.Register (p);
-		}
-	}
-
-	public class MockMessage
-		: Message
-	{
-		public MockMessage ()
-			: base (MockProtocol.Instance, 1)
+		public PingMessage()
+			: base (TempestMessageType.Ping)
 		{
 		}
 
-		public string Content
+		/// <summary>
+		/// Gets or sets the ping interval.
+		/// </summary>
+		public int Interval
 		{
-			get; set;
+			get;
+			set;
 		}
 
 		public override void WritePayload (IValueWriter writer)
 		{
-			writer.WriteString (Encoding.UTF8, Content);
+			writer.WriteInt32 (Interval);
 		}
 
 		public override void ReadPayload (IValueReader reader)
 		{
-			Content = reader.ReadString (Encoding.UTF8);
+			Interval = reader.ReadInt32();
+		}
+	}
+
+	/// <summary>
+	/// Internal Tempest protocol pong message.
+	/// </summary>
+	public class PongMessage
+		: TempestMessage
+	{
+		public PongMessage()
+			: base (TempestMessageType.Pong)
+		{
+		}
+
+		public override void ReadPayload (IValueReader reader)
+		{
+		}
+
+		public override void WritePayload (IValueWriter writer)
+		{
 		}
 	}
 }

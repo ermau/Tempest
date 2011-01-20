@@ -41,8 +41,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="InternalProtocol\ConnectMessage.cs" />
+    <Compile Include="InternalProtocol\DisconnectMessage.cs" />
     <Compile Include="MessageHeader.cs" />
     <Compile Include="ObjectSerializer.cs" />
+    <Compile Include="InternalProtocol\PingMessage.cs" />
     <Compile Include="Protocol.cs" />
     <Compile Include="BufferValueReader.cs" />
     <Compile Include="BufferValueWriter.cs" />
@@ -69,6 +72,7 @@
     <Compile Include="Server.cs" />
     <Compile Include="StreamValueReader.cs" />
     <Compile Include="StreamValueWriter.cs" />
+    <Compile Include="InternalProtocol\TempestMessage.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

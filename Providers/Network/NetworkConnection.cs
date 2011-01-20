@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ using System.Net.Sockets;
 #if NET_4
 using System.Collections.Concurrent;
 using System.Threading;
+using Tempest.InternalProtocol;
 
 #endif
 
@@ -191,13 +192,6 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
-		{
-			this.disconnecting = false;
-			this.reliableSocket = null;
-			OnDisconnected (new ConnectionEventArgs (this));
-		}
-
 		public void Dispose()
 		{
 			Dispose (true);
@@ -240,7 +234,7 @@ namespace Tempest.Providers.Network
 				dc (this, e);
 		}
 
-		protected void OnMessageSent (MessageEventArgs e)
+		protected virtual void OnMessageSent (MessageEventArgs e)
 		{
 			var sent = this.MessageSent;
 			if (sent != null)
@@ -249,6 +243,8 @@ namespace Tempest.Providers.Network
 
 		private void BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader)
 		{
+			this.lastReceived = DateTime.Now;
+
 			int length = 0;
 			while (remainingData > BaseHeaderLength)
 			{
@@ -318,6 +314,10 @@ namespace Tempest.Providers.Network
 				ReliableReceiveCompleted (sender, e);
 		}
 
+		
+		protected DateTime lastReceived;
+		protected int pingsOut = 0;
+
 		private void DeliverMessage (MessageHeader header, int offset)
 		{
 			this.rreader.Position = offset + BaseHeaderLength;
@@ -332,7 +332,25 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			OnMessageReceived (new MessageEventArgs (this, header.Message));
+			var tmessage = (header.Message as TempestMessage);
+			if (tmessage == null)
+				OnMessageReceived (new MessageEventArgs (this, header.Message));
+			else
+				OnTempestMessageReceived (new MessageEventArgs (this, header.Message));
+		}
+
+		protected virtual void OnTempestMessageReceived (MessageEventArgs e)
+		{
+			switch (e.Message.MessageType)
+			{
+				case (ushort)TempestMessageType.Ping:
+					Send (new PongMessage());
+					break;
+
+				case (ushort)TempestMessageType.Pong:
+					this.pingsOut = 0;
+					break;
+			}
 		}
 
 		private void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
@@ -349,6 +367,13 @@ namespace Tempest.Providers.Network
 			writerAsyncArgs.Push (e);
 
 			OnMessageSent (new MessageEventArgs (this, (Message)e.UserToken));
+		}
+
+		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
+		{
+			this.disconnecting = false;
+			this.reliableSocket = null;
+			OnDisconnected (new ConnectionEventArgs (this));
 		}
 
 		// TODO: Better buffer limit

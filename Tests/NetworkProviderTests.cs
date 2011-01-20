@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using NUnit.Framework;
 using Tempest.Providers.Network;
 
@@ -115,6 +116,31 @@ namespace Tempest.Tests
 			client.Connect (EndPoint, MessageTypes);
 
 			test.Assert (3000);
+		}
+
+		[Test]
+		public void PingPong()
+		{
+			AsyncTest test = new AsyncTest();
+
+			IServerConnection connection = null;
+			provider.ConnectionMade += (sender, e) =>
+			{
+				if (connection == null)
+					connection = e.Connection;
+			};
+
+			provider.Start (MessageTypes);
+
+			((NetworkConnectionProvider)provider).PingFrequency = 1000;
+			var client = GetNewClientConnection();
+			client.Disconnected += test.FailHandler;
+			client.ConnectionFailed += test.FailHandler;
+			client.Connect (EndPoint, MessageTypes);
+
+			test.Assert (4000, false);
+			Assert.IsTrue (connection.IsConnected);
+			Assert.IsTrue (client.IsConnected);
 		}
 	}
 }

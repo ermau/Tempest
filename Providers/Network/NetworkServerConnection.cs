@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@
 using System;
 using System.Linq;
 using System.Net.Sockets;
+using System.Threading;
+using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
 {
@@ -52,6 +54,10 @@ namespace Tempest.Providers.Network
 
 			this.reliableSocket.ReceiveAsync (asyncArgs);
 			this.rreader = new BufferValueReader (this.rmessageBuffer);
+
+			provider.PingFrequencyChanged += ProviderOnPingFrequencyChanged;
+
+			this.pingTimer = new Timer (PingCallback, null, provider.PingFrequency, provider.PingFrequency);
 		}
 
 		protected override void OnDisconnected (ConnectionEventArgs e)
@@ -62,8 +68,47 @@ namespace Tempest.Providers.Network
 
 		private readonly NetworkConnectionProvider provider;
 
+		private readonly object pingSync = new object();
+		private Timer pingTimer;
+
+		private void PingCallback (object state)
+		{
+			if (this.pingsOut >= 2)
+			{
+				Disconnect (true); // Connection timed out
+				return;
+			}
+
+			Send (new PingMessage { Interval = provider.PingFrequency });
+		}
+
+		protected override void OnMessageSent (MessageEventArgs e)
+		{
+			var pingMsg = (e.Message as PingMessage);
+			if (pingMsg != null)
+				Interlocked.Increment (ref this.pingsOut);
+
+			base.OnMessageSent(e);
+		}
+
+		private void ProviderOnPingFrequencyChanged (object sender, EventArgs e)
+		{
+			lock (this.pingSync)
+			{
+				if (this.pingTimer != null)
+					this.pingTimer.Change (0, this.provider.PingFrequency);
+			}
+		}
+
 		private void Recycle()
 		{
+			lock (this.pingSync)
+			{
+				this.pingTimer.Dispose();
+				this.pingTimer = null;
+			}
+
+			this.provider.PingFrequencyChanged -= ProviderOnPingFrequencyChanged;
 			this.provider.Disconnect (this);
 
 			if (this.reliableSocket == null)
@@ -75,13 +120,6 @@ namespace Tempest.Providers.Network
 				NetworkConnectionProvider.ReliableSockets.Push (this.reliableSocket);
 
 			this.reliableSocket = null;
-		}
-
-		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
-		{
-			this.disconnecting = false;
-			Recycle();
-			OnDisconnected (new ConnectionEventArgs (this));
 		}
 		
 		internal int NetworkId

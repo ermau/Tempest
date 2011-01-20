@@ -28,6 +28,8 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
 {
@@ -76,6 +78,33 @@ namespace Tempest.Providers.Network
 				ReliableReceiveCompleted (this.reliableSocket, e);
 
 			OnConnected (new ClientConnectionEventArgs(this));
+		}
+
+		private int pingFrequency;
+		private Timer activityTimer;
+
+		protected override void OnTempestMessageReceived (MessageEventArgs e)
+		{
+			switch (e.Message.MessageType)
+			{
+				case (ushort)TempestMessageType.Ping:
+					var ping = (PingMessage)e.Message;
+					if (this.pingFrequency == 0)
+						this.activityTimer = new Timer (ActivityCallback, null, ping.Interval, ping.Interval);
+					else if (ping.Interval != this.pingFrequency)
+						this.activityTimer.Change (ping.Interval, ping.Interval);
+					
+					this.pingFrequency = ((PingMessage)e.Message).Interval;
+					break;
+			}
+
+			base.OnTempestMessageReceived(e);
+		}
+
+		private void ActivityCallback (object state)
+		{
+			if (DateTime.Now.Subtract (this.lastReceived).TotalMilliseconds > this.pingFrequency * 2)
+				Disconnect (true);
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

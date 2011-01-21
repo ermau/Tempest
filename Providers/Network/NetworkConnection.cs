@@ -61,7 +61,7 @@ namespace Tempest.Providers.Network
 		{
 			get
 			{
-				if (this.reliableSocket != null && !this.reliableSocket.Connected && !this.disconnecting)
+				if (this.reliableSocket != null && !this.reliableSocket.Connected && this.disconnectingState == 0)
 					Disconnect (false);
 
 				return (this.reliableSocket != null && this.reliableSocket.Connected);
@@ -162,18 +162,22 @@ namespace Tempest.Providers.Network
 
 		public void Disconnect (bool now)
 		{
-			if (this.disconnecting)
+			if (this.disconnectingState == 1)
 				return;
 			if (this.reliableSocket == null)
 				return;
 
-			this.disconnecting = true;
+			int dstate = this.disconnectingState;
+			if (dstate == 1)
+				return;
+			else if (dstate != Interlocked.CompareExchange (ref this.disconnectingState, 1, 0))
+				return;
 
 			if (!this.reliableSocket.Connected)
 			{
 				this.reliableSocket = null;
 				OnDisconnected (new ConnectionEventArgs (this));
-				this.disconnecting = false;
+				Interlocked.Exchange (ref this.disconnectingState, 0);
 			}
 			else if (now)
 			{
@@ -181,7 +185,7 @@ namespace Tempest.Providers.Network
 				this.reliableSocket.Disconnect (true);
 				this.reliableSocket = null;
 				OnDisconnected (new ConnectionEventArgs (this));
-				this.disconnecting = false;
+				Interlocked.Exchange (ref this.disconnectingState, 0);
 			}
 			else
 			{
@@ -202,7 +206,7 @@ namespace Tempest.Providers.Network
 		private const int BaseHeaderLength = 7;
 		private int maxMessageLength = 1048576;
 
-		protected volatile bool disconnecting;
+		protected int disconnectingState = 0;
 		protected Socket reliableSocket;
 
 		protected byte[] rmessageBuffer = new byte[20480];
@@ -371,7 +375,7 @@ namespace Tempest.Providers.Network
 
 		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
-			this.disconnecting = false;
+			Interlocked.Exchange (ref this.disconnectingState, 0);
 			this.reliableSocket = null;
 			OnDisconnected (new ConnectionEventArgs (this));
 		}

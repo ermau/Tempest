@@ -176,6 +176,42 @@ namespace Tempest.Tests
 			Assert.IsTrue (test.Numbers.SequenceEqual (serialized.Numbers), "Numbers does not match");
 		}
 
+		[Test]
+		public void PrivateCtor()
+		{
+			var test = PrivateCtorTester.GetTester();
+			test.Name = "confidential";
+
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+			writer.Write (test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = reader.Read<PrivateCtorTester>();
+
+			Assert.IsNotNull (serialized);
+			Assert.AreEqual (test.Name, serialized.Name);
+		}
+
+		public class PrivateCtorTester
+		{
+			private PrivateCtorTester()
+			{
+			}
+
+			public string Name
+			{
+				get;
+				set;
+			}
+
+			public static PrivateCtorTester GetTester()
+			{
+				return new PrivateCtorTester();
+			}
+		}
+
 		public class ISerializableTester
 			: ISerializable
 		{

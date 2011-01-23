@@ -311,7 +311,7 @@ namespace Tempest
 			if (this.members != null)
 				return;
 
-			this.ctor = t.GetConstructor (Type.EmptyTypes);
+			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
 			if (this.ctor == null)
 				throw new ArgumentException ("Type must have an empty constructor.", "type");
 

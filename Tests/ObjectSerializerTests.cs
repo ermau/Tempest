@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Linq;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -150,6 +151,63 @@ namespace Tempest.Tests
 			Assert.AreEqual (inner.Message, ioex.InnerException.Message);
 			Assert.AreEqual (inner.Source, ioex.InnerException.Source);
 			Assert.AreEqual (inner.StackTrace, ioex.InnerException.StackTrace);
+		}
+
+		[Test]
+		public void Contracted()
+		{
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+
+			ISerializableTester test = new ISerializableTester
+			{
+				Name = "MONKEY!",
+				Numbers = new[] { 1, 2, 4, 8, 16, 32 }
+			};
+
+			writer.Write (test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = reader.Read<ISerializableTester>();
+
+			Assert.IsNotNull (serialized);
+			Assert.AreEqual (test.Name, serialized.Name);
+			Assert.IsTrue (test.Numbers.SequenceEqual (serialized.Numbers), "Numbers does not match");
+		}
+
+		public class ISerializableTester
+			: ISerializable
+		{
+			public string Name
+			{
+				get;
+				set;
+			}
+
+			public int[] Numbers
+			{
+				get;
+				set;
+			}
+
+			public void Serialize (IValueWriter writer)
+			{
+				writer.WriteString (Name);
+
+				writer.WriteInt32 (Numbers.Length);
+				for (int i = 0; i < Numbers.Length; ++i)
+					writer.WriteInt32 (Numbers[i]);
+			}
+
+			public void Deserialize (IValueReader reader)
+			{
+				Name = reader.ReadString();
+
+				Numbers = new int[reader.ReadInt32()];
+				for (int i = 0; i < Numbers.Length; ++i)
+					Numbers[i] = reader.ReadInt32();
+			}
 		}
 
 		public class MoreDerivedSerializingTester

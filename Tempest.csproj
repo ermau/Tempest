@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="InternalProtocol\ConnectMessage.cs" />
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />
+    <Compile Include="ISerializable.cs" />
     <Compile Include="MessageHeader.cs" />
     <Compile Include="ObjectSerializer.cs" />
     <Compile Include="InternalProtocol\PingMessage.cs" />

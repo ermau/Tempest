@@ -176,10 +176,19 @@ namespace Tempest
 							return GetSerializer (actualType).deserializer (r, true);
 					}
 
+					object value;
+
+					if (typeof(Tempest.ISerializable).IsAssignableFrom (t))
+					{
+						value = oserializer.ctor.Invoke (null);
+						((Tempest.ISerializable)value).Deserialize (r);
+
+						return value;
+					}
 					if (t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
 						return oserializer.SerializableDeserializer (r);
 					
-					object value = oserializer.ctor.Invoke (null);
+					value = oserializer.ctor.Invoke (null);
 					
 					foreach (var kvp in oserializer.members)
 					{
@@ -270,6 +279,13 @@ namespace Tempest
 					
 					w.WriteBool (true);
 					w.WriteString (String.Format ("{0}, {1}", t.FullName, t.Assembly.GetName().Name));
+
+					var serializable = (v as Tempest.ISerializable);
+					if (serializable != null)
+					{
+						serializable.Serialize (w);
+						return;
+					}
 
 					if (t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
 					{

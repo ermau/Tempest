@@ -102,6 +102,11 @@ namespace Tempest
 			return protocol;
 		}
 
+		static Protocols()
+		{
+			InternalProtocol.TempestMessage.RegisterProtocol();
+		}
+
 		private static readonly List<Protocol> CustomProtocols = new List<Protocol>();
 		#if !NET_4
 		private static readonly Dictionary<byte, Protocol> TempestProtocols = new Dictionary<byte, Protocol>();

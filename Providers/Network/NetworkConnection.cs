@@ -286,8 +286,7 @@ namespace Tempest.Providers.Network
 				remainingData -= length;
 			}
 
-			// TODO: Optimize allocation every chunk out
-			if (remainingData > 0)
+			if (remainingData > 0 || messageOffset + BaseHeaderLength >= buffer.Length)
 			{
 				byte[] newBuffer = new byte[(length > buffer.Length) ? length : buffer.Length];
 				reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);

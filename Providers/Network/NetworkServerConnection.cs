@@ -32,7 +32,7 @@ using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
 {
-	public class NetworkServerConnection
+	public sealed class NetworkServerConnection
 		: NetworkConnection, IServerConnection
 	{
 		internal NetworkServerConnection (Socket reliableSocket, NetworkConnectionProvider provider)
@@ -58,12 +58,6 @@ namespace Tempest.Providers.Network
 			provider.PingFrequencyChanged += ProviderOnPingFrequencyChanged;
 
 			this.pingTimer = new Timer (PingCallback, null, provider.PingFrequency, provider.PingFrequency);
-		}
-
-		protected override void OnDisconnected (ConnectionEventArgs e)
-		{
-			Recycle();
-			base.OnDisconnected(e);
 		}
 
 		private readonly NetworkConnectionProvider provider;
@@ -100,7 +94,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		private void Recycle()
+		protected override void Recycle()
 		{
 			lock (this.pingSync)
 			{

@@ -39,7 +39,7 @@ namespace Tempest.Providers.Network
 	/// <summary>
 	/// High performance socket based <see cref="IConnectionProvider"/>.
 	/// </summary>
-	public class NetworkConnectionProvider
+	public sealed class NetworkConnectionProvider
 		: IConnectionProvider
 	{
 		/// <summary>
@@ -174,7 +174,7 @@ namespace Tempest.Providers.Network
 			Dispose (true);
 		}
 
-		protected virtual void Dispose (bool disposing)
+		private void Dispose (bool disposing)
 		{
 			Stop();
 		}

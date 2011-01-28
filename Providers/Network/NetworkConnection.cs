@@ -61,10 +61,10 @@ namespace Tempest.Providers.Network
 		{
 			get
 			{
-				if (this.reliableSocket != null && !this.reliableSocket.Connected && this.disconnectingState == 0)
-					Disconnect (false);
-
-				return (this.reliableSocket != null && this.reliableSocket.Connected);
+				lock (this.stateSync)
+				{
+					return (!this.disconnecting && this.reliableSocket != null && this.reliableSocket.Connected);
+				}
 			}
 		}
 
@@ -146,53 +146,57 @@ namespace Tempest.Providers.Network
 			eargs.SetBuffer (buffer, 0, length);
 			eargs.UserToken = message;
 
-			if (!IsConnected)
+			bool sent;
+			lock (this.stateSync)
 			{
-				#if !NET_4
-				lock (writerAsyncArgs)
-				#endif
-				writerAsyncArgs.Push (eargs);
+				if (!IsConnected)
+				{
+					#if !NET_4
+					lock (writerAsyncArgs)
+					#endif
+					writerAsyncArgs.Push (eargs);
 
-				return;
+					return;
+				}
+
+				Interlocked.Increment (ref this.pendingAsync);
+				sent = !this.reliableSocket.SendAsync (eargs);
 			}
 
-			if (!this.reliableSocket.SendAsync (eargs))
+			if (sent)
 				ReliableSendCompleted (this.reliableSocket, eargs);
 		}
 
 		public void Disconnect (bool now)
 		{
-			if (this.disconnectingState == 1)
-				return;
-			if (this.reliableSocket == null)
-				return;
+			lock (this.stateSync)
+			{
+				if (this.disconnecting || this.reliableSocket == null)
+					return;
 
-			int dstate = this.disconnectingState;
-			if (dstate == 1)
-				return;
-			else if (dstate != Interlocked.CompareExchange (ref this.disconnectingState, 1, 0))
-				return;
+				if (!this.reliableSocket.Connected)
+				{
+					this.reliableSocket = null;
+					OnDisconnected (new ConnectionEventArgs (this));
+				}
+				else if (now)
+				{
+					this.reliableSocket.Shutdown (SocketShutdown.Both);
+					this.reliableSocket.Disconnect (true);
+					Recycle();
+					this.reliableSocket = null;
+					OnDisconnected (new ConnectionEventArgs (this));
+				}
+				else
+				{
+					this.disconnecting = true;
+					Interlocked.Increment (ref this.pendingAsync);
 
-			if (!this.reliableSocket.Connected)
-			{
-				this.reliableSocket = null;
-				OnDisconnected (new ConnectionEventArgs (this));
-				Interlocked.Exchange (ref this.disconnectingState, 0);
-			}
-			else if (now)
-			{
-				this.reliableSocket.Shutdown (SocketShutdown.Both);
-				this.reliableSocket.Disconnect (true);
-				this.reliableSocket = null;
-				OnDisconnected (new ConnectionEventArgs (this));
-				Interlocked.Exchange (ref this.disconnectingState, 0);
-			}
-			else
-			{
-				var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
-				args.Completed += OnDisconnectCompleted;
-				if (!this.reliableSocket.DisconnectAsync (args))
-					OnDisconnectCompleted (this.reliableSocket, args);
+					var args = new SocketAsyncEventArgs {DisconnectReuseSocket = true};
+					args.Completed += OnDisconnectCompleted;
+					if (!this.reliableSocket.DisconnectAsync (args))
+						OnDisconnectCompleted (this.reliableSocket, args);
+				}
 			}
 		}
 
@@ -206,7 +210,9 @@ namespace Tempest.Providers.Network
 		private const int BaseHeaderLength = 7;
 		private int maxMessageLength = 1048576;
 
-		protected int disconnectingState = 0;
+		protected readonly object stateSync = new object();
+		protected int pendingAsync = 0;
+		protected bool disconnecting = false;
 		protected Socket reliableSocket;
 
 		protected byte[] rmessageBuffer = new byte[20480];
@@ -214,7 +220,7 @@ namespace Tempest.Providers.Network
 		private int rmessageOffset = 0;
 		private int rmessageLoaded = 0;
 
-		protected virtual void Dispose (bool disposing)
+		protected void Dispose (bool disposing)
 		{
 			if (this.disposed)
 				return;
@@ -222,6 +228,10 @@ namespace Tempest.Providers.Network
 			Disconnect (true);
 
 			this.disposed = true;
+		}
+
+		protected virtual void Recycle()
+		{
 		}
 
 		protected void OnMessageReceived (MessageEventArgs e)
@@ -302,6 +312,7 @@ namespace Tempest.Providers.Network
 			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 			{
 				Disconnect (true);
+				Interlocked.Decrement (ref this.pendingAsync);
 				return;
 			}
 
@@ -310,14 +321,22 @@ namespace Tempest.Providers.Network
 			int bufferOffset = e.Offset;
 			BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader);
 			e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
+			Interlocked.Decrement (ref this.pendingAsync);
 
-			if (!IsConnected)
-				return;
-			if (!this.reliableSocket.ReceiveAsync (e))
+			bool sent;
+			lock (this.stateSync)
+			{
+				if (!IsConnected)
+					return;
+
+				Interlocked.Increment (ref this.pendingAsync);
+				sent = !this.reliableSocket.ReceiveAsync (e);
+			}
+
+			if (sent)
 				ReliableReceiveCompleted (sender, e);
 		}
 
-		
 		protected DateTime lastReceived;
 		protected int pingsOut = 0;
 
@@ -361,6 +380,7 @@ namespace Tempest.Providers.Network
 			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 			{
 				Disconnect (true);
+				Interlocked.Decrement (ref this.pendingAsync);
 				return;
 			}
 
@@ -370,13 +390,20 @@ namespace Tempest.Providers.Network
 			writerAsyncArgs.Push (e);
 
 			OnMessageSent (new MessageEventArgs (this, (Message)e.UserToken));
+			Interlocked.Decrement (ref this.pendingAsync);
 		}
 
 		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
-			Interlocked.Exchange (ref this.disconnectingState, 0);
-			this.reliableSocket = null;
+			lock (this.stateSync)
+			{
+				this.disconnecting = false;
+				Recycle();
+				this.reliableSocket = null;
+			}
+
 			OnDisconnected (new ConnectionEventArgs (this));
+			Interlocked.Decrement (ref this.pendingAsync);
 		}
 
 		// TODO: Better buffer limit

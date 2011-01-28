@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
 {
-	public class NetworkClientConnection
+	public sealed class NetworkClientConnection
 		: NetworkConnection, IClientConnection
 	{
 		public event EventHandler<ClientConnectionEventArgs> Connected;
@@ -45,18 +45,31 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("endpoint");
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
-			if (IsConnected)
-				throw new InvalidOperationException ("Already connected");
 
-			RemoteEndPoint = endpoint;
+			SocketAsyncEventArgs args;
+			bool connected;
 
-			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-			args.RemoteEndPoint = endpoint;
-			args.Completed += ConnectCompleted;
+			while (this.pendingAsync > 0)
+				Thread.Sleep (0);
 
-			this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			lock (this.stateSync)
+			{
+				if (IsConnected)
+					throw new InvalidOperationException ("Already connected");
 
-			if (!this.reliableSocket.ConnectAsync (args))
+				RemoteEndPoint = endpoint;
+
+				args = new SocketAsyncEventArgs();
+				args.RemoteEndPoint = endpoint;
+				args.Completed += ConnectCompleted;
+
+				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+				Interlocked.Increment (ref this.pendingAsync);
+				connected = !this.reliableSocket.ConnectAsync (args);
+			}
+
+			if (connected)
 				ConnectCompleted (this.reliableSocket, args);
 		}
 
@@ -66,6 +79,7 @@ namespace Tempest.Providers.Network
 			{
 				Disconnect (true);
 				OnConnectionFailed (new ClientConnectionEventArgs (this));
+				Interlocked.Decrement (ref this.pendingAsync);
 				return;
 			}
 
@@ -74,10 +88,24 @@ namespace Tempest.Providers.Network
 			e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
 			this.rreader = new BufferValueReader (this.rmessageBuffer);
 
-			if (!this.reliableSocket.ReceiveAsync (e))
+			bool recevied;
+			lock (this.stateSync)
+			{
+				if (!IsConnected)
+				{
+					Interlocked.Decrement (ref this.pendingAsync);
+					return;
+				}
+
+				Interlocked.Increment (ref this.pendingAsync);
+				recevied = !this.reliableSocket.ReceiveAsync (e);
+			}
+
+			if (recevied)
 				ReliableReceiveCompleted (this.reliableSocket, e);
 
 			OnConnected (new ClientConnectionEventArgs(this));
+			Interlocked.Decrement (ref this.pendingAsync);
 		}
 
 		private int pingFrequency;

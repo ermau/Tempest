@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using NUnit.Framework;
 using Tempest.Providers.Network;
@@ -141,6 +142,34 @@ namespace Tempest.Tests
 			test.Assert (4000, false);
 			Assert.IsTrue (connection.IsConnected);
 			Assert.IsTrue (client.IsConnected);
+		}
+
+		[Test]
+		public void DisconnectedEventAlreadyDisconnectedNow()
+		{
+			var test = new AsyncTest();
+
+			var c = new NetworkServerConnection (new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
+			                                     (NetworkConnectionProvider)provider);
+
+			c.Disconnected += test.PassHandler;
+			c.Disconnect (true);
+
+			test.Assert (2000);
+		}
+
+		[Test]
+		public void DisconnectedEventAlreadyDisconnectedLater()
+		{
+			var test = new AsyncTest();
+
+			var c = new NetworkServerConnection (new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
+			                                     (NetworkConnectionProvider)provider);
+
+			c.Disconnected += test.PassHandler;
+			c.Disconnect (false);
+
+			test.Assert (2000);
 		}
 	}
 }

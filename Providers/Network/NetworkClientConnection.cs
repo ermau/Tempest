@@ -118,7 +118,13 @@ namespace Tempest.Providers.Network
 				case (ushort)TempestMessageType.Ping:
 					var ping = (PingMessage)e.Message;
 					if (this.pingFrequency == 0)
-						this.activityTimer = new Timer (ActivityCallback, null, ping.Interval, ping.Interval);
+					{
+						if (this.activityTimer != null)
+							this.activityTimer.Dispose();
+
+						if (ping.Interval != 0)
+							this.activityTimer = new Timer (ActivityCallback, null, ping.Interval, ping.Interval);
+					}
 					else if (ping.Interval != this.pingFrequency)
 						this.activityTimer.Change (ping.Interval, ping.Interval);
 					

@@ -93,7 +93,7 @@ namespace Tempest.Providers.Network
 		}
 
 		/// <summary>
-		/// Gets or sets the frequency (in milliseconds) that the server pings the client.
+		/// Gets or sets the frequency (in milliseconds) that the server pings the client. 0 to disable.
 		/// </summary>
 		public int PingFrequency
 		{

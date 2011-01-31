@@ -274,6 +274,7 @@ namespace Tempest.Providers.Network
 				if (header == null)
 				{
 					Disconnect (true);
+					Interlocked.Decrement (ref this.pendingAsync);
 					return;
 				}
 
@@ -377,6 +378,13 @@ namespace Tempest.Providers.Network
 
 		private void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
 		{
+			var message = (Message)e.UserToken;
+
+			#if !NET_4
+			lock (writerAsyncArgs)
+			#endif
+			writerAsyncArgs.Push (e);
+
 			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 			{
 				Disconnect (true);
@@ -384,12 +392,7 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			#if !NET_4
-			lock (writerAsyncArgs)
-			#endif
-			writerAsyncArgs.Push (e);
-
-			OnMessageSent (new MessageEventArgs (this, (Message)e.UserToken));
+			OnMessageSent (new MessageEventArgs (this, message));
 			Interlocked.Decrement (ref this.pendingAsync);
 		}
 
@@ -407,7 +410,7 @@ namespace Tempest.Providers.Network
 		}
 
 		// TODO: Better buffer limit
-		private static readonly int BufferLimit = Environment.ProcessorCount * 4;
+		private static readonly int BufferLimit = Environment.ProcessorCount * 10;
 		private static volatile int bufferCount = 0;
 
 		#if NET_4

@@ -187,14 +187,22 @@ namespace Tempest.Providers.Network
 				}
 				else
 				{
-					this.disconnectingReason = reason;
 					this.disconnecting = true;
-					Interlocked.Increment (ref this.pendingAsync);
+					this.disconnectingReason = reason;
 
-					var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
-					args.Completed += OnDisconnectCompleted;
-					if (!this.reliableSocket.DisconnectAsync (args))
-						OnDisconnectCompleted (this.reliableSocket, args);
+					ThreadPool.QueueUserWorkItem (s =>
+					{
+						var spinwait = new SpinWait();
+						while (this.pendingAsync > 1)
+							spinwait.SpinOnce();
+
+						Interlocked.Increment (ref this.pendingAsync);
+
+						var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
+						args.Completed += OnDisconnectCompleted;
+						if (!this.reliableSocket.DisconnectAsync (args))
+							OnDisconnectCompleted (this.reliableSocket, args);
+					});
 				}
 			}
 		}

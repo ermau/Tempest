@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ namespace Tempest
 	/// identify the various sets of messages so that the correct handlers
 	/// receive the correct messages.
 	/// </remarks>
-	public class Protocol
+	public sealed class Protocol
 		: MessageFactory, IEquatable<Protocol>
 	{
 		internal byte id;
@@ -57,12 +57,12 @@ namespace Tempest
 		{
 		}
 
-		public virtual byte[] GetBytes (Message message, out int length)
+		public /*virtual*/ byte[] GetBytes (Message message, out int length)
 		{
 			return GetBytes (message, out length, new byte[1024]);
 		}
 
-		public virtual byte[] GetBytes (Message message, out int length, byte[] buffer)
+		public /*virtual*/ byte[] GetBytes (Message message, out int length, byte[] buffer)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -83,7 +83,7 @@ namespace Tempest
 			return writer.Buffer;
 		}
 
-		public virtual MessageHeader GetHeader (byte[] buffer, int offset, int length)
+		public /*virtual*/ MessageHeader GetHeader (byte[] buffer, int offset, int length)
 		{
 			if (buffer == null)
 				throw new ArgumentNullException ("buffer");

@@ -70,15 +70,15 @@ namespace Tempest
 					return header;
 			}
 
-			lock (CustomProtocols)
-			{
-				for (int i = 0; i < CustomProtocols.Count; ++i)
-				{
-					MessageHeader header = CustomProtocols[i].GetHeader (buffer, offset, length);
-					if (header != null)
-						return header;
-				}
-			}
+			//lock (CustomProtocols)
+			//{
+			//    for (int i = 0; i < CustomProtocols.Count; ++i)
+			//    {
+			//        MessageHeader header = CustomProtocols[i].GetHeader (buffer, offset, length);
+			//        if (header != null)
+			//            return header;
+			//    }
+			//}
 
 			return null;
 		}
@@ -103,11 +103,11 @@ namespace Tempest
 					throw new InvalidOperationException ("Protocol already registered.");
 				#endif
 			}
-			else
-			{
-				lock (CustomProtocols)
-					CustomProtocols.Add (protocol);
-			}
+			//else
+			//{
+			//    lock (CustomProtocols)
+			//        CustomProtocols.Add (protocol);
+			//}
 
 			return protocol;
 		}
@@ -117,7 +117,7 @@ namespace Tempest
 			InternalProtocol.TempestMessage.RegisterProtocol();
 		}
 
-		private static readonly List<Protocol> CustomProtocols = new List<Protocol>();
+		//private static readonly List<Protocol> CustomProtocols = new List<Protocol>();
 		#if !NET_4
 		private static readonly Dictionary<byte, Protocol> TempestProtocols = new Dictionary<byte, Protocol>();
 

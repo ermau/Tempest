@@ -377,6 +377,11 @@ namespace Tempest.Providers.Network
 				case (ushort)TempestMessageType.Pong:
 					this.pingsOut = 0;
 					break;
+
+				case (ushort)TempestMessageType.Disconnect:
+					var msg = (DisconnectMessage)e.Message;
+					Disconnect (true, msg.Reason);
+					break;
 			}
 		}
 

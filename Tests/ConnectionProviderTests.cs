@@ -30,6 +30,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using NUnit.Framework;
+using Tempest.InternalProtocol;
 
 namespace Tempest.Tests
 {
@@ -525,6 +526,27 @@ namespace Tempest.Tests
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
 			}
+		}
+
+		[Test]
+		public void DisconnectAyncWithReason()
+		{
+			var test = new AsyncTest (e => ((DisconnectedEventArgs)e).Reason == DisconnectedReason.IncompatibleVersion, true);
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) =>
+			{
+				e.Connection.Disconnected += test.PassHandler;
+
+				e.Connection.Send (new DisconnectMessage { Reason = DisconnectedReason.IncompatibleVersion });
+				e.Connection.Disconnect (false, DisconnectedReason.ConnectionFailed);
+			};
+
+			var c = GetNewClientConnection();
+			c.Disconnected += test.PassHandler;
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
 		}
 	}
 }

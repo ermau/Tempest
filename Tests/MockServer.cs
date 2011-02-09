@@ -29,7 +29,7 @@ using System.Linq;
 namespace Tempest.Tests
 {
 	public class MockServer
-		: Server
+		: ServerBase
 	{
 		public MockServer (MessageTypes messageTypes)
 			: base (messageTypes)

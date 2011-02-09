@@ -30,7 +30,7 @@ using System.Net;
 namespace Tempest.Tests
 {
 	public class MockClient
-		: Client
+		: ClientBase
 	{
 		public MockClient (IClientConnection connection, bool poll)
 			: base(connection, MessageTypes.Reliable, poll)

@@ -1,5 +1,5 @@
 ﻿//
-// Server.cs
+// ServerBase.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -48,15 +48,18 @@ namespace Tempest
 		GlobalOrder
 	}
 
-	public abstract class Server
+	/// <summary>
+	/// Base class for Tempest servers.
+	/// </summary>
+	public abstract class ServerBase
 		: MessageHandling
 	{
-		protected Server (MessageTypes messageTypes)
+		protected ServerBase (MessageTypes messageTypes)
 		{
 			this.messageTypes = messageTypes;
 		}
 
-		protected Server (IConnectionProvider provider, MessageTypes messageTypes)
+		protected ServerBase (IConnectionProvider provider, MessageTypes messageTypes)
 			: this (messageTypes)
 		{
 			AddConnectionProvider (provider);

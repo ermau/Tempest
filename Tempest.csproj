@@ -50,7 +50,7 @@
     <Compile Include="Protocol.cs" />
     <Compile Include="BufferValueReader.cs" />
     <Compile Include="BufferValueWriter.cs" />
-    <Compile Include="Client.cs" />
+    <Compile Include="ClientBase.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="IClientConnection.cs" />
     <Compile Include="IConnection.cs" />
@@ -70,7 +70,7 @@
     <Compile Include="Providers\Network\NetworkConnection.cs" />
     <Compile Include="Providers\Network\NetworkConnectionProvider.cs" />
     <Compile Include="Providers\Network\NetworkServerConnection.cs" />
-    <Compile Include="Server.cs" />
+    <Compile Include="ServerBase.cs" />
     <Compile Include="StreamValueReader.cs" />
     <Compile Include="StreamValueWriter.cs" />
     <Compile Include="InternalProtocol\TempestMessage.cs" />

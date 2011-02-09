@@ -1,5 +1,5 @@
 ﻿//
-// Client.cs
+// ClientBase.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -33,10 +33,13 @@ using Cadenza.Collections;
 
 namespace Tempest
 {
-	public abstract class Client
+	/// <summary>
+	/// Base class for Tempest clients.
+	/// </summary>
+	public abstract class ClientBase
 		: MessageHandling
 	{
-		protected Client (IClientConnection connection, MessageTypes mtypes, bool poll)
+		protected ClientBase (IClientConnection connection, MessageTypes mtypes, bool poll)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");

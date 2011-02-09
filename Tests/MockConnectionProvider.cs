@@ -28,6 +28,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
+using Tempest.InternalProtocol;
 
 namespace Tempest.Tests
 {
@@ -119,7 +121,7 @@ namespace Tempest.Tests
 			base.Send (message);
 		}
 
-		public override void Disconnect(bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
+		public override void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
 		{
 			if (connection == null)
 				return;
@@ -238,12 +240,38 @@ namespace Tempest.Tests
 		{
 			this.connected = false;
 
-			OnDisconnected (new DisconnectedEventArgs (this, reason));
+			var e = new DisconnectedEventArgs (this, reason);
+			if (now)
+				OnDisconnected (e);
+			else
+				ThreadPool.QueueUserWorkItem (s => OnDisconnected ((DisconnectedEventArgs)s), e);
 		}
 
 		internal void Receive (MessageEventArgs e)
 		{
-			OnMessageReceived (e);
+			var tmessage = (e.Message as TempestMessage);
+			if (tmessage == null)
+				OnMessageReceived (e);
+			else
+				OnTempestMessageReceived (e);
+		}
+
+		protected virtual void OnTempestMessageReceived (MessageEventArgs e)
+		{
+			switch (e.Message.MessageType)
+			{
+				case (ushort)TempestMessageType.Ping:
+					Send (new PongMessage());
+					break;
+
+				case (ushort)TempestMessageType.Pong:
+					break;
+
+				case (ushort)TempestMessageType.Disconnect:
+					var msg = (DisconnectMessage)e.Message;
+					Disconnect (true, msg.Reason);
+					break;
+			}
 		}
 
 		protected void OnDisconnected (DisconnectedEventArgs e)

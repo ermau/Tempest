@@ -178,7 +178,7 @@ namespace Tempest.Providers.Network
 				if (!this.reliableSocket.Connected)
 				{
 					this.reliableSocket = null;
-					OnDisconnected (new DisconnectedEventArgs (this, reason));
+					OnDisconnected (new DisconnectedEventArgs (this, DisconnectedReason.Unknown));
 				}
 				else if (now)
 				{

@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 #if NET_4
 using System.Collections.Concurrent;
@@ -37,6 +35,11 @@ namespace Tempest
 {
 	public static class Protocols
 	{
+		/// <summary>
+		/// Attempts to find protocol for <paramref name="buffer"/> and return the corresponding header.
+		/// </summary>
+		/// <param name="buffer">The message buffer to search.</param>
+		/// <returns>The header if found, <c>null</c> otherwise.</returns>
 		public static MessageHeader FindHeader (byte[] buffer)
 		{
 			if (buffer == null)
@@ -45,12 +48,19 @@ namespace Tempest
 			return FindHeader (buffer, 0, buffer.Length);
 		}
 
+		/// <summary>
+		/// Attempts to find protocol for <paramref name="buffer"/> and return the corresponding header.
+		/// </summary>
+		/// <param name="buffer">The message buffer to search.</param>
+		/// <param name="offset">The offset to start searching at.</param>
+		/// <param name="length">The maximum length to search.</param>
+		/// <returns>The header if found, <c>null</c> otherwise.</returns>
 		public static MessageHeader FindHeader (byte[] buffer, int offset, int length)
 		{
 			if (buffer == null)
 				throw new ArgumentNullException ("buffer");
 			if (offset + length > buffer.Length || offset < 0)
-				throw new ArgumentOutOfRangeException ("Offset and length fall within the size of the buffer");
+				throw new ArgumentOutOfRangeException ("offset", "Offset and length fall within the size of the buffer");
 
 			Protocol p = Get (buffer[offset]);
 			if (p != null)

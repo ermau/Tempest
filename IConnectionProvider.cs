@@ -71,6 +71,13 @@ namespace Tempest
 		bool SupportsConnectionless { get; }
 
 		/// <summary>
+		/// Gets whether this connection provider is currently running or not.
+		/// </summary>
+		/// <seealso cref="Start"/>
+		/// <seealso cref="Stop"/>
+		bool IsRunning { get; }
+
+		/// <summary>
 		/// Starts the connection provider.
 		/// </summary>
 		/// <param name="types">The message types to accept.</param>

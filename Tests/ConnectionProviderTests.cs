@@ -105,6 +105,18 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void IsRunning()
+		{
+			Assert.IsFalse (provider.IsRunning);
+
+			provider.Start (MessageTypes);
+			Assert.IsTrue (provider.IsRunning);
+
+			provider.Stop();
+			Assert.IsFalse (provider.IsRunning);
+		}
+
+		[Test]
 		public void ConnectionMade()
 		{
 			this.provider.Start (MessageTypes);

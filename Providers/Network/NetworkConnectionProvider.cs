@@ -92,6 +92,11 @@ namespace Tempest.Providers.Network
 			get { return false; }
 		}
 
+		public bool IsRunning
+		{
+			get { return this.running; }
+		}
+
 		/// <summary>
 		/// Gets or sets the frequency (in milliseconds) that the server pings the client. 0 to disable.
 		/// </summary>

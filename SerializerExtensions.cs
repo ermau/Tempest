@@ -1,10 +1,10 @@
 ﻿//
-// Extensions.cs
+// SerializerExtensions.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ using System.Collections.Generic;
 
 namespace Tempest
 {
-	public static class Extensions
+	public static class SerializerExtensions
 	{
 		/// <summary>
 		/// Writes a date value.

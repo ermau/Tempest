@@ -52,7 +52,7 @@
     <Compile Include="BufferValueReader.cs" />
     <Compile Include="BufferValueWriter.cs" />
     <Compile Include="ClientBase.cs" />
-    <Compile Include="Extensions.cs" />
+    <Compile Include="SerializerExtensions.cs" />
     <Compile Include="IClientConnection.cs" />
     <Compile Include="IConnection.cs" />
     <Compile Include="IConnectionProvider.cs" />

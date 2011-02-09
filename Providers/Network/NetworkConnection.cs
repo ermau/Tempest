@@ -61,10 +61,11 @@ namespace Tempest.Providers.Network
 		{
 			get
 			{
+				if (this.disconnecting || this.reliableSocket != null)
+					return false;
+
 				lock (this.stateSync)
-				{
-					return (!this.disconnecting && this.reliableSocket != null && this.reliableSocket.Connected);
-				}
+					return (this.disconnecting || this.reliableSocket == null || !this.reliableSocket.Connected);
 			}
 		}
 

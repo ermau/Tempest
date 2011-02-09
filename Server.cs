@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,9 @@ using System.Threading;
 
 namespace Tempest
 {
+	/// <summary>
+	/// Options for determining how messages are executed.
+	/// </summary>
 	public enum ExecutionMode
 	{
 		/// <summary>
@@ -63,6 +66,7 @@ namespace Tempest
 		/// Adds and starts the connection <paramref name="provider"/>.
 		/// </summary>
 		/// <param name="provider">The connection provider to add.</param>
+		/// <param name="mode">The <see cref="ExecutionMode"/> for <paramref name="provider"/>.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="provider"/> is <c>null</c>.</exception>
 		public void AddConnectionProvider (IConnectionProvider provider, ExecutionMode mode = ExecutionMode.ConnectionOrder)
 		{

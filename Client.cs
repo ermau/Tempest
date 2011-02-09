@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -61,8 +61,19 @@ namespace Tempest
 			this.polling = poll;
 		}
 
+		/// <summary>
+		/// Raised when the client connects.
+		/// </summary>
 		public event EventHandler Connected;
+
+		/// <summary>
+		/// Raised when the client fails to connect.
+		/// </summary>
 		public event EventHandler ConnectionFailed;
+
+		/// <summary>
+		/// Raised with the client is disconnected.
+		/// </summary>
 		public event EventHandler Disconnected;
 
 		/// <summary>
@@ -73,6 +84,11 @@ namespace Tempest
 			get { return this.connection.IsConnected; }
 		}
 
+		/// <summary>
+		/// Attempts to connect to <paramref name="endPoint"/>.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to connect to.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
 		public void Connect (EndPoint endPoint)
 		{
 			if (endPoint == null)
@@ -112,6 +128,9 @@ namespace Tempest
 			}
 		}
 
+		/// <summary>
+		/// Manually polls the connection and invokes message handlers.
+		/// </summary>
 		public void Poll()
 		{
 			if (!IsConnected)
@@ -155,7 +174,7 @@ namespace Tempest
 		private readonly AutoResetEvent mwait;
 		private Thread messageRunner;
 		protected volatile bool running;
-		private MessageTypes messageTypes;
+		private readonly MessageTypes messageTypes;
 
 		private void ConnectionOnMessageReceived (object sender, MessageEventArgs e)
 		{

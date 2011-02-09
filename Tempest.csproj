@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DisconnectedEventArgs.cs" />
     <Compile Include="InternalProtocol\ConnectMessage.cs" />
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />
     <Compile Include="ISerializable.cs" />

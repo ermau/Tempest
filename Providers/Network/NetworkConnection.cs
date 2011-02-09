@@ -55,7 +55,7 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Raised when the connection is lost or manually disconnected.
 		/// </summary>
-		public event EventHandler<ConnectionEventArgs> Disconnected;
+		public event EventHandler<DisconnectedEventArgs> Disconnected;
 
 		public bool IsConnected
 		{
@@ -167,7 +167,7 @@ namespace Tempest.Providers.Network
 				ReliableSendCompleted (this.reliableSocket, eargs);
 		}
 
-		public void Disconnect (bool now)
+		public void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
 		{
 			lock (this.stateSync)
 			{
@@ -177,7 +177,7 @@ namespace Tempest.Providers.Network
 				if (!this.reliableSocket.Connected)
 				{
 					this.reliableSocket = null;
-					OnDisconnected (new ConnectionEventArgs (this));
+					OnDisconnected (new DisconnectedEventArgs (this, reason));
 				}
 				else if (now)
 				{
@@ -185,14 +185,15 @@ namespace Tempest.Providers.Network
 					this.reliableSocket.Disconnect (true);
 					Recycle();
 					this.reliableSocket = null;
-					OnDisconnected (new ConnectionEventArgs (this));
+					OnDisconnected (new DisconnectedEventArgs (this, reason));
 				}
 				else
 				{
+					this.disconnectingReason = reason;
 					this.disconnecting = true;
 					Interlocked.Increment (ref this.pendingAsync);
 
-					var args = new SocketAsyncEventArgs {DisconnectReuseSocket = true};
+					var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
 					args.Completed += OnDisconnectCompleted;
 					if (!this.reliableSocket.DisconnectAsync (args))
 						OnDisconnectCompleted (this.reliableSocket, args);
@@ -213,6 +214,8 @@ namespace Tempest.Providers.Network
 		protected readonly object stateSync = new object();
 		protected int pendingAsync = 0;
 		protected bool disconnecting = false;
+		protected DisconnectedReason disconnectingReason;
+
 		protected Socket reliableSocket;
 
 		protected byte[] rmessageBuffer = new byte[20480];
@@ -241,7 +244,7 @@ namespace Tempest.Providers.Network
 				mr (this, e);
 		}
 
-		protected virtual void OnDisconnected (ConnectionEventArgs e)
+		protected virtual void OnDisconnected (DisconnectedEventArgs e)
 		{
 			var dc = this.Disconnected;
 			if (dc != null)
@@ -405,7 +408,7 @@ namespace Tempest.Providers.Network
 				this.reliableSocket = null;
 			}
 
-			OnDisconnected (new ConnectionEventArgs (this));
+			OnDisconnected (new DisconnectedEventArgs (this, this.disconnectingReason));
 			Interlocked.Decrement (ref this.pendingAsync);
 		}
 

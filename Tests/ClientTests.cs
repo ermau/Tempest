@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +48,8 @@ namespace Tempest.Tests
 		public void Setup()
 		{
 			provider = new MockConnectionProvider();
+			provider.Start (MessageTypes.Reliable);
+
 			connection = new MockClientConnection (provider);
 			client = new MockClient (connection, false);
 		}
@@ -70,7 +72,7 @@ namespace Tempest.Tests
 			var test = new AsyncTest();
 
 			client.Connected += test.PassHandler;
-			client.ConnectionFailed += test.FailHandler;
+			client.Disconnected += test.FailHandler;
 
 			client.Connect (new IPEndPoint (IPAddress.Any, 0));
 

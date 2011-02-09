@@ -119,16 +119,16 @@ namespace Tempest.Tests
 			base.Send (message);
 		}
 
-		public override void Disconnect(bool now)
+		public override void Disconnect(bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
 		{
 			if (connection == null)
 				return;
 
 			var c = connection;
 			connection = null;
-			c.Disconnect (now);
+			c.Disconnect (now, reason);
 
-			base.Disconnect (now);
+			base.Disconnect (now, reason);
 		}
 	}
 
@@ -146,7 +146,6 @@ namespace Tempest.Tests
 		}
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
-		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
 
 		public void Connect (EndPoint endpoint, MessageTypes messageTypes)
 		{
@@ -154,8 +153,15 @@ namespace Tempest.Tests
 				throw new ArgumentNullException ("endpoint");
 
 			this.connected = true;
-			provider.Connect (this);
-			OnConnected (new ClientConnectionEventArgs (this));
+			if (provider.IsRunning)
+			{
+				provider.Connect (this);
+				OnConnected (new ClientConnectionEventArgs (this));
+			}
+			else
+			{
+				OnDisconnected (new DisconnectedEventArgs (this, DisconnectedReason.ConnectionFailed));
+			}
 		}
 
 		public override void Send (Message message)
@@ -167,16 +173,16 @@ namespace Tempest.Tests
 			base.Send (message);
 		}
 
-		public override void Disconnect(bool now)
+		public override void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
 		{
 			if (connection == null)
 				return;
 
 			var c = connection;
 			connection = null;
-			c.Disconnect (now);
+			c.Disconnect (now, reason);
 			
-			base.Disconnect (now);
+			base.Disconnect (now, reason);
 		}
 
 		internal MockServerConnection connection;
@@ -184,13 +190,6 @@ namespace Tempest.Tests
 		private void OnConnected (ClientConnectionEventArgs e)
 		{
 			EventHandler<ClientConnectionEventArgs> handler = Connected;
-			if (handler != null)
-				handler (this, e);
-		}
-
-		private void OnConnectionFailed (ClientConnectionEventArgs e)
-		{
-			EventHandler<ClientConnectionEventArgs> handler = ConnectionFailed;
 			if (handler != null)
 				handler (this, e);
 		}
@@ -223,7 +222,7 @@ namespace Tempest.Tests
 
 		public event EventHandler<MessageEventArgs> MessageReceived;
 		public event EventHandler<MessageEventArgs> MessageSent;
-		public event EventHandler<ConnectionEventArgs> Disconnected;
+		public event EventHandler<DisconnectedEventArgs> Disconnected;
 		
 		public virtual void Send (Message message)
 		{
@@ -235,11 +234,11 @@ namespace Tempest.Tests
 			throw new NotSupportedException();
 		}
 
-		public virtual void Disconnect (bool now)
+		public virtual void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
 		{
 			this.connected = false;
 
-			OnDisconnected (new ConnectionEventArgs (this));
+			OnDisconnected (new DisconnectedEventArgs (this, reason));
 		}
 
 		internal void Receive (MessageEventArgs e)
@@ -247,9 +246,9 @@ namespace Tempest.Tests
 			OnMessageReceived (e);
 		}
 
-		protected void OnDisconnected (ConnectionEventArgs e)
+		protected void OnDisconnected (DisconnectedEventArgs e)
 		{
-			EventHandler<ConnectionEventArgs> handler = Disconnected;
+			var handler = Disconnected;
 			if (handler != null)
 				handler (this, e);
 		}

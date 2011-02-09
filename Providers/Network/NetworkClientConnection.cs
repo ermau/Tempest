@@ -77,7 +77,7 @@ namespace Tempest.Providers.Network
 		{
 			if (e.SocketError != SocketError.Success)
 			{
-				Disconnect (true);
+				Disconnect (true, DisconnectedReason.ConnectionFailed);
 				OnConnectionFailed (new ClientConnectionEventArgs (this));
 				Interlocked.Decrement (ref this.pendingAsync);
 				return;

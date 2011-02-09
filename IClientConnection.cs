@@ -39,11 +39,6 @@ namespace Tempest
 		event EventHandler<ClientConnectionEventArgs> Connected;
 
 		/// <summary>
-		/// Raised when a connection attempt fails.
-		/// </summary>
-		event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
-
-		/// <summary>
 		/// Attempts to connect to the <paramref name="endpoint"/> for <paramref name="messageTypes"/>.
 		/// </summary>
 		/// <param name="endpoint">The endpoint to connect to.</param>

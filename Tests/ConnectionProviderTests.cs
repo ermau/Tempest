@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -138,7 +138,7 @@ namespace Tempest.Tests
 
 			var test = new AsyncTest();
 			c.Connected += test.PassHandler;
-			c.ConnectionFailed += test.FailHandler;
+			c.Disconnected += test.FailHandler;
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -301,7 +301,7 @@ namespace Tempest.Tests
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
 
-			c.ConnectionFailed += test.FailHandler;
+			c.Disconnected += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
 			c.Connect (EndPoint, MessageTypes);
 
@@ -336,7 +336,7 @@ namespace Tempest.Tests
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => e.Connection.Send (new MockMessage { Content = content });
 
-			c.ConnectionFailed += test.FailHandler;
+			c.Disconnected += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
 			c.Connect (EndPoint, MessageTypes);
 
@@ -384,8 +384,29 @@ namespace Tempest.Tests
 				}
 			})).Start();
 
-			c.ConnectionFailed += test.FailHandler;
+			c.Disconnected += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (30000);
+		}
+
+		[Test]
+		public void ConnectionFailed()
+		{
+			Assert.IsFalse (provider.IsRunning);
+
+			var test = new AsyncTest();
+			var c = GetNewClientConnection();
+			c.Connected += test.FailHandler;
+			c.Disconnected += (s, e) =>
+			{
+				if (e.Reason == DisconnectedReason.ConnectionFailed)
+					test.PassHandler (s, e);
+				else
+					test.FailHandler (s, e);
+			};
+
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (30000);

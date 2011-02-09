@@ -86,7 +86,7 @@ namespace Tempest
 		/// <summary>
 		/// The connection was lost.
 		/// </summary>
-		event EventHandler<ConnectionEventArgs> Disconnected;
+		event EventHandler<DisconnectedEventArgs> Disconnected;
 
 		/// <summary>
 		/// Queues a message to send to this connection.
@@ -106,7 +106,8 @@ namespace Tempest
 		/// Closes the connection.
 		/// </summary>
 		/// <param name="now">Determines whether the connection is severed immediately or if pending messages are allowed to be sent.</param>
-		void Disconnect (bool now);
+		/// <param name="reason">Reason for the disconnection.</param>
+		void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown);
 	}
 
 	/// <summary>

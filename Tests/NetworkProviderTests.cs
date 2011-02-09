@@ -81,7 +81,7 @@ namespace Tempest.Tests
 
 				client = GetNewClientConnection();
 				client.Connected += test.PassHandler;
-				client.ConnectionFailed += test.FailHandler;
+				client.Disconnected += test.FailHandler;
 				client.Connect (EndPoint, MessageTypes);
 
 				test.Assert (3000);
@@ -136,7 +136,6 @@ namespace Tempest.Tests
 			((NetworkConnectionProvider)provider).PingFrequency = 1000;
 			var client = GetNewClientConnection();
 			client.Disconnected += test.FailHandler;
-			client.ConnectionFailed += test.FailHandler;
 			client.Connect (EndPoint, MessageTypes);
 
 			test.Assert (4000, false);

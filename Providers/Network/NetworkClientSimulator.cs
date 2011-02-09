@@ -95,7 +95,7 @@ namespace Tempest.Providers.Network
 			remove { this.connection.MessageSent -= value; }
 		}
 
-		public event EventHandler<ConnectionEventArgs> Disconnected
+		public event EventHandler<DisconnectedEventArgs> Disconnected
 		{
 			add { this.connection.Disconnected += value; }
 			remove { this.connection.Disconnected -= value;}
@@ -106,12 +106,6 @@ namespace Tempest.Providers.Network
 		{
 			add { this.connection.Connected += value; }
 			remove { this.connection.Connected -= value; }
-		}
-
-		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed
-		{
-			add { this.connection.ConnectionFailed += value; }
-			remove { this.connection.ConnectionFailed -= value; }
 		}
 
 		public void Send (Message message)
@@ -135,9 +129,9 @@ namespace Tempest.Providers.Network
 			return this.connection.Tick();
 		}
 
-		public void Disconnect (bool now)
+		public void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
 		{
-			this.connection.Disconnect (now);
+			this.connection.Disconnect (now, reason);
 		}
 
 		public void Connect (EndPoint endpoint, MessageTypes messageTypes)

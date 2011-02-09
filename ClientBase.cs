@@ -49,7 +49,6 @@ namespace Tempest
 			this.connection = connection;
 			this.connection.Connected += OnConnectionConnected;
 			this.connection.Disconnected += OnConnectionDisconnected;
-			this.connection.ConnectionFailed += OnConnectionConnectionFailed;
 
 			if ((this.connection.Modes & MessagingModes.Inline) == MessagingModes.Inline && (Environment.ProcessorCount == 1 || (this.connection.Modes & MessagingModes.Async) != MessagingModes.Async))
 				this.mode = MessagingModes.Inline;
@@ -70,14 +69,9 @@ namespace Tempest
 		public event EventHandler Connected;
 
 		/// <summary>
-		/// Raised when the client fails to connect.
-		/// </summary>
-		public event EventHandler ConnectionFailed;
-
-		/// <summary>
 		/// Raised with the client is disconnected.
 		/// </summary>
-		public event EventHandler Disconnected;
+		public event EventHandler<ClientDisconnectedEventArgs> Disconnected;
 
 		/// <summary>
 		/// Gets whether the client is currently connected or not.
@@ -269,14 +263,9 @@ namespace Tempest
 			}
 		}
 
-		private void OnConnectionConnectionFailed (object sender, ClientConnectionEventArgs e)
+		private void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
 		{
-			OnConnectionFailed (EventArgs.Empty);
-		}
-
-		private void OnConnectionDisconnected (object sender, ConnectionEventArgs e)
-		{
-			OnDisconnected (EventArgs.Empty);
+			OnDisconnected (new ClientDisconnectedEventArgs (e.Reason));
 		}
 
 		private void OnConnectionConnected (object sender, ClientConnectionEventArgs e)
@@ -301,18 +290,26 @@ namespace Tempest
 				handler (this, e);
 		}
 
-		protected virtual void OnConnectionFailed (EventArgs e)
+		protected virtual void OnDisconnected (ClientDisconnectedEventArgs e)
 		{
-			EventHandler handler = ConnectionFailed;
+			var handler = Disconnected;
 			if (handler != null)
 				handler (this, e);
 		}
+	}
 
-		protected virtual void OnDisconnected (EventArgs e)
+	public class ClientDisconnectedEventArgs
+		: EventArgs
+	{
+		public ClientDisconnectedEventArgs (DisconnectedReason reason)
 		{
-			EventHandler handler = Disconnected;
-			if (handler != null)
-				handler (this, e);
+			Reason = reason;
+		}
+
+		public DisconnectedReason Reason
+		{
+			get;
+			private set;
 		}
 	}
 }

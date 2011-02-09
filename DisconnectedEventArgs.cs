@@ -16,6 +16,11 @@ namespace Tempest
 		/// The connection failed to connect to begin with.
 		/// </summary>
 		ConnectionFailed = 1,
+
+		/// <summary>
+		/// The server does not support the client's version of the protocol.
+		/// </summary>
+		IncompatibleVersion = 2,
 	}
 
 	/// <summary>

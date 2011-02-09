@@ -1,5 +1,5 @@
 ﻿//
-// PingMessage.cs
+// DisconnectMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -27,18 +27,6 @@
 namespace Tempest.InternalProtocol
 {
 	/// <summary>
-	/// Reason for disconnection.
-	/// </summary>
-	/// <seealso cref="DisconnectMessage"/>
-	public enum DisconnectionReason
-	{
-		/// <summary>
-		/// Who knows?
-		/// </summary>
-		Unknown = 0,
-	}
-
-	/// <summary>
 	/// Internal Tempest protocol disconnect with reason message.
 	/// </summary>
 	public class DisconnectMessage
@@ -55,7 +43,7 @@ namespace Tempest.InternalProtocol
 		/// <summary>
 		/// Gets or sets the reason for disconnection.
 		/// </summary>
-		public DisconnectionReason Reason
+		public DisconnectedReason Reason
 		{
 			get;
 			set;
@@ -63,12 +51,12 @@ namespace Tempest.InternalProtocol
 
 		public override void WritePayload (IValueWriter writer)
 		{
-			writer.WriteByte ((byte)Reason);
+			writer.WriteInt32 ((int)Reason);
 		}
 
 		public override void ReadPayload (IValueReader reader)
 		{
-			Reason = (DisconnectionReason)reader.ReadByte();
+			Reason = (DisconnectedReason)reader.ReadInt32();
 		}
 	}
 }

@@ -88,7 +88,7 @@ namespace Tempest
 			if (buffer == null)
 				throw new ArgumentNullException ("buffer");
 			if (offset < 0 || length + offset > buffer.Length)
-				throw new ArgumentOutOfRangeException("offset and length must be within the size of the array");
+				throw new ArgumentOutOfRangeException ("offset and length must be within the size of the array");
 			if (length < TempestHeaderLength)
 				return null;
 			if (buffer[offset] != id)

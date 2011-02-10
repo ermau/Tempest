@@ -45,6 +45,13 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void ReservedIdCtor()
+		{
+			Assert.Throws<ArgumentException> (() => new Protocol (1));
+			Assert.Throws<ArgumentException> (() => new Protocol (1, 2));
+		}
+
+		[Test]
 		public void GetBytesNull()
 		{
 			int len;
@@ -113,6 +120,46 @@ namespace Tempest.Tests
 			Assert.Throws<ArgumentOutOfRangeException> (() => Protocols.FindHeader (new byte[10], 0, 11));
 			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocols.FindHeader (new byte[10], -1, 10));
 			Assert.Throws<ArgumentOutOfRangeException>(() => Tempest.Protocols.FindHeader (new byte[10], 6, 5));
+		}
+
+		[Test]
+		public void Equality()
+		{
+			var p1 = new Protocol (2, 1);
+			var p2 = new Protocol (2, 1);
+
+			Assert.AreEqual (p1, p2);
+			Assert.AreEqual (p1.GetHashCode(), p2.GetHashCode());
+		}
+
+		[Test]
+		public void Inequality()
+		{
+			var p1 = new Protocol (2, 1);
+			var p2 = new Protocol (3, 4);
+
+			Assert.AreNotEqual (p1, p2);
+			Assert.AreNotEqual (p1.GetHashCode(), p2.GetHashCode());
+		}
+
+		[Test]
+		public void InequalityDifferentVersions()
+		{
+			var p1 = new Protocol (2, 1);
+			var p2 = new Protocol (2, 3);
+
+			Assert.AreNotEqual (p1, p2);
+			Assert.AreNotEqual (p1.GetHashCode(), p2.GetHashCode());
+		}
+
+		[Test]
+		public void InequalityDifferentIds()
+		{
+			var p1 = new Protocol (3, 2);
+			var p2 = new Protocol (4, 2);
+
+			Assert.AreNotEqual (p1, p2);
+			Assert.AreNotEqual (p1.GetHashCode(), p2.GetHashCode());
 		}
 	}
 }

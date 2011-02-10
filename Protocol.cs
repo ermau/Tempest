@@ -41,14 +41,46 @@ namespace Tempest
 	public sealed class Protocol
 		: MessageFactory, IEquatable<Protocol>
 	{
+		private readonly int version;
 		internal byte id;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Protocol"/> class.
+		/// </summary>
+		/// <param name="id">The ID of the protocol.</param>
+		/// <exception cref="ArgumentException"><paramref name="id"/> is 1.</exception>
+		/// <remarks>
+		/// Protocol ID 1 is reserved for internal Tempest use.
+		/// </remarks>
 		public Protocol (byte id)
 		{
 			if (id == 1)
 				throw new ArgumentException ("ID 1 is reserved for Tempest use.", "id");
 
 			this.id = id;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Protocol"/> class.
+		/// </summary>
+		/// <param name="id">The ID of the protocol.</param>
+		/// <param name="version">The version of the protocol.</param>
+		/// <exception cref="ArgumentException"><paramref name="id"/> is 1.</exception>
+		/// <remarks>
+		/// Protocol ID 1 is reserved for internal Tempest use.
+		/// </remarks>
+		public Protocol (byte id, int version)
+			: this (id)
+		{
+			this.version = version;
+		}
+
+		/// <summary>
+		/// Gets the version of this protocol.
+		/// </summary>
+		public int Version
+		{
+			get { return this.version; }
 		}
 
 		// TODO: Write docs clarifying that Id is only needed for
@@ -125,12 +157,12 @@ namespace Tempest
 			if (ReferenceEquals (this, other))
 				return true;
 
-			return (GetType() == other.GetType() && other.id == id);
+			return (GetType() == other.GetType() && other.id == id && version == other.version);
 		}
 
 		public override int GetHashCode()
 		{
-			return (id != 0) ? id.GetHashCode() ^ GetType().GetHashCode() : GetType().GetHashCode();
+			return id.GetHashCode() ^ version.GetHashCode() ^ GetType().GetHashCode();
 		}
 
 		public static bool operator == (Protocol left, Protocol right)

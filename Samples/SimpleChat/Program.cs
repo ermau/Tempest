@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using Mono.Options;
 using Tempest.Providers.Network;
@@ -14,7 +15,11 @@ namespace Tempest.Samples.SimpleChat
 
 		static void Main (string[] args)
 		{
-			ChatProtocol.Discover();
+			ChatProtocol.Register (new []
+			{
+				new KeyValuePair<Type, Func<Message>> (typeof(ChatMessage), () => new ChatMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(SetNameMessage), () => new SetNameMessage()), 
+			});
 
 			bool runServer = false;
 			string clientHost = null;

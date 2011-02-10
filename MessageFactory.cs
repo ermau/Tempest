@@ -56,7 +56,7 @@ namespace Tempest
 				throw new ArgumentNullException ("assembly");
 			
 			Type mtype = typeof (Message);
-			RegisterTypes (assembly.GetTypes().Where (t => !mtype.IsGenericType && !mtype.IsGenericTypeDefinition && mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
+			RegisterTypes (assembly.GetTypes().Where (t => !t.IsGenericType && !t.IsGenericTypeDefinition && mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
 		}
 
 		/// <summary>

@@ -40,11 +40,11 @@ namespace Tempest.Samples.SimpleChat
 			}
 		}
 
-		protected override void OnConnectionDisconnected (object sender, ConnectionEventArgs e)
+		protected override void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
 		{
 			string name;
 			this.chatters.TryRemove (e.Connection, out name);
-
+			
 			base.OnConnectionDisconnected (sender, e);
 		}
 	}

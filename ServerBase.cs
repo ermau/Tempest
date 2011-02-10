@@ -173,7 +173,7 @@ namespace Tempest
 			e.Connection.Disconnected += OnConnectionDisconnected;
 		}
 
-		protected virtual void OnConnectionDisconnected (object sender, ConnectionEventArgs e)
+		protected virtual void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
 		{
 			ExecutionMode mode;
 			lock (this.connections)
@@ -224,7 +224,7 @@ namespace Tempest
 					OnConnectionMadeGlobal (this, cmargs);
 				else
 				{
-					var cdargs = (e as ConnectionEventArgs);
+					var cdargs = (e as DisconnectedEventArgs);
 					if (cdargs != null)
 						OnConnectionDisconnected (this, cdargs);
 				}

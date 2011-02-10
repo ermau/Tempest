@@ -107,10 +107,36 @@ namespace Tempest.Tests
 			}
 		}
 
+		private class GenericMessage<T>
+			: Message
+		{
+			public GenericMessage ()
+				: base (MockProtocol.Instance, 3)
+			{
+			}
+
+			public T Element
+			{
+				get;
+				set;
+			}
+
+			public override void WritePayload(IValueWriter writer)
+			{
+				writer.Write (Element);
+			}
+
+			public override void ReadPayload(IValueReader reader)
+			{
+				Element = reader.Read<T>();
+			}
+		}
+
 		#if !SAFE
 		[Test]
 		public void RegisterTypeInvalid()
 		{
+			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (GenericMessage<string>) }));
 			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (PrivateMessage) }));
 			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (int) }));
 			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (string) }));

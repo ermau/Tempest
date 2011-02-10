@@ -56,7 +56,7 @@ namespace Tempest
 				throw new ArgumentNullException ("assembly");
 			
 			Type mtype = typeof (Message);
-			RegisterTypes (assembly.GetTypes().Where (t => mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
+			RegisterTypes (assembly.GetTypes().Where (t => !mtype.IsGenericType && !mtype.IsGenericTypeDefinition && mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
 		}
 
 		/// <summary>
@@ -134,6 +134,8 @@ namespace Tempest
 		    {
 		        if (!mtype.IsAssignableFrom (t))
 		            throw new ArgumentException (String.Format ("{0} is not an implementation of Message", t.Name), "messageTypes");
+				if (mtype.IsGenericType || mtype.IsGenericTypeDefinition)
+					throw new ArgumentException (String.Format ("{0} is a generic type which is unsupported", t.Name), "messageTypes");
 
 		        ConstructorInfo plessCtor = t.GetConstructor (Type.EmptyTypes);
 		        if (plessCtor == null)
@@ -165,6 +167,8 @@ namespace Tempest
 				{
 					if (!mtype.IsAssignableFrom (kvp.Key))
 						throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
+					if (kvp.Key.IsGenericType || kvp.Key.IsGenericTypeDefinition)
+						throw new ArgumentException (String.Format ("{0} is a generic type which is unsupported", kvp.Key.Name), "messageTypes");
 
 					Message m = kvp.Value();
 					if (m.Protocol != (Protocol)this)

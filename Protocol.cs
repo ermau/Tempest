@@ -39,11 +39,8 @@ namespace Tempest
 	/// receive the correct messages.
 	/// </remarks>
 	public sealed class Protocol
-		: MessageFactory, IEquatable<Protocol>
+		: MessageFactory, IEquatable<Protocol>, ISerializable
 	{
-		private readonly int version;
-		internal byte id;
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Protocol"/> class.
 		/// </summary>
@@ -73,6 +70,11 @@ namespace Tempest
 			: this (id)
 		{
 			this.version = version;
+		}
+
+		internal Protocol (IValueReader reader)
+		{
+			Deserialize (reader);
 		}
 
 		/// <summary>
@@ -145,6 +147,18 @@ namespace Tempest
 			return new MessageHeader (this, msg, mlen);
 		}
 
+		public void Serialize (IValueWriter writer)
+		{
+			writer.WriteByte (this.id);
+			writer.WriteInt32 (this.version);
+		}
+
+		public void Deserialize (IValueReader reader)
+		{
+			this.id = reader.ReadByte();
+			this.version = reader.ReadInt32();
+		}
+
 		public override bool Equals (object obj)
 		{
 			return Equals (obj as Protocol);
@@ -174,6 +188,9 @@ namespace Tempest
 		{
 			return !Equals (left, right);
 		}
+
+		private int version;
+		internal byte id;
 		
 		private const int TempestHeaderLength = 7;
 	}

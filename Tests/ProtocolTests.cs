@@ -161,5 +161,22 @@ namespace Tempest.Tests
 			Assert.AreNotEqual (p1, p2);
 			Assert.AreNotEqual (p1.GetHashCode(), p2.GetHashCode());
 		}
+
+		[Test]
+		public void Serializer()
+		{
+			byte[] buffer = new byte[1024];
+			var writer = new BufferValueWriter (buffer);
+
+			var p = new Protocol (42, 248);
+			p.Serialize (writer);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var p2 = new Protocol (reader);
+
+			Assert.AreEqual (p.id, p2.id);
+			Assert.AreEqual (p.Version, p2.Version);
+		}
 	}
 }

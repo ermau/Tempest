@@ -372,32 +372,33 @@ namespace Tempest.Providers.Network
 
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
 		{
-			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
+			bool pending;
+			do
 			{
-				Disconnect (true);
-				Interlocked.Decrement (ref this.pendingAsync);
-				return;
-			}
-
-			this.rmessageLoaded += e.BytesTransferred;
-
-			int bufferOffset = e.Offset;
-			BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader);
-			e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
-			Interlocked.Decrement (ref this.pendingAsync);
-
-			bool sent;
-			lock (this.stateSync)
-			{
-				if (!IsConnected)
+				if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
+				{
+					Disconnect (true);
+					Interlocked.Decrement (ref this.pendingAsync);
 					return;
+				}
 
-				Interlocked.Increment (ref this.pendingAsync);
-				sent = !this.reliableSocket.ReceiveAsync (e);
-			}
+				this.rmessageLoaded += e.BytesTransferred;
 
-			if (sent)
-				ReliableReceiveCompleted (sender, e);
+				int bufferOffset = e.Offset;
+				BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded,
+				                ref this.rreader);
+				e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
+				Interlocked.Decrement (ref this.pendingAsync);
+
+				lock (this.stateSync)
+				{
+					if (!IsConnected)
+						return;
+
+					Interlocked.Increment (ref this.pendingAsync);
+					pending = this.reliableSocket.ReceiveAsync (e);
+				}
+			} while (!pending);
 		}
 
 		protected DateTime lastReceived;

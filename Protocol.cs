@@ -24,8 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Tempest
 {
@@ -84,69 +82,7 @@ namespace Tempest
 		{
 			get { return this.version; }
 		}
-
-		// TODO: Write docs clarifying that Id is only needed for
-		// Tempest-based protocols
-		protected Protocol()
-		{
-		}
-
-		public /*virtual*/ byte[] GetBytes (Message message, out int length)
-		{
-			return GetBytes (message, out length, new byte[1024]);
-		}
-
-		public /*virtual*/ byte[] GetBytes (Message message, out int length, byte[] buffer)
-		{
-			if (message == null)
-				throw new ArgumentNullException ("message");
-			if (buffer == null)
-				throw new ArgumentNullException ("buffer");
-
-			var writer = new BufferValueWriter (buffer);
-			writer.WriteByte (this.id);
-			writer.WriteUInt16 (message.MessageType);
-			writer.Length += sizeof (int); // length placeholder
-
-			message.WritePayload (writer);
-
-			Buffer.BlockCopy (BitConverter.GetBytes (writer.Length), 0, writer.Buffer, TempestHeaderLength - sizeof(int), sizeof(int));
-
-			length = writer.Length;
-
-			return writer.Buffer;
-		}
-
-		public /*virtual*/ MessageHeader GetHeader (byte[] buffer, int offset, int length)
-		{
-			if (buffer == null)
-				throw new ArgumentNullException ("buffer");
-			if (offset < 0 || length + offset > buffer.Length)
-				throw new ArgumentOutOfRangeException ("offset and length must be within the size of the array");
-			if (length < TempestHeaderLength)
-				return null;
-			if (buffer[offset] != id)
-				return null;
-
-			ushort type;
-			int mlen;
-			try
-			{
-				type = BitConverter.ToUInt16 (buffer, offset + 1);
-				mlen = BitConverter.ToInt32 (buffer, offset + 1 + sizeof (ushort));
-			}
-			catch
-			{
-				return null;
-			}
-
-			Message msg = Create (type);
-			if (msg == null)
-				return null;
-
-			return new MessageHeader (this, msg, mlen);
-		}
-
+		
 		public void Serialize (IValueWriter writer)
 		{
 			writer.WriteByte (this.id);
@@ -191,7 +127,5 @@ namespace Tempest
 
 		private int version;
 		internal byte id;
-		
-		private const int TempestHeaderLength = 7;
 	}
 }

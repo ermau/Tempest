@@ -39,6 +39,7 @@ namespace Tempest.Tests
 	public class NetworkProviderTests
 		: ConnectionProviderTests
 	{
+		private Protocol p = MockProtocol.Instance;
 		private const int MaxConnections = 20;
 		protected override EndPoint EndPoint
 		{
@@ -52,20 +53,25 @@ namespace Tempest.Tests
 
 		protected override IConnectionProvider SetUp()
 		{
-			return new NetworkConnectionProvider (new IPEndPoint (IPAddress.Any, 42000), MaxConnections);
+			return new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), MaxConnections);
 		}
 
 		protected override IClientConnection GetNewClientConnection ()
 		{
-			return new NetworkClientConnection ();
+			return new NetworkClientConnection (p);
 		}
 
 		[Test]
 		public void CtorInvalid()
 		{
-			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider (null, 20));
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new IPEndPoint (IPAddress.Any, 42000), 0));
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new IPEndPoint (IPAddress.Any, 42000), -1));
+			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider ((Protocol)null, new IPEndPoint (IPAddress.Any, 42000), 20));
+			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider ((IEnumerable<Protocol>)null, new IPEndPoint (IPAddress.Any, 42000), 20));
+			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider (p, null, 20));
+			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider (new [] { p }, null, 20));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), 0));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new [] { p }, new IPEndPoint (IPAddress.Any, 42000), 0));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), -1));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new [] { p }, new IPEndPoint (IPAddress.Any, 42000), -1));
 		}
 
 		[Test]
@@ -148,7 +154,7 @@ namespace Tempest.Tests
 		{
 			var test = new AsyncTest();
 
-			var c = new NetworkServerConnection (new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
+			var c = new NetworkServerConnection (new [] { p }, new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
 			                                     (NetworkConnectionProvider)provider);
 
 			c.Disconnected += test.PassHandler;
@@ -162,7 +168,7 @@ namespace Tempest.Tests
 		{
 			var test = new AsyncTest();
 
-			var c = new NetworkServerConnection (new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
+			var c = new NetworkServerConnection (new [] { p }, new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
 			                                     (NetworkConnectionProvider)provider);
 
 			c.Disconnected += test.PassHandler;

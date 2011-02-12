@@ -8,7 +8,7 @@ namespace Tempest.Samples.SimpleChat
 {
 	public class Program
 	{
-		public static readonly Protocol ChatProtocol = Protocols.Register (new Protocol (2, 1));
+		public static readonly Protocol ChatProtocol = new Protocol (2, 1);
 
 		private static ChatServer server;
 		private static ChatClient client;
@@ -34,12 +34,12 @@ namespace Tempest.Samples.SimpleChat
 			if (runServer)
 			{
 				server = new ChatServer (new NetworkConnectionProvider
-					(new IPEndPoint (IPAddress.Any, 42900), 100));
+					(ChatProtocol, new IPEndPoint (IPAddress.Any, 42900), 100));
 			}
 
 			if (clientHost != null)
 			{
-				client = new ChatClient (new NetworkClientConnection(), Console.Out);
+				client = new ChatClient (new NetworkClientConnection (ChatProtocol), Console.Out);
 				client.Connected += (s, e) => Console.WriteLine ("Connected");
 				client.Disconnected += (s, e) =>
 				{

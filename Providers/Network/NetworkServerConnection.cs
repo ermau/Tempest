@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -35,7 +36,8 @@ namespace Tempest.Providers.Network
 	public sealed class NetworkServerConnection
 		: NetworkConnection, IServerConnection
 	{
-		internal NetworkServerConnection (Socket reliableSocket, NetworkConnectionProvider provider)
+		internal NetworkServerConnection (IEnumerable<Protocol> protocols, Socket reliableSocket, NetworkConnectionProvider provider)
+			: base (protocols)
 		{
 			this.provider = provider;
 			if (reliableSocket == null)

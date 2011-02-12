@@ -65,8 +65,6 @@ namespace Tempest.InternalProtocol
 		internal static readonly Protocol InternalProtocol = new Protocol (0) { id = 1 };
 		internal static void RegisterProtocol()
 		{
-			Protocols.Register (InternalProtocol);
-
 			InternalProtocol.Register (new []
 			{
 				new KeyValuePair<Type, Func<Message>> (typeof(PingMessage), () => new PingMessage()),

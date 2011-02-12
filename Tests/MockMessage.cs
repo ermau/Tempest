@@ -34,14 +34,14 @@ namespace Tempest.Tests
 	{
 		public static Protocol Instance
 		{
-			get { return new Protocol (2); }
+			get { return p; }
 		}
 
+		private static Protocol p;
 		static MockProtocol()
 		{
-			var p = Instance;
+			p = new Protocol (2);
 			p.Register (new[] { new KeyValuePair<Type, Func<Message>> (typeof (MockMessage), () => new MockMessage()) });
-			Protocols.Register (p);
 		}
 	}
 

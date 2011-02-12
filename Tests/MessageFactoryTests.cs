@@ -40,7 +40,7 @@ namespace Tempest.Tests
 		[SetUp]
 		public void Setup()
 		{
-			protocol = MockProtocol.Instance;
+			protocol = new Protocol (MockProtocol.Instance.id, MockProtocol.Instance.Version);
 		}
 
 		#if !SAFE

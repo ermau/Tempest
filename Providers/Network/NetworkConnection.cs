@@ -29,12 +29,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using Tempest.InternalProtocol;
 
 #if NET_4
 using System.Collections.Concurrent;
 using System.Threading;
-using Tempest.InternalProtocol;
-
 #endif
 
 namespace Tempest.Providers.Network
@@ -42,6 +41,23 @@ namespace Tempest.Providers.Network
 	public abstract class NetworkConnection
 		: IConnection
 	{
+		protected NetworkConnection (IEnumerable<Protocol> protocols)
+		{
+			if (protocols == null)
+				throw new ArgumentNullException ("protocols");
+
+			this.protocols = new Dictionary<byte, Protocol>();
+			foreach (Protocol p in protocols)
+			{
+				if (p == null)
+					throw new ArgumentNullException ("protocols", "protocols contains a null protocol");
+				if (this.protocols.ContainsKey (p.id))
+					throw new ArgumentException ("Only one version of a protocol may be specified");
+
+				this.protocols.Add (p.id, p);
+			}
+		}
+
 		/// <summary>
 		/// Raised when a message is received.
 		/// </summary>
@@ -139,7 +155,7 @@ namespace Tempest.Providers.Network
 			#endif
 
 			int length;
-			byte[] buffer = message.Protocol.GetBytes (message, out length, eargs.Buffer);
+			byte[] buffer = GetBytes (message, out length, eargs.Buffer);
 
 			eargs.SetBuffer (buffer, 0, length);
 			eargs.UserToken = message;
@@ -217,6 +233,8 @@ namespace Tempest.Providers.Network
 		private const int BaseHeaderLength = 7;
 		private int maxMessageLength = 1048576;
 
+		private Dictionary<byte, Protocol> protocols;
+
 		protected readonly object stateSync = new object();
 		protected int pendingAsync = 0;
 		protected bool disconnecting = false;
@@ -264,6 +282,47 @@ namespace Tempest.Providers.Network
 				sent (this, e);
 		}
 
+		protected byte[] GetBytes (Message message, out int length, byte[] buffer)
+		{
+			var writer = new BufferValueWriter (buffer);
+			writer.WriteByte (message.Protocol.id);
+			writer.WriteUInt16 (message.MessageType);
+			writer.Length += sizeof (int); // length placeholder
+
+			message.WritePayload (writer);
+
+			Buffer.BlockCopy (BitConverter.GetBytes (writer.Length), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
+
+			length = writer.Length;
+
+			return writer.Buffer;
+		}
+
+		protected MessageHeader GetHeader (byte[] buffer, int offset, int length)
+		{
+			ushort type;
+			int mlen;
+			try
+			{
+				type = BitConverter.ToUInt16 (buffer, offset + 1);
+				mlen = BitConverter.ToInt32 (buffer, offset + 1 + sizeof (ushort));
+			}
+			catch
+			{
+				return null;
+			}
+
+			Protocol p;
+			if (!this.protocols.TryGetValue (buffer[offset], out p))
+				return null;
+
+			Message msg = p.Create (type);
+			if (msg == null)
+				return null;
+
+			return new MessageHeader (p, msg, mlen);
+		}
+
 		private void BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader)
 		{
 			this.lastReceived = DateTime.Now;
@@ -271,15 +330,7 @@ namespace Tempest.Providers.Network
 			int length = 0;
 			while (remainingData > BaseHeaderLength)
 			{
-				MessageHeader header = null;
-				try
-				{
-					header = Protocols.FindHeader (buffer, messageOffset, remainingData);
-				}
-				catch
-				{
-				}
-
+				MessageHeader header = GetHeader (buffer, bufferOffset, remainingData);
 				if (header == null)
 				{
 					Disconnect (true);

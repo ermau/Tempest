@@ -25,7 +25,7 @@
 // THE SOFTWARE.
 
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -36,6 +36,16 @@ namespace Tempest.Providers.Network
 	public sealed class NetworkClientConnection
 		: NetworkConnection, IClientConnection
 	{
+		public NetworkClientConnection (Protocol protocol)
+			: base (new [] { protocol })
+		{
+		}
+
+		public NetworkClientConnection (IEnumerable<Protocol> protocols)
+			: base (protocols)
+		{
+		}
+
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
 

@@ -47,15 +47,34 @@ namespace Tempest.Providers.Network
 		/// </summary>
 		/// <param name="endPoint">The endpoint to listen to.</param>
 		/// <param name="maxConnections">Maximum number of connections to allow.</param>
+		/// <param name="protocol">The protocol to accept.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
-		public NetworkConnectionProvider (IPEndPoint endPoint, int maxConnections)
+		public NetworkConnectionProvider (Protocol protocol, IPEndPoint endPoint, int maxConnections)
+			: this (new [] { protocol }, endPoint, maxConnections)
 		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to listen to.</param>
+		/// <param name="maxConnections">Maximum number of connections to allow.</param>
+		/// <param name="protocols">The protocols to accept.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections)
+		{
+			if (protocols == null)
+				throw new ArgumentNullException ("protocols");
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
 			if (maxConnections <= 0)
 				throw new ArgumentOutOfRangeException ("maxConnections");
 
+			this.protocols = protocols;
 			this.endPoint = endPoint;
 			MaxConnections = maxConnections;
 			this.serverConnections = new List<NetworkServerConnection> (maxConnections);
@@ -191,6 +210,7 @@ namespace Tempest.Providers.Network
 		private Socket unreliableSocket;
 		private MessageTypes mtypes;
 		private readonly byte sanityByte;
+		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;
 
 		private readonly List<NetworkServerConnection> serverConnections;
@@ -213,7 +233,7 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			var connection = new NetworkServerConnection (e.AcceptSocket, this);
+			var connection = new NetworkServerConnection (this.protocols, e.AcceptSocket, this);
 
 			lock (this.serverConnections)
 			{

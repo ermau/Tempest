@@ -63,7 +63,7 @@ namespace Tempest.InternalProtocol
 		}
 
 		internal static readonly Protocol InternalProtocol = new Protocol (0) { id = 1 };
-		internal static void RegisterProtocol()
+		static TempestMessage()
 		{
 			InternalProtocol.Register (new []
 			{

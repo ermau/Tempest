@@ -56,6 +56,8 @@ namespace Tempest.Providers.Network
 
 				this.protocols.Add (p.id, p);
 			}
+
+			this.protocols[1] = TempestMessage.InternalProtocol;
 		}
 
 		/// <summary>

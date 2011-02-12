@@ -298,7 +298,7 @@ namespace Tempest.Providers.Network
 			return writer.Buffer;
 		}
 
-		protected MessageHeader GetHeader (byte[] buffer, int offset, int length)
+		protected MessageHeader GetHeader (byte[] buffer, int offset)
 		{
 			ushort type;
 			int mlen;
@@ -330,7 +330,7 @@ namespace Tempest.Providers.Network
 			int length = 0;
 			while (remainingData > BaseHeaderLength)
 			{
-				MessageHeader header = GetHeader (buffer, bufferOffset, remainingData);
+				MessageHeader header = GetHeader (buffer, messageOffset);
 				if (header == null)
 				{
 					Disconnect (true);

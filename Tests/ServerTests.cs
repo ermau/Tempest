@@ -76,6 +76,19 @@ namespace Tempest.Tests
 
 			var server = new MockServer (provider, MessageTypes.Reliable);
 			server.AddConnectionProvider (p);
+			Assert.IsFalse (p.IsRunning);
+		}
+
+		[Test]
+		public void AddAfterStarting()
+		{
+			var p = new MockConnectionProvider();
+			Assert.IsFalse (p.IsRunning);
+
+			var server = new MockServer (provider, MessageTypes.Reliable);
+			server.Start();
+			
+			server.AddConnectionProvider (p);
 			Assert.IsTrue (p.IsRunning);
 		}
 
@@ -83,7 +96,7 @@ namespace Tempest.Tests
 		public void RemoveConnectionProvider()
 		{
 			var server = new MockServer (provider, MessageTypes.Reliable);
-			Assert.IsTrue (provider.IsRunning);
+			Assert.IsFalse (provider.IsRunning);
 
 			server.RemoveConnectionProvider (provider);
 			Assert.IsFalse (provider.IsRunning);
@@ -94,7 +107,7 @@ namespace Tempest.Tests
 		{
 			var server = new MockServer (MessageTypes.Reliable);
 			server.AddConnectionProvider (provider, ExecutionMode.GlobalOrder);
-			Assert.IsTrue (provider.IsRunning);
+			Assert.IsFalse (provider.IsRunning);
 
 			server.RemoveConnectionProvider (provider);
 			Assert.IsFalse (provider.IsRunning);
@@ -126,6 +139,8 @@ namespace Tempest.Tests
 			});
 
 			var server = new MockServer (provider, MessageTypes.Reliable);
+			server.Start();
+
 			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
 			((IContext)server).RegisterMessageHandler (1, handler);
 			
@@ -153,6 +168,7 @@ namespace Tempest.Tests
 
 			var server = new MockServer (MessageTypes.Reliable);
 			server.AddConnectionProvider (provider, ExecutionMode.GlobalOrder);
+			server.Start();
 
 			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
 			((IContext)server).RegisterMessageHandler (1, handler);

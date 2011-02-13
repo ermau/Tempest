@@ -65,6 +65,11 @@ namespace Tempest
 			AddConnectionProvider (provider);
 		}
 
+		public bool IsRunning
+		{
+			get { return this.running; }
+		}
+
 		/// <summary>
 		/// Adds and starts the connection <paramref name="provider"/>.
 		/// </summary>
@@ -87,20 +92,11 @@ namespace Tempest
 
 				case ExecutionMode.GlobalOrder:
 					provider.ConnectionMade += OnConnectionMadeGlobal;
-
-					lock (this.providers)
-					{
-						if (!this.running)
-						{
-							this.running = true;
-							(this.messageRunnerThread = new Thread (MessageRunner) { IsBackground = true }).Start();
-						}
-					}
-
 					break;
 			}
-			
-			provider.Start (this.messageTypes);
+
+			if (this.running)
+				provider.Start (this.messageTypes);
 		}
 
 		/// <summary>
@@ -121,25 +117,55 @@ namespace Tempest
 					return;
 
 				this.providers.Remove (provider);
-
-				if (mode == ExecutionMode.GlobalOrder)
-					others = this.providers.Any (kvp => kvp.Value == ExecutionMode.GlobalOrder);
 			}
-
-			provider.Stop();
 
 			if (mode == ExecutionMode.ConnectionOrder)
 				provider.ConnectionMade -= OnConnectionMade;
 			else
-			{
 				provider.ConnectionMade -= OnConnectionMadeGlobalEvent;
-				
-				if (!others)
+		}
+
+		/// <summary>
+		/// Starts the server and all connection providers.
+		/// </summary>
+		public virtual void Start()
+		{
+			if (this.running)
+				return;
+
+			this.running = true;
+
+			lock (this.providers)
+			{
+				foreach (var kvp in this.providers)
 				{
-					this.running = false;
-					this.wait.Set();
-					if (this.messageRunnerThread != null)
+					if (kvp.Value == ExecutionMode.GlobalOrder && this.messageRunnerThread == null)
+						(this.messageRunnerThread = new Thread (MessageRunner) { IsBackground = true }).Start();
+
+					kvp.Key.Start (this.messageTypes);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Stops the server and all connection providers.
+		/// </summary>
+		public virtual void Stop()
+		{
+			this.running = false;
+
+			lock (this.providers)
+			{
+				foreach (var kvp in this.providers)
+				{
+					kvp.Key.Stop();
+
+					if (kvp.Value == ExecutionMode.GlobalOrder && this.messageRunnerThread != null)
+					{
+						this.wait.Set();
 						this.messageRunnerThread.Join();
+						this.messageRunnerThread = null;
+					}
 				}
 			}
 		}

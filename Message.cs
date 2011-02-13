@@ -41,9 +41,17 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Gets whether this message needs to be reliably delivered or not.
+		/// Gets whether this message must be reliably delivered or not.
 		/// </summary>
-		public virtual bool Reliable
+		public virtual bool MustBeReliable
+		{
+			get { return true; }
+		}
+
+		/// <summary>
+		/// Gets whether this message prefers reliable delivery if possible.
+		/// </summary>
+		public virtual bool PreferReliable
 		{
 			get { return true; }
 		}

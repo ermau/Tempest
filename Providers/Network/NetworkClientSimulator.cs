@@ -110,8 +110,8 @@ namespace Tempest.Providers.Network
 
 		public void Send (Message message)
 		{
-			if (this.sendPacketLoss > 0 && ((message.Reliable && (SendPacketLossTypes & MessageTypes.Reliable) == MessageTypes.Reliable)
-											|| (!message.Reliable && (SendPacketLossTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)))
+			if (this.sendPacketLoss > 0 && ((message.MustBeReliable && (SendPacketLossTypes & MessageTypes.Reliable) == MessageTypes.Reliable)
+											|| (!message.MustBeReliable && (SendPacketLossTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)))
 			{
 				double v;
 				lock (random)

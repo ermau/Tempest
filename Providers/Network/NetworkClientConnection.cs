@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Linq;
 using System.Threading;
 using Tempest.InternalProtocol;
 
@@ -114,8 +115,7 @@ namespace Tempest.Providers.Network
 			if (recevied)
 				ReliableReceiveCompleted (this.reliableSocket, e);
 
-			OnConnected (new ClientConnectionEventArgs(this));
-			Interlocked.Decrement (ref this.pendingAsync);
+			Send (new ConnectMessage { Protocols = this.protocols.Values });
 		}
 
 		private int pingFrequency;
@@ -139,6 +139,14 @@ namespace Tempest.Providers.Network
 						this.activityTimer.Change (ping.Interval, ping.Interval);
 					
 					this.pingFrequency = ((PingMessage)e.Message).Interval;
+					break;
+
+				case (ushort)TempestMessageType.Connected:
+					var msg = (ConnectedMessage)e.Message;
+					this.protocols = msg.EnabledProtocols.ToDictionary (p => p.id);
+
+					OnConnected (new ClientConnectionEventArgs (this));
+					Interlocked.Decrement (ref this.pendingAsync);
 					break;
 			}
 

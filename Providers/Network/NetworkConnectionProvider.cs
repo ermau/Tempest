@@ -214,13 +214,23 @@ namespace Tempest.Providers.Network
 		private IPEndPoint endPoint;
 
 		private readonly List<NetworkServerConnection> serverConnections;
+		private readonly List<NetworkServerConnection> pendingConnections = new List<NetworkServerConnection>();
+
+		internal void Connect (NetworkServerConnection connection)
+		{
+			lock (this.serverConnections)
+			{
+				if (this.pendingConnections.Remove (connection))
+					this.serverConnections.Add (connection);
+			}
+		}
 
 		internal void Disconnect (NetworkServerConnection connection)
 		{
 			lock (this.serverConnections)
 			{
-				bool atMax = (this.serverConnections.Count == MaxConnections);
-				if (this.serverConnections.Remove (connection) && atMax)
+				bool atMax = (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections);
+				if ((this.pendingConnections.Remove (connection) || this.serverConnections.Remove (connection)) && atMax)
 					BeginAccepting (null);
 			}
 		}
@@ -237,7 +247,7 @@ namespace Tempest.Providers.Network
 
 			lock (this.serverConnections)
 			{
-				if (this.serverConnections.Count == MaxConnections)
+				if (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections)
 				{
 					connection.Disconnect (true);
 					return;
@@ -251,7 +261,7 @@ namespace Tempest.Providers.Network
 				if (made.Rejected)
 					connection.Dispose();
 				else
-					this.serverConnections.Add (connection);
+					this.pendingConnections.Add (connection);
 			}
 		}
 

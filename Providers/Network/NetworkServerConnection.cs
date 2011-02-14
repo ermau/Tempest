@@ -39,11 +39,12 @@ namespace Tempest.Providers.Network
 		internal NetworkServerConnection (IEnumerable<Protocol> protocols, Socket reliableSocket, NetworkConnectionProvider provider)
 			: base (protocols)
 		{
-			this.provider = provider;
 			if (reliableSocket == null)
 				throw new ArgumentNullException ("reliableSocket");
 			if (provider == null)
 				throw new ArgumentNullException ("provider");
+
+			this.provider = provider;
 
 			RemoteEndPoint = reliableSocket.RemoteEndPoint;
 
@@ -62,8 +63,11 @@ namespace Tempest.Providers.Network
 			this.pingTimer = new Timer (PingCallback, null, provider.PingFrequency, provider.PingFrequency);
 		}
 
+		private static int nextNetworkId;
+
 		private readonly NetworkConnectionProvider provider;
 
+		private bool formallyConnected;
 		private readonly object pingSync = new object();
 		private Timer pingTimer;
 
@@ -76,6 +80,42 @@ namespace Tempest.Providers.Network
 			}
 
 			Send (new PingMessage { Interval = provider.PingFrequency });
+		}
+
+		protected override void OnMessageReceived (MessageEventArgs e)
+		{
+			if (!this.formallyConnected)
+			{
+				Disconnect (true);
+				return;
+			}
+
+			base.OnMessageReceived(e);
+		}
+
+		protected override void OnTempestMessageReceived (MessageEventArgs e)
+		{
+			switch (e.Message.MessageType)
+			{
+				case (ushort)TempestMessageType.Connect:
+					var msg = (ConnectMessage)e.Message;
+
+					NetworkId = Interlocked.Increment (ref nextNetworkId);
+
+					IEnumerable<Protocol> ps = msg.Protocols.Intersect (this.protocols.Values);
+
+					this.formallyConnected = true;
+					this.provider.Connect (this);
+
+					e.Connection.Send (new ConnectedMessage
+					{
+						EnabledProtocols = ps,
+						NetworkId = NetworkId
+					});					
+					break;
+			}
+
+			base.OnTempestMessageReceived(e);
 		}
 
 		protected override void OnMessageSent (MessageEventArgs e)

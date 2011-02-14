@@ -235,7 +235,7 @@ namespace Tempest.Providers.Network
 		private const int BaseHeaderLength = 7;
 		private int maxMessageLength = 1048576;
 
-		private Dictionary<byte, Protocol> protocols;
+		protected Dictionary<byte, Protocol> protocols;
 
 		protected readonly object stateSync = new object();
 		protected int pendingAsync = 0;
@@ -263,7 +263,7 @@ namespace Tempest.Providers.Network
 		{
 		}
 
-		protected void OnMessageReceived (MessageEventArgs e)
+		protected virtual void OnMessageReceived (MessageEventArgs e)
 		{
 			var mr = this.MessageReceived;
 			if (mr != null)

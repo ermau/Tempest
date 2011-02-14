@@ -1,5 +1,5 @@
 ﻿//
-// TempestMessage.cs
+// ConnectedMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -24,63 +24,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Tempest.InternalProtocol
 {
-	/// <summary>
-	/// Internal Tempest protocol message type.
-	/// </summary>
-	public enum TempestMessageType
-		: ushort
+	public class ConnectedMessage
+		: TempestMessage
 	{
-		/// <summary>
-		/// Ping.
-		/// </summary>
-		Ping = 1,
-
-		/// <summary>
-		/// Pong.
-		/// </summary>
-		Pong = 2,
-
-		/// <summary>
-		/// Disconnect with reason.
-		/// </summary>
-		Disconnect = 3,
-
-		/// <summary>
-		/// ClientHello
-		/// </summary>
-		Connect = 4,
-
-		/// <summary>
-		/// ServerHello
-		/// </summary>
-		Connected = 5,
-	}
-
-	/// <summary>
-	/// Base class for all internal Tempest protocol messages.
-	/// </summary>
-	public abstract class TempestMessage
-		: Message
-	{
-		protected TempestMessage (TempestMessageType type)
-			: base (InternalProtocol, (ushort)type)
+		public ConnectedMessage()
+			: base (TempestMessageType.Connected)
 		{
 		}
 
-		internal static readonly Protocol InternalProtocol = new Protocol (0) { id = 1 };
-		static TempestMessage()
+		public IEnumerable<Protocol> EnabledProtocols
 		{
-			InternalProtocol.Register (new []
-			{
-				new KeyValuePair<Type, Func<Message>> (typeof(PingMessage), () => new PingMessage()),
-				new KeyValuePair<Type, Func<Message>> (typeof(PongMessage), () => new PongMessage()), 
-				new KeyValuePair<Type, Func<Message>> (typeof(DisconnectMessage), () => new DisconnectMessage()), 
-			});
+			get;
+			set;
+		}
+
+		public int NetworkId
+		{
+			get;
+			set;
+		}
+
+		public override void WritePayload (IValueWriter writer)
+		{
+			Protocol[] protocols = EnabledProtocols.ToArray();
+			writer.WriteInt32 (protocols.Length);
+			for (int i = 0; i < protocols.Length; ++i)
+				protocols[i].Serialize (writer);
+
+			writer.WriteInt32 (NetworkId);
+		}
+
+		public override void ReadPayload (IValueReader reader)
+		{
+			Protocol[] protocols = new Protocol[reader.ReadInt32()];
+			for (int i = 0; i < protocols.Length; ++i)
+				protocols[i] = new Protocol (reader);
+
+			EnabledProtocols = protocols;
+
+			NetworkId = reader.ReadInt32();
 		}
 	}
 }

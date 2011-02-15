@@ -143,7 +143,7 @@ namespace Tempest.Providers.Network
 
 				case (ushort)TempestMessageType.Connected:
 					var msg = (ConnectedMessage)e.Message;
-					this.protocols = msg.EnabledProtocols.ToDictionary (p => p.id);
+					this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (p => p.id);
 
 					OnConnected (new ClientConnectionEventArgs (this));
 					Interlocked.Decrement (ref this.pendingAsync);

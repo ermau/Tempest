@@ -80,6 +80,8 @@ namespace Tempest.InternalProtocol
 				new KeyValuePair<Type, Func<Message>> (typeof(PingMessage), () => new PingMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(PongMessage), () => new PongMessage()), 
 				new KeyValuePair<Type, Func<Message>> (typeof(DisconnectMessage), () => new DisconnectMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof(ConnectMessage), () => new ConnectMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof(ConnectedMessage), () => new ConnectedMessage()),
 			});
 		}
 	}

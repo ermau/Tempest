@@ -272,6 +272,7 @@ namespace Tempest.Tests
 
 			this.provider.Start (MessageTypes);
 
+			c.Disconnected += test.FailHandler;
 			c.MessageSent += test.PassHandler;
 			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
 			c.Connect (EndPoint, MessageTypes);

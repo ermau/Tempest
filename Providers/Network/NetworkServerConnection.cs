@@ -102,7 +102,7 @@ namespace Tempest.Providers.Network
 
 					NetworkId = Interlocked.Increment (ref nextNetworkId);
 
-					IEnumerable<Protocol> ps = msg.Protocols.Intersect (this.protocols.Values);
+					IEnumerable<Protocol> ps = this.protocols.Values.Intersect (msg.Protocols);
 
 					this.formallyConnected = true;
 					this.provider.Connect (this);

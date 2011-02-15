@@ -460,7 +460,9 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			OnMessageSent (new MessageEventArgs (this, message));
+			if (!(message is TempestMessage))
+				OnMessageSent (new MessageEventArgs (this, message));
+
 			Interlocked.Decrement (ref this.pendingAsync);
 		}
 

@@ -580,7 +580,7 @@ namespace Tempest.Tests
 		[Test]
 		public void DisconnectAyncWithReason()
 		{
-			var test = new AsyncTest (e => ((DisconnectedEventArgs)e).Reason == DisconnectedReason.IncompatibleVersion, true);
+			var test = new AsyncTest (e => ((DisconnectedEventArgs)e).Reason == DisconnectedReason.IncompatibleVersion, 2);
 
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) =>
@@ -588,7 +588,7 @@ namespace Tempest.Tests
 				e.Connection.Disconnected += test.PassHandler;
 
 				e.Connection.Send (new DisconnectMessage { Reason = DisconnectedReason.IncompatibleVersion });
-				e.Connection.Disconnect (false, DisconnectedReason.ConnectionFailed);
+				e.Connection.Disconnect (false, DisconnectedReason.IncompatibleVersion);
 			};
 
 			var c = GetNewClientConnection();

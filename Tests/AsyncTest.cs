@@ -138,7 +138,7 @@ namespace Tempest.Tests
 					NAssert.Fail ();
 				else if (passed || (exception as SuccessException) != null)
 					return;
-				else if (this.passCount >= this.timesToPass)
+				else if (this.timesToPass != 0 && this.passCount >= this.timesToPass)
 					return;
 				else if (exception != null)
 					throw new TargetInvocationException (exception);

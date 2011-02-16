@@ -419,7 +419,55 @@ namespace Tempest.Tests
 		{
 			this.provider.Start (MessageTypes);
 
-			var test = new AsyncTest();
+			var test = new AsyncTest (e =>
+			{
+				var args = (DisconnectedEventArgs)e;
+				switch (args.Reason)
+				{
+					case DisconnectedReason.ConnectionFailed:
+						return false;
+
+					default:
+						return true;
+				}
+			});
+
+			var c = GetNewClientConnection();
+
+			var wait = new AutoResetEvent (false);
+
+			c.Disconnected += test.PassHandler;
+			c.Connected += (sender, e) => wait.Set();
+			c.Connect (EndPoint, MessageTypes);
+
+			if (wait.WaitOne (10000))
+			{
+				c.Disconnect (true);
+
+				test.Assert (10000);
+			}
+			else
+				Assert.Fail ("Failed to connect");
+		}
+
+		[Test]
+		public void DisconnectFromClientOnClientInConnectedHandler()
+		{
+			this.provider.Start (MessageTypes);
+
+			var test = new AsyncTest (e =>
+			{
+				var args = (DisconnectedEventArgs)e;
+				switch (args.Reason)
+				{
+					case DisconnectedReason.ConnectionFailed:
+						return false;
+
+					default:
+						return true;
+				}
+			});
+
 			var c = GetNewClientConnection();
 
 			c.Disconnected += test.PassHandler;

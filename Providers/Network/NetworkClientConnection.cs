@@ -68,6 +68,7 @@ namespace Tempest.Providers.Network
 				if (IsConnected)
 					throw new InvalidOperationException ("Already connected");
 
+				this.connecting = true;
 				RemoteEndPoint = endpoint;
 
 				args = new SocketAsyncEventArgs();
@@ -88,6 +89,7 @@ namespace Tempest.Providers.Network
 		{
 			if (e.SocketError != SocketError.Success)
 			{
+				this.connecting = false;
 				Disconnect (true, DisconnectedReason.ConnectionFailed);
 				OnConnectionFailed (new ClientConnectionEventArgs (this));
 				Interlocked.Decrement (ref this.pendingAsync);
@@ -115,7 +117,10 @@ namespace Tempest.Providers.Network
 			if (recevied)
 				ReliableReceiveCompleted (this.reliableSocket, e);
 
-			Send (new ConnectMessage { Protocols = this.protocols.Values });
+			OnConnected (new ClientConnectionEventArgs (this));
+			this.connecting = false;
+			Interlocked.Decrement (ref this.pendingAsync);
+			//Send (new ConnectMessage { Protocols = this.protocols.Values });
 		}
 
 		private int pingFrequency;

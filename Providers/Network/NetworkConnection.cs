@@ -201,6 +201,10 @@ namespace Tempest.Providers.Network
 					this.reliableSocket.Disconnect (true);
 					Recycle();
 					this.reliableSocket = null;
+
+					while (this.pendingAsync > ((connecting) ? 2 : 1))
+						Thread.Sleep (0);
+
 					OnDisconnected (new DisconnectedEventArgs (this, reason));
 				}
 				else
@@ -210,10 +214,6 @@ namespace Tempest.Providers.Network
 
 					ThreadPool.QueueUserWorkItem (s =>
 					{
-						var spinwait = new SpinWait();
-						while (this.pendingAsync > 1)
-							spinwait.SpinOnce();
-
 						Interlocked.Increment (ref this.pendingAsync);
 
 						var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
@@ -240,6 +240,7 @@ namespace Tempest.Providers.Network
 		protected readonly object stateSync = new object();
 		protected int pendingAsync = 0;
 		protected bool disconnecting = false;
+		protected bool connecting = false;
 		protected DisconnectedReason disconnectingReason;
 
 		protected Socket reliableSocket;

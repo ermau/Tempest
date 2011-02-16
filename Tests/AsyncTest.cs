@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,9 +36,6 @@ namespace Tempest.Tests
 {
 	public class AsyncTest
 	{
-		private readonly bool multiple;
-		private readonly Action<EventArgs> passTest;
-
 		public AsyncTest()
 		{
 			this.passTest = e => NAssert.Pass();
@@ -63,6 +60,15 @@ namespace Tempest.Tests
 			this.multiple = multiple;
 		}
 
+		public AsyncTest (Action<EventArgs> passTest, int times)
+			: this (passTest, true)
+		{
+			if (times <= 0)
+				throw new ArgumentOutOfRangeException ("times");
+
+			this.timesToPass = times;
+		}
+
 		public AsyncTest (Func<EventArgs, bool> passPredicate)
 			: this (passPredicate, false)
 		{
@@ -78,10 +84,22 @@ namespace Tempest.Tests
 			this.passTest = e =>
 			{
 				if (passPredicate (e))
+				{
 					this.passed = true;
+					Interlocked.Increment (ref this.passCount);
+				}
 				else if (!this.multiple)
 					NAssert.Fail();
 			};
+		}
+
+		public AsyncTest (Func<EventArgs, bool> passPredicate, int times)
+			: this (passPredicate, true)
+		{
+			if (times <= 0)
+				throw new ArgumentOutOfRangeException ("times");
+
+			this.timesToPass = times;
 		}
 
 		public void PassHandler (object sender, EventArgs e)
@@ -120,16 +138,25 @@ namespace Tempest.Tests
 					NAssert.Fail ();
 				else if (passed || (exception as SuccessException) != null)
 					return;
+				else if (this.passCount >= this.timesToPass)
+					return;
 				else if (exception != null)
 					throw new TargetInvocationException (exception);
 
 				Thread.Sleep (1);
 			}
 
+			if (this.passCount < this.timesToPass)
+				NAssert.Fail ("Failed to pass required number of times.");
 			if (failIfNotPassed)
 				NAssert.Fail ("Asynchronous operation timed out.");
 		}
 
+		private readonly bool multiple;
+		private readonly Action<EventArgs> passTest;
+		private int timesToPass = 0;
+
+		private int passCount = 0;
 		private volatile bool passed = false;
 		private volatile bool failed = false;
 

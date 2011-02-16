@@ -111,6 +111,8 @@ namespace Tempest.Tests
 
 			ConnectionLimit();
 
+			Assert.IsNotNull (connection);
+
 			connection.Disconnect (true);
 
 			AsyncTest test  = new AsyncTest();
@@ -143,6 +145,7 @@ namespace Tempest.Tests
 			client.Connect (EndPoint, MessageTypes);
 
 			test.Assert (4000, false);
+			Assert.IsNotNull (connection);
 			Assert.IsTrue (connection.IsConnected);
 			Assert.IsTrue (client.IsConnected);
 		}

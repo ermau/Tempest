@@ -63,6 +63,7 @@ namespace Tempest.Providers.Network
 			while (this.pendingAsync > 0)
 				Thread.Sleep (0);
 
+			this.connecting = true;
 			lock (this.stateSync)
 			{
 				if (IsConnected)
@@ -104,6 +105,7 @@ namespace Tempest.Providers.Network
 			{
 				if (!IsConnected)
 				{
+					this.connecting = false;
 					Interlocked.Decrement (ref this.pendingAsync);
 					return;
 				}
@@ -117,6 +119,7 @@ namespace Tempest.Providers.Network
 
 			OnConnected (new ClientConnectionEventArgs (this));
 			Interlocked.Decrement (ref this.pendingAsync);
+			this.connecting = false;
 			//Send (new ConnectMessage { Protocols = this.protocols.Values });
 		}
 

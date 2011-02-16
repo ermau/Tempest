@@ -202,7 +202,7 @@ namespace Tempest.Providers.Network
 					Recycle();
 					this.reliableSocket = null;
 
-					while (this.pendingAsync > 0)
+					while (this.pendingAsync > ((connecting) ? 1 : 0))
 						Thread.Sleep (0);
 
 					OnDisconnected (new DisconnectedEventArgs (this, reason));
@@ -240,6 +240,7 @@ namespace Tempest.Providers.Network
 		protected readonly object stateSync = new object();
 		protected int pendingAsync = 0;
 		protected bool disconnecting = false;
+		protected bool connecting = false;
 		protected DisconnectedReason disconnectingReason;
 
 		protected Socket reliableSocket;

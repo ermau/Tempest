@@ -202,7 +202,7 @@ namespace Tempest.Providers.Network
 					Recycle();
 					this.reliableSocket = null;
 
-					while (this.pendingAsync > ((connecting) ? 2 : 1))
+					while (this.pendingAsync > 0)
 						Thread.Sleep (0);
 
 					OnDisconnected (new DisconnectedEventArgs (this, reason));
@@ -240,7 +240,6 @@ namespace Tempest.Providers.Network
 		protected readonly object stateSync = new object();
 		protected int pendingAsync = 0;
 		protected bool disconnecting = false;
-		protected bool connecting = false;
 		protected DisconnectedReason disconnectingReason;
 
 		protected Socket reliableSocket;
@@ -378,8 +377,8 @@ namespace Tempest.Providers.Network
 			{
 				if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 				{
-					Disconnect (true);
 					Interlocked.Decrement (ref this.pendingAsync);
+					Disconnect (true);
 					return;
 				}
 
@@ -456,8 +455,8 @@ namespace Tempest.Providers.Network
 
 			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 			{
-				Disconnect (true);
 				Interlocked.Decrement (ref this.pendingAsync);
+				Disconnect (true);
 				return;
 			}
 

@@ -198,6 +198,8 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
+				this.disconnecting = true;
+
 				if (!this.reliableSocket.Connected)
 				{
 					Trace.WriteLine ("Socket not connected, finishing cleanup.", String.Format ("{2} Disconnect({0},{1})",now,reason, GetType().Name));
@@ -209,6 +211,7 @@ namespace Tempest.Providers.Network
 						Thread.Sleep (0);
 
 					OnDisconnected (new DisconnectedEventArgs (this, reason));
+					this.disconnecting = false;
 				}
 				else if (now)
 				{
@@ -227,12 +230,12 @@ namespace Tempest.Providers.Network
 					Trace.WriteLine ("Finished waiting, raising Disconnected.", String.Format ("{2} Disconnect({0},{1})",now,reason, GetType().Name));
 
 					OnDisconnected (new DisconnectedEventArgs (this, reason));
+					this.disconnecting = false;
 				}
 				else
 				{
 					Trace.WriteLine ("Disconnecting asynchronously.", String.Format ("{2} Disconnect({0},{1})",now,reason, GetType().Name));
 
-					this.disconnecting = true;
 					this.disconnectingReason = reason;
 
 					int p = Interlocked.Increment (ref this.pendingAsync);

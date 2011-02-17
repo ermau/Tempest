@@ -177,9 +177,20 @@ namespace Tempest.Providers.Network
 			base.OnTempestMessageReceived(e);
 		}
 
+		protected override void OnDisconnected (DisconnectedEventArgs e)
+		{
+			if (this.activityTimer != null)
+			{
+				this.activityTimer.Dispose();
+				this.activityTimer = null;
+			}
+
+			base.OnDisconnected(e);
+		}
+
 		private void ActivityCallback (object state)
 		{
-			if (DateTime.Now.Subtract (this.lastReceived).TotalMilliseconds > this.pingFrequency * 2)
+			if (!this.disconnecting && DateTime.Now.Subtract (this.lastReceived).TotalMilliseconds > this.pingFrequency * 2)
 				Disconnect (true);
 		}
 

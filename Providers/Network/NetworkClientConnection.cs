@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Linq;
@@ -52,6 +53,8 @@ namespace Tempest.Providers.Network
 
 		public void Connect (EndPoint endpoint, MessageTypes messageTypes)
 		{
+			Trace.WriteLine ("Entering", String.Format ("{2} Connect({0},{1})", endpoint, messageTypes, GetType().Name));
+
 			if (endpoint == null)
 				throw new ArgumentNullException ("endpoint");
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
@@ -77,19 +80,31 @@ namespace Tempest.Providers.Network
 
 				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-				Interlocked.Increment (ref this.pendingAsync);
+				int p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{2} Connect({0},{1})", endpoint, messageTypes, GetType().Name));
 				connected = !this.reliableSocket.ConnectAsync (args);
 			}
 
 			if (connected)
+			{
+				Trace.WriteLine ("Connected synchronously", String.Format ("{2} Connect({0},{1})", endpoint, messageTypes, GetType().Name));
 				ConnectCompleted (this.reliableSocket, args);
+			}
+			else
+				Trace.WriteLine ("Connecting asynchronously", String.Format ("{2} Connect({0},{1})", endpoint, messageTypes, GetType().Name));
 		}
 
 		private void ConnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
+			Trace.WriteLine ("Entering", String.Format ("{2} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name));
+
+			int p;
+
 			if (e.SocketError != SocketError.Success)
 			{
-				Interlocked.Decrement (ref this.pendingAsync);
+				this.connecting = false;
+				p = Interlocked.Decrement (ref this.pendingAsync);
+				Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name));
 				Disconnect (true, DisconnectedReason.ConnectionFailed);
 				OnConnectionFailed (new ClientConnectionEventArgs (this));
 				return;
@@ -105,12 +120,15 @@ namespace Tempest.Providers.Network
 			{
 				if (!IsConnected)
 				{
+					Trace.WriteLine ("Already disconnected", "ConnectCompleted");
 					this.connecting = false;
-					Interlocked.Decrement (ref this.pendingAsync);
+					p = Interlocked.Decrement (ref this.pendingAsync);
+					Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name));
 					return;
 				}
 
-				Interlocked.Increment (ref this.pendingAsync);
+				p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{2} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name));
 				recevied = !this.reliableSocket.ReceiveAsync (e);
 			}
 
@@ -118,7 +136,8 @@ namespace Tempest.Providers.Network
 				ReliableReceiveCompleted (this.reliableSocket, e);
 
 			OnConnected (new ClientConnectionEventArgs (this));
-			Interlocked.Decrement (ref this.pendingAsync);
+			p = Interlocked.Decrement (ref this.pendingAsync);
+			Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name));
 			this.connecting = false;
 			//Send (new ConnectMessage { Protocols = this.protocols.Values });
 		}
@@ -146,13 +165,13 @@ namespace Tempest.Providers.Network
 					this.pingFrequency = ((PingMessage)e.Message).Interval;
 					break;
 
-				case (ushort)TempestMessageType.Connected:
-					var msg = (ConnectedMessage)e.Message;
-					this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (p => p.id);
+				//case (ushort)TempestMessageType.Connected:
+				//    var msg = (ConnectedMessage)e.Message;
+				//    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (p => p.id);
 
-					OnConnected (new ClientConnectionEventArgs (this));
-					Interlocked.Decrement (ref this.pendingAsync);
-					break;
+				//    OnConnected (new ClientConnectionEventArgs (this));
+				//    Interlocked.Decrement (ref this.pendingAsync);
+				//    break;
 			}
 
 			base.OnTempestMessageReceived(e);

@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -237,6 +238,8 @@ namespace Tempest.Providers.Network
 
 		private void Accept (object sender, SocketAsyncEventArgs e)
 		{
+			Trace.WriteLine ("Entering", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
+
 			if (!this.running)
 			{
 				e.Dispose();

@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -56,7 +57,7 @@ namespace Tempest.Providers.Network
 			asyncArgs.Completed += ReliableReceiveCompleted;
 
 			int p = Interlocked.Increment (ref this.pendingAsync);
-
+			Trace.WriteLine (String.Format ("Increment pending: {0}", p),"new NetworkServerConnection");
 
 			if (!this.reliableSocket.ReceiveAsync (asyncArgs))
 				ReliableReceiveCompleted (this, asyncArgs);
@@ -78,6 +79,8 @@ namespace Tempest.Providers.Network
 
 		private void PingCallback (object state)
 		{
+			Trace.WriteLine ("Entering", String.Format ("NetworkServerConnection PingCallback({0})", this.pingsOut));
+
 			if (this.pingsOut >= 2)
 			{
 				Disconnect (true); // Connection timed out

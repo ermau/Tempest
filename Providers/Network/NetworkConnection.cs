@@ -191,7 +191,7 @@ namespace Tempest.Providers.Network
 
 			lock (this.stateSync)
 			{
-				Trace.WriteLine ("Got state lock.");
+				Trace.WriteLine ("Got state lock.", String.Format ("{2} Disconnect({0},{1})",now,reason, GetType().Name));
 
 				if (this.disconnecting || this.reliableSocket == null)
 				{
@@ -213,7 +213,7 @@ namespace Tempest.Providers.Network
 				}
 				else if (now)
 				{
-					Trace.WriteLine ("Shutting down socket.");
+					Trace.WriteLine ("Shutting down socket.", String.Format ("{2} Disconnect({0},{1})",now,reason, GetType().Name));
 
 					this.reliableSocket.Shutdown (SocketShutdown.Both);
 					this.reliableSocket.Disconnect (true);

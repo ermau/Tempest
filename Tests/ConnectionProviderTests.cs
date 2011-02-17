@@ -29,6 +29,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Collections.Generic;
 using NUnit.Framework;
 using Tempest.InternalProtocol;
 
@@ -37,6 +38,7 @@ namespace Tempest.Tests
 	public abstract class ConnectionProviderTests
 	{
 		protected IConnectionProvider provider;
+		protected readonly List<IClientConnection> connections = new List<IClientConnection>();
 
 		[SetUp]
 		protected void Setup()
@@ -49,13 +51,31 @@ namespace Tempest.Tests
 		{
 			if (this.provider != null)
 				this.provider.Dispose();
+
+			lock (this.connections)
+			{
+				foreach (var c in this.connections)
+					c.Dispose();
+
+				this.connections.Clear();
+			}
 		}
 
 		protected abstract EndPoint EndPoint { get; }
 		protected abstract MessageTypes MessageTypes { get; }
 
 		protected abstract IConnectionProvider SetUp();
-		protected abstract IClientConnection GetNewClientConnection();
+		protected abstract IClientConnection SetupClientConnection();
+
+		protected IClientConnection GetNewClientConnection()
+		{
+			var c = SetupClientConnection();
+
+			lock (this.connections)
+				this.connections.Add (c);
+
+			return c;
+		}
 
 		[Test]
 		public void ConnectionlessSupport()

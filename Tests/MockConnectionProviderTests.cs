@@ -49,7 +49,7 @@ namespace Tempest.Tests
 			return new MockConnectionProvider();
 		}
 
-		protected override IClientConnection GetNewClientConnection()
+		protected override IClientConnection SetupClientConnection()
 		{
 			return ((MockConnectionProvider)this.provider).GetClientConnection();
 		}

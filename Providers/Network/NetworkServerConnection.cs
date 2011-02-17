@@ -55,7 +55,12 @@ namespace Tempest.Providers.Network
 			asyncArgs.SetBuffer (this.rmessageBuffer, 0, 20480);
 			asyncArgs.Completed += ReliableReceiveCompleted;
 
-			this.reliableSocket.ReceiveAsync (asyncArgs);
+			int p = Interlocked.Increment (ref this.pendingAsync);
+
+
+			if (!this.reliableSocket.ReceiveAsync (asyncArgs))
+				ReliableReceiveCompleted (this, asyncArgs);
+
 			this.rreader = new BufferValueReader (this.rmessageBuffer);
 
 			provider.PingFrequencyChanged += ProviderOnPingFrequencyChanged;

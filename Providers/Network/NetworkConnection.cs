@@ -200,7 +200,12 @@ namespace Tempest.Providers.Network
 				{
 					Trace.WriteLine ("Socket not connecting, finishing cleanup.");
 
+					Recycle();
 					this.reliableSocket = null;
+
+					while (this.pendingAsync > ((connecting) ? 1 : 0))
+						Thread.Sleep (0);
+
 					OnDisconnected (new DisconnectedEventArgs (this, reason));
 				}
 				else if (now)

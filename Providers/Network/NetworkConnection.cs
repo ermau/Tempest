@@ -233,6 +233,13 @@ namespace Tempest.Providers.Network
 
 					ThreadPool.QueueUserWorkItem (s =>
 					{
+						Trace.WriteLine (String.Format ("Async DC waiting for pending ({0}) async.", pendingAsync), String.Format ("{2} Disconnect({0},{1})",now,reason, GetType().Name));
+
+						while (this.pendingAsync > 1) // Disconnect is pending.
+							Thread.Sleep (0);
+
+						Trace.WriteLine ("Finished waiting, disconnecting async.", String.Format ("{2} Disconnect({0},{1})",now,reason, GetType().Name));
+
 						var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
 						args.Completed += OnDisconnectCompleted;
 						if (!this.reliableSocket.DisconnectAsync (args))

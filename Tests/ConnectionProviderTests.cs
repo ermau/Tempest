@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -43,12 +44,16 @@ namespace Tempest.Tests
 		[SetUp]
 		protected void Setup()
 		{
+			Trace.WriteLine ("Entering", "Setup");
 			this.provider = SetUp();
+			Trace.WriteLine ("Exiting", "Setup");
 		}
 
 		[TearDown]
 		protected void TearDown()
 		{
+			Trace.WriteLine ("Entering", "TearDown");
+
 			if (this.provider != null)
 				this.provider.Dispose();
 
@@ -59,6 +64,8 @@ namespace Tempest.Tests
 
 				this.connections.Clear();
 			}
+
+			Trace.WriteLine ("Exiting", "TearDown");
 		}
 
 		protected abstract EndPoint EndPoint { get; }

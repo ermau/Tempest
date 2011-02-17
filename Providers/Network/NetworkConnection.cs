@@ -126,7 +126,6 @@ namespace Tempest.Providers.Network
 					else if (count == Interlocked.CompareExchange (ref bufferCount, count + 1, count))
 					{
 						eargs = new SocketAsyncEventArgs();
-						eargs.Completed += ReliableSendCompleted;
 						eargs.SetBuffer (new byte[1024], 0, 1024);
 					}
 				}
@@ -149,7 +148,6 @@ namespace Tempest.Providers.Network
 						{
 							bufferCount++;
 							eargs = new SocketAsyncEventArgs();
-							eargs.Completed += ReliableSendCompleted;
 							eargs.SetBuffer (new byte[1024], 0, 1024);
 						}
 					}
@@ -175,7 +173,8 @@ namespace Tempest.Providers.Network
 
 					return;
 				}
-
+				
+				eargs.Completed += ReliableSendCompleted;
 				int p = Interlocked.Increment (ref this.pendingAsync);
 				Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{1} Send({0})", message, GetType().Name));
 				sent = !this.reliableSocket.SendAsync (eargs);
@@ -484,6 +483,8 @@ namespace Tempest.Providers.Network
 
 		private void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
 		{
+			e.Completed -= ReliableSendCompleted;
+
 			var message = (Message)e.UserToken;
 
 			#if !NET_4

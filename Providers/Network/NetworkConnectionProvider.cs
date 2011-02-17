@@ -188,6 +188,9 @@ namespace Tempest.Providers.Network
 			{
 				connections = this.serverConnections.ToList();
 				this.serverConnections.Clear();
+	
+				connections.AddRange (this.pendingConnections.ToList());
+				this.pendingConnections.Clear();
 			}
 			
 			foreach (NetworkServerConnection c in connections)
@@ -240,7 +243,7 @@ namespace Tempest.Providers.Network
 		{
 			Trace.WriteLine ("Entering", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
 
-			if (!this.running)
+			if (!this.running || e.SocketError != SocketError.Success)
 			{
 				e.Dispose();
 				return;
@@ -264,12 +267,15 @@ namespace Tempest.Providers.Network
 				if (made.Rejected)
 					connection.Dispose();
 				else
-					this.pendingConnections.Add (connection);
+					this.serverConnections.Add (connection);
 			}
 		}
 
 		private void BeginAccepting (SocketAsyncEventArgs e)
 		{
+			if (!this.running)
+				return;
+
 			if (e == null)
 			{
 				e = new SocketAsyncEventArgs ();
@@ -277,6 +283,9 @@ namespace Tempest.Providers.Network
 			}
 			else
 			{
+				if (e.SocketError != SocketError.Success)
+					return;
+
 				Socket s = null;
 				#if NET_4
 				if (!ReliableSockets.TryPop (out s))
@@ -295,7 +304,7 @@ namespace Tempest.Providers.Network
 				e.AcceptSocket = s;
 			}
 
-			if (!this.reliableSocket.AcceptAsync (e))
+			if (this.running && !this.reliableSocket.AcceptAsync (e))
 				Accept (this, e);
 		}
 

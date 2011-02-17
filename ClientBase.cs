@@ -37,7 +37,7 @@ namespace Tempest
 	/// Base class for Tempest clients.
 	/// </summary>
 	public abstract class ClientBase
-		: MessageHandling
+		: MessageHandler
 	{
 		protected ClientBase (IClientConnection connection, MessageTypes mtypes, bool poll)
 		{

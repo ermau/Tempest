@@ -52,7 +52,7 @@ namespace Tempest
 	/// Base class for Tempest servers.
 	/// </summary>
 	public abstract class ServerBase
-		: MessageHandling
+		: MessageHandler
 	{
 		protected ServerBase (MessageTypes messageTypes)
 		{

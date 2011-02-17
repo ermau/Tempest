@@ -229,10 +229,10 @@ namespace Tempest.Providers.Network
 					this.disconnecting = true;
 					this.disconnectingReason = reason;
 
+					Interlocked.Increment (ref this.pendingAsync);
+
 					ThreadPool.QueueUserWorkItem (s =>
 					{
-						Interlocked.Increment (ref this.pendingAsync);
-
 						var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
 						args.Completed += OnDisconnectCompleted;
 						if (!this.reliableSocket.DisconnectAsync (args))

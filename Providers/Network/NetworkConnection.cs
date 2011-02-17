@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -185,18 +186,27 @@ namespace Tempest.Providers.Network
 
 		public void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
 		{
+			Trace.WriteLine (String.Format ("Entering Disconnect ({0}, {1})", now, reason));
+
 			lock (this.stateSync)
 			{
 				if (this.disconnecting || this.reliableSocket == null)
+				{
+					Trace.WriteLine (String.Format ("Already disconnected, exiting Disconnect ({0}, {1})", now, reason));
 					return;
+				}
 
 				if (!this.reliableSocket.Connected)
 				{
+					Trace.WriteLine ("Socket not connecting, finishing cleanup.");
+
 					this.reliableSocket = null;
 					OnDisconnected (new DisconnectedEventArgs (this, reason));
 				}
 				else if (now)
 				{
+					Trace.WriteLine ("Shutting down socket.");
+
 					this.reliableSocket.Shutdown (SocketShutdown.Both);
 					this.reliableSocket.Disconnect (true);
 					Recycle();
@@ -209,6 +219,8 @@ namespace Tempest.Providers.Network
 				}
 				else
 				{
+					Trace.WriteLine ("Disconnecting asynchronously.");
+
 					this.disconnecting = true;
 					this.disconnectingReason = reason;
 

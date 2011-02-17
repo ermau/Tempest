@@ -352,7 +352,7 @@ namespace Tempest.Tests
 			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
 				Assert.Ignore();
 
-			const int messages = 10000;
+			const int messages = 100000;
 			int message = 0;
 
 			var test = new AsyncTest (e =>
@@ -367,7 +367,7 @@ namespace Tempest.Tests
 					Assert.Pass();
 			}, true);
 
-			this.provider.Start(MessageTypes);
+			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
 			{
 				try

@@ -149,33 +149,5 @@ namespace Tempest.Tests
 			Assert.IsTrue (connection.IsConnected);
 			Assert.IsTrue (client.IsConnected);
 		}
-
-		[Test]
-		public void DisconnectedEventAlreadyDisconnectedNow()
-		{
-			var test = new AsyncTest();
-
-			var c = new NetworkServerConnection (new [] { p }, new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
-			                                     (NetworkConnectionProvider)provider);
-
-			c.Disconnected += test.PassHandler;
-			c.Disconnect (true);
-
-			test.Assert (10000);
-		}
-
-		[Test]
-		public void DisconnectedEventAlreadyDisconnectedLater()
-		{
-			var test = new AsyncTest();
-
-			var c = new NetworkServerConnection (new [] { p }, new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
-			                                     (NetworkConnectionProvider)provider);
-
-			c.Disconnected += test.PassHandler;
-			c.Disconnect (false);
-
-			test.Assert (10000);
-		}
 	}
 }

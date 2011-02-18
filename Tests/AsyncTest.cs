@@ -118,6 +118,8 @@ namespace Tempest.Tests
 
 		public void FailHandler (object sender, EventArgs e)
 		{
+			Trace.WriteLine ("Fail handler called from " + Environment.StackTrace);
+
 			failed = true;
 		}
 

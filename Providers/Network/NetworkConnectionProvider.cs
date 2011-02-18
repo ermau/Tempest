@@ -245,6 +245,7 @@ namespace Tempest.Providers.Network
 
 			if (!this.running || e.SocketError != SocketError.Success)
 			{
+				Trace.WriteLine ("Exiting", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
 				e.Dispose();
 				return;
 			}
@@ -255,6 +256,7 @@ namespace Tempest.Providers.Network
 			{
 				if (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections)
 				{
+					Trace.WriteLine (String.Format ("At MaxConnections ({0}), disconnecting", MaxConnections), String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
 					connection.Disconnect (true);
 					return;
 				}
@@ -265,7 +267,10 @@ namespace Tempest.Providers.Network
 				OnConnectionMade (made);
 
 				if (made.Rejected)
+				{
+					Trace.WriteLine ("Connection rejected", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
 					connection.Dispose();
+				}
 				else
 					this.serverConnections.Add (connection);
 			}

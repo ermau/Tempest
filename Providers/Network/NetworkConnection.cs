@@ -220,7 +220,7 @@ namespace Tempest.Providers.Network
 					Recycle();
 					this.reliableSocket = null;
 
-					while (this.pendingAsync > ((connecting) ? 1 : 0))
+					while (this.pendingAsync > 1) // If called from *Completed, there'll be a pending.
 						Thread.Sleep (0);
 
 					OnDisconnected (new DisconnectedEventArgs (this, reason));
@@ -235,9 +235,9 @@ namespace Tempest.Providers.Network
 					Recycle();
 					this.reliableSocket = null;
 
-					Trace.WriteLine (String.Format ("Waiting for pending ({1}) async (connecting: {0}).", connecting, pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})",now,reason, GetType().Name, c, connectionId));
+					Trace.WriteLine (String.Format ("Waiting for pending ({0}) async.", pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})",now,reason, GetType().Name, c, connectionId));
 
-					while (this.pendingAsync > ((connecting) ? 1 : 0))
+					while (this.pendingAsync > 1)
 						Thread.Sleep (0);
 
 					Trace.WriteLine ("Finished waiting, raising Disconnected.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})",now,reason, GetType().Name, c, connectionId));
@@ -258,7 +258,7 @@ namespace Tempest.Providers.Network
 					{
 						Trace.WriteLine (String.Format ("Async DC waiting for pending ({0}) async.", pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})",now,reason, GetType().Name, c, connectionId));
 
-						while (this.pendingAsync > 1) // Disconnect is pending.
+						while (this.pendingAsync > 2) // Disconnect is pending.
 							Thread.Sleep (0);
 
 						Trace.WriteLine ("Finished waiting, disconnecting async.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})",now,reason, GetType().Name, c, connectionId));
@@ -291,7 +291,6 @@ namespace Tempest.Providers.Network
 		protected readonly object stateSync = new object();
 		protected int pendingAsync = 0;
 		protected bool disconnecting = false;
-		protected bool connecting = false;
 		protected DisconnectedReason disconnectingReason;
 
 		protected Socket reliableSocket;
@@ -440,19 +439,22 @@ namespace Tempest.Providers.Network
 			int c = Interlocked.Increment (ref nextCallId);
 			#endif
 
+			int p;
 			Trace.WriteLine ("Entering", String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
-			bool pending;
+			bool async;
 			do
 			{
-				int p = Interlocked.Decrement (ref this.pendingAsync);
-				Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
-
 				if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 				{
 					Disconnect (true);
+					p = Interlocked.Decrement (ref this.pendingAsync);
+					Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
 					Trace.WriteLine ("Exiting (error)", String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
 					return;
 				}
+
+				p = Interlocked.Decrement (ref this.pendingAsync);
+				Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
 
 				this.rmessageLoaded += e.BytesTransferred;
 
@@ -471,9 +473,9 @@ namespace Tempest.Providers.Network
 
 					p = Interlocked.Increment (ref this.pendingAsync);
 					Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
-					pending = this.reliableSocket.ReceiveAsync (e);
+					async = this.reliableSocket.ReceiveAsync (e);
 				}
-			} while (!pending);
+			} while (!async);
 
 			Trace.WriteLine ("Exiting", String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
 		}
@@ -540,9 +542,9 @@ namespace Tempest.Providers.Network
 			int p;
 			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 			{
+				Disconnect (true);
 				p = Interlocked.Decrement (ref this.pendingAsync);
 				Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
-				Disconnect (true);
 				Trace.WriteLine ("Exiting (error)", String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
 				return;
 			}

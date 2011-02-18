@@ -66,7 +66,6 @@ namespace Tempest.Providers.Network
 			while (this.pendingAsync > 0)
 				Thread.Sleep (0);
 
-			this.connecting = true;
 			lock (this.stateSync)
 			{
 				if (IsConnected)
@@ -102,7 +101,6 @@ namespace Tempest.Providers.Network
 
 			if (e.SocketError != SocketError.Success)
 			{
-				this.connecting = false;
 				p = Interlocked.Decrement (ref this.pendingAsync);
 				Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, connectionId));
 				Disconnect (true, DisconnectedReason.ConnectionFailed);
@@ -121,7 +119,6 @@ namespace Tempest.Providers.Network
 				if (!IsConnected)
 				{
 					Trace.WriteLine ("Already disconnected", String.Format ("{2}:{3} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, connectionId));
-					this.connecting = false;
 					p = Interlocked.Decrement (ref this.pendingAsync);
 					Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, connectionId));
 					return;
@@ -138,7 +135,6 @@ namespace Tempest.Providers.Network
 			OnConnected (new ClientConnectionEventArgs (this));
 			p = Interlocked.Decrement (ref this.pendingAsync);
 			Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, connectionId));
-			this.connecting = false;
 			//Send (new ConnectMessage { Protocols = this.protocols.Values });
 		}
 

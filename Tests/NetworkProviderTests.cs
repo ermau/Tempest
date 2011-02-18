@@ -38,7 +38,7 @@ namespace Tempest.Tests
 		: ConnectionProviderTests
 	{
 		private Protocol p = MockProtocol.Instance;
-		private const int MaxConnections = 20;
+		private const int MaxConnections = 5;
 		protected override EndPoint EndPoint
 		{
 			get { return new IPEndPoint (IPAddress.Loopback, 42000); }
@@ -161,7 +161,7 @@ namespace Tempest.Tests
 			c.Disconnected += test.PassHandler;
 			c.Disconnect (true);
 
-			test.Assert (2000);
+			test.Assert (10000);
 		}
 
 		[Test]
@@ -175,7 +175,7 @@ namespace Tempest.Tests
 			c.Disconnected += test.PassHandler;
 			c.Disconnect (false);
 
-			test.Assert (2000);
+			test.Assert (10000);
 		}
 	}
 }

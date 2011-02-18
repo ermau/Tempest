@@ -59,10 +59,10 @@ namespace Tempest.Tests
 
 			lock (this.connections)
 			{
-				foreach (var c in this.connections)
-					c.Dispose();
+			    foreach (var c in this.connections)
+			        c.Dispose();
 
-				this.connections.Clear();
+			    this.connections.Clear();
 			}
 
 			Trace.WriteLine ("Exiting", "TearDown");
@@ -79,7 +79,7 @@ namespace Tempest.Tests
 			var c = SetupClientConnection();
 
 			lock (this.connections)
-				this.connections.Add (c);
+			    this.connections.Add (c);
 
 			return c;
 		}
@@ -379,7 +379,7 @@ namespace Tempest.Tests
 			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
 				Assert.Ignore();
 
-			const int messages = 100000;
+			const int messages = 10000;
 			int message = 0;
 
 			var test = new AsyncTest (e =>
@@ -417,7 +417,7 @@ namespace Tempest.Tests
 			c.MessageReceived += test.PassHandler;
 			c.Connect (EndPoint, MessageTypes);
 
-			test.Assert (30000);
+			test.Assert (60000);
 		}
 
 		[Test]
@@ -561,7 +561,7 @@ namespace Tempest.Tests
 		[Test]
 		public void DisconnectAndReconnect()
 		{
-			AutoResetEvent wait = new AutoResetEvent (false);
+			var wait = new ManualResetEvent (false);
 
 			var c = GetNewClientConnection();
 			c.Connected += (sender, e) => wait.Set();
@@ -571,13 +571,17 @@ namespace Tempest.Tests
 
 			for (int i = 0; i < 5; ++i)
 			{
+				Trace.WriteLine ("Connecting");
+				wait.Reset();
 				c.Connect (EndPoint, MessageTypes);
 				if (!wait.WaitOne (10000))
-					Assert.Fail ("Failed to connect. Attempt {0}.", i);
+					Assert.Fail ("Failed to connect. Attempt {0}.", i + 1);
 
+				Trace.WriteLine ("Disconnecting");
+				wait.Reset();
 				c.Disconnect (true);
 				if (!wait.WaitOne (10000))
-					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
+					Assert.Fail ("Failed to disconnect. Attempt {0}.", i + 1);
 			}
 		}
 

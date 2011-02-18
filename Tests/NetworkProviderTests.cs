@@ -156,7 +156,7 @@ namespace Tempest.Tests
 			client.Disconnected += test.FailHandler;
 			client.Connect (EndPoint, MessageTypes);
 
-			test.Assert (4000, false);
+			test.Assert (30000, false);
 			Assert.IsNotNull (connection);
 			Assert.IsTrue (connection.IsConnected);
 			Assert.IsTrue (client.IsConnected);

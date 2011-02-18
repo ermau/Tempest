@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using NUnit.Framework;
 using Tempest.Providers.Network;
 
@@ -77,6 +78,14 @@ namespace Tempest.Tests
 		{
 			provider.Start (MessageTypes);
 
+			AutoResetEvent wait = new AutoResetEvent (false);
+			int counter = 0;
+			provider.ConnectionMade += (s, e) =>
+			{
+				if (Interlocked.Increment (ref counter) == MaxConnections)
+					wait.Set();
+			};
+
 			IClientConnection client;
 			AsyncTest test;
 			for (int i = 0; i < MaxConnections; ++i)
@@ -90,6 +99,9 @@ namespace Tempest.Tests
 
 				test.Assert (3000);
 			}
+
+			if (!wait.WaitOne (10000))
+				Assert.Fail ("MaxConnections was not reached in time");
 
 			test = new AsyncTest();
 			provider.ConnectionMade += test.FailHandler;

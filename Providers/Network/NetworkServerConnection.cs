@@ -148,8 +148,11 @@ namespace Tempest.Providers.Network
 		{
 			lock (this.pingSync)
 			{
-				this.pingTimer.Dispose();
-				this.pingTimer = null;
+				if (this.pingTimer != null)
+				{
+					this.pingTimer.Dispose();
+					this.pingTimer = null;
+				}
 			}
 
 			this.provider.PingFrequencyChanged -= ProviderOnPingFrequencyChanged;

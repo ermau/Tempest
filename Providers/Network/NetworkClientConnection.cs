@@ -132,10 +132,10 @@ namespace Tempest.Providers.Network
 			if (recevied)
 				ReliableReceiveCompleted (this.reliableSocket, e);
 
-			OnConnected (new ClientConnectionEventArgs (this));
-			p = Interlocked.Decrement (ref this.pendingAsync);
-			Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, connectionId));
-			//Send (new ConnectMessage { Protocols = this.protocols.Values });
+			//OnConnected (new ClientConnectionEventArgs (this));
+			//p = Interlocked.Decrement (ref this.pendingAsync);
+			//Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, connectionId));
+			Send (new ConnectMessage { Protocols = this.protocols.Values });
 		}
 
 		private int pingFrequency;
@@ -161,13 +161,14 @@ namespace Tempest.Providers.Network
 					this.pingFrequency = ((PingMessage)e.Message).Interval;
 					break;
 
-				//case (ushort)TempestMessageType.Connected:
-				//    var msg = (ConnectedMessage)e.Message;
-				//    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (p => p.id);
+				case (ushort)TempestMessageType.Connected:
+				    var msg = (ConnectedMessage)e.Message;
+				    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (pr => pr.id);
 
-				//    OnConnected (new ClientConnectionEventArgs (this));
-				//    Interlocked.Decrement (ref this.pendingAsync);
-				//    break;
+				    int p = Interlocked.Decrement (ref this.pendingAsync);
+					Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{1} OnTempestMessageReceived(TempestMessageType.Connected)", GetType().Name, connectionId));
+					OnConnected (new ClientConnectionEventArgs (this));
+				    break;
 			}
 
 			base.OnTempestMessageReceived(e);

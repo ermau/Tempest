@@ -272,7 +272,7 @@ namespace Tempest.Providers.Network
 					connection.Dispose();
 				}
 				else
-					this.serverConnections.Add (connection);
+					this.pendingConnections.Add (connection);
 			}
 		}
 

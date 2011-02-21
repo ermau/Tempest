@@ -73,7 +73,7 @@ namespace Tempest.Providers.Network
 
 		private readonly NetworkConnectionProvider provider;
 
-		private bool formallyConnected = true;
+		private bool formallyConnected = false;
 		private readonly object pingSync = new object();
 		private Timer pingTimer;
 
@@ -101,30 +101,30 @@ namespace Tempest.Providers.Network
 			base.OnMessageReceived(e);
 		}
 
-		//protected override void OnTempestMessageReceived (MessageEventArgs e)
-		//{
-		//    switch (e.Message.MessageType)
-		//    {
-		//        case (ushort)TempestMessageType.Connect:
-		//            var msg = (ConnectMessage)e.Message;
+		protected override void OnTempestMessageReceived (MessageEventArgs e)
+		{
+		    switch (e.Message.MessageType)
+		    {
+		        case (ushort)TempestMessageType.Connect:
+		            var msg = (ConnectMessage)e.Message;
 
-		//            NetworkId = Interlocked.Increment (ref nextNetworkId);
+		            NetworkId = Interlocked.Increment (ref nextNetworkId);
 
-		//            IEnumerable<Protocol> ps = this.protocols.Values.Intersect (msg.Protocols);
+		            IEnumerable<Protocol> ps = this.protocols.Values.Intersect (msg.Protocols);
 
-		//            this.formallyConnected = true;
-		//            this.provider.Connect (this);
+		            this.formallyConnected = true;
+		            this.provider.Connect (this);
 
-		//            e.Connection.Send (new ConnectedMessage
-		//            {
-		//                EnabledProtocols = ps,
-		//                NetworkId = NetworkId
-		//            });					
-		//            break;
-		//    }
+		            e.Connection.Send (new ConnectedMessage
+		            {
+		                EnabledProtocols = ps,
+		                NetworkId = NetworkId
+		            });					
+		            break;
+		    }
 
-		//    base.OnTempestMessageReceived(e);
-		//}
+		    base.OnTempestMessageReceived(e);
+		}
 
 		protected override void OnMessageSent (MessageEventArgs e)
 		{

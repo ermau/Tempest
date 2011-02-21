@@ -218,7 +218,6 @@ namespace Tempest.Providers.Network
 					Trace.WriteLine ("Socket not connected, finishing cleanup.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})",now,reason, GetType().Name, c, connectionId));
 
 					Recycle();
-					this.reliableSocket = null;
 
 					while (this.pendingAsync > 1) // If called from *Completed, there'll be a pending.
 						Thread.Sleep (0);
@@ -233,7 +232,6 @@ namespace Tempest.Providers.Network
 					this.reliableSocket.Shutdown (SocketShutdown.Both);
 					this.reliableSocket.Disconnect (true);
 					Recycle();
-					this.reliableSocket = null;
 
 					Trace.WriteLine (String.Format ("Waiting for pending ({0}) async.", pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})",now,reason, GetType().Name, c, connectionId));
 
@@ -312,6 +310,9 @@ namespace Tempest.Providers.Network
 
 		protected virtual void Recycle()
 		{
+			this.reliableSocket = null;
+			this.rmessageOffset = 0;
+			this.rmessageLoaded = 0;
 		}
 
 		protected virtual void OnMessageReceived (MessageEventArgs e)
@@ -570,7 +571,6 @@ namespace Tempest.Providers.Network
 
 				this.disconnecting = false;
 				Recycle();
-				this.reliableSocket = null;
 			}
 
 			Trace.WriteLine ("Raising Disconnected", String.Format ("{2}:{4} {3}:OnDisconnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));

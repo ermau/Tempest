@@ -467,14 +467,12 @@ namespace Tempest.Tests
 			c.Connected += (sender, e) => wait.Set();
 			c.Connect (EndPoint, MessageTypes);
 
-			if (wait.WaitOne (10000))
-			{
-				c.Disconnect (true);
-
-				test.Assert (10000);
-			}
-			else
+			if (!wait.WaitOne (10000))
 				Assert.Fail ("Failed to connect");
+			
+			c.Disconnect (true);
+
+			test.Assert (10000);
 		}
 
 		[Test]
@@ -511,15 +509,22 @@ namespace Tempest.Tests
 
 			var c = GetNewClientConnection();
 
+			var wait = new AutoResetEvent (false);
+
 			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) =>
+			this.provider.ConnectionMade += (s, e) =>
 			{
 				e.Connection.Disconnected += test.PassHandler;
-				c.Disconnect (true);
+				wait.Set();
 			};
-			
+
 			c.Connect (EndPoint, MessageTypes);
 
+			if (!wait.WaitOne(10000))
+				Assert.Fail ("Failed to connect");
+
+			c.Disconnect (true);
+			
 			test.Assert (10000);
 		}
 
@@ -532,7 +537,36 @@ namespace Tempest.Tests
 			c.Disconnected += test.PassHandler;
 
 			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => e.Connection.Disconnect (true);
+
+			IServerConnection sc = null;
+
+			var wait = new AutoResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				wait.Set();
+			};
+
+			c.Connect (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (10000) || sc == null)
+				Assert.Fail ("Failed to connect");
+
+			sc.Disconnect (true);
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void ConnectionRejected()
+		{
+			var test = new AsyncTest();
+
+			var c = GetNewClientConnection();
+			c.Disconnected += test.PassHandler;
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) => e.Rejected = true;
 			
 			c.Connect (EndPoint, MessageTypes);
 
@@ -540,7 +574,7 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void DisconnectFromServerOnServer()
+		public void DisconnectFromServerOnServerWithinConnectionMade()
 		{
 			var test = new AsyncTest();
 
@@ -554,6 +588,34 @@ namespace Tempest.Tests
 			};
 			
 			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void DisconnectFromServerOnServer()
+		{
+			var test = new AsyncTest();
+
+			var c = GetNewClientConnection();
+			IServerConnection sc = null;
+
+			var wait = new AutoResetEvent (false);
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) =>
+			{
+				e.Connection.Disconnected += test.PassHandler;
+				sc = e.Connection;
+				wait.Set();
+			};
+			
+			c.Connect (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (10000) || sc == null)
+				Assert.Fail ("Failed to connect");
+
+			sc.Disconnect (true);
 
 			test.Assert (10000);
 		}

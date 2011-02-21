@@ -91,7 +91,15 @@ namespace Tempest.Tests
 		{
 			var c = new MockServerConnection (connection);
 			connection.connection = c;
-			OnConnectionMade (new ConnectionMadeEventArgs (c));
+
+			var e = new ConnectionMadeEventArgs (c);
+			OnConnectionMade (e);
+
+			if (e.Rejected)
+			{
+				connection.Disconnect (true, DisconnectedReason.ConnectionFailed);
+				c.Disconnect (true, DisconnectedReason.ConnectionFailed);
+			}
 		}
 
 		private void OnConnectionMade (ConnectionMadeEventArgs e)

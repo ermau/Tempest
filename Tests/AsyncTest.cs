@@ -150,7 +150,7 @@ namespace Tempest.Tests
 
 			if (this.passCount < this.timesToPass)
 				NAssert.Fail ("Failed to pass required number of times.");
-			if (failIfNotPassed)
+			if (failIfNotPassed && !Debugger.IsAttached)
 				NAssert.Fail ("Asynchronous operation timed out.");
 		}
 

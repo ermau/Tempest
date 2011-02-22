@@ -72,8 +72,8 @@ namespace Tempest.Tests
 			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), -1));
 			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new [] { p }, new IPEndPoint (IPAddress.Any, 42000), -1));
 		}
-
-		[Test]
+		
+		[Test, Repeat (250)]
 		public void ConnectionLimit()
 		{
 			provider.Start (MessageTypes);
@@ -106,12 +106,13 @@ namespace Tempest.Tests
 			test = new AsyncTest();
 			provider.ConnectionMade += test.FailHandler;
 			client = GetNewClientConnection();
+			client.Disconnected += test.PassHandler;
 			client.Connect (EndPoint, MessageTypes);
 
 			test.Assert (3000, false);
 		}
 
-		[Test]
+		[Test, Repeat (250)]
 		public void ConnectionLimitRestartListening()
 		{
 			IServerConnection connection = null;
@@ -137,7 +138,7 @@ namespace Tempest.Tests
 			test.Assert (3000);
 		}
 
-		[Test]
+		[Test, Repeat (2)]
 		public void PingPong()
 		{
 			AsyncTest test = new AsyncTest();

@@ -227,6 +227,14 @@ namespace Tempest.Providers.Network
 				if (this.pendingConnections.Remove (connection))
 					this.serverConnections.Add (connection);
 			}
+
+			var made = new ConnectionMadeEventArgs (connection);
+			OnConnectionMade (made);
+			if (made.Rejected)
+			{
+				Trace.WriteLine ("Connection rejected", "NetworkConnectionProvider Connect");
+				connection.Dispose();
+			}
 		}
 
 		internal void Disconnect (NetworkServerConnection connection)
@@ -263,16 +271,7 @@ namespace Tempest.Providers.Network
 
 				BeginAccepting (e);
 
-				var made = new ConnectionMadeEventArgs (connection);
-				OnConnectionMade (made);
-
-				if (made.Rejected)
-				{
-					Trace.WriteLine ("Connection rejected", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
-					connection.Dispose();
-				}
-				else
-					this.pendingConnections.Add (connection);
+				this.pendingConnections.Add (connection);
 			}
 		}
 

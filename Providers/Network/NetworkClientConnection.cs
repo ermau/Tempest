@@ -133,8 +133,8 @@ namespace Tempest.Providers.Network
 				ReliableReceiveCompleted (this.reliableSocket, e);
 
 			//OnConnected (new ClientConnectionEventArgs (this));
-			//p = Interlocked.Decrement (ref this.pendingAsync);
-			//Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, connectionId));
+			p = Interlocked.Decrement (ref this.pendingAsync);
+			Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, connectionId));
 			Send (new ConnectMessage { Protocols = this.protocols.Values });
 		}
 
@@ -165,8 +165,8 @@ namespace Tempest.Providers.Network
 				    var msg = (ConnectedMessage)e.Message;
 				    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (pr => pr.id);
 
-				    int p = Interlocked.Decrement (ref this.pendingAsync);
-					Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{1} OnTempestMessageReceived(TempestMessageType.Connected)", GetType().Name, connectionId));
+				    //int p = Interlocked.Decrement (ref this.pendingAsync);
+					//Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{1} OnTempestMessageReceived(TempestMessageType.Connected)", GetType().Name, connectionId));
 					OnConnected (new ClientConnectionEventArgs (this));
 				    break;
 			}

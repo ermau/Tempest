@@ -486,6 +486,9 @@ namespace Tempest.Providers.Network
 
 		private void DeliverMessage (MessageHeader header, int offset)
 		{
+			if (!IsConnected)
+				return;
+
 			this.rreader.Position = offset + BaseHeaderLength;
 
 			try

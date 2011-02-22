@@ -228,6 +228,9 @@ namespace Tempest.Providers.Network
 					this.serverConnections.Add (connection);
 			}
 
+			if (!connection.IsConnected)
+				return;
+
 			var made = new ConnectionMadeEventArgs (connection);
 			OnConnectionMade (made);
 			if (made.Rejected)
@@ -262,6 +265,9 @@ namespace Tempest.Providers.Network
 
 			lock (this.serverConnections)
 			{
+				if (!connection.IsConnected)
+					return;
+
 				if (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections)
 				{
 					Trace.WriteLine (String.Format ("At MaxConnections ({0}), disconnecting", MaxConnections), String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));

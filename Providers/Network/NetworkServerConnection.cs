@@ -108,6 +108,9 @@ namespace Tempest.Providers.Network
 		        case (ushort)TempestMessageType.Connect:
 		            var msg = (ConnectMessage)e.Message;
 
+					if (!IsConnected)
+						return;
+
 		            NetworkId = Interlocked.Increment (ref nextNetworkId);
 
 		            IEnumerable<Protocol> ps = this.protocols.Values.Intersect (msg.Protocols);

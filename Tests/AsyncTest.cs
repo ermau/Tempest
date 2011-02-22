@@ -104,6 +104,9 @@ namespace Tempest.Tests
 
 		public void PassHandler (object sender, EventArgs e)
 		{
+			if (this.complete)
+				return;
+
 			try
 			{
 				passTest (e);
@@ -118,6 +121,9 @@ namespace Tempest.Tests
 
 		public void FailHandler (object sender, EventArgs e)
 		{
+			if (this.complete)
+				return;
+
 			Trace.WriteLine ("Fail handler called from " + Environment.StackTrace);
 
 			failed = true;
@@ -125,6 +131,9 @@ namespace Tempest.Tests
 
 		public void FailWith (Exception ex)
 		{
+			if (this.complete)
+				return;
+
 			if (ex == null)
 				ex = new ArgumentNullException ("ex");
 
@@ -133,31 +142,39 @@ namespace Tempest.Tests
 
 		public void Assert (int timeout, bool failIfNotPassed = true)
 		{
-			DateTime start = DateTime.Now;
-			while (DateTime.Now.Subtract (start).TotalMilliseconds < timeout)
+			try
 			{
-				if (failed)
-					NAssert.Fail ();
-				else if (passed || (exception as SuccessException) != null)
-					return;
-				else if (this.timesToPass != 0 && this.passCount >= this.timesToPass)
-					return;
-				else if (exception != null)
-					throw new TargetInvocationException (exception);
+				DateTime start = DateTime.Now;
+				while (DateTime.Now.Subtract (start).TotalMilliseconds < timeout)
+				{
+					if (failed)
+						NAssert.Fail();
+					else if (passed || (exception as SuccessException) != null)
+						return;
+					else if (this.timesToPass != 0 && this.passCount >= this.timesToPass)
+						return;
+					else if (exception != null)
+						throw new TargetInvocationException (exception);
 
-				Thread.Sleep (1);
+					Thread.Sleep (1);
+				}
+
+				if (this.passCount < this.timesToPass)
+					NAssert.Fail ("Failed to pass required number of times.");
+				if (failIfNotPassed && !Debugger.IsAttached)
+					NAssert.Fail ("Asynchronous operation timed out.");
 			}
-
-			if (this.passCount < this.timesToPass)
-				NAssert.Fail ("Failed to pass required number of times.");
-			if (failIfNotPassed && !Debugger.IsAttached)
-				NAssert.Fail ("Asynchronous operation timed out.");
+			finally
+			{
+				this.complete = true;
+			}
 		}
 
 		private readonly bool multiple;
 		private readonly Action<EventArgs> passTest;
 		private int timesToPass = 0;
 
+		private bool complete;
 		private int passCount = 0;
 		private volatile bool passed = false;
 		private volatile bool failed = false;

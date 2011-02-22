@@ -56,9 +56,19 @@ namespace Tempest.InternalProtocol
 		Connect = 4,
 
 		/// <summary>
-		/// ServerHello
+		/// ServerConnected
 		/// </summary>
 		Connected = 5,
+
+		/// <summary>
+		/// ServerHello
+		/// </summary>
+		AcknowledgeConnect = 6,
+
+		/// <summary>
+		/// Client finalize connection
+		/// </summary>
+		FinalConnect = 7,
 	}
 
 	/// <summary>

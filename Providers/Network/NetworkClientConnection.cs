@@ -92,6 +92,17 @@ namespace Tempest.Providers.Network
 			else
 				Trace.WriteLine ("Connecting asynchronously", String.Format ("{2}:{3} Connect({0},{1})", endpoint, messageTypes, GetType().Name, connectionId));
 		}
+		
+		private int pingFrequency;
+		private Timer activityTimer;
+		private int networkId;
+
+		protected override void Recycle()
+		{
+			this.networkId = 0;
+
+			base.Recycle();
+		}
 
 		private void ConnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
@@ -138,9 +149,6 @@ namespace Tempest.Providers.Network
 			Send (new ConnectMessage { Protocols = this.protocols.Values });
 		}
 
-		private int pingFrequency;
-		private Timer activityTimer;
-
 		protected override void OnTempestMessageReceived (MessageEventArgs e)
 		{
 			switch (e.Message.MessageType)
@@ -161,10 +169,10 @@ namespace Tempest.Providers.Network
 					this.pingFrequency = ((PingMessage)e.Message).Interval;
 					break;
 
-				case (ushort)TempestMessageType.Connected:
-				    var msg = (ConnectedMessage)e.Message;
+				case (ushort)TempestMessageType.AcknowledgeConnect:
+				    var msg = (AcknowledgeConnectMessage)e.Message;
 				    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (pr => pr.id);
-
+					this.networkId = msg.NetworkId;
 				    //int p = Interlocked.Decrement (ref this.pendingAsync);
 					//Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{1} OnTempestMessageReceived(TempestMessageType.Connected)", GetType().Name, connectionId));
 					OnConnected (new ClientConnectionEventArgs (this));

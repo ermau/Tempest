@@ -43,9 +43,11 @@
   <ItemGroup>
     <Compile Include="DisconnectedEventArgs.cs" />
     <Compile Include="ConnectionExtensions.cs" />
+    <Compile Include="InternalProtocol\AcknowledgeConnectMessage.cs" />
     <Compile Include="InternalProtocol\ConnectedMessage.cs" />
     <Compile Include="InternalProtocol\ConnectMessage.cs" />
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />
+    <Compile Include="InternalProtocol\FinalConnectMessage.cs" />
     <Compile Include="ISerializable.cs" />
     <Compile Include="MessageHeader.cs" />
     <Compile Include="ObjectSerializer.cs" />

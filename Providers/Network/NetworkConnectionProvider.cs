@@ -33,6 +33,8 @@ using System.Net.Sockets;
 
 #if NET_4
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
+
 #endif
 
 namespace Tempest.Providers.Network
@@ -140,6 +142,9 @@ namespace Tempest.Providers.Network
 
 			this.running = true;
 			this.mtypes = types;
+
+			this.rsaCrypto = new RSACryptoServiceProvider (2048);
+			this.rsaPublicParams = this.rsaCrypto.ExportParameters (false);
 			
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{
@@ -195,6 +200,13 @@ namespace Tempest.Providers.Network
 			
 			foreach (NetworkServerConnection c in connections)
 				c.Dispose();
+
+			this.rsaPublicParams = default(RSAParameters);
+			if (this.rsaCrypto != null)
+			{
+				this.rsaCrypto.Dispose();
+				this.rsaCrypto = null;
+			}
 		}
 
 		public void Dispose()
@@ -213,7 +225,10 @@ namespace Tempest.Providers.Network
 		private Socket reliableSocket;
 		private Socket unreliableSocket;
 		private MessageTypes mtypes;
-		private readonly byte sanityByte;
+		
+		internal RSACryptoServiceProvider rsaCrypto;
+		internal RSAParameters rsaPublicParams;
+		
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;
 

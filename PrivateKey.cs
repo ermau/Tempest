@@ -1,5 +1,5 @@
 ﻿//
-// ConnectedMessage.cs
+// PrivateKey.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -24,25 +24,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Collections.Generic;
+using System;
 using System.Linq;
+using System.Security.Cryptography;
 
-namespace Tempest.InternalProtocol
+namespace Tempest
 {
-	public class ConnectedMessage
-		: TempestMessage
+	public class PrivateKey
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
+		public PrivateKey (RSAParameters parameters)
 		{
+			this.key =
+				new byte[
+					parameters.D.Length + parameters.DP.Length + parameters.DQ.Length + parameters.InverseQ.Length +
+					parameters.P.Length + parameters.Q.Length];
+
+			int index = 0;
+			Array.Copy (parameters.D, 0, this.key, index, parameters.D.Length);
+			d = new ArraySegment<byte> (this.key, index, parameters.D.Length);
+
+			Array.Copy (parameters.DP, 0, this.key, index += parameters.D.Length, parameters.DP.Length);
+			dp = new ArraySegment<byte> (this.key, index, parameters.DP.Length);
 		}
 
-		public override void WritePayload (IValueWriter writer)
-		{
-		}
-
-		public override void ReadPayload (IValueReader reader)
-		{
-		}
+		private ArraySegment<byte> d;
+		private ArraySegment<byte> dp;
+		private ArraySegment<byte> dq;
+		private ArraySegment<byte> iq;
+		private ArraySegment<byte> p;
+		private ArraySegment<byte> q;
+		private byte[] key;
 	}
 }

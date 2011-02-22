@@ -1,5 +1,5 @@
 ﻿//
-// ConnectedMessage.cs
+// AcknowledgeConnectMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -29,20 +29,63 @@ using System.Linq;
 
 namespace Tempest.InternalProtocol
 {
-	public class ConnectedMessage
+	public class AcknowledgeConnectMessage
 		: TempestMessage
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
+		public AcknowledgeConnectMessage()
+			: base (TempestMessageType.AcknowledgeConnect)
 		{
+		}
+
+		public IEnumerable<Protocol> EnabledProtocols
+		{
+			get;
+			set;
+		}
+
+		public int NetworkId
+		{
+			get;
+			set;
+		}
+		
+		public byte[] PublicExponent
+		{
+			get;
+			set;
+		}
+
+		public byte[] Modulus
+		{
+			get;
+			set;
 		}
 
 		public override void WritePayload (IValueWriter writer)
 		{
+			Protocol[] protocols = EnabledProtocols.ToArray();
+			writer.WriteInt32 (protocols.Length);
+			for (int i = 0; i < protocols.Length; ++i)
+				protocols[i].Serialize (writer);
+
+			writer.WriteInt32 (NetworkId);
+
+			writer.WriteBytes (PublicExponent);
+			writer.WriteBytes (Modulus);
 		}
 
 		public override void ReadPayload (IValueReader reader)
 		{
+			Protocol[] protocols = new Protocol[reader.ReadInt32()];
+			for (int i = 0; i < protocols.Length; ++i)
+				protocols[i] = new Protocol (reader);
+
+			EnabledProtocols = protocols;
+
+			NetworkId = reader.ReadInt32();
+
+			PublicExponent = reader.ReadBytes();
+			Modulus = reader.ReadBytes();
 		}
 	}
 }

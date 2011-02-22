@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Threading;
 using Tempest.InternalProtocol;
 
@@ -72,6 +73,7 @@ namespace Tempest.Providers.Network
 		private static int nextNetworkId;
 
 		private readonly NetworkConnectionProvider provider;
+		private readonly AesCryptoServiceProvider aesCrypto = new AesCryptoServiceProvider();
 
 		private bool formallyConnected = false;
 		private readonly object pingSync = new object();
@@ -113,17 +115,23 @@ namespace Tempest.Providers.Network
 
 		            NetworkId = Interlocked.Increment (ref nextNetworkId);
 
-		            IEnumerable<Protocol> ps = this.protocols.Values.Intersect (msg.Protocols);
+		            this.protocols = this.protocols.Values.Intersect (msg.Protocols).ToDictionary (p => p.id);
 
-		            this.formallyConnected = true;
-		            this.provider.Connect (this);
-
-		            e.Connection.Send (new ConnectedMessage
+		            e.Connection.Send (new AcknowledgeConnectMessage
 		            {
-		                EnabledProtocols = ps,
-		                NetworkId = NetworkId
-		            });					
+		                EnabledProtocols = this.protocols.Values,
+		                NetworkId = NetworkId,
+						PublicExponent = this.provider.rsaPublicParams.Exponent,
+						Modulus = this.provider.rsaPublicParams.Modulus
+		            });
 		            break;
+
+				case (ushort)TempestMessageType.FinalConnect:
+					
+
+					this.formallyConnected = true;
+		            this.provider.Connect (this);
+		    		break;
 		    }
 
 		    base.OnTempestMessageReceived(e);

@@ -1,5 +1,5 @@
 ﻿//
-// ConnectedMessage.cs
+// PublicKey.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -24,25 +24,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Collections.Generic;
-using System.Linq;
+using System;
 
-namespace Tempest.InternalProtocol
+namespace Tempest
 {
-	public class ConnectedMessage
-		: TempestMessage
+	public class PublicKey
+		: ISerializable
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
+		public PublicKey (byte[] modulus, byte[] exponent)
 		{
+			if (modulus == null)
+				throw new ArgumentNullException ("modulus");
+			if (exponent == null)
+				throw new ArgumentNullException ("exponent");
+
+			Modulus = modulus;
+			Exponent = exponent;
 		}
 
-		public override void WritePayload (IValueWriter writer)
+		internal PublicKey (IValueReader reader)
 		{
+			Deserialize (reader);
 		}
 
-		public override void ReadPayload (IValueReader reader)
+		public byte[] Modulus
 		{
+			get;
+			private set;
+		}
+
+		public byte[] Exponent
+		{
+			get;
+			private set;
+		}
+
+		public void Serialize (IValueWriter writer)
+		{
+			writer.WriteBytes (Modulus);
+			writer.WriteBytes (Exponent);
+		}
+
+		public void Deserialize (IValueReader reader)
+		{
+			Modulus = reader.ReadBytes();
+			Exponent = reader.ReadBytes();
 		}
 	}
 }

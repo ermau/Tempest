@@ -1,5 +1,5 @@
 ﻿//
-// ConnectedMessage.cs
+// FinalConnectMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -24,25 +24,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Tempest.InternalProtocol
 {
-	public class ConnectedMessage
+	public class FinalConnectMessage
 		: TempestMessage
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
+		public FinalConnectMessage()
+			: base (TempestMessageType.FinalConnect)
 		{
+		}
+
+		public byte[] AESKey
+		{
+			get;
+			set;
 		}
 
 		public override void WritePayload (IValueWriter writer)
 		{
+			writer.WriteBytes (AESKey);
 		}
 
 		public override void ReadPayload (IValueReader reader)
 		{
+			AESKey = reader.ReadBytes();
 		}
 	}
 }

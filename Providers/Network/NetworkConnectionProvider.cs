@@ -45,6 +45,7 @@ namespace Tempest.Providers.Network
 	public sealed class NetworkConnectionProvider
 		: IConnectionProvider
 	{
+		#if !SAFE
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
 		/// </summary>
@@ -69,7 +70,19 @@ namespace Tempest.Providers.Network
 		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
 		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections)
+			: this (protocols, endPoint, maxConnections, new AesManaged(), () => new RSACrypto())
 		{
+		}
+		#endif
+
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, SymmetricAlgorithm symmetricAlgorithm, Func<IPublicKeyCrypto> cryptoFactory)
+		{
+			if (cryptoFactory == null)
+				throw new ArgumentNullException ("cryptoFactory");
+			if (symmetricAlgorithm == null)
+				throw new ArgumentNullException ("symmetricAlgorithm");
+			if (authenticationKey == null)
+				throw new ArgumentNullException ("authenticationKey");
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
 			if (endPoint == null)
@@ -81,6 +94,27 @@ namespace Tempest.Providers.Network
 			this.endPoint = endPoint;
 			MaxConnections = maxConnections;
 			this.serverConnections = new List<NetworkServerConnection> (maxConnections);
+
+			this.symmetricAlgorithm = symmetricAlgorithm;
+
+			this.pkEncryption = cryptoFactory();
+			this.encryptionKey = this.pkEncryption.ExportKey (true);
+			this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
+
+			this.authentication = cryptoFactory();
+			this.authenticationKey = this.authentication.ExportKey (true);
+			this.publicAuthenticationKey = this.authentication.ExportKey (false);
+		}
+
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, SymmetricAlgorithm symmetricAlgorithm, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey authKey)
+			: this (protocols, endPoint, maxConnections, symmetricAlgorithm, cryptoFactory)
+		{
+			if (authKey == null)
+				throw new ArgumentNullException ("authKey");
+
+			this.authenticationKey = authKey;
+			this.authentication.ImportKey (authKey);
+			this.publicAuthenticationKey = this.authentication.ExportKey (false);
 		}
 
 		public event EventHandler PingFrequencyChanged;
@@ -120,6 +154,30 @@ namespace Tempest.Providers.Network
 		}
 
 		/// <summary>
+		/// Gets the symmetric algorithm used for encryption.
+		/// </summary>
+		public SymmetricAlgorithm SymmetricAlgorithm
+		{
+			get { return this.symmetricAlgorithm; }
+		}
+
+		/// <summary>
+		/// Gets the public authentication key for the server.
+		/// </summary>
+		public IAsymmetricKey PublicAuthenticationKey
+		{
+			get { return this.publicAuthenticationKey; }
+		}
+
+		/// <summary>
+		/// Gets the public encryption key for the server.
+		/// </summary>
+		public IAsymmetricKey PublicEncryptionKey
+		{
+			get { return this.publicEncryptionKey; }
+		}
+
+		/// <summary>
 		/// Gets or sets the frequency (in milliseconds) that the server pings the client. 0 to disable.
 		/// </summary>
 		public int PingFrequency
@@ -142,9 +200,6 @@ namespace Tempest.Providers.Network
 
 			this.running = true;
 			this.mtypes = types;
-
-			this.rsaCrypto = new RSACryptoServiceProvider (2048);
-			this.rsaPublicParams = this.rsaCrypto.ExportParameters (false);
 			
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{
@@ -200,13 +255,6 @@ namespace Tempest.Providers.Network
 			
 			foreach (NetworkServerConnection c in connections)
 				c.Dispose();
-
-			this.rsaPublicParams = default(RSAParameters);
-			if (this.rsaCrypto != null)
-			{
-				this.rsaCrypto.Dispose();
-				this.rsaCrypto = null;
-			}
 		}
 
 		public void Dispose()
@@ -225,12 +273,17 @@ namespace Tempest.Providers.Network
 		private Socket reliableSocket;
 		private Socket unreliableSocket;
 		private MessageTypes mtypes;
-		
-		internal RSACryptoServiceProvider rsaCrypto;
-		internal RSAParameters rsaPublicParams;
+
+		private readonly IPublicKeyCrypto pkEncryption;
+		private readonly IAsymmetricKey encryptionKey;
+		private readonly IAsymmetricKey publicEncryptionKey;
+		private readonly IPublicKeyCrypto authentication;
+		private readonly IAsymmetricKey authenticationKey;
+		private readonly IAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;
+		private readonly SymmetricAlgorithm symmetricAlgorithm;
 
 		private readonly List<NetworkServerConnection> serverConnections;
 		private readonly List<NetworkServerConnection> pendingConnections = new List<NetworkServerConnection>();

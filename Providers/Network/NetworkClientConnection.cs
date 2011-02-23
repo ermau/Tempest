@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using Tempest.InternalProtocol;
 
@@ -38,14 +39,43 @@ namespace Tempest.Providers.Network
 	public sealed class NetworkClientConnection
 		: NetworkConnection, IClientConnection
 	{
+		#if !SILVERLIGHT
 		public NetworkClientConnection (Protocol protocol)
-			: base (new [] { protocol })
+			: this (new [] { protocol })
 		{
 		}
 
 		public NetworkClientConnection (IEnumerable<Protocol> protocols)
-			: base (protocols)
+			: this (protocols, new AesManaged(), () => new RSACrypto())
 		{
+		}
+		#endif
+
+		public NetworkClientConnection (Protocol protocol, Func<IPublicKeyCrypto> publicCryptoFactory)
+			: this (protocol, publicCryptoFactory, new AesManaged())
+		{
+		}
+
+		public NetworkClientConnection (Protocol protocol, SymmetricAlgorithm symmetricAlgorithm, Func<IPublicKeyCrypto> publicCryptoFactory)
+			: base (protocol, symmetricAlgorithm)
+		{
+			if (publicCryptoFactory == null)
+				throw new ArgumentNullException ("publicCryptoFactory");
+			if (authenticationKey == null)
+				throw new ArgumentNullException ("authenticationKey");
+
+			this.authenticationKey = authenticationKey;
+		}
+
+		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicCryptoFactory, IAsymmetricKey authenticationKey)
+			: base (protocols, symmetricAlgorithm)
+		{
+			if (publicCryptoFactory == null)
+				throw new ArgumentNullException ("publicCryptoFactory");
+			if (authenticationKey == null)
+				throw new ArgumentNullException ("authenticationKey");
+
+			this.authenticationKey = authenticationKey;
 		}
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;

@@ -34,6 +34,21 @@ namespace Tempest.InternalProtocol
 		{
 		}
 
+		public override bool Signed
+		{
+			get { return true; }
+		}
+
+		public override bool PreferReliable
+		{
+			get { return true; }
+		}
+
+		public override bool Encrypted
+		{
+			get { return true; }
+		}
+
 		public byte[] AESKey
 		{
 			get;

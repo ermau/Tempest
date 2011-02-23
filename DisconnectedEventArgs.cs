@@ -21,6 +21,11 @@ namespace Tempest
 		/// The server does not support the client's version of the protocol.
 		/// </summary>
 		IncompatibleVersion = 2,
+		
+		/// <summary>
+		/// The client failed during the handshake.
+		/// </summary>
+		FailedHandshake = 3,
 	}
 
 	/// <summary>

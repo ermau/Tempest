@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using Tempest.InternalProtocol;
 
 #if NET_4
@@ -42,10 +43,14 @@ namespace Tempest.Providers.Network
 	public abstract class NetworkConnection
 		: IConnection
 	{
-		protected NetworkConnection (IEnumerable<Protocol> protocols)
+		protected NetworkConnection (IEnumerable<Protocol> protocols, SymmetricAlgorithm symmetricAlgorithm)
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
+			if (symmetricAlgorithm == null)
+				throw new ArgumentNullException ("symmetricAlgorithm");
+
+			this.symmetricAlgorithm = symmetricAlgorithm;
 
 			this.protocols = new Dictionary<byte, Protocol>();
 			foreach (Protocol p in protocols)
@@ -286,9 +291,23 @@ namespace Tempest.Providers.Network
 
 		protected Dictionary<byte, Protocol> protocols;
 
+		protected IAsymmetricKey remoteAuthenticationKey;
+		protected IPublicKeyCrypto remoteAuthentication;
+		protected IAsymmetricKey authenticationKey;
+		protected IPublicKeyCrypto authentication;
+
+		protected IAsymmetricKey pEncryptionKey;
+		protected IPublicKeyCrypto pkEncryption;
+
+		protected IAsymmetricKey encryptionKey;
+		protected ICryptoTransform encryptor;
+		protected ICryptoTransform decryptor;
+		protected readonly SymmetricAlgorithm symmetricAlgorithm;
+
 		protected readonly object stateSync = new object();
 		protected int pendingAsync = 0;
 		protected bool disconnecting = false;
+		protected bool formallyConnected = false;
 		protected DisconnectedReason disconnectingReason;
 
 		protected Socket reliableSocket;
@@ -344,6 +363,35 @@ namespace Tempest.Providers.Network
 			writer.Length += sizeof (int); // length placeholder
 
 			message.WritePayload (writer);
+
+			if (message.Encrypted)
+			{
+				byte[] payload = new byte[writer.Length - BaseHeaderLength];
+
+				int elength = payload.Length;
+
+				if (this.encryptor == null)
+				{
+					Array.Copy (writer.Buffer, 0, payload, BaseHeaderLength, writer.Length - BaseHeaderLength);
+					payload = this.pkEncryption.Encrypt (payload);
+				}
+				else
+				{
+					elength = this.encryptor.TransformBlock (writer.Buffer, BaseHeaderLength, payload.Length, payload, 0);
+				}
+
+				writer.Length -= writer.Length - BaseHeaderLength;
+				writer.WriteBytes (payload, 0, elength);
+			}
+
+			if (message.Signed)
+			{
+				byte[] signature = this.authentication.HashAndSign (writer.Buffer, 0, buffer.Length);
+				byte[] signatureLength = BitConverter.GetBytes (signature.Length);
+				
+				writer.InsertBytes (BaseHeaderLength, signatureLength, 0, signatureLength.Length);
+				writer.InsertBytes (BaseHeaderLength + signatureLength.Length, signature, 0, signature.Length);
+			}
 
 			Buffer.BlockCopy (BitConverter.GetBytes (writer.Length), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
 
@@ -493,6 +541,11 @@ namespace Tempest.Providers.Network
 
 			try
 			{
+				if (header.Message.Signed)
+				{
+					byte[] signature = this.rreader.ReadBytes();
+				}
+
 				header.Message.ReadPayload (this.rreader);
 			}
 			catch

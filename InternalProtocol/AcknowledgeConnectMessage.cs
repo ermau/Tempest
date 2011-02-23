@@ -48,14 +48,14 @@ namespace Tempest.InternalProtocol
 			get;
 			set;
 		}
-		
-		public byte[] PublicExponent
+
+		public IAsymmetricKey PublicEncryptionKey
 		{
 			get;
 			set;
 		}
 
-		public byte[] Modulus
+		public IAsymmetricKey PublicAuthenticationKey
 		{
 			get;
 			set;
@@ -70,8 +70,8 @@ namespace Tempest.InternalProtocol
 
 			writer.WriteInt32 (NetworkId);
 
-			writer.WriteBytes (PublicExponent);
-			writer.WriteBytes (Modulus);
+			writer.Write (PublicEncryptionKey);
+			writer.Write (PublicAuthenticationKey);
 		}
 
 		public override void ReadPayload (IValueReader reader)
@@ -84,8 +84,8 @@ namespace Tempest.InternalProtocol
 
 			NetworkId = reader.ReadInt32();
 
-			PublicExponent = reader.ReadBytes();
-			Modulus = reader.ReadBytes();
+			PublicEncryptionKey = reader.Read<IAsymmetricKey>();
+			PublicAuthenticationKey = reader.Read<IAsymmetricKey>();
 		}
 	}
 }

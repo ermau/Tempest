@@ -24,9 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Tempest.InternalProtocol
 {
 	public class ConnectedMessage
@@ -35,6 +32,11 @@ namespace Tempest.InternalProtocol
 		public ConnectedMessage()
 			: base (TempestMessageType.Connected)
 		{
+		}
+
+		public override bool Signed
+		{
+			get { return true; }
 		}
 
 		public override void WritePayload (IValueWriter writer)

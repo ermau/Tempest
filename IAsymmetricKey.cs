@@ -1,5 +1,5 @@
 ﻿//
-// PublicKey.cs
+// IAsymmetricKey.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -24,51 +24,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-
 namespace Tempest
 {
-	public class PublicKey
+	public interface IAsymmetricKey
 		: ISerializable
 	{
-		public PublicKey (byte[] modulus, byte[] exponent)
-		{
-			if (modulus == null)
-				throw new ArgumentNullException ("modulus");
-			if (exponent == null)
-				throw new ArgumentNullException ("exponent");
+		/// <summary>
+		/// Gets the public portions of the key pair.
+		/// </summary>
+		byte[] Public { get; }
 
-			Modulus = modulus;
-			Exponent = exponent;
-		}
-
-		internal PublicKey (IValueReader reader)
-		{
-			Deserialize (reader);
-		}
-
-		public byte[] Modulus
-		{
-			get;
-			private set;
-		}
-
-		public byte[] Exponent
-		{
-			get;
-			private set;
-		}
-
-		public void Serialize (IValueWriter writer)
-		{
-			writer.WriteBytes (Modulus);
-			writer.WriteBytes (Exponent);
-		}
-
-		public void Deserialize (IValueReader reader)
-		{
-			Modulus = reader.ReadBytes();
-			Exponent = reader.ReadBytes();
-		}
+		/// <summary>
+		/// Gets the private portion of the key pair.
+		/// </summary>
+		byte[] Private { get; }
 	}
 }

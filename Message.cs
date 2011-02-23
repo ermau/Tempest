@@ -65,6 +65,14 @@ namespace Tempest
 		}
 
 		/// <summary>
+		/// Gets whether this message is hashed and signed.
+		/// </summary>
+		public virtual bool Signed
+		{
+			get { return false; }
+		}
+
+		/// <summary>
 		/// Gets the protocol this message belongs to.
 		/// </summary>
 		public Protocol Protocol

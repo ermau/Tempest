@@ -1,5 +1,5 @@
 ﻿//
-// PrivateKey.cs
+// IPublicKeyCrypto.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -24,35 +24,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-using System.Linq;
-using System.Security.Cryptography;
-
 namespace Tempest
 {
-	public class PrivateKey
+	public interface IPublicKeyCrypto
 	{
-		public PrivateKey (RSAParameters parameters)
-		{
-			this.key =
-				new byte[
-					parameters.D.Length + parameters.DP.Length + parameters.DQ.Length + parameters.InverseQ.Length +
-					parameters.P.Length + parameters.Q.Length];
+		byte[] Encrypt (byte[] data);
+		byte[] Decrypt (byte[] data);
 
-			int index = 0;
-			Array.Copy (parameters.D, 0, this.key, index, parameters.D.Length);
-			d = new ArraySegment<byte> (this.key, index, parameters.D.Length);
+		byte[] HashAndSign (byte[] data, int offset, int count);
+		bool VerifyData (byte[] data, byte[] signature);
 
-			Array.Copy (parameters.DP, 0, this.key, index += parameters.D.Length, parameters.DP.Length);
-			dp = new ArraySegment<byte> (this.key, index, parameters.DP.Length);
-		}
-
-		private ArraySegment<byte> d;
-		private ArraySegment<byte> dp;
-		private ArraySegment<byte> dq;
-		private ArraySegment<byte> iq;
-		private ArraySegment<byte> p;
-		private ArraySegment<byte> q;
-		private byte[] key;
+		IAsymmetricKey ExportKey (bool includePrivate);
+		void ImportKey (IAsymmetricKey key);
 	}
 }

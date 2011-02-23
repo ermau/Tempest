@@ -35,6 +35,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -48,14 +49,20 @@
     <Compile Include="InternalProtocol\ConnectMessage.cs" />
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />
     <Compile Include="InternalProtocol\FinalConnectMessage.cs" />
+    <Compile Include="IAsymmetricKey.cs" />
+    <Compile Include="IPublicKeyCrypto.cs" />
     <Compile Include="ISerializable.cs" />
     <Compile Include="MessageHeader.cs" />
     <Compile Include="ObjectSerializer.cs" />
     <Compile Include="InternalProtocol\PingMessage.cs" />
+    <Compile Include="RSAAsymmetricKey.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Protocol.cs" />
     <Compile Include="BufferValueReader.cs" />
     <Compile Include="BufferValueWriter.cs" />
     <Compile Include="ClientBase.cs" />
+    <Compile Include="RSACrypto.cs" />
     <Compile Include="SerializerExtensions.cs" />
     <Compile Include="IClientConnection.cs" />
     <Compile Include="IConnection.cs" />

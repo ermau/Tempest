@@ -118,6 +118,21 @@ namespace Tempest
 			this.position += length;
 		}
 
+		public void InsertBytes (int offset, byte[] value, int valueOffset, int length)
+		{
+			if (value == null)
+				throw new ArgumentNullException ("value");
+			if (valueOffset < 0 || valueOffset >= value.Length)
+				throw new ArgumentOutOfRangeException ("offset", offset, "offset can not negative or >=data.Length");
+			if (length < 0 || valueOffset + length >= value.Length)
+				throw new ArgumentOutOfRangeException ("length", length, "length can not be negative or combined with offset longer than the array");
+
+			EnsureAdditionalCapacity (length);
+
+			Buff.BlockCopy (this.buffer, offset, this.buffer, offset + length, this.position - offset);
+			Buff.BlockCopy (value, valueOffset, this.buffer, offset, length);
+		}
+
 		public void WriteInt16 (short value)
 		{
 			EnsureAdditionalCapacity (sizeof (short));

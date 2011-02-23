@@ -73,6 +73,14 @@ namespace Tempest
 		}
 
 		/// <summary>
+		/// Gets whether this message is encrypted.
+		/// </summary>
+		public virtual bool Encrypted
+		{
+			get { return false; }
+		}
+
+		/// <summary>
 		/// Gets the protocol this message belongs to.
 		/// </summary>
 		public Protocol Protocol

@@ -50,8 +50,9 @@ namespace Tempest
 		/// <summary>
 		/// Writes a boolean to the transport.
 		/// </summary>
-		/// <param name="value"></param>
-		void WriteBool (bool value);
+		/// <param name="value">The value to write.</param>
+		/// <returns><paramref name="value"/></returns>
+		bool WriteBool (bool value);
 
 		/// <summary>
 		/// Writes an array of unsigned bytes to the transport.

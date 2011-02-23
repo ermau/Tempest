@@ -154,12 +154,35 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void ISerializable()
+		{
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+
+			SerializableTester test = new SerializableTester
+			{
+				Name = "MONKEY!",
+				Numbers = new[] { 1, 2, 4, 8, 16, 32 }
+			};
+
+			writer.Write (test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = reader.Read<SerializableTester>();
+
+			Assert.IsNotNull (serialized);
+			Assert.AreEqual (test.Name, serialized.Name);
+			Assert.IsTrue (test.Numbers.SequenceEqual (serialized.Numbers), "Numbers does not match");
+		}
+
+		[Test]
 		public void Contracted()
 		{
 			byte[] buffer = new byte[20480];
 			var writer = new BufferValueWriter (buffer);
 
-			ISerializableTester test = new ISerializableTester
+			ISerializableTester test = new SerializableTester
 			{
 				Name = "MONKEY!",
 				Numbers = new[] { 1, 2, 4, 8, 16, 32 }
@@ -212,9 +235,25 @@ namespace Tempest.Tests
 			}
 		}
 
-		public class ISerializableTester
+		public interface ISerializableTester
 			: ISerializable
 		{
+			string Name { get; }
+			int[] Numbers { get; }
+		}
+
+		public class SerializableTester
+			: ISerializableTester
+		{
+			public SerializableTester()
+			{
+			}
+
+			protected SerializableTester (IValueReader reader)
+			{
+				Deserialize (reader);
+			}
+
 			public string Name
 			{
 				get;

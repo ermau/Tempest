@@ -202,40 +202,58 @@ namespace Tempest
 		
 		public void Serialize (IValueWriter writer)
 		{
-			ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
-			writer.WriteBytes (this.privateKey);
-			ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
+			if (writer.WriteBool (this.privateKey != null))
+			{
+				ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
+				writer.WriteBytes (this.privateKey);
+				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
-			writer.WriteInt32 (this.d.Offset);
-			writer.WriteInt32 (this.d.Count);
-			
-			writer.WriteInt32 (this.dp.Offset);
-			writer.WriteInt32 (this.dp.Count);
+				writer.WriteInt32 (this.d.Offset);
+				writer.WriteInt32 (this.d.Count);
 
-			writer.WriteInt32 (this.dq.Offset);
-			writer.WriteInt32 (this.dq.Count);
+				writer.WriteInt32 (this.dp.Offset);
+				writer.WriteInt32 (this.dp.Count);
 
-			writer.WriteInt32 (this.iq.Offset);
-			writer.WriteInt32 (this.iq.Count);
-			
-			writer.WriteInt32 (this.p.Offset);
-			writer.WriteInt32 (this.p.Count);
-			
-			writer.WriteInt32 (this.q.Offset);
-			writer.WriteInt32 (this.q.Count);
+				writer.WriteInt32 (this.dq.Offset);
+				writer.WriteInt32 (this.dq.Count);
+
+				writer.WriteInt32 (this.iq.Offset);
+				writer.WriteInt32 (this.iq.Count);
+
+				writer.WriteInt32 (this.p.Offset);
+				writer.WriteInt32 (this.p.Count);
+
+				writer.WriteInt32 (this.q.Offset);
+				writer.WriteInt32 (this.q.Count);
+			}
+
+			if (writer.WriteBool (this.publicKey != null))
+			{
+				writer.WriteBytes (this.publicKey);
+				writer.WriteInt32 (this.exponentOffset);
+			}
 		}
 
 		public void Deserialize (IValueReader reader)
 		{
-			this.privateKey = reader.ReadBytes();
-			ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
+			if (reader.ReadBool())
+			{
+				this.privateKey = reader.ReadBytes();
+				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
-			this.d = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
-			this.dp = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
-			this.dq = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
-			this.iq = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
-			this.p = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
-			this.q = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
+				this.d = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
+				this.dp = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
+				this.dq = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
+				this.iq = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
+				this.p = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
+				this.q = new ArraySegment<byte> (this.privateKey, reader.ReadInt32(), reader.ReadInt32());
+			}
+
+			if (reader.ReadBool())
+			{
+				this.publicKey = reader.ReadBytes();
+				this.exponentOffset = reader.ReadInt32();
+			}
 		}
 
 		public static implicit operator RSAParameters (RSAAsymmetricKey key)

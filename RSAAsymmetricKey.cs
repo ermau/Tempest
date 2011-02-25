@@ -25,7 +25,6 @@
 // THE SOFTWARE.
 
 using System;
-using System.Linq;
 using System.Security.Cryptography;
 
 namespace Tempest
@@ -34,36 +33,70 @@ namespace Tempest
 	public class RSAAsymmetricKey
 		: IAsymmetricKey
 	{
+		public RSAAsymmetricKey()
+		{
+		}
+
 		public RSAAsymmetricKey (RSAParameters parameters)
 		{
-			int len = parameters.D.Length + parameters.DP.Length + parameters.DQ.Length + parameters.InverseQ.Length +
-			          parameters.P.Length + parameters.Q.Length;
+			int len = 0;
+			len += (parameters.D != null) ? parameters.D.Length : 0;
+			len += (parameters.DP != null) ? parameters.DP.Length : 0;
+			len += (parameters.DQ != null) ? parameters.DQ.Length : 0;
+			len += (parameters.InverseQ != null) ? parameters.InverseQ.Length : 0;
+			len += (parameters.P != null) ? parameters.P.Length : 0;
+			len += (parameters.Q != null) ? parameters.Q.Length : 0;
 
 			while ((len % 16) != 0)
 				len++;
 
-			this.privateKey = new byte[len];
+			if (len != 0)
+				this.privateKey = new byte[len];
 
 			int index = 0;
-			Array.Copy (parameters.D, 0, this.privateKey, index, parameters.D.Length);
-			d = new ArraySegment<byte> (this.privateKey, index, parameters.D.Length);
+			if (parameters.D != null)
+			{
+				Array.Copy (parameters.D, 0, this.privateKey, index, parameters.D.Length);
+				d = new ArraySegment<byte> (this.privateKey, index, parameters.D.Length);
+				index += parameters.D.Length;
+			}
 
-			Array.Copy (parameters.DP, 0, this.privateKey, index += parameters.D.Length, parameters.DP.Length);
-			dp = new ArraySegment<byte> (this.privateKey, index, parameters.DP.Length);
+			if (parameters.DP != null)
+			{
+				Array.Copy (parameters.DP, 0, this.privateKey, index, parameters.DP.Length);
+				dp = new ArraySegment<byte> (this.privateKey, index, parameters.DP.Length);
+				index += parameters.DP.Length;
+			}
 
-			Array.Copy (parameters.DQ, 0, this.privateKey, index += parameters.DP.Length, parameters.DQ.Length);
-			dq = new ArraySegment<byte> (this.privateKey, index, parameters.DQ.Length);
+			if (parameters.DQ != null)
+			{
+				Array.Copy (parameters.DQ, 0, this.privateKey, index, parameters.DQ.Length);
+				dq = new ArraySegment<byte> (this.privateKey, index, parameters.DQ.Length);
+				index += parameters.DQ.Length;
+			}
 
-			Array.Copy (parameters.InverseQ, 0, this.privateKey, index += parameters.DQ.Length, parameters.InverseQ.Length);
-			iq = new ArraySegment<byte> (this.privateKey, index, parameters.InverseQ.Length);
+			if (parameters.InverseQ != null)
+			{
+				Array.Copy (parameters.InverseQ, 0, this.privateKey, index, parameters.InverseQ.Length);
+				iq = new ArraySegment<byte> (this.privateKey, index, parameters.InverseQ.Length);
+			}
 
-			Array.Copy (parameters.P, 0, this.privateKey, index += parameters.InverseQ.Length, parameters.P.Length);
-			p = new ArraySegment<byte> (this.privateKey, index, parameters.P.Length);
+			if (parameters.P != null)
+			{
+				Array.Copy (parameters.P, 0, this.privateKey, index, parameters.P.Length);
+				p = new ArraySegment<byte> (this.privateKey, index, parameters.P.Length);
+				index += parameters.P.Length;
+			}
 
-			Array.Copy (parameters.Q, 0, this.privateKey, index += parameters.P.Length, parameters.Q.Length);
-			q = new ArraySegment<byte> (this.privateKey, index, parameters.Q.Length);
+			if (parameters.Q != null)
+			{
+				Array.Copy (parameters.Q, 0, this.privateKey, index, parameters.Q.Length);
+				q = new ArraySegment<byte> (this.privateKey, index, parameters.Q.Length);
+				index += parameters.Q.Length;
+			}
 
-			ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
+			if (this.privateKey != null)
+				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
 			this.publicKey = new byte[parameters.Modulus.Length + parameters.Exponent.Length];
 			Array.Copy (parameters.Modulus, this.publicKey, parameters.Modulus.Length);

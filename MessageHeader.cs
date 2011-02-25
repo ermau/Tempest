@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,15 +25,12 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Tempest
 {
 	public class MessageHeader
 	{
-		internal MessageHeader (Protocol protocol, Message message, int length)
+		internal MessageHeader (Protocol protocol, Message message, int length, byte[] iv, byte[] signature)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
@@ -43,6 +40,8 @@ namespace Tempest
 			Protocol = protocol;
 			Message = message;
 			Length = length;
+			IV = iv;
+			Signature = signature;
 		}
 
 		public Protocol Protocol
@@ -58,6 +57,18 @@ namespace Tempest
 		}
 
 		public int Length
+		{
+			get;
+			private set;
+		}
+
+		public byte[] IV
+		{
+			get;
+			private set;
+		}
+
+		public byte[] Signature
 		{
 			get;
 			private set;

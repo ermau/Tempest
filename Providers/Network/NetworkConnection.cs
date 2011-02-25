@@ -422,7 +422,7 @@ namespace Tempest.Providers.Network
 			if (msg == null)
 				return null;
 
-			return new MessageHeader (p, msg, mlen);
+			return new MessageHeader (p, msg, mlen, null, null);
 		}
 
 		private void BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader)

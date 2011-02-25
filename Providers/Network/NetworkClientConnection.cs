@@ -204,6 +204,7 @@ namespace Tempest.Providers.Network
 
 					this.aes = new AesManaged { KeySize = 256 };
 					this.aes.GenerateKey();
+					this.hmac = new HMACSHA256 (this.aes.Key);
 					Send (new FinalConnectMessage
 					{
 						AESKey = this.aes.Key,

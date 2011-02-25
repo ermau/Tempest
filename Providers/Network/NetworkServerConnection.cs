@@ -133,13 +133,27 @@ namespace Tempest.Providers.Network
 				case (ushort)TempestMessageType.FinalConnect:
 		    		var finalConnect = (FinalConnectMessage)e.Message;
 
-		    		this.aes = new AesManaged { KeySize = 256 };
-		    		this.aes.Key = finalConnect.AESKey;
-		    		this.remotePublicAuthenticationKey = finalConnect.PublicAuthenticationKey;
+					if (finalConnect.AESKey == null || finalConnect.AESKey.Length == 0 || finalConnect.PublicAuthenticationKey == null)
+					{
+						Disconnect (true, DisconnectedReason.FailedHandshake);
+						return;
+					}
 
-					this.formallyConnected = true;
-		            this.provider.Connect (this);
-		    		break;
+					try
+					{
+						this.hmac = new HMACSHA256(finalConnect.AESKey);
+						this.aes = new AesManaged { KeySize = 256, Key = finalConnect.AESKey };
+						this.remotePublicAuthenticationKey = finalConnect.PublicAuthenticationKey;
+
+						this.formallyConnected = true;
+						this.provider.Connect (this);
+					}
+					catch
+					{
+						Disconnect (true, DisconnectedReason.FailedHandshake);
+					}
+
+					break;
 		    }
 
 		    base.OnTempestMessageReceived(e);

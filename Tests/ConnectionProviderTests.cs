@@ -690,5 +690,161 @@ namespace Tempest.Tests
 
 			test.Assert (10000);
 		}
+
+		public class CryptoMessage
+			: Message
+		{
+			public CryptoMessage()
+				: base (MockProtocol.Instance, 10)
+			{
+			}
+
+			public bool Encrypt { get; set; }
+
+			public override bool Encrypted
+			{
+				get { return Encrypt; }
+			}
+
+			public bool Authenticate { get; set; }
+
+			public override bool Authenticated
+			{
+				get { return Authenticate; }
+			}
+
+			public string Message
+			{
+				get;
+				set;
+			}
+
+			public int Number
+			{
+				get;
+				set;
+			}
+
+			public override void WritePayload (IValueWriter writer)
+			{
+				writer.WriteString (Message);
+				writer.WriteInt32 (Number);
+			}
+
+			public override void ReadPayload (IValueReader reader)
+			{
+				Message = reader.ReadString();
+				Number = reader.ReadInt32();
+			}
+		}
+
+		[Test, Repeat (100)]
+		public void EncryptedMessage()
+		{
+			var cmessage = new CryptoMessage
+			{
+				Encrypt = true,
+				Message = "It's a secret!",
+				Number = 42
+			};
+
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+			
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (me.Connection, c);
+
+				var msg = (me.Message as CryptoMessage);
+				Assert.IsNotNull (msg);
+				Assert.AreEqual (cmessage.Message, msg.Message);
+				Assert.AreEqual (cmessage.Number, msg.Number);
+			});
+
+			this.provider.Start (MessageTypes);
+
+			c.Disconnected += test.FailHandler;
+			c.MessageSent += test.PassHandler;
+			c.Connected += (sender, e) => c.Send (cmessage);
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (100)]
+		public void AuthenticatedMessage()
+		{
+			var cmessage = new CryptoMessage
+			{
+				Authenticate = true,
+				Message = "It's a secret!",
+				Number = 42
+			};
+
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+			
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (me.Connection, c);
+
+				var msg = (me.Message as CryptoMessage);
+				Assert.IsNotNull (msg);
+				Assert.AreEqual (cmessage.Message, msg.Message);
+				Assert.AreEqual (cmessage.Number, msg.Number);
+			});
+
+			this.provider.Start (MessageTypes);
+
+			c.Disconnected += test.FailHandler;
+			c.MessageSent += test.PassHandler;
+			c.Connected += (sender, e) => c.Send (cmessage);
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (100)]
+		public void EncryptedAndAuthenticatedMessage()
+		{
+			var cmessage = new CryptoMessage
+			{
+				Encrypt = true,
+				Authenticate = true,
+				Message = "It's a secret!",
+				Number = 42
+			};
+
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+			
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (me.Connection, c);
+
+				var msg = (me.Message as CryptoMessage);
+				Assert.IsNotNull (msg);
+				Assert.AreEqual (cmessage.Message, msg.Message);
+				Assert.AreEqual (cmessage.Number, msg.Number);
+			});
+
+			this.provider.Start (MessageTypes);
+
+			c.Disconnected += test.FailHandler;
+			c.MessageSent += test.PassHandler;
+			c.Connected += (sender, e) => c.Send (cmessage);
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
 	}
 }

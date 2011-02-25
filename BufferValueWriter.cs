@@ -129,7 +129,9 @@ namespace Tempest
 
 			EnsureAdditionalCapacity (length);
 
-			Buff.BlockCopy (this.buffer, offset, this.buffer, offset + length, this.position - offset);
+			if (offset != this.position)
+				Buff.BlockCopy (this.buffer, offset, this.buffer, offset + length, this.position - offset);
+
 			Buff.BlockCopy (value, valueOffset, this.buffer, offset, length);
 		}
 

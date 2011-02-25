@@ -307,7 +307,7 @@ namespace Tempest.Providers.Network
 		protected Dictionary<byte, Protocol> protocols;
 
 		protected AesManaged aes;
-		protected HMACSHA1 hmac;
+		protected HMACSHA256 hmac;
 
 		protected IPublicKeyCrypto pkAuthentication;
 		protected IAsymmetricKey authenticationKey;
@@ -385,12 +385,41 @@ namespace Tempest.Providers.Network
 					encryptor = this.aes.CreateEncryptor();
 				}
 
-				writer.WriteBytes (iv);
+				writer.WriteInt16 ((short)iv.Length);
+				writer.InsertBytes (writer.Length, iv, 0, iv.Length);
 			}
 
 			int headerLength = writer.Length;
 
 			message.WritePayload (writer);
+
+			if (message.Encrypted)
+			{
+				byte[] payload;
+				if (this.aes != null)
+				{
+					int plen = (writer.Length - headerLength);
+					int r = (plen % encryptor.OutputBlockSize);
+					if (r != 0)
+					{
+						int pad = encryptor.OutputBlockSize - r;
+						plen += pad;
+						writer.InsertBytes (writer.Length, new byte[pad], 0, pad);
+					}
+
+					payload = new byte[plen];
+					encryptor.TransformBlock (writer.Buffer, headerLength, plen, payload, 0);
+				}
+				else
+				{
+					payload = new byte[writer.Length - BaseHeaderLength];
+					Buffer.BlockCopy (writer.Buffer, BaseHeaderLength, payload, 0, payload.Length);
+					payload = this.remotePkCrypto.Encrypt (payload);
+				}
+
+				writer.Length -= writer.Length - headerLength;
+				writer.WriteBytes (payload, 0, payload.Length);
+			}
 
 			if (message.Authenticated)
 			{
@@ -398,25 +427,10 @@ namespace Tempest.Providers.Network
 				                   	? this.pkAuthentication.HashAndSign (writer.Buffer, 0, buffer.Length)
 				                   	: this.hmac.ComputeHash (writer.Buffer, 0, buffer.Length);
 
-				byte[] signatureLength = BitConverter.GetBytes (signature.Length);
+				byte[] signatureLength = BitConverter.GetBytes ((short)signature.Length);
 				
 				writer.InsertBytes (headerLength, signatureLength, 0, signatureLength.Length);
 				writer.InsertBytes (headerLength + signatureLength.Length, signature, 0, signature.Length);
-			}
-
-			if (message.Encrypted)
-			{
-				if (this.aes != null)
-				{
-					byte[] payload = new byte[writer.Length - headerLength];
-
-					int elength = payload.Length;
-
-
-
-					writer.Length -= writer.Length - BaseHeaderLength;
-					writer.WriteBytes (payload, 0, elength);					
-				}
 			}
 
 			Buffer.BlockCopy (BitConverter.GetBytes (writer.Length), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
@@ -426,29 +440,80 @@ namespace Tempest.Providers.Network
 			return writer.Buffer;
 		}
 
-		protected MessageHeader GetHeader (byte[] buffer, int offset)
+		/// <returns><c>true</c> if there was sufficient data to retrieve the message's header.</returns>
+		/// <remarks>
+		/// If <see cref="TryGetHeader"/> returns <c>true</c> and <paramref name="header"/> is <c>null</c>,
+		/// disconnect.
+		/// </remarks>
+		protected bool TryGetHeader (byte[] buffer, int offset, int remaining, out MessageHeader header)
 		{
+			header = null;
+
 			ushort type;
 			int mlen;
 			try
 			{
 				type = BitConverter.ToUInt16 (buffer, offset + 1);
 				mlen = BitConverter.ToInt32 (buffer, offset + 1 + sizeof (ushort));
+
+				Protocol p;
+				if (!this.protocols.TryGetValue (buffer[offset], out p))
+					return true;
+
+				Message msg = p.Create (type);
+				if (msg == null)
+					return true;
+
+				offset += BaseHeaderLength;
+
+				int headerLength = BaseHeaderLength;
+
+				byte[] iv = null;
+				if (msg.Encrypted)
+				{
+					headerLength += sizeof (short);
+					if (remaining < headerLength)
+						return false;
+
+					int length = BitConverter.ToInt16 (buffer, offset);
+					iv = new byte[length];
+
+					headerLength += length;
+					if (remaining < headerLength)
+						return false;
+
+					offset += sizeof (short);
+					Buffer.BlockCopy (buffer, offset, iv, 0, length);
+					offset += length;
+				}
+
+				byte[] signature = null;
+				if (msg.Authenticated)
+				{
+					headerLength += sizeof (short);
+					if (remaining < headerLength)
+						return false;
+
+					short length = BitConverter.ToInt16 (buffer, offset);
+					signature = new byte[length];
+
+					headerLength += length;
+					if (remaining < headerLength)
+						return false;
+				
+					offset += sizeof (short);			
+					Buffer.BlockCopy (buffer, offset, signature, 0, length);
+					offset += length;
+				}
+
+				header = new MessageHeader (p, msg, mlen, iv, signature);
+				return true;
 			}
 			catch
 			{
-				return null;
+				header = null;
+				return true;
 			}
-
-			Protocol p;
-			if (!this.protocols.TryGetValue (buffer[offset], out p))
-				return null;
-
-			Message msg = p.Create (type);
-			if (msg == null)
-				return null;
-
-			return new MessageHeader (p, msg, mlen, null, null);
 		}
 
 		private void BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader)
@@ -463,7 +528,10 @@ namespace Tempest.Providers.Network
 			int length = 0;
 			while (remainingData > BaseHeaderLength)
 			{
-				MessageHeader header = GetHeader (buffer, messageOffset);
+				MessageHeader header;
+				if (!TryGetHeader (buffer, messageOffset, remainingData, out header))
+					break;
+
 				if (header == null)
 				{
 					int p = Interlocked.Decrement (ref this.pendingAsync);
@@ -567,11 +635,6 @@ namespace Tempest.Providers.Network
 
 			try
 			{
-				if (header.Message.Authenticated)
-				{
-					byte[] signature = this.rreader.ReadBytes();
-				}
-
 				header.Message.ReadPayload (this.rreader);
 			}
 			catch

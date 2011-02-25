@@ -67,7 +67,7 @@ namespace Tempest
 		/// <summary>
 		/// Gets whether this message is hashed and signed.
 		/// </summary>
-		public virtual bool Signed
+		public virtual bool Authenticated
 		{
 			get { return false; }
 		}

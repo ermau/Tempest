@@ -37,6 +37,11 @@ namespace Tempest.InternalProtocol
 		{
 		}
 
+		public override bool Authenticated
+		{
+			get { return true; }
+		}
+
 		public IEnumerable<Protocol> EnabledProtocols
 		{
 			get;

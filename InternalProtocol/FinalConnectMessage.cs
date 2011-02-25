@@ -34,7 +34,7 @@ namespace Tempest.InternalProtocol
 		{
 		}
 
-		public override bool Signed
+		public override bool Authenticated
 		{
 			get { return true; }
 		}

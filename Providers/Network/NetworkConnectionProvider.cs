@@ -79,8 +79,6 @@ namespace Tempest.Providers.Network
 		{
 			if (pkCryptoFactory == null)
 				throw new ArgumentNullException ("pkCryptoFactory");
-			if (authenticationKey == null)
-				throw new ArgumentNullException ("authenticationKey");
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
 			if (endPoint == null)

@@ -56,7 +56,7 @@ namespace Tempest
 		/// <summary>
 		/// A signed message failed verification.
 		/// </summary>
-		SignatureMismatch = 4,
+		MessageAuthenticationFailed = 4,
 
 		/// <summary>
 		/// An encrypted message failed decryption.

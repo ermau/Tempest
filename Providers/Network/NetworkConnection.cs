@@ -506,10 +506,10 @@ namespace Tempest.Providers.Network
 					offset += length;
 				}
 
-				header = new MessageHeader (p, msg, mlen, iv, signature);
+				header = new MessageHeader (p, msg, mlen, offset, iv, signature);
 				return true;
 			}
-			catch
+			catch (Exception ex)
 			{
 				header = null;
 				return true;
@@ -541,7 +541,7 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
-				length = header.Length;
+				length = header.MessageLength;
 				if (length > maxMessageLength)
 				{
 					int p = Interlocked.Decrement (ref this.pendingAsync);
@@ -557,7 +557,55 @@ namespace Tempest.Providers.Network
 					break;
 				}
 
-				DeliverMessage (header, messageOffset);
+				if (!IsConnected)
+					return;
+
+				this.rreader.Position = messageOffset + header.HeaderLength;
+
+				try
+				{
+					header.Message.ReadPayload (this.rreader);
+				}
+				catch
+				{
+					Disconnect (true);
+					return;
+				}		
+
+				if (header.Message.Authenticated)
+				{
+					if (this.hmac == null)
+					{
+						AcknowledgeConnectMessage ack = header.Message as AcknowledgeConnectMessage;
+						if (ack == null)
+						{
+							int p = Interlocked.Decrement (ref this.pendingAsync);
+							Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+							Disconnect (true, DisconnectedReason.MessageAuthenticationFailed);
+							Trace.WriteLine ("Exiting (unauthenticatable message)", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+							return;
+						}
+						
+						this.pkAuthentication.ImportKey (ack.PublicAuthenticationKey);
+						byte[] payload = new byte[header.MessageLength];
+						Buffer.BlockCopy (buffer, messageOffset + header.HeaderLength, payload, 0, payload.Length);
+						if (!this.pkAuthentication.VerifyData (payload, header.Signature))
+						{
+							int p = Interlocked.Decrement (ref this.pendingAsync);
+							Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId));
+							Disconnect (true, DisconnectedReason.FailedHandshake);
+							Trace.WriteLine ("Exiting (message failed authentication)", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId));
+							return;
+						}
+					}
+				}
+
+				var tmessage = (header.Message as TempestMessage);
+				if (tmessage == null)
+					OnMessageReceived (new MessageEventArgs (this, header.Message));
+				else
+					OnTempestMessageReceived (new MessageEventArgs (this, header.Message));
+
 				messageOffset += length;
 				bufferOffset = messageOffset;
 				remainingData -= length;
@@ -625,30 +673,6 @@ namespace Tempest.Providers.Network
 
 		protected DateTime lastReceived;
 		protected int pingsOut = 0;
-
-		private void DeliverMessage (MessageHeader header, int offset)
-		{
-			if (!IsConnected)
-				return;
-
-			this.rreader.Position = offset + BaseHeaderLength;
-
-			try
-			{
-				header.Message.ReadPayload (this.rreader);
-			}
-			catch
-			{
-				Disconnect (true);
-				return;
-			}
-
-			var tmessage = (header.Message as TempestMessage);
-			if (tmessage == null)
-				OnMessageReceived (new MessageEventArgs (this, header.Message));
-			else
-				OnTempestMessageReceived (new MessageEventArgs (this, header.Message));
-		}
 
 		protected virtual void OnTempestMessageReceived (MessageEventArgs e)
 		{

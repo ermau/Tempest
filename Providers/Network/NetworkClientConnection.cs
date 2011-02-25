@@ -46,36 +46,31 @@ namespace Tempest.Providers.Network
 		}
 
 		public NetworkClientConnection (IEnumerable<Protocol> protocols)
-			: this (protocols, new AesManaged(), () => new RSACrypto())
+			: this (protocols, () => new RSACrypto())
 		{
 		}
 		#endif
 
-		public NetworkClientConnection (Protocol protocol, Func<IPublicKeyCrypto> publicCryptoFactory)
-			: this (protocol, publicCryptoFactory, new AesManaged())
+		public NetworkClientConnection (Protocol protocol, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
+			: this (new [] { protocol }, publicKeyCryptoFactory)
 		{
+
 		}
 
-		public NetworkClientConnection (Protocol protocol, SymmetricAlgorithm symmetricAlgorithm, Func<IPublicKeyCrypto> publicCryptoFactory)
-			: base (protocol, symmetricAlgorithm)
+		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
+			: base (protocols, publicKeyCryptoFactory)
 		{
-			if (publicCryptoFactory == null)
-				throw new ArgumentNullException ("publicCryptoFactory");
-			if (authenticationKey == null)
-				throw new ArgumentNullException ("authenticationKey");
-
-			this.authenticationKey = authenticationKey;
+			this.publicAuthenticationKey = this.pkAuthentication.ExportKey (false);
+			this.authenticationKey = this.pkAuthentication.ExportKey (true);
 		}
 
-		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicCryptoFactory, IAsymmetricKey authenticationKey)
-			: base (protocols, symmetricAlgorithm)
+		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
+			: this (protocols, publicKeyCryptoFactory)
 		{
-			if (publicCryptoFactory == null)
-				throw new ArgumentNullException ("publicCryptoFactory");
-			if (authenticationKey == null)
-				throw new ArgumentNullException ("authenticationKey");
+			if (authKey == null)
+				throw new ArgumentNullException ("authKey");
 
-			this.authenticationKey = authenticationKey;
+			this.authenticationKey = authKey;
 		}
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
@@ -203,8 +198,18 @@ namespace Tempest.Providers.Network
 				    var msg = (AcknowledgeConnectMessage)e.Message;
 				    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (pr => pr.id);
 					this.networkId = msg.NetworkId;
-				    //int p = Interlocked.Decrement (ref this.pendingAsync);
-					//Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{1} OnTempestMessageReceived(TempestMessageType.Connected)", GetType().Name, connectionId));
+
+					this.remotePublicAuthenticationKey = msg.PublicAuthenticationKey;
+					this.pkAuthentication.ImportKey (msg.PublicEncryptionKey);
+
+					this.aes = new AesManaged { KeySize = 256 };
+					this.aes.GenerateKey();
+					Send (new FinalConnectMessage
+					{
+						AESKey = this.aes.Key,
+						PublicAuthenticationKey = this.publicAuthenticationKey
+					});
+
 					OnConnected (new ClientConnectionEventArgs (this));
 				    break;
 			}

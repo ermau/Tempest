@@ -92,7 +92,7 @@ namespace Tempest.Tests
 			var c = new MockServerConnection (connection);
 			connection.connection = c;
 
-			var e = new ConnectionMadeEventArgs (c);
+			var e = new ConnectionMadeEventArgs (c, null);
 			OnConnectionMade (e);
 
 			if (e.Rejected)

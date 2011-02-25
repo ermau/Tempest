@@ -111,13 +111,24 @@ namespace Tempest
 		/// Initializes a new instance of the <see cref="ConnectionMadeEventArgs"/> class.
 		/// </summary>
 		/// <param name="connection">The newly made connection.</param>
+		/// <param name="publicKey">The clients public authentication key.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="connection"/> is <c>null</c>.</exception>
-		public ConnectionMadeEventArgs (IServerConnection connection)
+		public ConnectionMadeEventArgs (IServerConnection connection, IAsymmetricKey publicKey)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
 
 			Connection = connection;
+			ClientPublicKey = publicKey;
+		}
+
+		/// <summary>
+		/// Gets the clients public authentication key, if present.
+		/// </summary>
+		public IAsymmetricKey ClientPublicKey
+		{
+			get;
+			private set;
 		}
 
 		/// <summary>

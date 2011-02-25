@@ -55,14 +55,27 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
+		/// <summary>
+		/// Gets or sets the public authentication key.
+		/// </summary>
+		public IAsymmetricKey PublicAuthenticationKey
+		{
+			get;
+			set;
+		}
+
 		public override void WritePayload (IValueWriter writer)
 		{
 			writer.WriteBytes (AESKey);
+
+			writer.Write (PublicAuthenticationKey);
 		}
 
 		public override void ReadPayload (IValueReader reader)
 		{
 			AESKey = reader.ReadBytes();
+
+			PublicAuthenticationKey = reader.Read<IAsymmetricKey>();
 		}
 	}
 }

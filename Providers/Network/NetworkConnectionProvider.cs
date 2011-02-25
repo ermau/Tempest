@@ -45,7 +45,7 @@ namespace Tempest.Providers.Network
 	public sealed class NetworkConnectionProvider
 		: IConnectionProvider
 	{
-		#if !SAFE
+		#if !SILVERLIGHT
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
 		/// </summary>
@@ -70,17 +70,15 @@ namespace Tempest.Providers.Network
 		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
 		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections)
-			: this (protocols, endPoint, maxConnections, new AesManaged(), () => new RSACrypto())
+			: this (protocols, endPoint, maxConnections, () => new RSACrypto())
 		{
 		}
 		#endif
 
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, SymmetricAlgorithm symmetricAlgorithm, Func<IPublicKeyCrypto> cryptoFactory)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory)
 		{
-			if (cryptoFactory == null)
-				throw new ArgumentNullException ("cryptoFactory");
-			if (symmetricAlgorithm == null)
-				throw new ArgumentNullException ("symmetricAlgorithm");
+			if (pkCryptoFactory == null)
+				throw new ArgumentNullException ("pkCryptoFactory");
 			if (authenticationKey == null)
 				throw new ArgumentNullException ("authenticationKey");
 			if (protocols == null)
@@ -95,19 +93,19 @@ namespace Tempest.Providers.Network
 			MaxConnections = maxConnections;
 			this.serverConnections = new List<NetworkServerConnection> (maxConnections);
 
-			this.symmetricAlgorithm = symmetricAlgorithm;
+			this.pkCryptoFactory = pkCryptoFactory;
 
-			this.pkEncryption = cryptoFactory();
+			this.pkEncryption = pkCryptoFactory();
 			this.encryptionKey = this.pkEncryption.ExportKey (true);
 			this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
 
-			this.authentication = cryptoFactory();
+			this.authentication = pkCryptoFactory();
 			this.authenticationKey = this.authentication.ExportKey (true);
 			this.publicAuthenticationKey = this.authentication.ExportKey (false);
 		}
 
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, SymmetricAlgorithm symmetricAlgorithm, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey authKey)
-			: this (protocols, endPoint, maxConnections, symmetricAlgorithm, cryptoFactory)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey)
+			: this (protocols, endPoint, maxConnections, pkCryptoFactory)
 		{
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
@@ -274,15 +272,19 @@ namespace Tempest.Providers.Network
 		private Socket unreliableSocket;
 		private MessageTypes mtypes;
 
+		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
+
 		private readonly IPublicKeyCrypto pkEncryption;
-		private readonly IAsymmetricKey encryptionKey;
+		internal readonly IAsymmetricKey encryptionKey;
 		private readonly IAsymmetricKey publicEncryptionKey;
+
 		private readonly IPublicKeyCrypto authentication;
-		private readonly IAsymmetricKey authenticationKey;
+		internal readonly IAsymmetricKey authenticationKey;
 		private readonly IAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;
+		
 		private readonly SymmetricAlgorithm symmetricAlgorithm;
 
 		private readonly List<NetworkServerConnection> serverConnections;
@@ -299,7 +301,7 @@ namespace Tempest.Providers.Network
 			if (!connection.IsConnected)
 				return;
 
-			var made = new ConnectionMadeEventArgs (connection);
+			var made = new ConnectionMadeEventArgs (connection, connection.PublicAuthenticationKey);
 			OnConnectionMade (made);
 			if (made.Rejected)
 			{

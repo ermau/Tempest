@@ -46,23 +46,12 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
-		/// <summary>
-		/// Gets or sets the public authentication key.
-		/// </summary>
-		public IAsymmetricKey PublicAuthenticationKey
-		{
-			get;
-			set;
-		}
-
 		public override void WritePayload (IValueWriter writer)
 		{
 			Protocol[] protocols = Protocols.ToArray();
 			writer.WriteInt32 (protocols.Length);
 			for (int i = 0 ; i < protocols.Length; ++i)
 				protocols[i].Serialize (writer);
-
-			writer.Write (PublicAuthenticationKey);
 		}
 
 		public override void ReadPayload (IValueReader reader)
@@ -72,8 +61,6 @@ namespace Tempest.InternalProtocol
 				protocols[i] = new Protocol (reader);
 
 			Protocols = protocols;
-
-			PublicAuthenticationKey = reader.Read<IAsymmetricKey>();
 		}
 	}
 }

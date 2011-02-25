@@ -39,7 +39,7 @@ namespace Tempest.Providers.Network
 		: NetworkConnection, IServerConnection
 	{
 		internal NetworkServerConnection (IEnumerable<Protocol> protocols, Socket reliableSocket, NetworkConnectionProvider provider)
-			: base (protocols, provider.SymmetricAlgorithm)
+			: base (protocols, provider.pkCryptoFactory)
 		{
 			if (reliableSocket == null)
 				throw new ArgumentNullException ("reliableSocket");
@@ -73,7 +73,6 @@ namespace Tempest.Providers.Network
 		private static int nextNetworkId;
 
 		private readonly NetworkConnectionProvider provider;
-		private readonly AesCryptoServiceProvider aesCrypto = new AesCryptoServiceProvider();
 
 		private readonly object pingSync = new object();
 		private Timer pingTimer;
@@ -112,7 +111,7 @@ namespace Tempest.Providers.Network
 					if (!IsConnected)
 						return;
 
-					if (msg.PublicAuthenticationKey == null || !msg.Protocols.Any())
+					if (!msg.Protocols.Any())
 					{
 						Disconnect (true, DisconnectedReason.FailedHandshake);
 						return;
@@ -132,7 +131,11 @@ namespace Tempest.Providers.Network
 		            break;
 
 				case (ushort)TempestMessageType.FinalConnect:
-					
+		    		var finalConnect = (FinalConnectMessage)e.Message;
+
+		    		this.aes = new AesManaged { KeySize = 256 };
+		    		this.aes.Key = finalConnect.AESKey;
+		    		this.remotePublicAuthenticationKey = finalConnect.PublicAuthenticationKey;
 
 					this.formallyConnected = true;
 		            this.provider.Connect (this);

@@ -34,11 +34,6 @@ namespace Tempest.InternalProtocol
 		{
 		}
 
-		public override bool Signed
-		{
-			get { return true; }
-		}
-
 		public override void WritePayload (IValueWriter writer)
 		{
 		}

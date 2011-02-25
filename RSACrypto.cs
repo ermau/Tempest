@@ -91,7 +91,7 @@ namespace Tempest
 
 		private static readonly string Sha1Name = CryptoConfig.MapNameToOID ("SHA1");
 		private readonly SHA1Managed sha = new SHA1Managed();
-		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider();
+		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider { KeySize = 2048 };
 	}
 	#endif
 }

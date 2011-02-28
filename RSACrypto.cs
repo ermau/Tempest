@@ -28,7 +28,7 @@ using System.Security.Cryptography;
 
 namespace Tempest
 {
-	#if !SAFE
+	#if !SILVERLIGHT
 	public class RSACrypto
 		: IPublicKeyCrypto
 	{

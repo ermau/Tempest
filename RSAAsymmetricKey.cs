@@ -56,42 +56,42 @@ namespace Tempest
 			int index = 0;
 			if (parameters.D != null)
 			{
-				Array.Copy (parameters.D, 0, this.privateKey, index, parameters.D.Length);
+				Buffer.BlockCopy (parameters.D, 0, this.privateKey, index, parameters.D.Length);
 				this.d = new ArraySegment<byte> (this.privateKey, index, parameters.D.Length);
 				index += parameters.D.Length;
 			}
 
 			if (parameters.DP != null)
 			{
-				Array.Copy (parameters.DP, 0, this.privateKey, index, parameters.DP.Length);
+				Buffer.BlockCopy (parameters.DP, 0, this.privateKey, index, parameters.DP.Length);
 				this.dp = new ArraySegment<byte> (this.privateKey, index, parameters.DP.Length);
 				index += parameters.DP.Length;
 			}
 
 			if (parameters.DQ != null)
 			{
-				Array.Copy (parameters.DQ, 0, this.privateKey, index, parameters.DQ.Length);
+				Buffer.BlockCopy (parameters.DQ, 0, this.privateKey, index, parameters.DQ.Length);
 				this.dq = new ArraySegment<byte> (this.privateKey, index, parameters.DQ.Length);
 				index += parameters.DQ.Length;
 			}
 
 			if (parameters.InverseQ != null)
 			{
-				Array.Copy (parameters.InverseQ, 0, this.privateKey, index, parameters.InverseQ.Length);
+				Buffer.BlockCopy (parameters.InverseQ, 0, this.privateKey, index, parameters.InverseQ.Length);
 				this.iq = new ArraySegment<byte> (this.privateKey, index, parameters.InverseQ.Length);
 				index += parameters.InverseQ.Length;
 			}
 
 			if (parameters.P != null)
 			{
-				Array.Copy (parameters.P, 0, this.privateKey, index, parameters.P.Length);
+				Buffer.BlockCopy (parameters.P, 0, this.privateKey, index, parameters.P.Length);
 				this.p = new ArraySegment<byte> (this.privateKey, index, parameters.P.Length);
 				index += parameters.P.Length;
 			}
 
 			if (parameters.Q != null)
 			{
-				Array.Copy (parameters.Q, 0, this.privateKey, index, parameters.Q.Length);
+				Buffer.BlockCopy (parameters.Q, 0, this.privateKey, index, parameters.Q.Length);
 				this.q = new ArraySegment<byte> (this.privateKey, index, parameters.Q.Length);
 				index += parameters.Q.Length;
 			}
@@ -100,8 +100,8 @@ namespace Tempest
 				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
 			this.publicKey = new byte[parameters.Modulus.Length + parameters.Exponent.Length];
-			Array.Copy (parameters.Modulus, this.publicKey, parameters.Modulus.Length);
-			Array.Copy (parameters.Exponent, 0, this.publicKey, parameters.Modulus.Length, parameters.Exponent.Length);
+			Buffer.BlockCopy (parameters.Modulus, 0, this.publicKey, 0, parameters.Modulus.Length);
+			Buffer.BlockCopy (parameters.Exponent, 0, this.publicKey, parameters.Modulus.Length, parameters.Exponent.Length);
 			this.exponentOffset = parameters.Modulus.Length;
 		}
 
@@ -117,7 +117,7 @@ namespace Tempest
 				byte[] copy = new byte[this.privateKey.Length];
 
 				ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
-				Array.Copy (this.privateKey, copy, this.privateKey.Length);
+				Buffer.BlockCopy (this.privateKey, 0, copy, 0, this.privateKey.Length);
 				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
 				return copy;
@@ -139,7 +139,7 @@ namespace Tempest
 				byte[] copyD = new byte[this.d.Count];
 
 				ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
-				Array.Copy (this.privateKey, this.d.Offset, copyD, 0, this.d.Count);
+				Buffer.BlockCopy (this.privateKey, this.d.Offset, copyD, 0, this.d.Count);
 				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
 				return copyD;
@@ -156,7 +156,7 @@ namespace Tempest
 				byte[] copy = new byte[this.dp.Count];
 
 				ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
-				Array.Copy (this.privateKey, this.dp.Offset, copy, 0, this.dp.Count);
+				Buffer.BlockCopy (this.privateKey, this.dp.Offset, copy, 0, this.dp.Count);
 				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
 				return copy;
@@ -173,7 +173,7 @@ namespace Tempest
 				byte[] copy = new byte[this.dq.Count];
 
 				ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
-				Array.Copy (this.privateKey, this.dq.Offset, copy, 0, this.dq.Count);
+				Buffer.BlockCopy (this.privateKey, this.dq.Offset, copy, 0, this.dq.Count);
 				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
 				return copy;
@@ -190,7 +190,7 @@ namespace Tempest
 				byte[] copy = new byte[this.iq.Count];
 
 				ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
-				Array.Copy (this.privateKey, this.iq.Offset, copy, 0, this.iq.Count);
+				Buffer.BlockCopy (this.privateKey, this.iq.Offset, copy, 0, this.iq.Count);
 				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
 				return copy;
@@ -207,7 +207,7 @@ namespace Tempest
 				byte[] copy = new byte[this.p.Count];
 
 				ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
-				Array.Copy (this.privateKey, this.p.Offset, copy, 0, this.p.Count);
+				Buffer.BlockCopy (this.privateKey, this.p.Offset, copy, 0, this.p.Count);
 				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
 				return copy;
@@ -224,7 +224,7 @@ namespace Tempest
 				byte[] copyQ = new byte[this.q.Count];
 
 				ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
-				Array.Copy (this.privateKey, this.q.Offset, copyQ, 0, this.q.Count);
+				Buffer.BlockCopy (this.privateKey, this.q.Offset, copyQ, 0, this.q.Count);
 				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
 
 				return copyQ;
@@ -236,7 +236,7 @@ namespace Tempest
 			get
 			{
 				byte[] copy = new byte[this.exponentOffset];
-				Array.Copy (this.publicKey, copy, this.exponentOffset);
+				Buffer.BlockCopy (this.publicKey, 0, copy, 0, this.exponentOffset);
 
 				return copy;
 			}
@@ -247,7 +247,7 @@ namespace Tempest
 			get
 			{
 				byte[] copy = new byte[this.publicKey.Length - this.exponentOffset];
-				Array.Copy (this.publicKey, this.exponentOffset, copy, 0, copy.Length);
+				Buffer.BlockCopy (this.publicKey, this.exponentOffset, copy, 0, copy.Length);
 				return copy;
 			}
 		}

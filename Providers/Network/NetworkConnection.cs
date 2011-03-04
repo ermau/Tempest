@@ -50,8 +50,8 @@ namespace Tempest.Providers.Network
 			if (publicKeyCryptoFactory == null)
 				throw new ArgumentNullException ("publicKeyCrypto");
 
+			this.publicKeyCryptoFactory = publicKeyCryptoFactory;
 			this.pkAuthentication = publicKeyCryptoFactory();
-			this.remotePkCrypto = publicKeyCryptoFactory();
 
 			this.protocols = new Dictionary<byte, Protocol>();
 			foreach (Protocol p in protocols)
@@ -309,12 +309,11 @@ namespace Tempest.Providers.Network
 		protected AesManaged aes;
 		protected HMACSHA256 hmac;
 
+		protected readonly Func<IPublicKeyCrypto> publicKeyCryptoFactory;
+
 		protected IPublicKeyCrypto pkAuthentication;
 		protected IAsymmetricKey authenticationKey;
 		protected IAsymmetricKey publicAuthenticationKey;
-
-		protected IPublicKeyCrypto remotePkCrypto;
-		protected IAsymmetricKey remotePublicAuthenticationKey;
 
 		protected readonly object stateSync = new object();
 		protected int pendingAsync = 0;
@@ -367,77 +366,103 @@ namespace Tempest.Providers.Network
 				sent (this, e);
 		}
 
-		protected byte[] GetBytes (Message message, out int length, byte[] buffer)
+		protected virtual void EncryptMessage (BufferValueWriter writer, ref int headerLength)
 		{
-			var writer = new BufferValueWriter (buffer);
-			writer.WriteByte (message.Protocol.id);
-			writer.WriteUInt16 (message.MessageType);
-			writer.Length += sizeof (int); // length placeholder
+			if (this.aes == null)
+				throw new InvalidOperationException ("Attempting to encrypt a message without an encryptor");
 
 			ICryptoTransform encryptor = null;
-			if (message.Encrypted && this.aes != null)
+			byte[] iv = null;
+			lock (this.aes)
 			{
-				byte[] iv = null;
-				lock (this.aes)
-				{
-					this.aes.GenerateIV();
-					iv = this.aes.IV;
-					encryptor = this.aes.CreateEncryptor();
-				}
-
-				writer.WriteInt16 ((short)iv.Length);
-				writer.InsertBytes (writer.Length, iv, 0, iv.Length);
+				this.aes.GenerateIV();
+				iv = this.aes.IV;
+				encryptor = this.aes.CreateEncryptor();
 			}
 
-			int headerLength = writer.Length;
+			int r = ((writer.Length - BaseHeaderLength) % encryptor.OutputBlockSize);
+			if (r != 0)
+			{
+				int pad = encryptor.OutputBlockSize - r;
+				writer.InsertBytes (writer.Length, new byte[pad], 0, pad);
+			}
+
+			byte[] payload = new byte[writer.Length - BaseHeaderLength];
+			encryptor.TransformBlock (writer.Buffer, BaseHeaderLength, writer.Length - BaseHeaderLength, payload, 0);
+
+			writer.Length = BaseHeaderLength;
+			writer.WriteBytes (iv);		
+			writer.WriteBytes (payload);
+
+			headerLength += sizeof (short) + iv.Length;
+		}
+
+		protected virtual void DecryptMessage (MessageHeader header, ref BufferValueReader r, ref byte[] message, ref int moffset)
+		{
+			byte[] payload = r.ReadBytes();
+
+			ICryptoTransform decryptor;
+			lock (this.aes)
+			{
+				this.aes.IV = header.IV;
+				decryptor = this.aes.CreateDecryptor();
+			}
+
+			message = new byte[payload.Length];
+			moffset = 0;
+
+			decryptor.TransformBlock (payload, 0, payload.Length, message, 0);
+
+			r = new BufferValueReader (message);
+		}
+
+		protected virtual void SignMessage (BufferValueWriter writer, int headerLength)
+		{
+			if (this.hmac == null)
+				throw new InvalidOperationException();
+
+			writer.WriteBytes (this.hmac.ComputeHash (writer.Buffer, headerLength, writer.Length - headerLength));
+		}
+
+		protected virtual bool VerifyMessage (Message message, byte[] signature, byte[] data, int moffset, int length)
+		{
+			byte[] ourhash = this.hmac.ComputeHash (data, moffset, length - moffset);
+
+			if (signature.Length != ourhash.Length)
+				return false;
+
+			for (int i = 0; i < signature.Length; i++)
+			{
+				if (signature[i] != ourhash[i])
+					return false;
+			}
+
+			return true;
+		}
+
+		protected byte[] GetBytes (Message message, out int length, byte[] buffer)
+		{
+			BufferValueWriter writer = new BufferValueWriter (buffer);
+			writer.WriteByte (message.Protocol.id);
+			writer.WriteUInt16 (message.MessageType);
+			writer.Length += sizeof (int); // length  placeholder
 
 			message.WritePayload (writer);
+			
+			byte[] rawMessage = writer.Buffer;
+
+			int headerLength = BaseHeaderLength;
 
 			if (message.Encrypted)
-			{
-				byte[] payload;
-				if (this.aes != null)
-				{
-					int plen = (writer.Length - headerLength);
-					int r = (plen % encryptor.OutputBlockSize);
-					if (r != 0)
-					{
-						int pad = encryptor.OutputBlockSize - r;
-						plen += pad;
-						writer.InsertBytes (writer.Length, new byte[pad], 0, pad);
-					}
-
-					payload = new byte[plen];
-					encryptor.TransformBlock (writer.Buffer, headerLength, plen, payload, 0);
-				}
-				else
-				{
-					payload = new byte[writer.Length - BaseHeaderLength];
-					Buffer.BlockCopy (writer.Buffer, BaseHeaderLength, payload, 0, payload.Length);
-					payload = this.remotePkCrypto.Encrypt (payload);
-				}
-
-				writer.Length -= writer.Length - headerLength;
-				writer.WriteBytes (payload, 0, payload.Length);
-			}
+				EncryptMessage (writer, ref headerLength);
 
 			if (message.Authenticated)
-			{
-				byte[] signature = (this.aes == null)
-				                   	? this.pkAuthentication.HashAndSign (writer.Buffer, 0, buffer.Length)
-				                   	: this.hmac.ComputeHash (writer.Buffer, 0, buffer.Length);
-
-				byte[] signatureLength = BitConverter.GetBytes ((short)signature.Length);
-				
-				writer.InsertBytes (headerLength, signatureLength, 0, signatureLength.Length);
-				writer.InsertBytes (headerLength + signatureLength.Length, signature, 0, signature.Length);
-			}
-
-			Buffer.BlockCopy (BitConverter.GetBytes (writer.Length), 0, writer.Buffer, BaseHeaderLength - sizeof(int), sizeof(int));
+				SignMessage (writer, headerLength);
 
 			length = writer.Length;
+			Buffer.BlockCopy (BitConverter.GetBytes (length), 0, rawMessage, BaseHeaderLength - sizeof(int), sizeof(int));
 
-			return writer.Buffer;
+			return rawMessage;
 		}
 
 		/// <returns><c>true</c> if there was sufficient data to retrieve the message's header.</returns>
@@ -469,13 +494,13 @@ namespace Tempest.Providers.Network
 				int headerLength = BaseHeaderLength;
 
 				byte[] iv = null;
-				if (msg.Encrypted)
+				if (msg.Encrypted && this.aes != null)
 				{
-					headerLength += sizeof (short);
+					headerLength += sizeof (int);
 					if (remaining < headerLength)
 						return false;
 
-					int length = BitConverter.ToInt16 (buffer, offset);
+					int length = BitConverter.ToInt32 (buffer, offset);
 					iv = new byte[length];
 
 					headerLength += length;
@@ -487,26 +512,7 @@ namespace Tempest.Providers.Network
 					offset += length;
 				}
 
-				byte[] signature = null;
-				if (msg.Authenticated)
-				{
-					headerLength += sizeof (short);
-					if (remaining < headerLength)
-						return false;
-
-					short length = BitConverter.ToInt16 (buffer, offset);
-					signature = new byte[length];
-
-					headerLength += length;
-					if (remaining < headerLength)
-						return false;
-				
-					offset += sizeof (short);			
-					Buffer.BlockCopy (buffer, offset, signature, 0, length);
-					offset += length;
-				}
-
-				header = new MessageHeader (p, msg, mlen, offset, iv, signature);
+				header = new MessageHeader (p, msg, mlen, headerLength, iv);
 				return true;
 			}
 			catch (Exception ex)
@@ -535,9 +541,13 @@ namespace Tempest.Providers.Network
 				if (header == null)
 				{
 					int p = Interlocked.Decrement (ref this.pendingAsync);
-					Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLine (String.Format ("Decrement pending: {0}", p),
+					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
+					                                bufferOffset, messageOffset, remainingData, connectionId));
 					Disconnect (true);
-					Trace.WriteLine ("Exiting (header not found)", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLine ("Exiting (header not found)",
+					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
+					                                bufferOffset, messageOffset, remainingData, connectionId));
 					return;
 				}
 
@@ -545,9 +555,13 @@ namespace Tempest.Providers.Network
 				if (length > maxMessageLength)
 				{
 					int p = Interlocked.Decrement (ref this.pendingAsync);
-					Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLine (String.Format ("Decrement pending: {0}", p),
+					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
+					                                bufferOffset, messageOffset, remainingData, connectionId));
 					Disconnect (true);
-					Trace.WriteLine ("Exiting (bad message size)", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLine ("Exiting (bad message size)",
+					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
+					                                bufferOffset, messageOffset, remainingData, connectionId));
 					return;
 				}
 
@@ -560,44 +574,31 @@ namespace Tempest.Providers.Network
 				if (!IsConnected)
 					return;
 
-				this.rreader.Position = messageOffset + header.HeaderLength;
-
 				try
 				{
-					header.Message.ReadPayload (this.rreader);
+					int moffset = messageOffset + BaseHeaderLength;
+					byte[] message = buffer;
+					BufferValueReader r = reader;
+					if (header.Message.Encrypted)
+						DecryptMessage (header, ref r, ref message, ref moffset);
+
+					r.Position = moffset;
+					header.Message.ReadPayload (r);
+
+					if (header.Message.Authenticated)
+					{
+						byte[] signature = reader.ReadBytes();
+						if (!VerifyMessage (header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - messageOffset - signature.Length))
+						{
+							Disconnect (true, DisconnectedReason.MessageAuthenticationFailed);
+							return;
+						}
+					}
 				}
 				catch
 				{
 					Disconnect (true);
 					return;
-				}		
-
-				if (header.Message.Authenticated)
-				{
-					if (this.hmac == null)
-					{
-						AcknowledgeConnectMessage ack = header.Message as AcknowledgeConnectMessage;
-						if (ack == null)
-						{
-							int p = Interlocked.Decrement (ref this.pendingAsync);
-							Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
-							Disconnect (true, DisconnectedReason.MessageAuthenticationFailed);
-							Trace.WriteLine ("Exiting (unauthenticatable message)", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
-							return;
-						}
-						
-						this.pkAuthentication.ImportKey (ack.PublicAuthenticationKey);
-						byte[] payload = new byte[header.MessageLength];
-						Buffer.BlockCopy (buffer, messageOffset + header.HeaderLength, payload, 0, payload.Length);
-						if (!this.pkAuthentication.VerifyData (payload, header.Signature))
-						{
-							int p = Interlocked.Decrement (ref this.pendingAsync);
-							Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId));
-							Disconnect (true, DisconnectedReason.FailedHandshake);
-							Trace.WriteLine ("Exiting (message failed authentication)", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId));
-							return;
-						}
-					}
 				}
 
 				var tmessage = (header.Message as TempestMessage);

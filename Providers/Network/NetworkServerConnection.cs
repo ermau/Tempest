@@ -141,9 +141,10 @@ namespace Tempest.Providers.Network
 
 					try
 					{
-						this.hmac = new HMACSHA256(finalConnect.AESKey);
+						this.hmac = new HMACSHA256 (finalConnect.AESKey);
 						this.aes = new AesManaged { KeySize = 256, Key = finalConnect.AESKey };
-						this.remotePublicAuthenticationKey = finalConnect.PublicAuthenticationKey;
+						
+						this.pkAuthentication.ImportKey (finalConnect.PublicAuthenticationKey);
 
 						this.formallyConnected = true;
 						this.provider.Connect (this);
@@ -157,6 +158,41 @@ namespace Tempest.Providers.Network
 		    }
 
 		    base.OnTempestMessageReceived(e);
+		}
+
+		protected override void DecryptMessage (MessageHeader header, ref BufferValueReader r, ref byte[] message, ref int moffset)
+		{
+			if (this.aes == null)
+			{
+				byte[] payload = r.ReadBytes();
+
+				message = this.provider.pkEncryption.Decrypt (payload);
+				moffset = 0;
+				r = new BufferValueReader (message);
+			}
+			else
+				base.DecryptMessage (header, ref r, ref message, ref moffset);
+		}
+
+		protected override void SignMessage (BufferValueWriter writer, int headerLength)
+		{
+			if (this.hmac == null)
+				writer.WriteBytes (this.provider.authentication.HashAndSign (writer.Buffer, headerLength, writer.Length - headerLength));
+			else
+				base.SignMessage (writer, headerLength);
+		}
+
+		protected override bool VerifyMessage (Message message, byte[] signature, byte[] data, int moffset, int length)
+		{
+			if (this.hmac == null)
+			{
+				byte[] resized = new byte[length];
+				Buffer.BlockCopy (data, moffset, resized, 0, length);
+
+				return this.pkAuthentication.VerifySignedHash (resized, signature);
+			}
+			else
+				return base.VerifyMessage (message, signature, data, moffset, length);
 		}
 
 		protected override void OnMessageSent (MessageEventArgs e)

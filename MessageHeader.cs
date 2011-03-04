@@ -30,7 +30,7 @@ namespace Tempest
 {
 	public class MessageHeader
 	{
-		internal MessageHeader (Protocol protocol, Message message, int messageLength, int headerLength, byte[] iv, byte[] signature)
+		internal MessageHeader (Protocol protocol, Message message, int messageLength, int headerLength, byte[] iv)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
@@ -42,7 +42,6 @@ namespace Tempest
 			MessageLength = messageLength;
 			HeaderLength = headerLength;
 			IV = iv;
-			Signature = signature;
 		}
 
 		public Protocol Protocol
@@ -70,12 +69,6 @@ namespace Tempest
 		}
 
 		public byte[] IV
-		{
-			get;
-			private set;
-		}
-
-		public byte[] Signature
 		{
 			get;
 			private set;

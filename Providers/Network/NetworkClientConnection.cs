@@ -54,7 +54,6 @@ namespace Tempest.Providers.Network
 		public NetworkClientConnection (Protocol protocol, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
 			: this (new [] { protocol }, publicKeyCryptoFactory)
 		{
-
 		}
 
 		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
@@ -122,8 +121,17 @@ namespace Tempest.Providers.Network
 		private Timer activityTimer;
 		private int networkId;
 
+		private IPublicKeyCrypto serverAuthentication;
+		private IAsymmetricKey serverAuthenticationKey;
+
+		private IPublicKeyCrypto serverEncryption;
+		private IAsymmetricKey serverEncryptionKey;
+		
 		protected override void Recycle()
 		{
+			this.serverEncryption = null;
+			this.serverEncryptionKey = null;
+			
 			this.networkId = 0;
 
 			base.Recycle();
@@ -168,7 +176,6 @@ namespace Tempest.Providers.Network
 			if (recevied)
 				ReliableReceiveCompleted (this.reliableSocket, e);
 
-			//OnConnected (new ClientConnectionEventArgs (this));
 			p = Interlocked.Decrement (ref this.pendingAsync);
 			Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, connectionId));
 			Send (new ConnectMessage { Protocols = this.protocols.Values });
@@ -199,8 +206,9 @@ namespace Tempest.Providers.Network
 				    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (pr => pr.id);
 					this.networkId = msg.NetworkId;
 
-					this.remotePublicAuthenticationKey = msg.PublicAuthenticationKey;
-					this.pkAuthentication.ImportKey (msg.PublicEncryptionKey);
+					this.serverEncryption = this.publicKeyCryptoFactory();
+					this.serverEncryption.ImportKey (msg.PublicEncryptionKey);
+					this.serverEncryptionKey = msg.PublicEncryptionKey;
 
 					this.aes = new AesManaged { KeySize = 256 };
 					this.aes.GenerateKey();
@@ -216,6 +224,49 @@ namespace Tempest.Providers.Network
 			}
 
 			base.OnTempestMessageReceived(e);
+		}
+
+		protected override void EncryptMessage (BufferValueWriter writer, ref int headerLength)
+		{
+			if (this.aes == null)
+			{
+				byte[] payload = new byte[writer.Length - headerLength];
+				Buffer.BlockCopy (writer.Buffer, headerLength, payload, 0, payload.Length);
+
+				payload = this.serverEncryption.Encrypt (payload);
+
+				writer.Length = headerLength;
+				writer.WriteBytes (payload);
+			}
+			else
+				base.EncryptMessage (writer, ref headerLength);
+		}
+
+		protected override void SignMessage (BufferValueWriter writer, int headerLength)
+		{
+			if (this.hmac == null)
+				writer.WriteBytes (this.pkAuthentication.HashAndSign (writer.Buffer, headerLength, writer.Length - headerLength));
+			else
+				base.SignMessage (writer, headerLength);
+		}
+
+		protected override bool VerifyMessage (Message message, byte[] signature, byte[] data, int moffset, int length)
+		{
+			if (this.hmac == null)
+			{
+				byte[] resized = new byte[length];
+				Buffer.BlockCopy (data, moffset, resized, 0, length);
+
+				var msg = (AcknowledgeConnectMessage)message;
+
+				this.serverAuthentication = this.publicKeyCryptoFactory();
+				this.serverAuthenticationKey = msg.PublicAuthenticationKey;
+				this.serverAuthentication.ImportKey (this.serverAuthenticationKey);
+
+				return this.serverAuthentication.VerifySignedHash (resized, signature);
+			}
+			else
+				return base.VerifyMessage (message, signature, data, moffset, length);
 		}
 
 		protected override void OnDisconnected (DisconnectedEventArgs e)

@@ -150,14 +150,6 @@ namespace Tempest.Providers.Network
 		}
 
 		/// <summary>
-		/// Gets the symmetric algorithm used for encryption.
-		/// </summary>
-		public SymmetricAlgorithm SymmetricAlgorithm
-		{
-			get { return this.symmetricAlgorithm; }
-		}
-
-		/// <summary>
 		/// Gets the public authentication key for the server.
 		/// </summary>
 		public IAsymmetricKey PublicAuthenticationKey
@@ -272,18 +264,16 @@ namespace Tempest.Providers.Network
 
 		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
-		private readonly IPublicKeyCrypto pkEncryption;
+		internal readonly IPublicKeyCrypto pkEncryption;
 		internal readonly IAsymmetricKey encryptionKey;
 		private readonly IAsymmetricKey publicEncryptionKey;
 
-		private readonly IPublicKeyCrypto authentication;
+		internal readonly IPublicKeyCrypto authentication;
 		internal readonly IAsymmetricKey authenticationKey;
 		private readonly IAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;
-		
-		private readonly SymmetricAlgorithm symmetricAlgorithm;
 
 		private readonly List<NetworkServerConnection> serverConnections;
 		private readonly List<NetworkServerConnection> pendingConnections = new List<NetworkServerConnection>();

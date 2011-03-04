@@ -58,7 +58,7 @@ namespace Tempest
 			return this.rsaCrypto.SignHash (hash, Sha256Name);
 		}
 
-		public bool VerifyData (byte[] data, byte[] signature)
+		public bool VerifySignedHash (byte[] data, byte[] signature)
 		{
 			if (data == null)
 				throw new ArgumentNullException ("data");

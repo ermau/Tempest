@@ -32,7 +32,7 @@ namespace Tempest
 		byte[] Decrypt (byte[] data);
 
 		byte[] HashAndSign (byte[] data, int offset, int count);
-		bool VerifyData (byte[] data, byte[] signature);
+		bool VerifySignedHash (byte[] data, byte[] signature);
 
 		IAsymmetricKey ExportKey (bool includePrivate);
 		void ImportKey (IAsymmetricKey key);

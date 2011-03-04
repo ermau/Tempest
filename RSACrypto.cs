@@ -55,7 +55,7 @@ namespace Tempest
 
 			byte[] hash = sha.ComputeHash (data, offset, count);
 
-			return this.rsaCrypto.SignHash (hash, Sha1Name);
+			return this.rsaCrypto.SignHash (hash, Sha256Name);
 		}
 
 		public bool VerifyData (byte[] data, byte[] signature)
@@ -65,11 +65,11 @@ namespace Tempest
 			if (signature == null)
 				throw new ArgumentNullException ("signature");
 
-			if (!this.rsaCrypto.VerifyData (data, Sha1Name, signature))
+			if (!this.rsaCrypto.VerifyData (data, Sha256Name, signature))
 				return false;
 
 			byte[] hash = this.sha.ComputeHash (data);
-			return this.rsaCrypto.VerifyHash (hash, Sha1Name, signature);
+			return this.rsaCrypto.VerifyHash (hash, Sha256Name, signature);
 		}
 
 		public IAsymmetricKey ExportKey (bool includePrivate)
@@ -89,9 +89,9 @@ namespace Tempest
 			this.rsaCrypto.ImportParameters (rsaKey);
 		}
 
-		private static readonly string Sha1Name = CryptoConfig.MapNameToOID ("SHA1");
-		private readonly SHA1Managed sha = new SHA1Managed();
-		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider { KeySize = 2048 };
+		private static readonly string Sha256Name = CryptoConfig.MapNameToOID ("SHA256");
+		private readonly SHA256Managed sha = new SHA256Managed();
+		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider (2048);
 	}
 	#endif
 }

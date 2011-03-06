@@ -45,6 +45,7 @@
     <Compile Include="DisconnectedEventArgs.cs" />
     <Compile Include="ConnectionExtensions.cs" />
     <Compile Include="InternalProtocol\AcknowledgeConnectMessage.cs" />
+    <Compile Include="IClientContext.cs" />
     <Compile Include="InternalProtocol\ConnectedMessage.cs" />
     <Compile Include="InternalProtocol\ConnectMessage.cs" />
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />

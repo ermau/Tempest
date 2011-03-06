@@ -47,5 +47,29 @@ namespace Tempest
 			self.Send (new DisconnectMessage { Reason = reason });
 			self.Disconnect (false, reason);
 		}
+
+		public static void On<TMessage> (this IConnection self, Func<TMessage, bool> predicate, Action<TMessage, MessageEventArgs> callback)
+			where TMessage : Message
+		{
+			if (self == null)
+				throw new ArgumentNullException ("self");
+			if (predicate == null)
+				throw new ArgumentNullException ("predicate");
+			if (callback == null)
+				throw new ArgumentNullException ("callback");
+
+			EventHandler<MessageEventArgs> evcallback = null;
+			evcallback = (s, e) =>
+			{
+				TMessage msg = e.Message as TMessage;
+				if (msg == null || !predicate (msg))
+					return;
+
+				self.MessageReceived -= evcallback;
+				callback (msg, e);
+			};
+
+			self.MessageReceived += evcallback;
+		}
 	}
 }

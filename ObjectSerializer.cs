@@ -313,7 +313,7 @@ namespace Tempest
 
 			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
 			if (this.ctor == null)
-				throw new ArgumentException ("Type must have an empty constructor.", "type");
+				throw new ArgumentException (String.Format ("Type ({0}) must have an empty constructor.", t.FullName), "type");
 
 			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
 							.Where (mi =>

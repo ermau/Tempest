@@ -37,7 +37,7 @@ namespace Tempest
 	/// Base class for Tempest clients.
 	/// </summary>
 	public abstract class ClientBase
-		: MessageHandler
+		: MessageHandler, IClientContext
 	{
 		protected ClientBase (IClientConnection connection, MessageTypes mtypes, bool poll)
 		{
@@ -72,6 +72,11 @@ namespace Tempest
 		/// Raised with the client is disconnected.
 		/// </summary>
 		public event EventHandler<ClientDisconnectedEventArgs> Disconnected;
+
+		public IClientConnection Connection
+		{
+			get { return this.connection; }
+		}
 
 		/// <summary>
 		/// Gets whether the client is currently connected or not.

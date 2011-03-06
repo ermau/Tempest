@@ -28,6 +28,8 @@ using System;
 
 #if NET_4
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 #else
@@ -74,6 +76,51 @@ namespace Tempest
 				throw new ArgumentNullException ("reader");
 
 			return reader.ReadString (Encoding.UTF8);
+		}
+
+		public static void WriteEnumerable<T> (this IValueWriter writer, IEnumerable<T> enumerable)
+			where T : ISerializable
+		{
+			if (writer == null)
+				throw new ArgumentNullException ("writer");
+			if (enumerable == null)
+				throw new ArgumentNullException ("enumerable");
+
+			T[] elements = enumerable.ToArray();
+			writer.WriteInt32 (elements.Length);
+			for (int i = 0; i < elements.Length; ++i)
+				elements[i].Serialize (writer);
+		}
+
+		public static IEnumerable<T> ReadEnumerable<T> (this IValueReader reader, Func<T> elementFactory)
+			where T : ISerializable
+		{
+			if (reader == null)
+				throw new ArgumentNullException ("reader");
+			if (elementFactory == null)
+				throw new ArgumentNullException ("elementFactory");
+
+			int length = reader.ReadInt32();
+			T[] elements = new T[length];
+			for (int i = 0; i < elements.Length; ++i)
+				(elements[i] = elementFactory()).Deserialize (reader);
+
+			return elements;
+		}
+
+		public static IEnumerable<T> ReadEnumerable<T> (this IValueReader reader, Func<IValueReader, T> elementFactory)
+		{
+			if (reader == null)
+				throw new ArgumentNullException ("reader");
+			if (elementFactory == null)
+				throw new ArgumentNullException ("elementFactory");
+
+			int length = reader.ReadInt32();
+			T[] elements = new T[length];
+			for (int i = 0; i < elements.Length; ++i)
+				elements[i] = elementFactory (reader);
+
+			return elements;
 		}
 
 		public static void Write (this IValueWriter writer, object value)

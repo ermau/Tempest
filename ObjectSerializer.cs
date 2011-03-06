@@ -388,8 +388,12 @@ namespace Tempest
 			return GetSerializer (stype);
 		}
 
+		private static readonly ObjectSerializer baseSerializer = new ObjectSerializer (typeof(object));
 		internal static ObjectSerializer GetSerializer (Type type)
 		{
+			if (type == typeof(object) || type.IsInterface || type.IsAbstract)
+				return baseSerializer;
+
 			ObjectSerializer serializer;
 			#if NET_4
 			serializer = Serializers.GetOrAdd (type, t => new ObjectSerializer (t));

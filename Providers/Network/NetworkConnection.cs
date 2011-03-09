@@ -588,7 +588,7 @@ namespace Tempest.Providers.Network
 					if (header.Message.Authenticated)
 					{
 						byte[] signature = reader.ReadBytes();
-						if (!VerifyMessage (header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - messageOffset - signature.Length))
+						if (!VerifyMessage (header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - messageOffset - signature.Length - sizeof(int)))
 						{
 							Disconnect (true, DisconnectedReason.MessageAuthenticationFailed);
 							return;

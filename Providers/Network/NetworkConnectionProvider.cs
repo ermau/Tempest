@@ -94,7 +94,6 @@ namespace Tempest.Providers.Network
 			this.pkCryptoFactory = pkCryptoFactory;
 
 			this.pkEncryption = pkCryptoFactory();
-			this.encryptionKey = this.pkEncryption.ExportKey (true);
 			this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
 
 			this.authentication = pkCryptoFactory();
@@ -265,7 +264,6 @@ namespace Tempest.Providers.Network
 		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
 		internal readonly IPublicKeyCrypto pkEncryption;
-		internal readonly IAsymmetricKey encryptionKey;
 		private readonly IAsymmetricKey publicEncryptionKey;
 
 		internal readonly IPublicKeyCrypto authentication;

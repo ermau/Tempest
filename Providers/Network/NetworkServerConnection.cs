@@ -119,6 +119,7 @@ namespace Tempest.Providers.Network
 
 		    		NetworkId = Interlocked.Increment (ref nextNetworkId);
 
+					// TODO: Version checks
 		            this.protocols = this.protocols.Values.Intersect (msg.Protocols).ToDictionary (p => p.id);
 
 		            e.Connection.Send (new AcknowledgeConnectMessage
@@ -152,6 +153,7 @@ namespace Tempest.Providers.Network
 					catch
 					{
 						Disconnect (true, DisconnectedReason.FailedHandshake);
+						return;
 					}
 
 					break;

@@ -73,7 +73,7 @@ namespace Tempest.Tests
 			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new [] { p }, new IPEndPoint (IPAddress.Any, 42000), -1));
 		}
 		
-		[Test, Repeat (250)]
+		[Test, Repeat (3)]
 		public void ConnectionLimit()
 		{
 			provider.Start (MessageTypes);
@@ -100,7 +100,7 @@ namespace Tempest.Tests
 				test.Assert (3000);
 			}
 
-			if (!wait.WaitOne (10000))
+			if (!wait.WaitOne (30000))
 				Assert.Fail ("MaxConnections was not reached in time");
 
 			test = new AsyncTest();
@@ -112,7 +112,7 @@ namespace Tempest.Tests
 			test.Assert (3000, false);
 		}
 
-		[Test, Repeat (250)]
+		[Test, Repeat (3)]
 		public void ConnectionLimitRestartListening()
 		{
 			IServerConnection connection = null;
@@ -138,7 +138,7 @@ namespace Tempest.Tests
 			test.Assert (3000);
 		}
 
-		[Test, Repeat (2)]
+		[Test, Repeat (3)]
 		public void PingPong()
 		{
 			AsyncTest test = new AsyncTest();

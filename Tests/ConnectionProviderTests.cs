@@ -132,7 +132,7 @@ namespace Tempest.Tests
 			Assert.DoesNotThrow (() => this.provider.Stop());
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void IsRunning()
 		{
 			Assert.IsFalse (provider.IsRunning);
@@ -144,7 +144,7 @@ namespace Tempest.Tests
 			Assert.IsFalse (provider.IsRunning);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void ConnectionMade()
 		{
 			this.provider.Start (MessageTypes);
@@ -157,7 +157,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void Connected()
 		{
 			this.provider.Start (MessageTypes);
@@ -207,7 +207,7 @@ namespace Tempest.Tests
 			throw new NotImplementedException();
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void ClientSendMessageAsync()
 		{
 			const string content = "Oh, hello there.";
@@ -242,7 +242,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void ClientSendMessageConnectedHandler()
 		{
 			const string content = "Oh, hello there.";
@@ -277,7 +277,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void ClientMessageSent()
 		{
 			const string content = "Oh, hello there.";
@@ -307,7 +307,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void ServerSendMessageAsync()
 		{
 			const string content = "Oh, hello there.";
@@ -337,7 +337,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void SendLongMessageAsync()
 		{
 			StringBuilder contentBuilder = new StringBuilder();
@@ -441,7 +441,7 @@ namespace Tempest.Tests
 			test.Assert (30000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void DisconnectFromClientOnClient()
 		{
 			this.provider.Start (MessageTypes);
@@ -475,7 +475,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void DisconnectFromClientOnClientInConnectedHandler()
 		{
 			this.provider.Start (MessageTypes);
@@ -502,7 +502,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void DisconnectFromClientOnServer()
 		{
 			var test = new AsyncTest();
@@ -528,7 +528,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void DisconnectFromServerOnClient()
 		{
 			var test = new AsyncTest();
@@ -557,7 +557,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void ConnectionRejected()
 		{
 			var test = new AsyncTest();
@@ -573,7 +573,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void DisconnectFromServerOnServerWithinConnectionMade()
 		{
 			var test = new AsyncTest();
@@ -592,7 +592,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void DisconnectFromServerOnServer()
 		{
 			var test = new AsyncTest();
@@ -620,7 +620,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void DisconnectAndReconnect()
 		{
 			var wait = new ManualResetEvent (false);
@@ -647,7 +647,7 @@ namespace Tempest.Tests
 			}
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void DisconnectAndReconnectAsync()
 		{
 			AutoResetEvent wait = new AutoResetEvent (false);
@@ -670,7 +670,7 @@ namespace Tempest.Tests
 			}
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void DisconnectAyncWithReason()
 		{
 			var test = new AsyncTest (e => ((DisconnectedEventArgs)e).Reason == DisconnectedReason.IncompatibleVersion, 2);
@@ -738,7 +738,7 @@ namespace Tempest.Tests
 			}
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void EncryptedMessage()
 		{
 			var cmessage = new CryptoMessage
@@ -774,7 +774,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void AuthenticatedMessage()
 		{
 			var cmessage = new CryptoMessage
@@ -810,7 +810,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (100)]
+		[Test, Repeat (3)]
 		public void EncryptedAndAuthenticatedMessage()
 		{
 			var cmessage = new CryptoMessage

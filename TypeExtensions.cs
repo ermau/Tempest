@@ -1,5 +1,5 @@
 ﻿//
-// IPublicKeyCrypto.cs
+// TypeExtensions.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -24,22 +24,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
+
 namespace Tempest
 {
-	public interface IPublicKeyCrypto
+	public static class TypeExtensions
 	{
-		/// <summary>
-		/// Gets the key size in bits.
-		/// </summary>
-		int KeySize { get; }
+		public static string GetSimpleName (this Type self)
+		{
+			if (self == null)
+				throw new ArgumentNullException ("self");
 
-		byte[] Encrypt (byte[] data);
-		byte[] Decrypt (byte[] data);
-
-		byte[] HashAndSign (byte[] data, int offset, int count);
-		bool VerifySignedHash (byte[] data, byte[] signature);
-
-		IAsymmetricKey ExportKey (bool includePrivate);
-		void ImportKey (IAsymmetricKey key);
+			return String.Format ("{0}, {1}", self.FullName, self.Assembly.GetName().Name);
+		}
 	}
 }

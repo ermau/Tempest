@@ -32,6 +32,11 @@ namespace Tempest
 	public class RSACrypto
 		: IPublicKeyCrypto
 	{
+		public int KeySize
+		{
+			get { return this.rsaCrypto.KeySize; }
+		}
+
 		public byte[] Encrypt (byte[] data)
 		{
 			if (data == null)
@@ -91,7 +96,7 @@ namespace Tempest
 
 		private static readonly string Sha256Name = CryptoConfig.MapNameToOID ("SHA256");
 		private readonly SHA256Managed sha = new SHA256Managed();
-		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider (2048);
+		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider (4096);
 	}
 	#endif
 }

@@ -210,36 +210,27 @@ namespace Tempest.Providers.Network
 					this.serverEncryption.ImportKey (msg.PublicEncryptionKey);
 					this.serverEncryptionKey = msg.PublicEncryptionKey;
 
-					this.aes = new AesManaged { KeySize = 256 };
-					this.aes.GenerateKey();
-					this.hmac = new HMACSHA256 (this.aes.Key);
+					var encryption = new AesManaged { KeySize = 256 };
+					encryption.GenerateKey();
+					
+					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[256]);
+					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption);
+
 					Send (new FinalConnectMessage
 					{
-						AESKey = this.aes.Key,
-						PublicAuthenticationKey = this.publicAuthenticationKey
+						AESKey = this.serverEncryption.Encrypt (encryption.Key),
+						PublicAuthenticationKeyType = this.publicAuthenticationKey.GetType(),
+						PublicAuthenticationKey = authKeyWriter.ToArray()
 					});
+
+					this.aes = encryption;
+					this.hmac = new HMACSHA256 (this.aes.Key);
 
 					OnConnected (new ClientConnectionEventArgs (this));
 				    break;
 			}
 
 			base.OnTempestMessageReceived(e);
-		}
-
-		protected override void EncryptMessage (BufferValueWriter writer, ref int headerLength)
-		{
-			if (this.aes == null)
-			{
-				byte[] payload = new byte[writer.Length - headerLength];
-				Buffer.BlockCopy (writer.Buffer, headerLength, payload, 0, payload.Length);
-
-				payload = this.serverEncryption.Encrypt (payload);
-
-				writer.Length = headerLength;
-				writer.WriteBytes (payload);
-			}
-			else
-				base.EncryptMessage (writer, ref headerLength);
 		}
 
 		protected override void SignMessage (BufferValueWriter writer, int headerLength)

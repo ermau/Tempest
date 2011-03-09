@@ -29,14 +29,7 @@ namespace Tempest
 	public interface IAsymmetricKey
 		: ISerializable
 	{
-		/// <summary>
-		/// Gets the public portions of the key pair.
-		/// </summary>
-		byte[] Public { get; }
-
-		/// <summary>
-		/// Gets the private portion of the key pair.
-		/// </summary>
-		byte[] Private { get; }
+		void Serialize (IValueWriter writer, IPublicKeyCrypto crypto);
+		void Deserialize (IValueReader reader, IPublicKeyCrypto crypto);
 	}
 }

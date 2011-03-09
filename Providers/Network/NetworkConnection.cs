@@ -382,10 +382,7 @@ namespace Tempest.Providers.Network
 
 			int r = ((writer.Length - BaseHeaderLength) % encryptor.OutputBlockSize);
 			if (r != 0)
-			{
-				int pad = encryptor.OutputBlockSize - r;
-				writer.InsertBytes (writer.Length, new byte[pad], 0, pad);
-			}
+				writer.Pad (encryptor.OutputBlockSize - r);
 
 			byte[] payload = new byte[writer.Length - BaseHeaderLength];
 			encryptor.TransformBlock (writer.Buffer, BaseHeaderLength, writer.Length - BaseHeaderLength, payload, 0);
@@ -579,6 +576,8 @@ namespace Tempest.Providers.Network
 					int moffset = messageOffset + BaseHeaderLength;
 					byte[] message = buffer;
 					BufferValueReader r = reader;
+
+					r.Position = moffset;
 					if (header.Message.Encrypted)
 						DecryptMessage (header, ref r, ref message, ref moffset);
 

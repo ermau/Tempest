@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Linq;
 using System.Security.Cryptography;
 
 namespace Tempest
@@ -108,25 +109,6 @@ namespace Tempest
 		public RSAAsymmetricKey (IValueReader reader)
 		{
 			Deserialize (reader);
-		}
-
-		public byte[] Private
-		{
-			get
-			{
-				byte[] copy = new byte[this.privateKey.Length];
-
-				ProtectedMemory.Unprotect (this.privateKey, MemoryProtectionScope.SameProcess);
-				Buffer.BlockCopy (this.privateKey, 0, copy, 0, this.privateKey.Length);
-				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
-
-				return copy;
-			}
-		}
-
-		public byte[] Public
-		{
-			get { return this.publicKey; }
 		}
 
 		public byte[] D
@@ -286,6 +268,28 @@ namespace Tempest
 			}
 		}
 
+		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto)
+		{
+			if (writer.WriteBool (this.privateKey != null))
+			{
+				writer.WriteBytes (crypto.Encrypt (D));
+				writer.WriteBytes (crypto.Encrypt (DP));
+				writer.WriteBytes (crypto.Encrypt (DQ));
+				writer.WriteBytes (crypto.Encrypt (InverseQ));
+				writer.WriteBytes (crypto.Encrypt (P));
+				writer.WriteBytes (crypto.Encrypt (Q));
+			}
+
+			if (writer.WriteBool (this.publicKey != null))
+			{
+				writer.WriteBytes (crypto.Encrypt (Exponent));
+
+				int first = Modulus.Length / 2;
+				writer.WriteBytes (crypto.Encrypt (Modulus.Copy (0, first)));
+				writer.WriteBytes (crypto.Encrypt (Modulus.Copy (first, Modulus.Length - first)));
+			}
+		}
+
 		public void Deserialize (IValueReader reader)
 		{
 			if (reader.ReadBool())
@@ -305,6 +309,62 @@ namespace Tempest
 			{
 				this.publicKey = reader.ReadBytes();
 				this.exponentOffset = reader.ReadInt32();
+			}
+		}
+
+		public void Deserialize (IValueReader reader, IPublicKeyCrypto crypto)
+		{
+			if (reader.ReadBool())
+			{
+				byte[] ld = crypto.Decrypt (reader.ReadBytes());
+				byte[] ldp = crypto.Decrypt (reader.ReadBytes());
+				byte[] ldq = crypto.Decrypt (reader.ReadBytes());
+				byte[] liq = crypto.Decrypt (reader.ReadBytes());
+				byte[] lp = crypto.Decrypt (reader.ReadBytes());
+				byte[] lq = crypto.Decrypt (reader.ReadBytes());
+
+				this.privateKey = new byte[ld.Length + ldp.Length + ldq.Length + liq.Length + lp.Length + lq.Length];
+
+				int offset = 0;
+				
+				Buffer.BlockCopy (ld, 0, this.privateKey, offset, ld.Length);
+				this.d = new ArraySegment<byte> (this.privateKey, offset, ld.Length);
+				offset += ld.Length;
+
+				Buffer.BlockCopy (ldp, 0, this.privateKey, offset, ldp.Length);
+				this.dp = new ArraySegment<byte> (this.privateKey, offset, ldp.Length);
+				offset += ldp.Length;
+
+				Buffer.BlockCopy (ldq, 0, this.privateKey, offset, ldq.Length);
+				this.dq = new ArraySegment<byte> (this.privateKey, offset, ldq.Length);
+				offset += ldq.Length;
+
+				Buffer.BlockCopy (liq, 0, this.privateKey, offset, liq.Length);
+				this.iq = new ArraySegment<byte> (this.privateKey, offset, liq.Length);
+				offset += liq.Length;
+
+				Buffer.BlockCopy (lp, 0, this.privateKey, offset, lp.Length);
+				this.p = new ArraySegment<byte> (this.privateKey, offset, lp.Length);
+				offset += lp.Length;
+
+				Buffer.BlockCopy (lq, 0, this.privateKey, offset, lq.Length);
+				this.q = new ArraySegment<byte> (this.privateKey, offset, lq.Length);
+
+				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
+			}
+
+			if (reader.ReadBool())
+			{
+				byte[] exponent = crypto.Decrypt (reader.ReadBytes());
+
+				byte[] modulus1 = crypto.Decrypt (reader.ReadBytes());
+				byte[] modulus2 = crypto.Decrypt (reader.ReadBytes());
+				byte[] modulus = modulus1.Concat (modulus2).ToArray();
+
+				this.exponentOffset = modulus.Length;
+				this.publicKey = new byte[exponent.Length + modulus.Length];
+				Buffer.BlockCopy (modulus, 0, this.publicKey, 0, modulus.Length);
+				Buffer.BlockCopy (exponent, 0, this.publicKey, exponentOffset, exponent.Length);
 			}
 		}
 

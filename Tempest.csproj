@@ -87,6 +87,7 @@
     <Compile Include="StreamValueReader.cs" />
     <Compile Include="StreamValueWriter.cs" />
     <Compile Include="InternalProtocol\TempestMessage.cs" />
+    <Compile Include="TypeExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="LICENSE.txt" />

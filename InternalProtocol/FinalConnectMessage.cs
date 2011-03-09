@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
+
 namespace Tempest.InternalProtocol
 {
 	public class FinalConnectMessage
@@ -44,12 +46,13 @@ namespace Tempest.InternalProtocol
 			get { return true; }
 		}
 
-		public override bool Encrypted
+		public byte[] AESKey
 		{
-			get { return true; }
+			get;
+			set;
 		}
 
-		public byte[] AESKey
+		public Type PublicAuthenticationKeyType
 		{
 			get;
 			set;
@@ -58,7 +61,7 @@ namespace Tempest.InternalProtocol
 		/// <summary>
 		/// Gets or sets the public authentication key.
 		/// </summary>
-		public IAsymmetricKey PublicAuthenticationKey
+		public byte[] PublicAuthenticationKey
 		{
 			get;
 			set;
@@ -67,15 +70,15 @@ namespace Tempest.InternalProtocol
 		public override void WritePayload (IValueWriter writer)
 		{
 			writer.WriteBytes (AESKey);
-
-			writer.Write (PublicAuthenticationKey);
+			writer.WriteString (PublicAuthenticationKeyType.GetSimpleName());
+			writer.WriteBytes (PublicAuthenticationKey);
 		}
 
 		public override void ReadPayload (IValueReader reader)
 		{
 			AESKey = reader.ReadBytes();
-
-			PublicAuthenticationKey = reader.Read<IAsymmetricKey>();
+			PublicAuthenticationKeyType = Type.GetType (reader.ReadString());
+			PublicAuthenticationKey = reader.ReadBytes();
 		}
 	}
 }

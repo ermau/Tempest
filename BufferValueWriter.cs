@@ -133,6 +133,7 @@ namespace Tempest
 				Buff.BlockCopy (this.buffer, offset, this.buffer, offset + length, this.position - offset);
 
 			Buff.BlockCopy (value, valueOffset, this.buffer, offset, length);
+			this.position += length;
 		}
 
 		public void WriteInt16 (short value)

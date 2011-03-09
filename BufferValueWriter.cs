@@ -226,6 +226,12 @@ namespace Tempest
 			this.position = 0;
 		}
 
+		public void Pad (int count)
+		{
+			EnsureAdditionalCapacity (count);
+			this.position += count;
+		}
+
 		private byte[] buffer;
 		private int position;
 		private readonly bool resizing;

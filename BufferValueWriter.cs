@@ -232,6 +232,14 @@ namespace Tempest
 			this.position += count;
 		}
 
+		public byte[] ToArray()
+		{
+			byte[] value = new byte[Length];
+			Buff.BlockCopy (this.buffer, 0, value, 0, Length);
+
+			return value;
+		}
+
 		private byte[] buffer;
 		private int position;
 		private readonly bool resizing;

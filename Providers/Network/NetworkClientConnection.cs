@@ -225,9 +225,11 @@ namespace Tempest.Providers.Network
 
 					this.aes = encryption;
 					this.hmac = new HMACSHA256 (this.aes.Key);
-
-					OnConnected (new ClientConnectionEventArgs (this));
 				    break;
+
+				case (ushort)TempestMessageType.Connected:
+					OnConnected (new ClientConnectionEventArgs (this));
+					break;
 			}
 
 			base.OnTempestMessageReceived(e);

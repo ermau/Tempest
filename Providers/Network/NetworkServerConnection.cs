@@ -149,6 +149,8 @@ namespace Tempest.Providers.Network
 
 						this.formallyConnected = true;
 						this.provider.Connect (this);
+
+						Send (new ConnectedMessage());
 					}
 					catch
 					{

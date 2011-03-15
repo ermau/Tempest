@@ -366,7 +366,7 @@ namespace Tempest.Providers.Network
 				sent (this, e);
 		}
 
-		protected virtual void EncryptMessage (BufferValueWriter writer, ref int headerLength)
+		protected void EncryptMessage (BufferValueWriter writer, ref int headerLength)
 		{
 			if (this.aes == null)
 				throw new InvalidOperationException ("Attempting to encrypt a message without an encryptor");
@@ -394,7 +394,7 @@ namespace Tempest.Providers.Network
 			headerLength += sizeof (short) + iv.Length;
 		}
 
-		protected virtual void DecryptMessage (MessageHeader header, ref BufferValueReader r, ref byte[] message, ref int moffset)
+		protected void DecryptMessage (MessageHeader header, ref BufferValueReader r, ref byte[] message, ref int moffset)
 		{
 			byte[] payload = r.ReadBytes();
 

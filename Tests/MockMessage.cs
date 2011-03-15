@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,11 @@ namespace Tempest.Tests
 		static MockProtocol()
 		{
 			p = new Protocol (2);
-			p.Register (new[] { new KeyValuePair<Type, Func<Message>> (typeof (MockMessage), () => new MockMessage()) });
+			p.Register (new[]
+			{
+				new KeyValuePair<Type, Func<Message>> (typeof (MockMessage), () => new MockMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof (ConnectionProviderTests.CryptoMessage), () => new ConnectionProviderTests.CryptoMessage()),
+			});
 		}
 	}
 

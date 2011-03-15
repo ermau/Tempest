@@ -213,7 +213,7 @@ namespace Tempest.Providers.Network
 					var encryption = new AesManaged { KeySize = 256 };
 					encryption.GenerateKey();
 					
-					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[256]);
+					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
 					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption);
 
 					Send (new FinalConnectMessage

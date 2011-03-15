@@ -749,8 +749,6 @@ namespace Tempest.Tests
 			};
 
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 			
 			var test = new AsyncTest (e =>
 			{
@@ -785,9 +783,6 @@ namespace Tempest.Tests
 			};
 
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
-			
 			var test = new AsyncTest (e =>
 			{
 				var me = (e as MessageEventArgs);
@@ -822,8 +817,6 @@ namespace Tempest.Tests
 			};
 
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 			
 			var test = new AsyncTest (e =>
 			{

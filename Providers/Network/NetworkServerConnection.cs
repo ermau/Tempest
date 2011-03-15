@@ -233,10 +233,5 @@ namespace Tempest.Providers.Network
 
 			this.reliableSocket = null;
 		}
-		
-		internal int NetworkId
-		{
-			get; private set;
-		}
 	}
 }

@@ -119,7 +119,6 @@ namespace Tempest.Providers.Network
 		
 		private int pingFrequency;
 		private Timer activityTimer;
-		private int networkId;
 
 		private IPublicKeyCrypto serverAuthentication;
 		private IAsymmetricKey serverAuthenticationKey;
@@ -131,8 +130,7 @@ namespace Tempest.Providers.Network
 		{
 			this.serverEncryption = null;
 			this.serverEncryptionKey = null;
-			
-			this.networkId = 0;
+			this.serverAuthenticationKey = null;
 
 			base.Recycle();
 		}
@@ -204,7 +202,7 @@ namespace Tempest.Providers.Network
 				case (ushort)TempestMessageType.AcknowledgeConnect:
 				    var msg = (AcknowledgeConnectMessage)e.Message;
 				    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (pr => pr.id);
-					this.networkId = msg.NetworkId;
+					NetworkId = msg.NetworkId;
 
 					this.serverEncryption = this.publicKeyCryptoFactory();
 					this.serverEncryption.ImportKey (msg.PublicEncryptionKey);

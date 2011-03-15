@@ -328,6 +328,12 @@ namespace Tempest.Providers.Network
 		private int rmessageOffset = 0;
 		private int rmessageLoaded = 0;
 
+		internal int NetworkId
+		{
+			get;
+			set;
+		}
+
 		protected void Dispose (bool disposing)
 		{
 			if (this.disposed)
@@ -340,6 +346,20 @@ namespace Tempest.Providers.Network
 
 		protected virtual void Recycle()
 		{
+			NetworkId = 0;
+
+			if (this.hmac != null)
+			{
+				this.hmac.Dispose();
+				this.hmac = null;
+			}
+
+			if (this.aes != null)
+			{
+				this.aes.Dispose();
+				this.aes = null;
+			}
+
 			this.reliableSocket = null;
 			this.rmessageOffset = 0;
 			this.rmessageLoaded = 0;
@@ -537,10 +557,6 @@ namespace Tempest.Providers.Network
 
 				if (header == null)
 				{
-					//int p = Interlocked.Decrement (ref this.pendingAsync);
-					//Trace.WriteLine (String.Format ("Decrement pending: {0}", p),
-					//                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
-					//                                bufferOffset, messageOffset, remainingData, connectionId));
 					Disconnect (true);
 					Trace.WriteLine ("Exiting (header not found)",
 					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
@@ -551,10 +567,6 @@ namespace Tempest.Providers.Network
 				length = header.MessageLength;
 				if (length > maxMessageLength)
 				{
-					//int p = Interlocked.Decrement (ref this.pendingAsync);
-					//Trace.WriteLine (String.Format ("Decrement pending: {0}", p),
-					//                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
-					//                                bufferOffset, messageOffset, remainingData, connectionId));
 					Disconnect (true);
 					Trace.WriteLine ("Exiting (bad message size)",
 					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,

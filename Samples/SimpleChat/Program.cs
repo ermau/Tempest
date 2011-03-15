@@ -33,8 +33,8 @@ namespace Tempest.Samples.SimpleChat
 
 			if (runServer)
 			{
-				server = new ChatServer (new NetworkConnectionProvider
-					(ChatProtocol, new IPEndPoint (IPAddress.Any, 42900), 100));
+				server = new ChatServer (new NetworkConnectionProvider (ChatProtocol, new IPEndPoint (IPAddress.Any, 42900), 100));
+				server.Start();
 			}
 
 			if (clientHost != null)

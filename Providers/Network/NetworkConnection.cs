@@ -529,7 +529,7 @@ namespace Tempest.Providers.Network
 			this.lastReceived = DateTime.Now;
 
 			int length = 0;
-			while (remainingData > BaseHeaderLength)
+			while (remainingData >= BaseHeaderLength)
 			{
 				MessageHeader header;
 				if (!TryGetHeader (buffer, messageOffset, remainingData, out header))

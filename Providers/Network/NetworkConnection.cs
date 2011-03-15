@@ -537,10 +537,10 @@ namespace Tempest.Providers.Network
 
 				if (header == null)
 				{
-					int p = Interlocked.Decrement (ref this.pendingAsync);
-					Trace.WriteLine (String.Format ("Decrement pending: {0}", p),
-					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
-					                                bufferOffset, messageOffset, remainingData, connectionId));
+					//int p = Interlocked.Decrement (ref this.pendingAsync);
+					//Trace.WriteLine (String.Format ("Decrement pending: {0}", p),
+					//                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
+					//                                bufferOffset, messageOffset, remainingData, connectionId));
 					Disconnect (true);
 					Trace.WriteLine ("Exiting (header not found)",
 					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
@@ -551,10 +551,10 @@ namespace Tempest.Providers.Network
 				length = header.MessageLength;
 				if (length > maxMessageLength)
 				{
-					int p = Interlocked.Decrement (ref this.pendingAsync);
-					Trace.WriteLine (String.Format ("Decrement pending: {0}", p),
-					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
-					                                bufferOffset, messageOffset, remainingData, connectionId));
+					//int p = Interlocked.Decrement (ref this.pendingAsync);
+					//Trace.WriteLine (String.Format ("Decrement pending: {0}", p),
+					//                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
+					//                                bufferOffset, messageOffset, remainingData, connectionId));
 					Disconnect (true);
 					Trace.WriteLine ("Exiting (bad message size)",
 					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,

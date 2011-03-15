@@ -586,17 +586,23 @@ namespace Tempest.Providers.Network
 
 					if (header.Message.Authenticated)
 					{
-						byte[] signature = reader.ReadBytes();
-						if (!VerifyMessage (header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - messageOffset - signature.Length - sizeof(int)))
+						byte[] signature = reader.ReadBytes(); // Need the original reader here, sig is after payload
+						if (!VerifyMessage (header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - signature.Length - sizeof(int)))
 						{
 							Disconnect (true, DisconnectedReason.MessageAuthenticationFailed);
+							Trace.WriteLine ("Exiting (message auth failed)",
+											 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
+															bufferOffset, messageOffset, remainingData, connectionId));
 							return;
 						}
 					}
 				}
-				catch
+				catch (Exception ex)
 				{
 					Disconnect (true);
+					Trace.WriteLine ("Exiting for error: " + ex,
+					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", GetType().Name, c, buffer.Length,
+					                                bufferOffset, messageOffset, remainingData, connectionId));
 					return;
 				}
 

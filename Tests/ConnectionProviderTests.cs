@@ -72,7 +72,10 @@ namespace Tempest.Tests
 		protected abstract MessageTypes MessageTypes { get; }
 
 		protected abstract IConnectionProvider SetUp();
+		protected abstract IConnectionProvider SetUp (IEnumerable<Protocol> protocols);
+
 		protected abstract IClientConnection SetupClientConnection();
+		protected abstract IClientConnection SetupClientConnection (IEnumerable<Protocol> protocols);
 
 		protected IClientConnection GetNewClientConnection()
 		{
@@ -82,6 +85,44 @@ namespace Tempest.Tests
 			    this.connections.Add (c);
 
 			return c;
+		}
+
+		[Test]
+		public void InvalidProtocolVersion()
+		{
+			TearDown();
+
+			this.provider = SetUp (new[] { new Protocol (5, 5, 4) });
+			this.provider.Start (MessageTypes);
+
+			var client = SetupClientConnection (new[] { new Protocol (5, 3) });
+
+			var test = new AsyncTest (e => Assert.AreEqual (DisconnectedReason.IncompatibleVersion, ((DisconnectedEventArgs)e).Reason));
+			client.Connected += test.FailHandler;
+			client.Disconnected += test.PassHandler;
+
+			client.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void OlderCompatibleVersion()
+		{
+			TearDown();
+
+			this.provider = SetUp (new[] { new Protocol (5, 5, 4) });
+			this.provider.Start (MessageTypes);
+
+			var client = SetupClientConnection (new[] { new Protocol (5, 4) });
+
+			var test = new AsyncTest();
+			client.Connected += test.PassHandler;
+			client.Disconnected += test.FailHandler;
+
+			client.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
 		}
 
 		[Test]

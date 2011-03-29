@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using NUnit.Framework;
@@ -34,6 +35,8 @@ namespace Tempest.Tests
 	public class MockConnectionProviderTests
 		: ConnectionProviderTests
 	{
+		private Protocol p = MockProtocol.Instance;
+
 		protected override EndPoint EndPoint
 		{
 			get { return new IPEndPoint (IPAddress.Any, 0); }
@@ -46,12 +49,22 @@ namespace Tempest.Tests
 
 		protected override IConnectionProvider SetUp()
 		{
-			return new MockConnectionProvider();
+			return new MockConnectionProvider (p);
+		}
+
+		protected override IConnectionProvider SetUp (IEnumerable<Protocol> protocols)
+		{
+			return new MockConnectionProvider (protocols);
 		}
 
 		protected override IClientConnection SetupClientConnection()
 		{
 			return ((MockConnectionProvider)this.provider).GetClientConnection();
+		}
+
+		protected override IClientConnection SetupClientConnection(IEnumerable<Protocol> protocols)
+		{
+			return ((MockConnectionProvider)this.provider).GetClientConnection (protocols);
 		}
 	}
 }

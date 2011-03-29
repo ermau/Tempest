@@ -36,6 +36,16 @@ namespace Tempest.Tests
 	public class MockConnectionProvider
 		: IConnectionProvider
 	{
+		public MockConnectionProvider (Protocol protocol)
+			: this (new [] { protocol })
+		{
+		}
+
+		public MockConnectionProvider (IEnumerable<Protocol> protocols)
+		{
+			this.protocols = protocols.ToDictionary (p => p.id);
+		}
+
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
 		public event EventHandler<ConnectionlessMessageReceivedEventArgs> ConnectionlessMessageReceived
 		{
@@ -81,16 +91,40 @@ namespace Tempest.Tests
 			return new MockClientConnection (this);
 		}
 
+		public IClientConnection GetClientConnection (Protocol protocol)
+		{
+			return GetClientConnection (new[] { protocol });
+		}
+
+		public IClientConnection GetClientConnection (IEnumerable<Protocol> protocols)
+		{
+			return new MockClientConnection (this, protocols);
+		}
+
 		public void Dispose()
 		{
 		}
 
 		private bool running;
+		private readonly Dictionary<byte, Protocol> protocols;
 
 		internal void Connect (MockClientConnection connection)
 		{
 			var c = new MockServerConnection (connection);
 			connection.connection = c;
+
+			if (connection.protocols != null)
+			{
+				foreach (Protocol ip in connection.protocols)
+				{
+					Protocol lp;
+					if (!this.protocols.TryGetValue (ip.id, out lp) || !lp.CompatibleWith (ip))
+					{
+						connection.Disconnect (false, DisconnectedReason.IncompatibleVersion);
+						return;
+					}
+				}
+			}
 
 			var e = new ConnectionMadeEventArgs (c, null);
 			OnConnectionMade (e);
@@ -145,7 +179,8 @@ namespace Tempest.Tests
 	public class MockClientConnection
 		: MockConnection, IClientConnection
 	{
-		private MockConnectionProvider provider;
+		internal readonly IEnumerable<Protocol> protocols;
+		private readonly MockConnectionProvider provider;
 
 		public MockClientConnection (MockConnectionProvider provider)
 		{
@@ -153,6 +188,12 @@ namespace Tempest.Tests
 				throw new ArgumentNullException ("provider");
 
 			this.provider = provider;
+		}
+
+		public MockClientConnection (MockConnectionProvider provider, IEnumerable<Protocol> protocols)
+			: this (provider)
+		{
+			this.protocols = protocols;
 		}
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
@@ -166,7 +207,9 @@ namespace Tempest.Tests
 			if (provider.IsRunning)
 			{
 				provider.Connect (this);
-				OnConnected (new ClientConnectionEventArgs (this));
+
+				if (this.connected)
+					OnConnected (new ClientConnectionEventArgs (this));
 			}
 			else
 			{

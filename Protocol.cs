@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 
 namespace Tempest
 {
@@ -70,6 +71,26 @@ namespace Tempest
 			this.version = version;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Protocol"/> class.
+		/// </summary>
+		/// <param name="id">The ID of the protocol.</param>
+		/// <param name="version">The version of the protocol.</param>
+		/// <param name="compatibleVersions">Versions of this protcol that are compatible with this version.</param>
+		/// <exception cref="ArgumentException"><paramref name="id"/> is 1.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="compatibleVersions"/> is <c>null</c></exception>
+		/// <remarks>
+		/// Protocol ID 1 is reserved for internal Tempest use.
+		/// </remarks>
+		public Protocol (byte id, int version, params int[] compatibleVersions)
+			: this (id, version)
+		{
+			if (compatibleVersions == null)
+				throw new ArgumentNullException ("compatibleVersions");
+
+			this.compatible = new HashSet<int> (compatibleVersions);
+		}
+
 		internal Protocol (IValueReader reader)
 		{
 			Deserialize (reader);
@@ -82,7 +103,38 @@ namespace Tempest
 		{
 			get { return this.version; }
 		}
-		
+
+		/// <summary>
+		/// Gets whether <paramref name="versionToCheck"/> is compatible with this version.
+		/// </summary>
+		/// <param name="versionToCheck">The version to check against this version.</param>
+		/// <returns><c>true</c> if compatible, <c>false</c> if not.</returns>
+		public bool CompatibleWith (int versionToCheck)
+		{
+			if (versionToCheck == this.version)
+				return true;
+			if (this.compatible == null)
+				return false;
+
+			return this.compatible.Contains (versionToCheck);
+		}
+
+		/// <summary>
+		/// Gets whether <paramref name="protocol"/> is compatible with this version.
+		/// </summary>
+		/// <param name="protocol">The protocol to check against this version.</param>
+		/// <returns><c>true</c> if compatible, <c>false</c> if not.</returns>
+		public bool CompatibleWith (Protocol protocol)
+		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
+
+			if (this.id != protocol.id)
+				return false;
+
+			return CompatibleWith (protocol.Version);
+		}
+
 		public void Serialize (IValueWriter writer)
 		{
 			writer.WriteByte (this.id);
@@ -127,5 +179,6 @@ namespace Tempest
 
 		private int version;
 		internal byte id;
+		private readonly HashSet<int> compatible;
 	}
 }

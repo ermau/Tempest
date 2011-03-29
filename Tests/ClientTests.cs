@@ -47,7 +47,7 @@ namespace Tempest.Tests
 		[SetUp]
 		public void Setup()
 		{
-			provider = new MockConnectionProvider();
+			provider = new MockConnectionProvider (protocol);
 			provider.Start (MessageTypes.Reliable);
 
 			connection = new MockClientConnection (provider);

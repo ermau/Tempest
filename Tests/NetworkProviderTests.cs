@@ -55,9 +55,19 @@ namespace Tempest.Tests
 			return new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), MaxConnections);
 		}
 
+		protected override IConnectionProvider SetUp (IEnumerable<Protocol> protocols)
+		{
+			return new NetworkConnectionProvider (protocols, new IPEndPoint (IPAddress.Any, 42000), MaxConnections);
+		}
+
 		protected override IClientConnection SetupClientConnection ()
 		{
 			return new NetworkClientConnection (p);
+		}
+
+		protected override IClientConnection SetupClientConnection (IEnumerable<Protocol> protocols)
+		{
+			return new NetworkClientConnection (protocols);
 		}
 
 		[Test]

@@ -45,7 +45,7 @@ namespace Tempest.Tests
 		[SetUp]
 		public void Setup()
 		{
-			provider = new MockConnectionProvider();
+			provider = new MockConnectionProvider (protocol);
 		}
 
 		[Test]
@@ -71,7 +71,7 @@ namespace Tempest.Tests
 		[Test]
 		public void AddConnectionProvider()
 		{
-			var p = new MockConnectionProvider();
+			var p = new MockConnectionProvider (protocol);
 			Assert.IsFalse (p.IsRunning);
 
 			var server = new MockServer (provider, MessageTypes.Reliable);
@@ -82,7 +82,7 @@ namespace Tempest.Tests
 		[Test]
 		public void AddAfterStarting()
 		{
-			var p = new MockConnectionProvider();
+			var p = new MockConnectionProvider (protocol);
 			Assert.IsFalse (p.IsRunning);
 
 			var server = new MockServer (provider, MessageTypes.Reliable);
@@ -116,7 +116,7 @@ namespace Tempest.Tests
 		[Test]
 		public void RemoveNotAddedConnectionProvider()
 		{
-			var p = new MockConnectionProvider();
+			var p = new MockConnectionProvider (protocol);
 			p.Start (MessageTypes.Reliable);
 			Assert.IsTrue (p.IsRunning);
 
@@ -146,7 +146,7 @@ namespace Tempest.Tests
 			
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			
-			var c = provider.GetClientConnection();
+			var c = provider.GetClientConnection (protocol);
 			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 			c.Send (new MockMessage () { Content = "hi" });
 
@@ -175,9 +175,9 @@ namespace Tempest.Tests
 			
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			
-			var c = provider.GetClientConnection();
+			var c = provider.GetClientConnection (protocol);
 			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
-			c.Send (new MockMessage () { Content = "hi" });
+			c.Send (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
 		}

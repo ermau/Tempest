@@ -119,7 +119,17 @@ namespace Tempest.Providers.Network
 
 		    		NetworkId = Interlocked.Increment (ref nextNetworkId);
 
-					// TODO: Version checks
+					foreach (Protocol ip in msg.Protocols)
+					{
+						Protocol lp;
+						if (!this.protocols.TryGetValue (ip.id, out lp) || !lp.CompatibleWith (ip))
+						{
+							Send (new DisconnectMessage { Reason = DisconnectedReason.IncompatibleVersion });
+							Disconnect (false, DisconnectedReason.IncompatibleVersion);
+							return;
+						}
+					}
+
 		            this.protocols = this.protocols.Values.Intersect (msg.Protocols).ToDictionary (p => p.id);
 
 		            e.Connection.Send (new AcknowledgeConnectMessage

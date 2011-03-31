@@ -158,6 +158,8 @@ namespace Tempest.Tests
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
+			if (!IsConnected)
+				return;
 
 			connection.Receive (new MessageEventArgs (connection, message));
 			base.Send (message);
@@ -188,6 +190,7 @@ namespace Tempest.Tests
 				throw new ArgumentNullException ("provider");
 
 			this.provider = provider;
+			//this.connection = new MockServerConnection (this);
 		}
 
 		public MockClientConnection (MockConnectionProvider provider, IEnumerable<Protocol> protocols)
@@ -221,6 +224,8 @@ namespace Tempest.Tests
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
+			if (!IsConnected)
+				return;
 			
 			connection.Receive (new MessageEventArgs (connection, message));
 			base.Send (message);

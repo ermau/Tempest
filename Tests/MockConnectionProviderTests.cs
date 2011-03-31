@@ -27,6 +27,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -62,7 +63,7 @@ namespace Tempest.Tests
 			return ((MockConnectionProvider)this.provider).GetClientConnection();
 		}
 
-		protected override IClientConnection SetupClientConnection(IEnumerable<Protocol> protocols)
+		protected override IClientConnection SetupClientConnection (IEnumerable<Protocol> protocols)
 		{
 			return ((MockConnectionProvider)this.provider).GetClientConnection (protocols);
 		}

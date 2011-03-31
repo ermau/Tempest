@@ -47,6 +47,7 @@
     <Compile Include="AsyncTest.cs" />
     <Compile Include="BufferReaderWriterTests.cs" />
     <Compile Include="ClientTests.cs" />
+    <Compile Include="ConnectionProviderExtensions.cs" />
     <Compile Include="ConnectionProviderTests.cs" />
     <Compile Include="ExtensionsTests.cs" />
     <Compile Include="MessageFactoryTests.cs" />

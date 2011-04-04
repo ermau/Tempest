@@ -67,5 +67,22 @@ namespace Tempest.Tests
 		{
 			return ((MockConnectionProvider)this.provider).GetClientConnection (protocols);
 		}
+
+		[Test]
+		public void ServerConnectionConnected()
+		{
+			var provider = new MockConnectionProvider (MockProtocol.Instance);
+			provider.Start (MessageTypes.Reliable);
+
+			IServerConnection connection;
+
+			var test = new AsyncTest<ConnectionMadeEventArgs> (e => Assert.AreEqual (true, e.Connection.IsConnected));
+			provider.ConnectionMade += test.PassHandler;
+
+			var client = provider.GetClientConnection (MockProtocol.Instance);
+			client.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			
+			test.Assert (5000);
+		}
 	}
 }

@@ -151,6 +151,7 @@ namespace Tempest.Tests
 
 		internal MockServerConnection (MockClientConnection connection)
 		{
+			this.connected = true;
 			this.connection = connection;
 		}
 

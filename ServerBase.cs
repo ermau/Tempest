@@ -52,7 +52,7 @@ namespace Tempest
 	/// Base class for Tempest servers.
 	/// </summary>
 	public abstract class ServerBase
-		: MessageHandler
+		: MessageHandler, IServerContext
 	{
 		protected ServerBase (MessageTypes messageTypes)
 		{
@@ -64,6 +64,8 @@ namespace Tempest
 		{
 			AddConnectionProvider (provider);
 		}
+
+		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
 
 		public bool IsRunning
 		{
@@ -185,6 +187,10 @@ namespace Tempest
 			
 			e.Connection.MessageReceived += OnConnectionMessageReceived;
 			e.Connection.Disconnected += OnConnectionDisconnected;
+
+			var cmade = ConnectionMade;
+			if (cmade != null)
+				cmade (this, e);
 		}
 
 		protected virtual void OnConnectionMadeGlobal (object sender, ConnectionMadeEventArgs e)
@@ -197,6 +203,10 @@ namespace Tempest
 			
 			e.Connection.MessageReceived += OnGlobalMessageReceived;
 			e.Connection.Disconnected += OnConnectionDisconnected;
+
+			var cmade = ConnectionMade;
+			if (cmade != null)
+				cmade (this, e);
 		}
 
 		protected virtual void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)

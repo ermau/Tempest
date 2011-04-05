@@ -181,5 +181,36 @@ namespace Tempest.Tests
 
 			test.Assert (10000);
 		}
+
+		[Test]
+		public void ConnectionMade()
+		{
+			var server = new MockServer (provider, MessageTypes.Reliable);
+			server.Start();
+
+			var test = new AsyncTest();
+			server.ConnectionMade += test.PassHandler;
+
+			var client = provider.GetClientConnection (protocol);
+			client.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+
+			test.Assert (5000);
+		}
+
+		[Test]
+		public void ConnectionMadeGlobalOrder()
+		{
+			var server = new MockServer (MessageTypes.Reliable);
+			server.AddConnectionProvider (provider, ExecutionMode.GlobalOrder);
+			server.Start();
+
+			var test = new AsyncTest();
+			server.ConnectionMade += test.PassHandler;
+
+			var client = provider.GetClientConnection (protocol);
+			client.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+
+			test.Assert (5000);
+		}
 	}
 }

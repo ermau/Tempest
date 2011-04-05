@@ -175,6 +175,14 @@ namespace Tempest.Tests
 			this.exception = ex;
 		}
 
+		public void FailWith (string message)
+		{
+			if (this.complete)
+				return;
+
+			this.exception = new AssertionException (message);
+		}
+
 		public void Assert (int timeout, bool failIfNotPassed = true)
 		{
 			try

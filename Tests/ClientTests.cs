@@ -111,5 +111,23 @@ namespace Tempest.Tests
 
 			test.Assert (10000);
 		}
+
+		[Test]
+		public void DisconnectFromHandlerThread()
+		{
+			var test = new AsyncTest();
+
+			Action<MessageEventArgs> handler = e =>
+			{
+				client.Disconnect (true);
+				test.PassHandler (null, EventArgs.Empty);
+			};
+
+			((IContext)client).RegisterMessageHandler (1, handler);
+			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
+
+			test.Assert (10000);
+		}
 	}
 }

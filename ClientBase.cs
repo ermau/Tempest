@@ -123,11 +123,11 @@ namespace Tempest
 					this.mqueue.Clear();
 			}
 
-			if (this.messageRunner != null)
-			{
-				this.messageRunner.Join();
-				this.messageRunner = null;
-			}
+			Thread runner = this.messageRunner;
+			this.messageRunner = null;
+
+			if (runner != null && Thread.CurrentThread != runner)
+				runner.Join();
 		}
 
 		/// <summary>

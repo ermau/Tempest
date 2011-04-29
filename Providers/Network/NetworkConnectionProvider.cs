@@ -312,8 +312,12 @@ namespace Tempest.Providers.Network
 
 			if (!this.running || e.SocketError != SocketError.Success)
 			{
+				if (!this.running)
+					e.Dispose();
+				else
+					BeginAccepting (e);
+
 				Trace.WriteLine ("Exiting", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
-				e.Dispose();
 				return;
 			}
 

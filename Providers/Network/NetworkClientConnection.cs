@@ -185,7 +185,7 @@ namespace Tempest.Providers.Network
 			{
 				case (ushort)TempestMessageType.Ping:
 					var ping = (PingMessage)e.Message;
-					if (this.pingFrequency == 0)
+					if (this.pingFrequency == 0 || this.activityTimer == null)
 					{
 						if (this.activityTimer != null)
 							this.activityTimer.Dispose();

@@ -315,7 +315,16 @@ namespace Tempest.Providers.Network
 				if (!this.running)
 					e.Dispose();
 				else
+				{
+					e.AcceptSocket.Shutdown (SocketShutdown.Both);
+					e.AcceptSocket.Disconnect (true);
+					//#if !NET_4
+					//lock (ReliableSockets)
+					//#endif
+					//    ReliableSockets.Push (this.reliableSocket);
+
 					BeginAccepting (e);
+				}
 
 				Trace.WriteLine ("Exiting", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
 				return;
@@ -357,19 +366,19 @@ namespace Tempest.Providers.Network
 					return;
 
 				Socket s = null;
-				#if NET_4
-				if (!ReliableSockets.TryPop (out s))
-					s = null;
-				#else
-				if (ReliableSockets.Count != 0)
-				{
-					lock (ReliableSockets)
-					{
-						if (ReliableSockets.Count != 0)
-							s = ReliableSockets.Pop();
-					}
-				}
-				#endif
+				//#if NET_4
+				//if (!ReliableSockets.TryPop (out s))
+				//    s = null;
+				//#else
+				//if (ReliableSockets.Count != 0)
+				//{
+				//    lock (ReliableSockets)
+				//    {
+				//        if (ReliableSockets.Count != 0)
+				//            s = ReliableSockets.Pop();
+				//    }
+				//}
+				//#endif
 
 				e.AcceptSocket = s;
 			}
@@ -385,10 +394,10 @@ namespace Tempest.Providers.Network
 				cmade (this, e);
 		}
 
-		#if NET_4
-		internal static readonly ConcurrentStack<Socket> ReliableSockets = new ConcurrentStack<Socket>();
-		#else
-		internal static readonly Stack<Socket> ReliableSockets = new Stack<Socket>();
-		#endif
+		//#if NET_4
+		//internal static readonly ConcurrentStack<Socket> ReliableSockets = new ConcurrentStack<Socket>();
+		//#else
+		//internal static readonly Stack<Socket> ReliableSockets = new Stack<Socket>();
+		//#endif
 	}
 }

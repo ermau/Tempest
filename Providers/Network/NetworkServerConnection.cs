@@ -236,10 +236,10 @@ namespace Tempest.Providers.Network
 			if (this.reliableSocket == null)
 				return;
 
-			#if !NET_4
-			lock (NetworkConnectionProvider.ReliableSockets)
-			#endif
-				NetworkConnectionProvider.ReliableSockets.Push (this.reliableSocket);
+			//#if !NET_4
+			//lock (NetworkConnectionProvider.ReliableSockets)
+			//#endif
+			//    NetworkConnectionProvider.ReliableSockets.Push (this.reliableSocket);
 
 			this.reliableSocket = null;
 		}

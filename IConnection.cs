@@ -72,6 +72,11 @@ namespace Tempest
 		EndPoint RemoteEndPoint { get; }
 
 		/// <summary>
+		/// Gets the response time in milliseconds for the connection. -1 if unsupported.
+		/// </summary>
+		int ResponseTime { get; }
+
+		/// <summary>
 		/// A message was received on the transport.
 		/// </summary>
 		/// <exception cref="NotSupportedException"><see cref="Modes"/> is not <see cref="MessagingModes.Async"/>.</exception>

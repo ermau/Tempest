@@ -268,6 +268,11 @@ namespace Tempest.Tests
 			get { return this.connected; }
 		}
 
+		public int ResponseTime
+		{
+			get { return -1; }
+		}
+
 		public MessagingModes Modes
 		{
 			get { return MessagingModes.Async; }

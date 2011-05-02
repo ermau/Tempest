@@ -104,6 +104,12 @@ namespace Tempest.Providers.Network
 			}
 		}
 
+		public int ResponseTime
+		{
+			get;
+			private set;
+		}
+
 		public MessagingModes Modes
 		{
 			get { return MessagingModes.Async; }
@@ -689,6 +695,7 @@ namespace Tempest.Providers.Network
 			Trace.WriteLine ("Exiting", String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
 		}
 
+		protected long lastSent;
 		protected DateTime lastReceived;
 		protected int pingsOut = 0;
 
@@ -698,9 +705,11 @@ namespace Tempest.Providers.Network
 			{
 				case (ushort)TempestMessageType.Ping:
 					Send (new PongMessage());
+					this.lastSent = Stopwatch.GetTimestamp();
 					break;
 
 				case (ushort)TempestMessageType.Pong:
+					ResponseTime = (int)Math.Round (TimeSpan.FromTicks (Stopwatch.GetTimestamp() - this.lastSent).TotalMilliseconds, 0);
 					this.pingsOut = 0;
 					break;
 

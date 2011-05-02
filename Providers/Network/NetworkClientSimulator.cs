@@ -73,6 +73,11 @@ namespace Tempest.Providers.Network
 			get { return this.connection.IsConnected; }
 		}
 
+		public int ResponseTime
+		{
+			get { return this.connection.ResponseTime; }
+		}
+
 		public MessagingModes Modes
 		{
 			get { return this.connection.Modes; }

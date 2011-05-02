@@ -135,6 +135,19 @@ namespace Tempest
 			return CompatibleWith (protocol.Version);
 		}
 
+		/// <summary>
+		/// Gets whether <paramref name="protocol" /> is the same protocol (ignoring version).
+		/// </summary>
+		/// <param name="protocol">Protocl to check.</param>
+		/// <returns><c>true</c> if the protocol id's match, <c>false</c> otherwise.</returns>
+		public bool IsSameProtocolAs (Protocol protocol)
+		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
+
+			return id == protocol.id;
+		}
+
 		public void Serialize (IValueWriter writer)
 		{
 			writer.WriteByte (this.id);

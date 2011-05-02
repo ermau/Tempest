@@ -156,5 +156,49 @@ namespace Tempest.Tests
 			Assert.IsFalse (p1.CompatibleWith (p3));
 			Assert.IsFalse (p1.CompatibleWith (p4));
 		}
+
+		[Test]
+		public void IsSameProtocolAsNull()
+		{
+			var p1 = new Protocol (5, 1);
+
+			Assert.Throws<ArgumentNullException> (() => p1.IsSameProtocolAs (null));
+		}
+
+		[Test]
+		public void IsSameProtocolAsSameVersion()
+		{
+			var p1 = new Protocol (5, 2);
+			var p2 = new Protocol (5, 2);
+
+			Assert.IsTrue (p1.IsSameProtocolAs (p2));
+		}
+
+		[Test]
+		public void IsSameProtocolAsDifferentVersion()
+		{
+			var p1 = new Protocol (5, 2);
+			var p2 = new Protocol (5, 6);
+
+			Assert.IsTrue (p1.IsSameProtocolAs (p2));
+		}
+
+		[Test]
+		public void IsSameProtocolAsNonCompatibleVersion()
+		{
+			var p1 = new Protocol (5, 2, new int[] { 1, 2 });
+			var p2 = new Protocol (5, 6, new int[] { 5, 6 });
+
+			Assert.IsTrue (p1.IsSameProtocolAs (p2));
+		}
+
+		[Test]
+		public void IsNotSameProtocol()
+		{
+			var p1 = new Protocol (5, 2);
+			var p2 = new Protocol (6, 2);
+
+			Assert.IsFalse (p1.IsSameProtocolAs (p2));
+		}
 	}
 }

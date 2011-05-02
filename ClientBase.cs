@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -38,7 +39,7 @@ namespace Tempest
 	/// Base class for Tempest clients.
 	/// </summary>
 	public abstract class ClientBase
-		: MessageHandler, IClientContext
+		: MessageHandler, IClientContext, INotifyPropertyChanged
 	{
 		protected ClientBase (IClientConnection connection, MessageTypes mtypes, bool poll = false)
 		{
@@ -63,6 +64,8 @@ namespace Tempest
 
 			this.polling = poll;
 		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
 
 		/// <summary>
 		/// Raised when the client connects.
@@ -292,6 +295,7 @@ namespace Tempest
 
 		private void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
 		{
+			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
 			OnDisconnected (new ClientDisconnectedEventArgs (e.Reason));
 		}
 
@@ -310,6 +314,13 @@ namespace Tempest
 			OnConnected (EventArgs.Empty);
 		}
 
+		protected virtual void OnPropertyChanged (PropertyChangedEventArgs e)
+		{
+			var changed = PropertyChanged;
+			if (changed != null)
+				changed (this, e);
+		}
+
 		protected virtual void OnConnected (EventArgs e)
 		{
 			EventHandler handler = Connected;
@@ -323,6 +334,8 @@ namespace Tempest
 			if (handler != null)
 				handler (this, e);
 		}
+
+		
 	}
 
 	public class ClientDisconnectedEventArgs

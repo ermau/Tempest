@@ -67,6 +67,15 @@ namespace Tempest
 		{
 			Discover (Assembly.GetCallingAssembly());
 		}
+
+		/// <summary>
+		/// Discovers and registers messages from the assembly of type <typeparamref name="T"/>.
+		/// </summary>
+		/// <typeparam name="T">The type who's assembly to discover messages from.</typeparam>
+		public void DiscoverFromAssemblyOf<T>()
+		{
+			Discover (typeof (T).Assembly);
+		}
 		#endif
 
 		/// <summary>

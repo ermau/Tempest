@@ -268,6 +268,11 @@ namespace Tempest.Tests
 			get { return this.connected; }
 		}
 
+		public IEnumerable<Protocol> Protocols
+		{
+			get { throw new NotImplementedException(); }
+		}
+
 		public MessagingModes Modes
 		{
 			get { return MessagingModes.Async; }

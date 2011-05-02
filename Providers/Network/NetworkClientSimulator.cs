@@ -73,6 +73,11 @@ namespace Tempest.Providers.Network
 			get { return this.connection.IsConnected; }
 		}
 
+		public IEnumerable<Protocol> Protocols
+		{
+			get { return this.connection.Protocols; }
+		}
+
 		public MessagingModes Modes
 		{
 			get { return this.connection.Modes; }

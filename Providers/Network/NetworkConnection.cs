@@ -104,6 +104,11 @@ namespace Tempest.Providers.Network
 			}
 		}
 
+		public IEnumerable<Protocol> Protocols
+		{
+			get { return this.protocols.Values; }
+		}
+
 		public MessagingModes Modes
 		{
 			get { return MessagingModes.Async; }

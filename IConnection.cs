@@ -62,6 +62,11 @@ namespace Tempest
 		bool IsConnected { get; }
 
 		/// <summary>
+		/// Gets the protocols the connection has enabled/negotiated.
+		/// </summary>
+		IEnumerable<Protocol> Protocols { get; }
+
+		/// <summary>
 		/// The supported modes for the connection.
 		/// </summary>
 		MessagingModes Modes { get; }

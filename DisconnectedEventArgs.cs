@@ -62,6 +62,11 @@ namespace Tempest
 		/// An encrypted message failed decryption.
 		/// </summary>
 		EncryptionMismatch = 5,
+
+		/// <summary>
+		/// An application specified reason.
+		/// </summary>
+		Custom = 6,
 	}
 
 	/// <summary>
@@ -82,7 +87,19 @@ namespace Tempest
 			Reason = reason;
 		}
 
+		public DisconnectedEventArgs (IConnection connection, DisconnectedReason reason, string customReason)
+			: this (connection, reason)
+		{
+			CustomReason = customReason;
+		}
+
 		public DisconnectedReason Reason
+		{
+			get;
+			private set;
+		}
+
+		public string CustomReason
 		{
 			get;
 			private set;

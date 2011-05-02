@@ -30,6 +30,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using Cadenza.Collections;
+using Tempest.InternalProtocol;
 
 namespace Tempest
 {
@@ -105,29 +106,20 @@ namespace Tempest
 		/// <param name="now">Whether or not to disconnect immediately or wait for pending messages.</param>
 		public virtual void Disconnect (bool now)
 		{
-			this.connection.Disconnect (now);
+			Disconnect (now, DisconnectedReason.Unknown, null);
+		}
 
-			if (!now)
-			{
-				this.disconnecting = true;
-				return;
-			}
+		/// <summary>
+		/// Disconnects after sending a disconnection message with <see cref="reason"/>.
+		/// </summary>
+		/// <param name="reason">The reason given for disconnection.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="reason"/> is <c>null</c>.</exception>
+		public void DisconnectWithReason (string reason)
+		{
+			if (reason == null)
+				throw new ArgumentNullException ("reason");
 
-			this.running = false;
-
-			if (this.mode == MessagingModes.Async)
-			{
-				this.mwait.Set();
-					
-				lock (this.mqueue)
-					this.mqueue.Clear();
-			}
-
-			Thread runner = this.messageRunner;
-			this.messageRunner = null;
-
-			if (runner != null && Thread.CurrentThread != runner)
-				runner.Join();
+			Disconnect (false, DisconnectedReason.Custom, reason);
 		}
 
 		/// <summary>
@@ -177,6 +169,36 @@ namespace Tempest
 		private Thread messageRunner;
 		protected volatile bool running;
 		private readonly MessageTypes messageTypes;
+
+		private void Disconnect (bool now, DisconnectedReason reason, string customReason)
+		{
+			if (reason == DisconnectedReason.Custom)
+				this.connection.Send (new DisconnectMessage { Reason = DisconnectedReason.Custom, CustomReason = customReason });
+
+			this.connection.Disconnect (now, reason);
+
+			if (!now)
+			{
+				this.disconnecting = true;
+				return;
+			}
+
+			this.running = false;
+
+			if (this.mode == MessagingModes.Async)
+			{
+				this.mwait.Set();
+					
+				lock (this.mqueue)
+					this.mqueue.Clear();
+			}
+
+			Thread runner = this.messageRunner;
+			this.messageRunner = null;
+
+			if (runner != null && Thread.CurrentThread != runner)
+				runner.Join();
+		}
 
 		private void ConnectionOnMessageReceived (object sender, MessageEventArgs e)
 		{

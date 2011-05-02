@@ -29,6 +29,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Tempest.InternalProtocol;
 
 namespace Tempest
 {
@@ -170,6 +171,17 @@ namespace Tempest
 					}
 				}
 			}
+		}
+
+		public void DisconnectWithReason (IConnection connection, string reason)
+		{
+			if (connection == null)
+				throw new ArgumentNullException ("connection");
+			if (reason == null)
+				throw new ArgumentNullException ("reason");
+
+			connection.Send (new DisconnectMessage { Reason = DisconnectedReason.Custom, CustomReason = reason });
+			connection.Disconnect (false, DisconnectedReason.Custom);
 		}
 
 		protected volatile bool running = false;

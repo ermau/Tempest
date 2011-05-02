@@ -49,14 +49,27 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
+		/// <summary>
+		/// Gets or sets a custom reason for disconnection.
+		/// </summary>
+		public string CustomReason
+		{
+			get;
+			set;
+		}
+
 		public override void WritePayload (IValueWriter writer)
 		{
 			writer.WriteInt32 ((int)Reason);
+			if (Reason == DisconnectedReason.Custom)
+				writer.WriteString (CustomReason);
 		}
 
 		public override void ReadPayload (IValueReader reader)
 		{
 			Reason = (DisconnectedReason)reader.ReadInt32();
+			if (Reason == DisconnectedReason.Custom)
+				CustomReason = reader.ReadString();
 		}
 	}
 }

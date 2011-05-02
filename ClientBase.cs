@@ -40,7 +40,7 @@ namespace Tempest
 	public abstract class ClientBase
 		: MessageHandler, IClientContext
 	{
-		protected ClientBase (IClientConnection connection, MessageTypes mtypes, bool poll)
+		protected ClientBase (IClientConnection connection, MessageTypes mtypes, bool poll = false)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");

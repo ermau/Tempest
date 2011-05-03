@@ -590,9 +590,9 @@ namespace Tempest.Providers.Network
 			{
 				if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 				{
-					Disconnect (true);
 					p = Interlocked.Decrement (ref this.pendingAsync);
 					Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
+					Disconnect (true);
 					Trace.WriteLine ("Exiting (error)", String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, GetType().Name, c, connectionId));
 					return;
 				}

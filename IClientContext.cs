@@ -35,5 +35,12 @@ namespace Tempest
 		/// Gets the client connection.
 		/// </summary>
 		IClientConnection Connection { get; }
+
+		/// <summary>
+		/// Disconnects after sending a disconnection message with <see cref="reason"/>.
+		/// </summary>
+		/// <param name="reason">The reason given for disconnection.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="reason"/> is <c>null</c>.</exception>
+		void DisconnectWithReason (string reason);
 	}
 }

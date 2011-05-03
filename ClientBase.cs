@@ -26,10 +26,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Threading;
 using Cadenza.Collections;
+using Tempest.InternalProtocol;
 
 namespace Tempest
 {
@@ -37,9 +39,9 @@ namespace Tempest
 	/// Base class for Tempest clients.
 	/// </summary>
 	public abstract class ClientBase
-		: MessageHandler, IClientContext
+		: MessageHandler, IClientContext, INotifyPropertyChanged
 	{
-		protected ClientBase (IClientConnection connection, MessageTypes mtypes, bool poll)
+		protected ClientBase (IClientConnection connection, MessageTypes mtypes, bool poll = false)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
@@ -62,6 +64,8 @@ namespace Tempest
 
 			this.polling = poll;
 		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
 
 		/// <summary>
 		/// Raised when the client connects.
@@ -105,29 +109,20 @@ namespace Tempest
 		/// <param name="now">Whether or not to disconnect immediately or wait for pending messages.</param>
 		public virtual void Disconnect (bool now)
 		{
-			this.connection.Disconnect (now);
+			Disconnect (now, DisconnectedReason.Unknown, null);
+		}
 
-			if (!now)
-			{
-				this.disconnecting = true;
-				return;
-			}
+		/// <summary>
+		/// Disconnects after sending a disconnection message with <see cref="reason"/>.
+		/// </summary>
+		/// <param name="reason">The reason given for disconnection.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="reason"/> is <c>null</c>.</exception>
+		public void DisconnectWithReason (string reason)
+		{
+			if (reason == null)
+				throw new ArgumentNullException ("reason");
 
-			this.running = false;
-
-			if (this.mode == MessagingModes.Async)
-			{
-				this.mwait.Set();
-					
-				lock (this.mqueue)
-					this.mqueue.Clear();
-			}
-
-			Thread runner = this.messageRunner;
-			this.messageRunner = null;
-
-			if (runner != null && Thread.CurrentThread != runner)
-				runner.Join();
+			Disconnect (false, DisconnectedReason.Custom, reason);
 		}
 
 		/// <summary>
@@ -177,6 +172,36 @@ namespace Tempest
 		private Thread messageRunner;
 		protected volatile bool running;
 		private readonly MessageTypes messageTypes;
+
+		private void Disconnect (bool now, DisconnectedReason reason, string customReason)
+		{
+			if (reason == DisconnectedReason.Custom)
+				this.connection.Send (new DisconnectMessage { Reason = DisconnectedReason.Custom, CustomReason = customReason });
+
+			this.connection.Disconnect (now, reason);
+
+			if (!now)
+			{
+				this.disconnecting = true;
+				return;
+			}
+
+			this.running = false;
+
+			if (this.mode == MessagingModes.Async)
+			{
+				this.mwait.Set();
+					
+				lock (this.mqueue)
+					this.mqueue.Clear();
+			}
+
+			Thread runner = this.messageRunner;
+			this.messageRunner = null;
+
+			if (runner != null && Thread.CurrentThread != runner)
+				runner.Join();
+		}
 
 		private void ConnectionOnMessageReceived (object sender, MessageEventArgs e)
 		{
@@ -270,6 +295,7 @@ namespace Tempest
 
 		private void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
 		{
+			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
 			OnDisconnected (new ClientDisconnectedEventArgs (e.Reason));
 		}
 
@@ -288,6 +314,13 @@ namespace Tempest
 			OnConnected (EventArgs.Empty);
 		}
 
+		protected virtual void OnPropertyChanged (PropertyChangedEventArgs e)
+		{
+			var changed = PropertyChanged;
+			if (changed != null)
+				changed (this, e);
+		}
+
 		protected virtual void OnConnected (EventArgs e)
 		{
 			EventHandler handler = Connected;
@@ -301,6 +334,8 @@ namespace Tempest
 			if (handler != null)
 				handler (this, e);
 		}
+
+		
 	}
 
 	public class ClientDisconnectedEventArgs

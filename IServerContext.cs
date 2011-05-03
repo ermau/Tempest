@@ -38,5 +38,13 @@ namespace Tempest
 		/// Raised when a connection is made.
 		/// </summary>
 		event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
+
+		/// <summary>
+		/// Disconnects a connection after sending a disconnection message with <see cref="reason"/>.
+		/// </summary>
+		/// <param name="connection">This connection to disconnect.</param>
+		/// <param name="reason">The reason given for disconnection.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="connection"/> or <paramref name="reason"/> is <c>null</c>.</exception>
+		void DisconnectWithReason (IConnection connection, string reason);
 	}
 }

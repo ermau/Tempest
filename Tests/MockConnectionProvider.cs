@@ -273,6 +273,11 @@ namespace Tempest.Tests
 			get { throw new NotImplementedException(); }
 		}
 
+		public int ResponseTime
+		{
+			get { return -1; }
+		}
+
 		public MessagingModes Modes
 		{
 			get { return MessagingModes.Async; }

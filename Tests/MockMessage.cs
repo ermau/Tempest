@@ -44,7 +44,10 @@ namespace Tempest.Tests
 			p.Register (new[]
 			{
 				new KeyValuePair<Type, Func<Message>> (typeof (MockMessage), () => new MockMessage()),
-				new KeyValuePair<Type, Func<Message>> (typeof (ConnectionProviderTests.CryptoMessage), () => new ConnectionProviderTests.CryptoMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof (BlankMessage), () => new BlankMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof (AuthenticatedMessage), () => new AuthenticatedMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof (EncryptedMessage), () => new EncryptedMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof (AuthenticatedAndEncryptedMessage), () => new AuthenticatedAndEncryptedMessage()), 
 			});
 		}
 	}
@@ -70,6 +73,103 @@ namespace Tempest.Tests
 		public override void ReadPayload (IValueReader reader)
 		{
 			Content = reader.ReadString (Encoding.UTF8);
+		}
+	}
+
+	public abstract class ContentMessage
+		: Message
+	{
+		protected ContentMessage (ushort id)
+			: base (MockProtocol.Instance, id)
+		{
+		}
+
+		public string Message
+		{
+			get;
+			set;
+		}
+
+		public int Number
+		{
+			get;
+			set;
+		}
+
+		public override void WritePayload (IValueWriter writer)
+		{
+			writer.WriteString (Message);
+			writer.WriteInt32 (Number);
+		}
+
+		public override void ReadPayload (IValueReader reader)
+		{
+			Message = reader.ReadString();
+			Number = reader.ReadInt32();
+		}
+	}
+
+	public class AuthenticatedMessage
+		: ContentMessage
+	{
+		public AuthenticatedMessage()
+			: base (3)
+		{
+		}
+
+		public override bool Authenticated
+		{
+			get { return true; }
+		}
+	}
+
+	public class EncryptedMessage
+		: ContentMessage
+	{
+		public EncryptedMessage()
+			: base (4)
+		{
+		}
+
+		public override bool Encrypted
+		{
+			get { return true; }
+		}
+	}
+
+	public class AuthenticatedAndEncryptedMessage
+		: ContentMessage
+	{
+		public AuthenticatedAndEncryptedMessage()
+			: base (5)
+		{
+		}
+
+		public override bool Authenticated
+		{
+			get { return true; }
+		}
+
+		public override bool Encrypted
+		{
+			get { return true; }
+		}
+	}
+
+	public class BlankMessage
+		: Message
+	{
+		public BlankMessage()
+			: base (MockProtocol.Instance, 2)
+		{
+		}
+
+		public override void WritePayload (IValueWriter writer)
+		{
+		}
+
+		public override void ReadPayload (IValueReader reader)
+		{
 		}
 	}
 }

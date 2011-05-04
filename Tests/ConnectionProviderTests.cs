@@ -461,6 +461,55 @@ namespace Tempest.Tests
 			test.Assert (60000);
 		}
 
+		[Test]
+		public void StressAuthenticatedAndEncrypted()
+		{
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+
+			const int messages = 10000;
+			int number = 0;
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (c, me.Connection);
+
+				Assert.AreEqual (number, ((AuthenticatedAndEncryptedMessage)me.Message).Number);
+				Assert.AreEqual (number.ToString(), ((AuthenticatedAndEncryptedMessage)me.Message).Message);
+
+				if (++number == messages)
+					Assert.Pass();
+			}, true);
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
+			{
+				try
+				{
+					for (int i = 0; i < messages; ++i)
+					{
+						if (i > Int32.MaxValue)
+							System.Diagnostics.Debugger.Break();
+
+						e.Connection.Send (new AuthenticatedAndEncryptedMessage { Number = i, Message = i.ToString() });
+					}
+				}
+				catch (Exception ex)
+				{
+					test.FailWith (ex);
+				}
+			})).Start();
+
+			c.Disconnected += test.FailHandler;
+			c.MessageReceived += test.PassHandler;
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (60000);
+		}
+
 		[Test, Repeat (25)]
 		public void ConnectionFailed()
 		{
@@ -732,59 +781,11 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		public class CryptoMessage
-			: Message
-		{
-			public CryptoMessage()
-				: base (MockProtocol.Instance, 10)
-			{
-			}
-
-			public bool Encrypt { get; set; }
-
-			public override bool Encrypted
-			{
-				get { return Encrypt; }
-			}
-
-			public bool Authenticate { get; set; }
-
-			public override bool Authenticated
-			{
-				get { return Authenticate; }
-			}
-
-			public string Message
-			{
-				get;
-				set;
-			}
-
-			public int Number
-			{
-				get;
-				set;
-			}
-
-			public override void WritePayload (IValueWriter writer)
-			{
-				writer.WriteString (Message);
-				writer.WriteInt32 (Number);
-			}
-
-			public override void ReadPayload (IValueReader reader)
-			{
-				Message = reader.ReadString();
-				Number = reader.ReadInt32();
-			}
-		}
-
 		[Test, Repeat (3)]
 		public void EncryptedMessage()
 		{
-			var cmessage = new CryptoMessage
+			var cmessage = new EncryptedMessage
 			{
-				Encrypt = true,
 				Message = "It's a secret!",
 				Number = 42
 			};
@@ -797,8 +798,9 @@ namespace Tempest.Tests
 				Assert.IsNotNull (me);
 				Assert.AreSame (me.Connection, c);
 
-				var msg = (me.Message as CryptoMessage);
+				var msg = (me.Message as EncryptedMessage);
 				Assert.IsNotNull (msg);
+				Assert.IsTrue (msg.Encrypted);
 				Assert.AreEqual (cmessage.Message, msg.Message);
 				Assert.AreEqual (cmessage.Number, msg.Number);
 			});
@@ -816,9 +818,8 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void AuthenticatedMessage()
 		{
-			var cmessage = new CryptoMessage
+			var cmessage = new AuthenticatedMessage
 			{
-				Authenticate = true,
 				Message = "It's a secret!",
 				Number = 42
 			};
@@ -830,8 +831,9 @@ namespace Tempest.Tests
 				Assert.IsNotNull (me);
 				Assert.AreSame (me.Connection, c);
 
-				var msg = (me.Message as CryptoMessage);
+				var msg = (me.Message as AuthenticatedMessage);
 				Assert.IsNotNull (msg);
+				Assert.IsTrue (msg.Authenticated);
 				Assert.AreEqual (cmessage.Message, msg.Message);
 				Assert.AreEqual (cmessage.Number, msg.Number);
 			});
@@ -847,12 +849,36 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
+		public void BlankMessage()
+		{
+			var cmessage = new BlankMessage();
+
+			var c = GetNewClientConnection();
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (me.Connection, c);
+
+				var msg = (me.Message as BlankMessage);
+				Assert.IsNotNull (msg);
+			});
+
+			this.provider.Start (MessageTypes);
+
+			c.Disconnected += test.FailHandler;
+			c.MessageSent += test.PassHandler;
+			c.Connected += (sender, e) => c.Send (cmessage);
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
 		public void EncryptedAndAuthenticatedMessage()
 		{
-			var cmessage = new CryptoMessage
+			var cmessage = new AuthenticatedAndEncryptedMessage()
 			{
-				Encrypt = true,
-				Authenticate = true,
 				Message = "It's a secret!",
 				Number = 42
 			};
@@ -865,8 +891,10 @@ namespace Tempest.Tests
 				Assert.IsNotNull (me);
 				Assert.AreSame (me.Connection, c);
 
-				var msg = (me.Message as CryptoMessage);
+				var msg = (me.Message as AuthenticatedAndEncryptedMessage);
 				Assert.IsNotNull (msg);
+				Assert.IsTrue (msg.Encrypted);
+				Assert.IsTrue (msg.Authenticated);
 				Assert.AreEqual (cmessage.Message, msg.Message);
 				Assert.AreEqual (cmessage.Number, msg.Number);
 			});

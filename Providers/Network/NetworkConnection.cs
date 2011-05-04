@@ -378,7 +378,7 @@ namespace Tempest.Providers.Network
 
 		protected virtual bool VerifyMessage (Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
-			byte[] ourhash = this.hmac.ComputeHash (data, moffset, length - moffset);
+			byte[] ourhash = this.hmac.ComputeHash (data, moffset, length);
 
 			if (signature.Length != ourhash.Length)
 				return false;

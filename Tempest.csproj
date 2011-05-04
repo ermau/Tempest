@@ -55,6 +55,7 @@
     <Compile Include="IAsymmetricKey.cs" />
     <Compile Include="IPublicKeyCrypto.cs" />
     <Compile Include="ISerializable.cs" />
+    <Compile Include="ISerializer.cs" />
     <Compile Include="IServerContext.cs" />
     <Compile Include="MessageHeader.cs" />
     <Compile Include="ObjectSerializer.cs" />

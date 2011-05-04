@@ -123,18 +123,37 @@ namespace Tempest
 			return elements;
 		}
 
-		public static void Write (this IValueWriter writer, object value)
+		public static void Write<T> (this IValueWriter writer, T element)
+		{
+			Write (writer, element, Serializer<T>.Default);
+		}
+
+		public static void Write<T> (this IValueWriter writer, T element, ISerializer<T> serializer)
 		{
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
+			if (serializer == null)
+				throw new ArgumentNullException ("serializer");
 
-			ObjectSerializer serializer = ObjectSerializer.GetSerializer (value.GetType());
-			serializer.Serialize (writer, value);
+			serializer.Serialize (element, writer);
 		}
 
 		public static T Read<T> (this IValueReader reader)
 		{
-			return (T)reader.Read (typeof (T));
+			if (reader == null)
+				throw new ArgumentNullException ("reader");
+
+			return Read (reader, Serializer<T>.Default);
+		}
+
+		public static T Read<T> (this IValueReader reader, ISerializer<T> serializer)
+		{
+			if (reader == null)
+				throw new ArgumentNullException ("reader");
+			if (serializer == null)
+				throw new ArgumentNullException ("serializer");
+
+			return serializer.Deserialize (reader);
 		}
 
 		public static object Read (this IValueReader reader, Type type)

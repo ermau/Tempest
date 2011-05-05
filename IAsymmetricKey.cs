@@ -29,6 +29,8 @@ namespace Tempest
 	public interface IAsymmetricKey
 		: ISerializable
 	{
+		byte[] PublicSignature { get; }
+
 		void Serialize (IValueWriter writer, IPublicKeyCrypto crypto);
 		void Deserialize (IValueReader reader, IPublicKeyCrypto crypto);
 	}

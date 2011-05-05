@@ -104,11 +104,19 @@ namespace Tempest
 			Buffer.BlockCopy (parameters.Modulus, 0, this.publicKey, 0, parameters.Modulus.Length);
 			Buffer.BlockCopy (parameters.Exponent, 0, this.publicKey, parameters.Modulus.Length, parameters.Exponent.Length);
 			this.exponentOffset = parameters.Modulus.Length;
+
+			SetupSignature();
 		}
 
 		public RSAAsymmetricKey (IValueReader reader)
 		{
 			Deserialize (reader);
+		}
+
+		public byte[] PublicSignature
+		{
+			get;
+			private set;
 		}
 
 		public byte[] D
@@ -366,6 +374,8 @@ namespace Tempest
 				Buffer.BlockCopy (modulus, 0, this.publicKey, 0, modulus.Length);
 				Buffer.BlockCopy (exponent, 0, this.publicKey, exponentOffset, exponent.Length);
 			}
+
+			SetupSignature();
 		}
 
 		public static implicit operator RSAParameters (RSAAsymmetricKey key)
@@ -398,6 +408,12 @@ namespace Tempest
 
 		private int exponentOffset;
 		private byte[] publicKey;
+
+		private void SetupSignature()
+		{
+			using (SHA1CryptoServiceProvider sha = new SHA1CryptoServiceProvider())
+				PublicSignature = sha.ComputeHash (this.publicKey);
+		}
 	}
 	#endif
 }

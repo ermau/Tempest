@@ -38,74 +38,19 @@ namespace Tempest
 		{
 		}
 
+		public RSAAsymmetricKey (byte[] cspBlob)
+		{
+			using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+			{
+				rsa.ImportCspBlob (cspBlob);
+
+				ImportRSAParameters (rsa.ExportParameters (true));
+			}
+		}
+
 		public RSAAsymmetricKey (RSAParameters parameters)
 		{
-			int len = 0;
-			len += (parameters.D != null) ? parameters.D.Length : 0;
-			len += (parameters.DP != null) ? parameters.DP.Length : 0;
-			len += (parameters.DQ != null) ? parameters.DQ.Length : 0;
-			len += (parameters.InverseQ != null) ? parameters.InverseQ.Length : 0;
-			len += (parameters.P != null) ? parameters.P.Length : 0;
-			len += (parameters.Q != null) ? parameters.Q.Length : 0;
-
-			while ((len % 16) != 0)
-				len++;
-
-			if (len != 0)
-				this.privateKey = new byte[len];
-
-			int index = 0;
-			if (parameters.D != null)
-			{
-				Buffer.BlockCopy (parameters.D, 0, this.privateKey, index, parameters.D.Length);
-				this.d = new ArraySegment<byte> (this.privateKey, index, parameters.D.Length);
-				index += parameters.D.Length;
-			}
-
-			if (parameters.DP != null)
-			{
-				Buffer.BlockCopy (parameters.DP, 0, this.privateKey, index, parameters.DP.Length);
-				this.dp = new ArraySegment<byte> (this.privateKey, index, parameters.DP.Length);
-				index += parameters.DP.Length;
-			}
-
-			if (parameters.DQ != null)
-			{
-				Buffer.BlockCopy (parameters.DQ, 0, this.privateKey, index, parameters.DQ.Length);
-				this.dq = new ArraySegment<byte> (this.privateKey, index, parameters.DQ.Length);
-				index += parameters.DQ.Length;
-			}
-
-			if (parameters.InverseQ != null)
-			{
-				Buffer.BlockCopy (parameters.InverseQ, 0, this.privateKey, index, parameters.InverseQ.Length);
-				this.iq = new ArraySegment<byte> (this.privateKey, index, parameters.InverseQ.Length);
-				index += parameters.InverseQ.Length;
-			}
-
-			if (parameters.P != null)
-			{
-				Buffer.BlockCopy (parameters.P, 0, this.privateKey, index, parameters.P.Length);
-				this.p = new ArraySegment<byte> (this.privateKey, index, parameters.P.Length);
-				index += parameters.P.Length;
-			}
-
-			if (parameters.Q != null)
-			{
-				Buffer.BlockCopy (parameters.Q, 0, this.privateKey, index, parameters.Q.Length);
-				this.q = new ArraySegment<byte> (this.privateKey, index, parameters.Q.Length);
-				index += parameters.Q.Length;
-			}
-
-			if (this.privateKey != null)
-				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
-
-			this.publicKey = new byte[parameters.Modulus.Length + parameters.Exponent.Length];
-			Buffer.BlockCopy (parameters.Modulus, 0, this.publicKey, 0, parameters.Modulus.Length);
-			Buffer.BlockCopy (parameters.Exponent, 0, this.publicKey, parameters.Modulus.Length, parameters.Exponent.Length);
-			this.exponentOffset = parameters.Modulus.Length;
-
-			SetupSignature();
+			ImportRSAParameters (parameters);
 		}
 
 		public RSAAsymmetricKey (IValueReader reader)
@@ -413,6 +358,76 @@ namespace Tempest
 		{
 			using (SHA1CryptoServiceProvider sha = new SHA1CryptoServiceProvider())
 				PublicSignature = sha.ComputeHash (this.publicKey);
+		}
+
+		private void ImportRSAParameters (RSAParameters parameters)
+		{
+			int len = 0;
+			len += (parameters.D != null) ? parameters.D.Length : 0;
+			len += (parameters.DP != null) ? parameters.DP.Length : 0;
+			len += (parameters.DQ != null) ? parameters.DQ.Length : 0;
+			len += (parameters.InverseQ != null) ? parameters.InverseQ.Length : 0;
+			len += (parameters.P != null) ? parameters.P.Length : 0;
+			len += (parameters.Q != null) ? parameters.Q.Length : 0;
+
+			while ((len % 16) != 0)
+				len++;
+
+			if (len != 0)
+				this.privateKey = new byte[len];
+
+			int index = 0;
+			if (parameters.D != null)
+			{
+				Buffer.BlockCopy (parameters.D, 0, this.privateKey, index, parameters.D.Length);
+				this.d = new ArraySegment<byte> (this.privateKey, index, parameters.D.Length);
+				index += parameters.D.Length;
+			}
+
+			if (parameters.DP != null)
+			{
+				Buffer.BlockCopy (parameters.DP, 0, this.privateKey, index, parameters.DP.Length);
+				this.dp = new ArraySegment<byte> (this.privateKey, index, parameters.DP.Length);
+				index += parameters.DP.Length;
+			}
+
+			if (parameters.DQ != null)
+			{
+				Buffer.BlockCopy (parameters.DQ, 0, this.privateKey, index, parameters.DQ.Length);
+				this.dq = new ArraySegment<byte> (this.privateKey, index, parameters.DQ.Length);
+				index += parameters.DQ.Length;
+			}
+
+			if (parameters.InverseQ != null)
+			{
+				Buffer.BlockCopy (parameters.InverseQ, 0, this.privateKey, index, parameters.InverseQ.Length);
+				this.iq = new ArraySegment<byte> (this.privateKey, index, parameters.InverseQ.Length);
+				index += parameters.InverseQ.Length;
+			}
+
+			if (parameters.P != null)
+			{
+				Buffer.BlockCopy (parameters.P, 0, this.privateKey, index, parameters.P.Length);
+				this.p = new ArraySegment<byte> (this.privateKey, index, parameters.P.Length);
+				index += parameters.P.Length;
+			}
+
+			if (parameters.Q != null)
+			{
+				Buffer.BlockCopy (parameters.Q, 0, this.privateKey, index, parameters.Q.Length);
+				this.q = new ArraySegment<byte> (this.privateKey, index, parameters.Q.Length);
+				index += parameters.Q.Length;
+			}
+
+			if (this.privateKey != null)
+				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
+
+			this.publicKey = new byte[parameters.Modulus.Length + parameters.Exponent.Length];
+			Buffer.BlockCopy (parameters.Modulus, 0, this.publicKey, 0, parameters.Modulus.Length);
+			Buffer.BlockCopy (parameters.Exponent, 0, this.publicKey, parameters.Modulus.Length, parameters.Exponent.Length);
+			this.exponentOffset = parameters.Modulus.Length;
+
+			SetupSignature();
 		}
 	}
 	#endif

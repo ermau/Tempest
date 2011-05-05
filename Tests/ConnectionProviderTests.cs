@@ -796,7 +796,6 @@ namespace Tempest.Tests
 			{
 				var me = (e as MessageEventArgs);
 				Assert.IsNotNull (me);
-				Assert.AreSame (me.Connection, c);
 
 				var msg = (me.Message as EncryptedMessage);
 				Assert.IsNotNull (msg);
@@ -805,12 +804,76 @@ namespace Tempest.Tests
 				Assert.AreEqual (cmessage.Number, msg.Number);
 			});
 
+			IConnection sc;
+			ManualResetEvent wait = new ManualResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				sc.MessageReceived += test.PassHandler;
+				sc.Disconnected += test.FailHandler;
+				wait.Set();
+			};
+
 			this.provider.Start (MessageTypes);
 
 			c.Disconnected += test.FailHandler;
 			c.MessageSent += test.PassHandler;
 			c.Connected += (sender, e) => c.Send (cmessage);
 			c.Connect (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne(10000))
+				Assert.Fail ("Failed to connect");
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void EncryptedLongMessage()
+		{
+			Random r = new Random();
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < 10000000; ++i)
+				builder.Append ((char)r.Next (1, 20));
+
+			string message = builder.ToString();
+			var cmessage = new EncryptedMessage
+			{
+				Message = message,
+				Number = 42
+			};
+
+			var c = GetNewClientConnection();
+			
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+
+				var msg = (me.Message as EncryptedMessage);
+				Assert.IsNotNull (msg);
+				Assert.IsTrue (msg.Encrypted);
+				Assert.AreEqual (message, msg.Message);
+				Assert.AreEqual (cmessage.Number, msg.Number);
+			});
+
+			IConnection sc;
+			ManualResetEvent wait = new ManualResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				sc.MessageReceived += test.PassHandler;
+				sc.Disconnected += test.FailHandler;
+				wait.Set();
+			};
+
+			this.provider.Start (MessageTypes);
+
+			c.Disconnected += test.FailHandler;
+			c.Connected += (sender, e) => c.Send (cmessage);
+			c.Connect (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne(10000))
+				Assert.Fail ("Failed to connect");
 
 			test.Assert (10000);
 		}
@@ -829,7 +892,6 @@ namespace Tempest.Tests
 			{
 				var me = (e as MessageEventArgs);
 				Assert.IsNotNull (me);
-				Assert.AreSame (me.Connection, c);
 
 				var msg = (me.Message as AuthenticatedMessage);
 				Assert.IsNotNull (msg);
@@ -838,12 +900,25 @@ namespace Tempest.Tests
 				Assert.AreEqual (cmessage.Number, msg.Number);
 			});
 
+			IConnection sc;
+			ManualResetEvent wait = new ManualResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				sc.MessageReceived += test.PassHandler;
+				sc.Disconnected += test.FailHandler;
+				wait.Set();
+			};
+
 			this.provider.Start (MessageTypes);
 
 			c.Disconnected += test.FailHandler;
 			c.MessageSent += test.PassHandler;
 			c.Connected += (sender, e) => c.Send (cmessage);
 			c.Connect (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (10000))
+				Assert.Fail ("Failed to connect");
 
 			test.Assert (10000);
 		}
@@ -858,18 +933,29 @@ namespace Tempest.Tests
 			{
 				var me = (e as MessageEventArgs);
 				Assert.IsNotNull (me);
-				Assert.AreSame (me.Connection, c);
 
 				var msg = (me.Message as BlankMessage);
 				Assert.IsNotNull (msg);
 			});
 
+			IConnection sc;
+			ManualResetEvent wait = new ManualResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				sc.MessageReceived += test.PassHandler;
+				sc.Disconnected += test.FailHandler;
+				wait.Set();
+			};
+
 			this.provider.Start (MessageTypes);
 
 			c.Disconnected += test.FailHandler;
-			c.MessageSent += test.PassHandler;
 			c.Connected += (sender, e) => c.Send (cmessage);
 			c.Connect (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (10000))
+				Assert.Fail ("Failed to connect");
 
 			test.Assert (10000);
 		}
@@ -889,7 +975,6 @@ namespace Tempest.Tests
 			{
 				var me = (e as MessageEventArgs);
 				Assert.IsNotNull (me);
-				Assert.AreSame (me.Connection, c);
 
 				var msg = (me.Message as AuthenticatedAndEncryptedMessage);
 				Assert.IsNotNull (msg);
@@ -899,12 +984,24 @@ namespace Tempest.Tests
 				Assert.AreEqual (cmessage.Number, msg.Number);
 			});
 
+			IConnection sc;
+			ManualResetEvent wait = new ManualResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				sc.MessageReceived += test.PassHandler;
+				sc.Disconnected += test.FailHandler;
+				wait.Set();
+			};
+
 			this.provider.Start (MessageTypes);
 
 			c.Disconnected += test.FailHandler;
-			c.MessageSent += test.PassHandler;
 			c.Connected += (sender, e) => c.Send (cmessage);
 			c.Connect (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (10000))
+				Assert.Fail ("Failed to connect");
 
 			test.Assert (10000);
 		}

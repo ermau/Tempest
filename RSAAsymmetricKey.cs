@@ -354,6 +354,26 @@ namespace Tempest
 		private int exponentOffset;
 		private byte[] publicKey;
 
+		public override bool Equals (object obj)
+		{
+			RSAAsymmetricKey key = (obj as RSAAsymmetricKey);
+			if (key != null)
+			{
+				if (this.publicKey.Length != key.publicKey.Length)
+					return false;
+
+				for (int i = 0; i < this.publicKey.Length; ++i)
+				{
+					if (this.publicKey[i] != key.publicKey[i])
+						return false;
+				}
+
+				return true;
+			}
+
+			return base.Equals (obj);
+		}
+
 		private void SetupSignature()
 		{
 			using (SHA1CryptoServiceProvider sha = new SHA1CryptoServiceProvider())

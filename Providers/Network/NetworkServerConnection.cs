@@ -193,6 +193,8 @@ namespace Tempest.Providers.Network
 
 				IAsymmetricKey key = (IAsymmetricKey)Activator.CreateInstance (msg.PublicAuthenticationKeyType);
 				key.Deserialize (new BufferValueReader (msg.PublicAuthenticationKey), this.provider.pkEncryption);
+
+				this.publicAuthenticationKey = key;
 				this.pkAuthentication.ImportKey (key);
 
 				return this.pkAuthentication.VerifySignedHash (resized, signature);

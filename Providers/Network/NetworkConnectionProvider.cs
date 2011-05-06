@@ -34,7 +34,6 @@ using System.Net.Sockets;
 #if NET_4
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-
 #endif
 
 namespace Tempest.Providers.Network

@@ -75,6 +75,12 @@ namespace Tempest.Tests
 		protected abstract IConnectionProvider SetUp (IEnumerable<Protocol> protocols);
 
 		protected abstract IClientConnection SetupClientConnection();
+		protected virtual IClientConnection SetupClientConnection (out IAsymmetricKey key)
+		{
+			key = null;
+			return SetupClientConnection();
+		}
+
 		protected abstract IClientConnection SetupClientConnection (IEnumerable<Protocol> protocols);
 
 		protected IClientConnection GetNewClientConnection()
@@ -83,6 +89,16 @@ namespace Tempest.Tests
 
 			lock (this.connections)
 			    this.connections.Add (c);
+
+			return c;
+		}
+
+		protected IClientConnection GetNewClientConnection (out IAsymmetricKey key)
+		{
+			var c = SetupClientConnection (out key);
+
+			lock (this.connections)
+				this.connections.Add (c);
 
 			return c;
 		}
@@ -193,6 +209,32 @@ namespace Tempest.Tests
 			var test = new AsyncTest();
 			this.provider.ConnectionMade += test.PassHandler;
 			var c = GetNewClientConnection();
+			c.Connect (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void ConnectedWithKey()
+		{
+			this.provider.Start (MessageTypes);
+
+			IAsymmetricKey key = null;
+
+			var test = new AsyncTest (e =>
+			{
+				var ce = (ConnectionMadeEventArgs)e;
+
+				Assert.IsNotNull (ce.ClientPublicKey);
+				Assert.AreEqual (key, ce.ClientPublicKey);
+			});
+
+			this.provider.ConnectionMade += test.PassHandler;
+
+			var c = GetNewClientConnection (out key);
+			if (key == null)
+				Assert.Ignore();
+
 			c.Connect (EndPoint, MessageTypes);
 
 			test.Assert (10000);

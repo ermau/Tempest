@@ -65,6 +65,14 @@ namespace Tempest.Tests
 			return new NetworkClientConnection (p);
 		}
 
+		protected override IClientConnection SetupClientConnection(out IAsymmetricKey key)
+		{
+			var c = new NetworkClientConnection (p);
+			key = c.PublicAuthenticationKey;
+
+			return c;
+		}
+
 		protected override IClientConnection SetupClientConnection (IEnumerable<Protocol> protocols)
 		{
 			return new NetworkClientConnection (protocols);

@@ -821,7 +821,7 @@ namespace Tempest.Tests
 			c.Connected += (sender, e) => c.Send (cmessage);
 			c.Connect (EndPoint, MessageTypes);
 
-			if (!wait.WaitOne(10000))
+			if (!wait.WaitOne (10000))
 				Assert.Fail ("Failed to connect");
 
 			test.Assert (10000);
@@ -832,7 +832,7 @@ namespace Tempest.Tests
 		{
 			Random r = new Random();
 			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < 10000000; ++i)
+			for (int i = 0; i < 1000000; ++i)
 				builder.Append ((char)r.Next (1, 20));
 
 			string message = builder.ToString();

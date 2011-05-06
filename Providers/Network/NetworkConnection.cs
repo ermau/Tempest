@@ -339,14 +339,13 @@ namespace Tempest.Providers.Network
 			if (r != 0)
 				writer.Pad (encryptor.OutputBlockSize - r);
 
-			byte[] payload = new byte[writer.Length - BaseHeaderLength];
-			encryptor.TransformBlock (writer.Buffer, BaseHeaderLength, writer.Length - BaseHeaderLength, payload, 0);
+			byte[] payload = encryptor.TransformFinalBlock (writer.Buffer, BaseHeaderLength, writer.Length - BaseHeaderLength);
 
 			writer.Length = BaseHeaderLength;
-			writer.WriteBytes (iv);		
+			writer.InsertBytes (BaseHeaderLength, iv, 0, iv.Length);
 			writer.WriteBytes (payload);
 
-			headerLength += sizeof (short) + iv.Length;
+			headerLength += iv.Length;
 		}
 
 		protected void DecryptMessage (MessageHeader header, ref BufferValueReader r, ref byte[] message, ref int moffset)
@@ -360,10 +359,8 @@ namespace Tempest.Providers.Network
 				decryptor = this.aes.CreateDecryptor();
 			}
 
-			message = new byte[payload.Length];
+			message = decryptor.TransformFinalBlock (payload, 0, payload.Length);
 			moffset = 0;
-
-			decryptor.TransformBlock (payload, 0, payload.Length, message, 0);
 
 			r = new BufferValueReader (message);
 		}
@@ -400,8 +397,6 @@ namespace Tempest.Providers.Network
 			writer.Length += sizeof (int); // length  placeholder
 
 			message.WritePayload (writer);
-			
-			byte[] rawMessage = writer.Buffer;
 
 			int headerLength = BaseHeaderLength;
 
@@ -411,6 +406,7 @@ namespace Tempest.Providers.Network
 			if (message.Authenticated)
 				SignMessage (writer, headerLength);
 
+			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
 			Buffer.BlockCopy (BitConverter.GetBytes (length), 0, rawMessage, BaseHeaderLength - sizeof(int), sizeof(int));
 
@@ -448,18 +444,13 @@ namespace Tempest.Providers.Network
 				byte[] iv = null;
 				if (msg.Encrypted && this.aes != null)
 				{
-					headerLength += sizeof (int);
-					if (remaining < headerLength)
-						return false;
-
-					int length = BitConverter.ToInt32 (buffer, offset);
+					int length = this.aes.IV.Length;
 					iv = new byte[length];
 
 					headerLength += length;
 					if (remaining < headerLength)
 						return false;
 
-					offset += sizeof (short);
 					Buffer.BlockCopy (buffer, offset, iv, 0, length);
 					offset += length;
 				}
@@ -520,7 +511,7 @@ namespace Tempest.Providers.Network
 
 				try
 				{
-					int moffset = messageOffset + BaseHeaderLength;
+					int moffset = messageOffset + header.HeaderLength;
 					byte[] message = buffer;
 					BufferValueReader r = reader;
 

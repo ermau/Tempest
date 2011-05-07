@@ -35,6 +35,8 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 #endif
 
+using System.Threading;
+
 namespace Tempest.Providers.Network
 {
 	/// <summary>
@@ -322,14 +324,15 @@ namespace Tempest.Providers.Network
 		private Socket unreliableSocket;
 		private MessageTypes mtypes;
 
+		private readonly ManualResetEvent keyWait = new ManualResetEvent (false);
 		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
-		internal readonly IPublicKeyCrypto pkEncryption;
-		private readonly IAsymmetricKey publicEncryptionKey;
+		internal IPublicKeyCrypto pkEncryption;
+		private IAsymmetricKey publicEncryptionKey;
 
-		internal readonly IPublicKeyCrypto authentication;
-		internal readonly IAsymmetricKey authenticationKey;
-		private readonly IAsymmetricKey publicAuthenticationKey;
+		internal IPublicKeyCrypto authentication;
+		internal IAsymmetricKey authenticationKey;
+		private IAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;

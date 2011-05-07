@@ -50,8 +50,16 @@ namespace Tempest.Providers.Network
 			if (publicKeyCryptoFactory == null)
 				throw new ArgumentNullException ("publicKeyCrypto");
 
-			this.publicKeyCryptoFactory = publicKeyCryptoFactory;
-			this.pkAuthentication = publicKeyCryptoFactory();
+			if (protocols.Any (p => p.RequiresHandshake))
+			{
+				this.publicKeyCryptoFactory = publicKeyCryptoFactory;
+				Interlocked.Increment (ref this.pendingAsync);
+				ThreadPool.QueueUserWorkItem (s =>
+				{
+					this.pkAuthentication = this.publicKeyCryptoFactory();
+					Interlocked.Decrement (ref this.pendingAsync);
+				});
+			}
 
 			this.protocols = new Dictionary<byte, Protocol>();
 			foreach (Protocol p in protocols)

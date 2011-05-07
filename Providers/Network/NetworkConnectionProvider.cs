@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 #if NET_4
 using System.Collections.Concurrent;
@@ -105,18 +106,21 @@ namespace Tempest.Providers.Network
 
 			this.pkCryptoFactory = pkCryptoFactory;
 
-			this.pkEncryption = pkCryptoFactory();
-			this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
+			if (protocols.Any (p => p.RequiresHandshake))
+			{
+				ThreadPool.QueueUserWorkItem (s =>
+				{
+					this.pkEncryption = this.pkCryptoFactory();
+					this.publicEncryptionKey = this.pkEncryption.ExportKey(false);
 
-			this.authentication = pkCryptoFactory();
-			this.authenticationKey = this.authentication.ExportKey (true);
-			this.publicAuthenticationKey = this.authentication.ExportKey (false);
-
-			this.enabledHashAlgorithms = new List<string>();
-			if (enabledHashAlgs == null || !enabledHashAlgs.Any())
-				this.enabledHashAlgorithms.AddRange (this.authentication.SupportedHashAlgs);
-			else // Need to maintain preference order
-				this.enabledHashAlgorithms.AddRange (enabledHashAlgs.Where (a => this.authentication.SupportedHashAlgs.Contains (a)));
+					this.authentication = this.pkCryptoFactory();
+					this.authenticationKey = this.authentication.ExportKey(true);
+					this.publicAuthenticationKey = this.authentication.ExportKey(false);
+					this.keyWait.Set();
+				});
+			}
+			else
+				this.keyWait.Set();
 		}
 
 		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
@@ -273,6 +277,7 @@ namespace Tempest.Providers.Network
 		}
 
 		private int pingFrequency = 15000;
+		private readonly ManualResetEvent keyWait = new ManualResetEvent (false);
 
 		private volatile bool running;
 		private Socket reliableSocket;
@@ -282,12 +287,12 @@ namespace Tempest.Providers.Network
 		private readonly List<string> enabledHashAlgorithms;
 		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
-		internal readonly IPublicKeyCrypto pkEncryption;
-		private readonly IAsymmetricKey publicEncryptionKey;
+		internal IPublicKeyCrypto pkEncryption;
+		private IAsymmetricKey publicEncryptionKey;
 
-		internal readonly IPublicKeyCrypto authentication;
-		internal readonly IAsymmetricKey authenticationKey;
-		private readonly IAsymmetricKey publicAuthenticationKey;
+		internal IPublicKeyCrypto authentication;
+		internal IAsymmetricKey authenticationKey;
+		private IAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;

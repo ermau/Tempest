@@ -153,15 +153,22 @@ namespace Tempest.Providers.Network
 
 		            this.protocols = this.protocols.Values.Intersect (msg.Protocols).ToDictionary (p => p.id);
 
-		            e.Connection.Send (new AcknowledgeConnectMessage
-		            {
-						SignatureHashAlgorithm = this.signingHashAlgorithm,
-		                EnabledProtocols = this.protocols.Values,
-		                NetworkId = NetworkId,
-						PublicAuthenticationKey = this.provider.PublicAuthenticationKey,
-						PublicEncryptionKey = this.provider.PublicEncryptionKey
-		            });
-		            break;
+					if (this.provider.PublicAuthenticationKey == null)
+					{
+						e.Connection.Send (new ConnectedMessage());
+					}
+					else
+					{
+						e.Connection.Send (new AcknowledgeConnectMessage
+						{
+							SignatureHashAlgorithm = this.signingHashAlgorithm,
+							EnabledProtocols = this.protocols.Values,
+							NetworkId = NetworkId,
+							PublicAuthenticationKey = this.provider.PublicAuthenticationKey,
+							PublicEncryptionKey = this.provider.PublicEncryptionKey
+						});
+					}
+		    		break;
 
 				case (ushort)TempestMessageType.FinalConnect:
 		    		var finalConnect = (FinalConnectMessage)e.Message;

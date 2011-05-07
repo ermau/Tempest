@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 #if NET_4
 using System.Collections.Concurrent;
@@ -92,12 +93,16 @@ namespace Tempest.Providers.Network
 
 			this.pkCryptoFactory = pkCryptoFactory;
 
-			this.pkEncryption = pkCryptoFactory();
-			this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
+			ThreadPool.QueueUserWorkItem (s =>
+			{
+				this.pkEncryption = this.pkCryptoFactory();
+				this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
 
-			this.authentication = pkCryptoFactory();
-			this.authenticationKey = this.authentication.ExportKey (true);
-			this.publicAuthenticationKey = this.authentication.ExportKey (false);
+				this.authentication = this.pkCryptoFactory();
+				this.authenticationKey = this.authentication.ExportKey (true);
+				this.publicAuthenticationKey = this.authentication.ExportKey (false);
+				this.keyWait.Set();
+			});
 		}
 
 		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey)
@@ -107,8 +112,12 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("authKey");
 
 			this.authenticationKey = authKey;
-			this.authentication.ImportKey (authKey);
-			this.publicAuthenticationKey = this.authentication.ExportKey (false);
+			ThreadPool.QueueUserWorkItem (s =>
+			{
+				this.authentication.ImportKey (authKey);
+				this.publicAuthenticationKey = this.authentication.ExportKey (false);
+				this.keyWait.Set();
+			});
 		}
 
 		public event EventHandler PingFrequencyChanged;
@@ -186,6 +195,8 @@ namespace Tempest.Providers.Network
 
 			this.running = true;
 			this.mtypes = types;
+
+			this.keyWait.WaitOne();
 			
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{
@@ -255,6 +266,7 @@ namespace Tempest.Providers.Network
 
 		private int pingFrequency = 15000;
 
+		private ManualResetEvent keyWait = new ManualResetEvent (false);
 		private volatile bool running;
 		private Socket reliableSocket;
 		private Socket unreliableSocket;
@@ -262,12 +274,12 @@ namespace Tempest.Providers.Network
 
 		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
-		internal readonly IPublicKeyCrypto pkEncryption;
-		private readonly IAsymmetricKey publicEncryptionKey;
+		internal IPublicKeyCrypto pkEncryption;
+		private IAsymmetricKey publicEncryptionKey;
 
-		internal readonly IPublicKeyCrypto authentication;
-		internal readonly IAsymmetricKey authenticationKey;
-		private readonly IAsymmetricKey publicAuthenticationKey;
+		internal IPublicKeyCrypto authentication;
+		internal IAsymmetricKey authenticationKey;
+		private IAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;

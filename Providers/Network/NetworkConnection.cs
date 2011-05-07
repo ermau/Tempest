@@ -32,10 +32,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using Tempest.InternalProtocol;
+using System.Threading;
 
 #if NET_4
 using System.Collections.Concurrent;
-using System.Threading;
 #endif
 
 namespace Tempest.Providers.Network
@@ -51,7 +51,12 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("publicKeyCrypto");
 
 			this.publicKeyCryptoFactory = publicKeyCryptoFactory;
-			this.pkAuthentication = publicKeyCryptoFactory();
+			Interlocked.Increment (ref this.pendingAsync);
+			ThreadPool.QueueUserWorkItem (s =>
+			{
+				this.pkAuthentication = this.publicKeyCryptoFactory();
+				Interlocked.Decrement (ref this.pendingAsync);
+			});
 
 			this.protocols = new Dictionary<byte, Protocol>();
 			foreach (Protocol p in protocols)

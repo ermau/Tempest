@@ -92,12 +92,21 @@ namespace Tempest.Providers.Network
 
 			this.pkCryptoFactory = pkCryptoFactory;
 
-			this.pkEncryption = pkCryptoFactory();
-			this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
+			if (protocols.Any (p => p.RequiresHandshake))
+			{
+				ThreadPool.QueueUserWorkItem (s =>
+				{
+					this.pkEncryption = this.pkCryptoFactory();
+					this.publicEncryptionKey = this.pkEncryption.ExportKey(false);
 
-			this.authentication = pkCryptoFactory();
-			this.authenticationKey = this.authentication.ExportKey (true);
-			this.publicAuthenticationKey = this.authentication.ExportKey (false);
+					this.authentication = this.pkCryptoFactory();
+					this.authenticationKey = this.authentication.ExportKey(true);
+					this.publicAuthenticationKey = this.authentication.ExportKey(false);
+					this.keyWait.Set();
+				});
+			}
+			else
+				this.keyWait.Set();
 		}
 
 		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey)

@@ -43,6 +43,12 @@ namespace Tempest
 		{
 		}
 
+		public bool RequiresHandshake
+		{
+			get;
+			private set;
+		}
+
 		#if !SAFE
 		/// <summary>
 		/// Discovers and registers message types from <paramref name="assembly"/>.
@@ -138,7 +144,7 @@ namespace Tempest
 			
 		    Type mtype = typeof (Message);
 
-		    Dictionary<Type, Func<Message>> types = new Dictionary<Type, Func<Message>>();
+		    var types = new Dictionary<Type, Func<Message>>();
 		    foreach (Type t in messageTypes)
 		    {
 		        if (!mtype.IsAssignableFrom (t))
@@ -178,10 +184,13 @@ namespace Tempest
 						throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
 					if (kvp.Key.IsGenericType || kvp.Key.IsGenericTypeDefinition)
 						throw new ArgumentException (String.Format ("{0} is a generic type which is unsupported", kvp.Key.Name), "messageTypes");
-
+					
 					Message m = kvp.Value();
 					if (m.Protocol != (Protocol)this)
 						continue;
+
+					if (m.Authenticated || m.Encrypted)
+						RequiresHandshake = true;
 
 					#if !NET_4
 					if (this.messageCtors.ContainsKey (m.MessageType))

@@ -33,8 +33,7 @@ using System.Net.Sockets;
 using System.Threading;
 
 #if NET_4
-using System.Collections.Concurrent;
-using System.Security.Cryptography;
+using System.Threading.Tasks;
 #endif
 
 namespace Tempest.Providers.Network
@@ -110,12 +109,32 @@ namespace Tempest.Providers.Network
 			{
 				ThreadPool.QueueUserWorkItem (s =>
 				{
-					this.pkEncryption = this.pkCryptoFactory();
-					this.publicEncryptionKey = this.pkEncryption.ExportKey(false);
+					#if NET_4
+					Task encryptKeyGen = Task.Factory.StartNew (() =>
+					{
+					#endif
+						this.pkEncryption = this.pkCryptoFactory();
+						this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
+					#if NET_4
+					});
+					#endif
 
-					this.authentication = this.pkCryptoFactory();
-					this.authenticationKey = this.authentication.ExportKey(true);
-					this.publicAuthenticationKey = this.authentication.ExportKey(false);
+					#if NET_4
+					Task authKeyGen = Task.Factory.StartNew (() =>
+					{
+					#endif
+						this.authentication = this.pkCryptoFactory();
+						this.authenticationKey = this.authentication.ExportKey (true);
+						this.publicAuthenticationKey = this.authentication.ExportKey (false);
+					#if NET_4
+					});
+					#endif
+
+					#if NET_4
+					authKeyGen.Wait();
+					encryptKeyGen.Wait();
+					#endif
+
 					this.keyWait.Set();
 				});
 			}
@@ -130,8 +149,40 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("authKey");
 
 			this.authenticationKey = authKey;
-			this.authentication.ImportKey (authKey);
-			this.publicAuthenticationKey = this.authentication.ExportKey (false);
+
+			if (this.protocols.Any (p => p.RequiresHandshake))
+			{
+				ThreadPool.QueueUserWorkItem (s =>
+				{
+					#if NET_4
+					Task encryptKeyGen = Task.Factory.StartNew (() =>
+					{
+					#endif
+						this.pkEncryption = this.pkCryptoFactory();
+						this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
+					#if NET_4
+					});
+					#endif
+
+					#if NET_4
+					Task authKeyLoad = Task.Factory.StartNew (() =>
+					{
+					#endif
+						this.authentication = this.pkCryptoFactory();
+						this.authentication.ImportKey (authKey);
+						this.publicAuthenticationKey = this.authentication.ExportKey (false);
+					#if NET_4
+					});
+					#endif
+
+					#if NET_4
+					authKeyLoad.Wait();
+					encryptKeyGen.Wait();
+					#endif
+
+					this.keyWait.Set();
+				});
+			}
 		}
 
 		public event EventHandler PingFrequencyChanged;
@@ -209,6 +260,8 @@ namespace Tempest.Providers.Network
 
 			this.running = true;
 			this.mtypes = types;
+
+			//this.keyWait.WaitOne();
 			
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{

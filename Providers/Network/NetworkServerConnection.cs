@@ -39,7 +39,7 @@ namespace Tempest.Providers.Network
 		: NetworkConnection, IServerConnection
 	{
 		internal NetworkServerConnection (IEnumerable<string> signatureHashAlgs, IEnumerable<Protocol> protocols, Socket reliableSocket, NetworkConnectionProvider provider)
-			: base (protocols, provider.pkCryptoFactory)
+			: base (protocols, provider.pkCryptoFactory, null)
 		{
 			if (signatureHashAlgs == null)
 				throw new ArgumentNullException ("signatureHashAlgs");

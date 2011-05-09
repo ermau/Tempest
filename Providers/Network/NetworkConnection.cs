@@ -32,10 +32,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using Tempest.InternalProtocol;
+using System.Threading;
 
 #if NET_4
 using System.Collections.Concurrent;
-using System.Threading;
 #endif
 
 namespace Tempest.Providers.Network

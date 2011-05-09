@@ -43,7 +43,7 @@ namespace Tempest.Providers.Network
 	public abstract class NetworkConnection
 		: IConnection
 	{
-		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
+		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey = null)
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
@@ -55,6 +55,19 @@ namespace Tempest.Providers.Network
 			ThreadPool.QueueUserWorkItem (s =>
 			{
 				this.pkAuthentication = this.publicKeyCryptoFactory();
+
+				if (authKey == null)
+				{
+					this.publicAuthenticationKey =  this.pkAuthentication.ExportKey (false);
+					this.authenticationKey = this.pkAuthentication.ExportKey (true);
+				}
+				else
+				{
+					this.authenticationKey = authKey;
+					this.pkAuthentication.ImportKey (authKey);
+					this.publicAuthenticationKey = this.pkAuthentication.ExportKey (false);
+				}
+
 				Interlocked.Decrement (ref this.pendingAsync);
 			});
 
@@ -74,15 +87,6 @@ namespace Tempest.Providers.Network
 			#if TRACE
 			this.connectionId = Interlocked.Increment (ref nextConnectionId);
 			#endif
-		}
-
-		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authenticationKey)
-			: this (protocols, publicKeyCryptoFactory)
-		{
-			if (authenticationKey == null)
-				throw new ArgumentNullException ("authenticationKey");
-
-			this.authenticationKey = authenticationKey;
 		}
 
 		/// <summary>

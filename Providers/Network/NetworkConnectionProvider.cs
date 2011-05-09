@@ -108,12 +108,29 @@ namespace Tempest.Providers.Network
 		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey)
 			: this (protocols, endPoint, maxConnections, pkCryptoFactory)
 		{
-			if (authKey == null)
-				throw new ArgumentNullException ("authKey");
+			if (pkCryptoFactory == null)
+				throw new ArgumentNullException ("pkCryptoFactory");
+			if (protocols == null)
+				throw new ArgumentNullException ("protocols");
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
+			if (maxConnections <= 0)
+				throw new ArgumentOutOfRangeException ("maxConnections");
+
+			this.protocols = protocols;
+			this.endPoint = endPoint;
+			MaxConnections = maxConnections;
+			this.serverConnections = new List<NetworkServerConnection> (maxConnections);
+
+			this.pkCryptoFactory = pkCryptoFactory;
 
 			this.authenticationKey = authKey;
 			ThreadPool.QueueUserWorkItem (s =>
 			{
+				this.pkEncryption = this.pkCryptoFactory();
+				this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
+
+				this.authentication = this.pkCryptoFactory();
 				this.authentication.ImportKey (authKey);
 				this.publicAuthenticationKey = this.authentication.ExportKey (false);
 				this.keyWait.Set();

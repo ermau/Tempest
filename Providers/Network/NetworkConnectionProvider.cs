@@ -37,6 +37,9 @@ using System.Threading.Tasks;
 
 using System.Threading;
 
+#if NET_4
+using System.Threading.Tasks;
+#endif
 namespace Tempest.Providers.Network
 {
 	/// <summary>

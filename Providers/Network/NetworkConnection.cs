@@ -32,10 +32,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using Tempest.InternalProtocol;
-using System.Threading;
 
 #if NET_4
 using System.Collections.Concurrent;
+using System.Threading;
 #endif
 
 namespace Tempest.Providers.Network
@@ -43,7 +43,7 @@ namespace Tempest.Providers.Network
 	public abstract class NetworkConnection
 		: IConnection
 	{
-		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey = null)
+		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
@@ -51,25 +51,7 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("publicKeyCrypto");
 
 			this.publicKeyCryptoFactory = publicKeyCryptoFactory;
-			Interlocked.Increment (ref this.pendingAsync);
-			ThreadPool.QueueUserWorkItem (s =>
-			{
-				this.pkAuthentication = this.publicKeyCryptoFactory();
-
-				if (authKey == null)
-				{
-					this.publicAuthenticationKey =  this.pkAuthentication.ExportKey (false);
-					this.authenticationKey = this.pkAuthentication.ExportKey (true);
-				}
-				else
-				{
-					this.authenticationKey = authKey;
-					this.pkAuthentication.ImportKey (authKey);
-					this.publicAuthenticationKey = this.pkAuthentication.ExportKey (false);
-				}
-
-				Interlocked.Decrement (ref this.pendingAsync);
-			});
+			this.pkAuthentication = publicKeyCryptoFactory();
 
 			this.protocols = new Dictionary<byte, Protocol>();
 			foreach (Protocol p in protocols)
@@ -87,6 +69,15 @@ namespace Tempest.Providers.Network
 			#if TRACE
 			this.connectionId = Interlocked.Increment (ref nextConnectionId);
 			#endif
+		}
+
+		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authenticationKey)
+			: this (protocols, publicKeyCryptoFactory)
+		{
+			if (authenticationKey == null)
+				throw new ArgumentNullException ("authenticationKey");
+
+			this.authenticationKey = authenticationKey;
 		}
 
 		/// <summary>

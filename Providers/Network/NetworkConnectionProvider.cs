@@ -30,7 +30,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 
 #if NET_4
 using System.Collections.Concurrent;
@@ -93,48 +92,23 @@ namespace Tempest.Providers.Network
 
 			this.pkCryptoFactory = pkCryptoFactory;
 
-			ThreadPool.QueueUserWorkItem (s =>
-			{
-				this.pkEncryption = this.pkCryptoFactory();
-				this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
+			this.pkEncryption = pkCryptoFactory();
+			this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
 
-				this.authentication = this.pkCryptoFactory();
-				this.authenticationKey = this.authentication.ExportKey (true);
-				this.publicAuthenticationKey = this.authentication.ExportKey (false);
-				this.keyWait.Set();
-			});
+			this.authentication = pkCryptoFactory();
+			this.authenticationKey = this.authentication.ExportKey (true);
+			this.publicAuthenticationKey = this.authentication.ExportKey (false);
 		}
 
 		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey)
 			: this (protocols, endPoint, maxConnections, pkCryptoFactory)
 		{
-			if (pkCryptoFactory == null)
-				throw new ArgumentNullException ("pkCryptoFactory");
-			if (protocols == null)
-				throw new ArgumentNullException ("protocols");
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
-			if (maxConnections <= 0)
-				throw new ArgumentOutOfRangeException ("maxConnections");
-
-			this.protocols = protocols;
-			this.endPoint = endPoint;
-			MaxConnections = maxConnections;
-			this.serverConnections = new List<NetworkServerConnection> (maxConnections);
-
-			this.pkCryptoFactory = pkCryptoFactory;
+			if (authKey == null)
+				throw new ArgumentNullException ("authKey");
 
 			this.authenticationKey = authKey;
-			ThreadPool.QueueUserWorkItem (s =>
-			{
-				this.pkEncryption = this.pkCryptoFactory();
-				this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
-
-				this.authentication = this.pkCryptoFactory();
-				this.authentication.ImportKey (authKey);
-				this.publicAuthenticationKey = this.authentication.ExportKey (false);
-				this.keyWait.Set();
-			});
+			this.authentication.ImportKey (authKey);
+			this.publicAuthenticationKey = this.authentication.ExportKey (false);
 		}
 
 		public event EventHandler PingFrequencyChanged;
@@ -212,8 +186,6 @@ namespace Tempest.Providers.Network
 
 			this.running = true;
 			this.mtypes = types;
-
-			this.keyWait.WaitOne();
 			
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{
@@ -283,7 +255,6 @@ namespace Tempest.Providers.Network
 
 		private int pingFrequency = 15000;
 
-		private ManualResetEvent keyWait = new ManualResetEvent (false);
 		private volatile bool running;
 		private Socket reliableSocket;
 		private Socket unreliableSocket;
@@ -291,12 +262,12 @@ namespace Tempest.Providers.Network
 
 		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
-		internal IPublicKeyCrypto pkEncryption;
-		private IAsymmetricKey publicEncryptionKey;
+		internal readonly IPublicKeyCrypto pkEncryption;
+		private readonly IAsymmetricKey publicEncryptionKey;
 
-		internal IPublicKeyCrypto authentication;
-		internal IAsymmetricKey authenticationKey;
-		private IAsymmetricKey publicAuthenticationKey;
+		internal readonly IPublicKeyCrypto authentication;
+		internal readonly IAsymmetricKey authenticationKey;
+		private readonly IAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;

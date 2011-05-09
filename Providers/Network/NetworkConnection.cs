@@ -674,8 +674,8 @@ namespace Tempest.Providers.Network
 					while (this.pendingAsync > 1) // If called from *Completed, there'll be a pending.
 						Thread.Sleep (0);
 
-					OnDisconnected (new DisconnectedEventArgs (this, reason));
 					this.disconnecting = false;
+					OnDisconnected (new DisconnectedEventArgs (this, reason));
 				}
 				else if (now)
 				{
@@ -692,8 +692,8 @@ namespace Tempest.Providers.Network
 
 					Trace.WriteLine ("Finished waiting, raising Disconnected.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, GetType().Name, c, connectionId));
 
-					OnDisconnected (new DisconnectedEventArgs (this, reason, customReason));
 					this.disconnecting = false;
+					OnDisconnected (new DisconnectedEventArgs (this, reason, customReason));
 				}
 				else
 				{

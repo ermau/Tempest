@@ -95,7 +95,7 @@ namespace Tempest
 		/// </summary>
 		/// <param name="endPoint">The endpoint to connect to.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
-		public void Connect (EndPoint endPoint)
+		public virtual void Connect (EndPoint endPoint)
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");

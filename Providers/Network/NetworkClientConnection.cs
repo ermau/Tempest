@@ -57,21 +57,15 @@ namespace Tempest.Providers.Network
 		}
 
 		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
-			: base (protocols, publicKeyCryptoFactory)
+			: base (protocols, publicKeyCryptoFactory, null)
 		{
-			this.publicAuthenticationKey = this.pkAuthentication.ExportKey (false);
-			this.authenticationKey = this.pkAuthentication.ExportKey (true);
 		}
 
 		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
-			: base (protocols, publicKeyCryptoFactory)
+			: base (protocols, publicKeyCryptoFactory, authKey)
 		{
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
-
-			this.pkAuthentication.ImportKey (authKey);
-			this.publicAuthenticationKey = this.pkAuthentication.ExportKey (false);
-			this.authenticationKey = authKey;
 		}
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;

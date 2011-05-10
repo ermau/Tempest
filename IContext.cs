@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,5 +38,13 @@ namespace Tempest
 		/// <param name="handler">The handler to register for the message type.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="handler"/> is <c>null</c>.</exception>
 		void RegisterMessageHandler (ushort messageType, Action<MessageEventArgs> handler);
+
+		/// <summary>
+		/// Registers a message handler.
+		/// </summary>
+		/// <param name="messageType">The message type to register a handler for.</param>
+		/// <param name="handler">The handler to register for the message type.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="handler"/> is <c>null</c>.</exception>
+		void RegisterConnectionlessMessageHandler (ushort messageType, Action<ConnectionlessMessageEventArgs> handler);
 	}
 }

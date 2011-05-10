@@ -61,7 +61,7 @@ namespace Tempest
 		/// A connectionless message was received.
 		/// </summary>
 		/// <exception cref="NotSupportedException"><see cref="SupportsConnectionless"/> is <c>false</c>.</exception>
-		event EventHandler<ConnectionlessMessageReceivedEventArgs> ConnectionlessMessageReceived;
+		event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
 
 		/// <summary>
 		/// Gets whether this connection provider supports connectionless messages.
@@ -153,16 +153,16 @@ namespace Tempest
 	/// <summary>
 	/// Provides data for the <see cref="IConnectionProvider.ConnectionlessMessageReceived"/> event.
 	/// </summary>
-	public class ConnectionlessMessageReceivedEventArgs
+	public class ConnectionlessMessageEventArgs
 		: EventArgs
 	{
 		/// <summary>
-		/// Initializes a new instance of the <see cref="ConnectionlessMessageReceivedEventArgs"/> class.
+		/// Initializes a new instance of the <see cref="ConnectionlessMessageEventArgs"/> class.
 		/// </summary>
 		/// <param name="message">The message received connectionlessly.</param>
 		/// <param name="from">Where the message came from.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="from"/> is <c>null</c>.</exception>
-		public ConnectionlessMessageReceivedEventArgs (Message message, EndPoint from)
+		public ConnectionlessMessageEventArgs (Message message, EndPoint from)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");

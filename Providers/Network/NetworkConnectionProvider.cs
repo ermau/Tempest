@@ -179,7 +179,7 @@ namespace Tempest.Providers.Network
 		public event EventHandler PingFrequencyChanged;
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
 		
-		public event EventHandler<ConnectionlessMessageReceivedEventArgs> ConnectionlessMessageReceived
+		public event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived
 		{
 			add { throw new NotSupportedException(); }
 			remove { throw new NotSupportedException(); }

@@ -47,7 +47,7 @@ namespace Tempest.Tests
 		}
 
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
-		public event EventHandler<ConnectionlessMessageReceivedEventArgs> ConnectionlessMessageReceived
+		public event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived
 		{
 			add { throw new NotSupportedException(); }
 			remove { throw new NotSupportedException(); }

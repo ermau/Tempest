@@ -144,7 +144,7 @@ namespace Tempest.Tests
 		[Test]
 		public void ConnectionlessSupport()
 		{
-			EventHandler<ConnectionlessMessageReceivedEventArgs> cmr = (sender, e) => { };
+			EventHandler<ConnectionlessMessageEventArgs> cmr = (sender, e) => { };
 
 			if (this.provider.SupportsConnectionless)
 			{

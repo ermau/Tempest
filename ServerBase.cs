@@ -91,10 +91,12 @@ namespace Tempest
 			{
 				case ExecutionMode.ConnectionOrder:
 					provider.ConnectionMade += OnConnectionMade;
+					provider.ConnectionlessMessageReceived += OnConnectionlessMessageReceived;
 					break;
 
 				case ExecutionMode.GlobalOrder:
 					provider.ConnectionMade += OnConnectionMadeGlobal;
+					provider.ConnectionlessMessageReceived += OnConnectionlessMessageReceivedGlobal;
 					break;
 			}
 
@@ -236,6 +238,26 @@ namespace Tempest
 			e.Connection.Disconnected -= OnConnectionDisconnected;
 		}
 
+		protected virtual void OnConnectionlessMessageReceived (object sender, ConnectionlessMessageEventArgs e)
+		{
+			var mhandlers = GetConnectionlessHandlers (e.Message.MessageType);
+			if (mhandlers == null)
+				return;
+
+			for (int i = 0; i < mhandlers.Count; ++i)
+				mhandlers[i] (e);
+		}
+		
+		private void OnConnectionlessMessageReceivedGlobal (object sender, ConnectionlessMessageEventArgs e)
+		{
+			#if !NET_4
+			lock (this.mqueue)
+			#endif
+			this.mqueue.Enqueue (e);
+
+			this.wait.Set();
+		}
+
 		private void OnConnectionMadeGlobalEvent (object sender, ConnectionMadeEventArgs e)
 		{
 			#if !NET_4
@@ -267,14 +289,20 @@ namespace Tempest
 				OnConnectionMessageReceived (this, margs);
 			else
 			{
-				var cmargs = (e as ConnectionMadeEventArgs);
-				if (cmargs != null)
-					OnConnectionMadeGlobal (this, cmargs);
+				var clmargs = (e as ConnectionlessMessageEventArgs);
+				if (clmargs != null)
+					OnConnectionlessMessageReceived (this, clmargs);
 				else
 				{
-					var cdargs = (e as DisconnectedEventArgs);
-					if (cdargs != null)
-						OnConnectionDisconnected (this, cdargs);
+					var cmargs = (e as ConnectionMadeEventArgs);
+					if (cmargs != null)
+						OnConnectionMadeGlobal (this, cmargs);
+					else
+					{
+						var cdargs = (e as DisconnectedEventArgs);
+						if (cdargs != null)
+							OnConnectionDisconnected (this, cdargs);
+					}
 				}
 			}
 		}

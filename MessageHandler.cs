@@ -35,11 +35,18 @@ namespace Tempest
 		: IContext
 	{
 		private readonly MutableLookup<ushort, Action<MessageEventArgs>> handlers = new MutableLookup<ushort, Action<MessageEventArgs>>();
+		private readonly MutableLookup<ushort, Action<ConnectionlessMessageEventArgs>> connectionlessHandlers = new MutableLookup<ushort, Action<ConnectionlessMessageEventArgs>>();
 
 		void IContext.RegisterMessageHandler (ushort messageType, Action<MessageEventArgs> handler)
 		{
 			lock (this.handlers)
 				this.handlers.Add (messageType, handler);
+		}
+
+		void IContext.RegisterConnectionlessMessageHandler (ushort messageType, Action<ConnectionlessMessageEventArgs> handler)
+		{
+			lock (this.connectionlessHandlers)
+				this.connectionlessHandlers.Add (messageType, handler);
 		}
 
 		protected List<Action<MessageEventArgs>> GetHandlers (ushort messageType)
@@ -49,6 +56,19 @@ namespace Tempest
 			{
 				IEnumerable<Action<MessageEventArgs>> thandlers;
 				if (this.handlers.TryGetValues (messageType, out thandlers))
+					mhandlers = thandlers.ToList();
+			}
+
+			return mhandlers;
+		}
+
+		protected List<Action<ConnectionlessMessageEventArgs>> GetConnectionlessHandlers (ushort messageType)
+		{
+			List<Action<ConnectionlessMessageEventArgs>> mhandlers = null;
+			lock (this.connectionlessHandlers)
+			{
+				IEnumerable<Action<ConnectionlessMessageEventArgs>> thandlers;
+				if (this.connectionlessHandlers.TryGetValues (messageType, out thandlers))
 					mhandlers = thandlers.ToList();
 			}
 

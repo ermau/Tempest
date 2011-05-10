@@ -93,6 +93,8 @@ namespace Tempest.Providers.Network
 			SocketAsyncEventArgs args;
 			bool connected;
 
+			Trace.WriteLine (String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), String.Format ("{2}:{3} {4}:Connect({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+
 			while (this.pendingAsync > 0)
 				Thread.Sleep (0);
 

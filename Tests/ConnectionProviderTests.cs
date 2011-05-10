@@ -752,7 +752,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (3)]
+		[Test, Repeat (10)]
 		public void DisconnectAndReconnect()
 		{
 			var wait = new ManualResetEvent (false);
@@ -770,16 +770,19 @@ namespace Tempest.Tests
 				c.Connect (EndPoint, MessageTypes);
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to connect. Attempt {0}.", i + 1);
+				Trace.WriteLine ("Connected");
 
 				Trace.WriteLine ("Disconnecting");
 				wait.Reset();
 				c.Disconnect (true);
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to disconnect. Attempt {0}.", i + 1);
+
+				Trace.WriteLine ("Disconnected");
 			}
 		}
 
-		[Test, Repeat (3)]
+		[Test, Repeat (10)]
 		public void DisconnectAndReconnectAsync()
 		{
 			AutoResetEvent wait = new AutoResetEvent (false);

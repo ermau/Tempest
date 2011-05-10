@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempest", "Tempest.csproj", "{D6A2003C-CBB2-47B0-B306-521141D3068D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{97D53DFA-634E-4595-9AE3-DC1BC8A5F553}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempest.Tests", "Tests\Tempest.Tests.csproj", "{97D53DFA-634E-4595-9AE3-DC1BC8A5F553}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleChat", "Samples\SimpleChat\SimpleChat.csproj", "{70AD4282-2C6C-4E41-859B-42E43EAB7C34}"
 EndProject

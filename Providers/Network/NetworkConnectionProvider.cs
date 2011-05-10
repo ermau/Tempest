@@ -327,7 +327,6 @@ namespace Tempest.Providers.Network
 		private Socket unreliableSocket;
 		private MessageTypes mtypes;
 
-		private readonly ManualResetEvent keyWait = new ManualResetEvent (false);
 		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
 		internal IPublicKeyCrypto pkEncryption;

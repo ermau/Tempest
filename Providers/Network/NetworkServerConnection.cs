@@ -156,17 +156,17 @@ namespace Tempest.Providers.Network
 
 						this.hmac = new HMACSHA256 (aeskey);
 						this.aes = new AesManaged { KeySize = 256, Key = aeskey };
-
-						this.formallyConnected = true;
-						this.provider.Connect (this);
-
-						Send (new ConnectedMessage());
 					}
 					catch
 					{
 						Disconnect (true, DisconnectedReason.FailedHandshake);
 						return;
 					}
+
+					this.formallyConnected = true;
+					this.provider.Connect (this);
+
+					Send (new ConnectedMessage());
 
 					break;
 		    }

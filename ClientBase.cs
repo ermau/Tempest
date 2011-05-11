@@ -296,7 +296,7 @@ namespace Tempest
 		private void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
 		{
 			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
-			OnDisconnected (new ClientDisconnectedEventArgs (e.Reason));
+			OnDisconnected (new ClientDisconnectedEventArgs (e.Reason, e.CustomReason));
 		}
 
 		private void OnConnectionConnected (object sender, ClientConnectionEventArgs e)
@@ -334,19 +334,24 @@ namespace Tempest
 			if (handler != null)
 				handler (this, e);
 		}
-
-		
 	}
 
 	public class ClientDisconnectedEventArgs
 		: EventArgs
 	{
-		public ClientDisconnectedEventArgs (DisconnectedReason reason)
+		public ClientDisconnectedEventArgs (DisconnectedReason reason, string customReason)
 		{
 			Reason = reason;
+			CustomReason = customReason;
 		}
 
 		public DisconnectedReason Reason
+		{
+			get;
+			private set;
+		}
+
+		public string CustomReason
 		{
 			get;
 			private set;

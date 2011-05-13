@@ -101,6 +101,22 @@ namespace Tempest.Tests
 			return new MockClientConnection (this, protocols);
 		}
 
+		public MockServerConnection GetServerConnection (Protocol protocol)
+		{
+			return GetConnections (protocol).Item2;
+		}
+
+		public Tuple<MockClientConnection, MockServerConnection> GetConnections (Protocol protocol)
+		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
+
+			MockClientConnection c = new MockClientConnection (this, new [] { protocol });
+			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+
+			return new Tuple<MockClientConnection, MockServerConnection> (c, c.connection);
+		}
+
 		public void Dispose()
 		{
 		}

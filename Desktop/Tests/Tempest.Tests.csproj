@@ -70,7 +70,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Tempest.csproj">
       <Project>{D6A2003C-CBB2-47B0-B306-521141D3068D}</Project>
-      <Name>Tempest</Name>
+      <Name>Tempest %28Desktop\Tempest%29</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

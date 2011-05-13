@@ -26,15 +26,19 @@
 using System;
 using System.Security.Cryptography;
 
+#if SILVERLIGHT
+using RSA;
+using RSA.SignatureProviders;
+#endif
+
 namespace Tempest
 {
-	#if !SILVERLIGHT
 	public class RSACrypto
 		: IPublicKeyCrypto
 	{
 		public int KeySize
 		{
-			get { return this.rsaCrypto.KeySize; }
+			get { return 4096; }
 		}
 
 		public byte[] Encrypt (byte[] data)
@@ -42,7 +46,11 @@ namespace Tempest
 			if (data == null)
 				throw new ArgumentNullException ("data");
 
+			#if !SILVERLIGHT
 			return this.rsaCrypto.Encrypt (data, true);
+			#else
+			return this.rsaCrypto.Encrypt (data);
+			#endif
 		}
 
 		public byte[] Decrypt (byte[] data)
@@ -50,7 +58,11 @@ namespace Tempest
 			if (data == null)
 				throw new ArgumentNullException ("data");
 
+			#if !SILVERLIGHT
 			return this.rsaCrypto.Decrypt (data, true);
+			#else
+			return this.rsaCrypto.Decrypt (data);
+			#endif
 		}
 
 		public byte[] HashAndSign (byte[] data, int offset, int count)
@@ -58,9 +70,14 @@ namespace Tempest
 			if (data == null)
 				throw new ArgumentNullException ("data");
 
-			byte[] hash = sha.ComputeHash (data, offset, count);
+			#if !SILVERLIGHT
+			return this.rsaCrypto.SignData (data, offset, count, Sha256Name);
+			#else
+			byte[] d = new byte[count];
+			Buffer.BlockCopy (data, offset, d, 0, count);
 
-			return this.rsaCrypto.SignHash (hash, Sha256Name);
+			return this.rsaCrypto.SignData (d, this.shaSignature);
+			#endif
 		}
 
 		public bool VerifySignedHash (byte[] data, byte[] signature)
@@ -70,16 +87,27 @@ namespace Tempest
 			if (signature == null)
 				throw new ArgumentNullException ("signature");
 
-			if (!this.rsaCrypto.VerifyData (data, Sha256Name, signature))
-				return false;
-
-			byte[] hash = this.sha.ComputeHash (data);
-			return this.rsaCrypto.VerifyHash (hash, Sha256Name, signature);
+			#if !SILVERLIGHT
+			return this.rsaCrypto.VerifyData (data, Sha256Name, signature);
+			#else
+			return this.rsaCrypto.VerifyData (data, signature, this.shaSignature);
+			#endif
 		}
 
 		public IAsymmetricKey ExportKey (bool includePrivate)
 		{
+			#if !SILVERLIGHT
 			return new RSAAsymmetricKey (this.rsaCrypto.ExportParameters (includePrivate));
+			#else
+			var parameters = this.rsaCrypto.ExportParameters();
+			if (!includePrivate)
+			{
+				var p = parameters;
+				parameters = new RSAParameters { N = p.N, E = p.E };
+			}
+
+			return new RSAAsymmetricKey (parameters);
+			#endif
 		}
 
 		public void ImportKey (IAsymmetricKey key)
@@ -93,10 +121,17 @@ namespace Tempest
 
 			this.rsaCrypto.ImportParameters (rsaKey);
 		}
-
+		
+		#if !SILVERLIGHT
 		private static readonly string Sha256Name = CryptoConfig.MapNameToOID ("SHA256");
-		private readonly SHA256Managed sha = new SHA256Managed();
+		#else
+		private readonly EMSAPKCS1v1_5_SHA256 shaSignature = new EMSAPKCS1v1_5_SHA256();
+		#endif
+		
+		#if !SILVERLIGHT
 		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider (4096);
+		#else
+		private readonly RSA.RSACrypto rsaCrypto = new RSA.RSACrypto (4096);
+		#endif
 	}
-	#endif
 }

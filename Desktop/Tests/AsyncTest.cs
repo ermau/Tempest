@@ -159,7 +159,7 @@ namespace Tempest.Tests
 			if (this.complete)
 				return;
 
-			Trace.WriteLine ("Fail handler called from " + Environment.StackTrace);
+			Trace.WriteLine ("Fail handler called from " + new Exception().StackTrace);
 
 			failed = true;
 		}

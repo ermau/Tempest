@@ -46,6 +46,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DH.Scrypt">
+      <HintPath>.\DH.Scrypt.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System.Windows" />
     <Reference Include="system" />
@@ -55,133 +58,133 @@
     <Reference Include="System.Windows.Browser" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\Desktop\ArrayExtensions.cs">
+    <Compile Include="..\Desktop\ArrayExtensions.cs">
       <Link>ArrayExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\BufferValueReader.cs">
+    <Compile Include="..\Desktop\BufferValueReader.cs">
       <Link>BufferValueReader.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\BufferValueWriter.cs">
+    <Compile Include="..\Desktop\BufferValueWriter.cs">
       <Link>BufferValueWriter.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\ClientBase.cs">
+    <Compile Include="..\Desktop\ClientBase.cs">
       <Link>ClientBase.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\ConnectionExtensions.cs">
+    <Compile Include="..\Desktop\ConnectionExtensions.cs">
       <Link>ConnectionExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\DisconnectedEventArgs.cs">
+    <Compile Include="..\Desktop\DisconnectedEventArgs.cs">
       <Link>DisconnectedEventArgs.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IAsymmetricKey.cs">
+    <Compile Include="..\Desktop\IAsymmetricKey.cs">
       <Link>IAsymmetricKey.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IClientConnection.cs">
+    <Compile Include="..\Desktop\IClientConnection.cs">
       <Link>IClientConnection.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IClientContext.cs">
+    <Compile Include="..\Desktop\IClientContext.cs">
       <Link>IClientContext.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IConnection.cs">
+    <Compile Include="..\Desktop\IConnection.cs">
       <Link>IConnection.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IConnectionProvider.cs">
+    <Compile Include="..\Desktop\IConnectionProvider.cs">
       <Link>IConnectionProvider.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IContext.cs">
+    <Compile Include="..\Desktop\IContext.cs">
       <Link>IContext.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\InternalProtocol\AcknowledgeConnectMessage.cs">
+    <Compile Include="..\Desktop\InternalProtocol\AcknowledgeConnectMessage.cs">
       <Link>InternalProtocol\AcknowledgeConnectMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\InternalProtocol\ConnectedMessage.cs">
+    <Compile Include="..\Desktop\InternalProtocol\ConnectedMessage.cs">
       <Link>InternalProtocol\ConnectedMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\InternalProtocol\ConnectMessage.cs">
+    <Compile Include="..\Desktop\InternalProtocol\ConnectMessage.cs">
       <Link>InternalProtocol\ConnectMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\InternalProtocol\DisconnectMessage.cs">
+    <Compile Include="..\Desktop\InternalProtocol\DisconnectMessage.cs">
       <Link>InternalProtocol\DisconnectMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\InternalProtocol\FinalConnectMessage.cs">
+    <Compile Include="..\Desktop\InternalProtocol\FinalConnectMessage.cs">
       <Link>InternalProtocol\FinalConnectMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\InternalProtocol\PingMessage.cs">
+    <Compile Include="..\Desktop\InternalProtocol\PingMessage.cs">
       <Link>InternalProtocol\PingMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\InternalProtocol\TempestMessage.cs">
+    <Compile Include="..\Desktop\InternalProtocol\TempestMessage.cs">
       <Link>InternalProtocol\TempestMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IPublicKeyCrypto.cs">
+    <Compile Include="..\Desktop\IPublicKeyCrypto.cs">
       <Link>IPublicKeyCrypto.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\ISerializable.cs">
+    <Compile Include="..\Desktop\ISerializable.cs">
       <Link>ISerializable.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\ISerializer.cs">
+    <Compile Include="..\Desktop\ISerializer.cs">
       <Link>ISerializer.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IServerConnection.cs">
+    <Compile Include="..\Desktop\IServerConnection.cs">
       <Link>IServerConnection.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IServerContext.cs">
+    <Compile Include="..\Desktop\IServerContext.cs">
       <Link>IServerContext.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IValueReader.cs">
+    <Compile Include="..\Desktop\IValueReader.cs">
       <Link>IValueReader.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\IValueWriter.cs">
+    <Compile Include="..\Desktop\IValueWriter.cs">
       <Link>IValueWriter.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Message.cs">
+    <Compile Include="..\Desktop\Message.cs">
       <Link>Message.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\MessageFactory.cs">
+    <Compile Include="..\Desktop\MessageFactory.cs">
       <Link>MessageFactory.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\MessageHandler.cs">
+    <Compile Include="..\Desktop\MessageHandler.cs">
       <Link>MessageHandler.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\MessageHeader.cs">
+    <Compile Include="..\Desktop\MessageHeader.cs">
       <Link>MessageHeader.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\MutableLookup.cs">
+    <Compile Include="..\Desktop\MutableLookup.cs">
       <Link>MutableLookup.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\ObjectSerializer.cs">
+    <Compile Include="..\Desktop\ObjectSerializer.cs">
       <Link>ObjectSerializer.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Protocol.cs">
+    <Compile Include="..\Desktop\Protocol.cs">
       <Link>Protocol.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Providers\Network\NetworkClientConnection.cs">
+    <Compile Include="..\Desktop\Providers\Network\NetworkClientConnection.cs">
       <Link>Providers\Network\NetworkClientConnection.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Providers\Network\NetworkClientSimulator.cs">
+    <Compile Include="..\Desktop\Providers\Network\NetworkClientSimulator.cs">
       <Link>Providers\Network\NetworkClientSimulator.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Providers\Network\NetworkConnection.cs">
+    <Compile Include="..\Desktop\Providers\Network\NetworkConnection.cs">
       <Link>Providers\Network\NetworkConnection.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\RSAAsymmetricKey.cs">
+    <Compile Include="..\Desktop\RSAAsymmetricKey.cs">
       <Link>RSAAsymmetricKey.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\RSACrypto.cs">
+    <Compile Include="..\Desktop\RSACrypto.cs">
       <Link>RSACrypto.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\SerializerExtensions.cs">
+    <Compile Include="..\Desktop\SerializerExtensions.cs">
       <Link>SerializerExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\ServerBase.cs">
+    <Compile Include="..\Desktop\ServerBase.cs">
       <Link>ServerBase.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\StreamValueReader.cs">
+    <Compile Include="..\Desktop\StreamValueReader.cs">
       <Link>StreamValueReader.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\StreamValueWriter.cs">
+    <Compile Include="..\Desktop\StreamValueWriter.cs">
       <Link>StreamValueWriter.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\TypeExtensions.cs">
+    <Compile Include="..\Desktop\TypeExtensions.cs">
       <Link>TypeExtensions.cs</Link>
     </Compile>
     <Compile Include="InternalBufferOverflowException.cs" />

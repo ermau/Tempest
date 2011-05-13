@@ -62,8 +62,7 @@ namespace Tempest.Tests
 		[Test]
 		public void WriteStringNullEncoding()
 		{
-			Assert.AreEqual (Assert.Throws<ArgumentNullException> (() => this.writer.WriteString (null, null))
-			               	.ParamName, "encoding");
+			Assert.Throws<ArgumentNullException> (() => this.writer.WriteString (null, null));
 		}
 
 		[Test]
@@ -252,13 +251,17 @@ namespace Tempest.Tests
 			const string value = "The lazy fox..\n oh forget it.\0";
 
 			this.writer.WriteString (Encoding.UTF8, value);
+			#if !SILVERLIGHT
 			this.writer.WriteString (Encoding.UTF32, value);
 			this.writer.WriteString (Encoding.ASCII, value);
+			#endif
 			this.writer.Flush ();
 
 			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF8));
+			#if !SILVERLIGHT
 			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF32));
 			Assert.AreEqual (value, this.reader.ReadString (Encoding.ASCII));
+			#endif
 		}
 
 		[Test]

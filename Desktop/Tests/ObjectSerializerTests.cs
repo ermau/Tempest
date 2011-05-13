@@ -144,12 +144,10 @@ namespace Tempest.Tests
 
 			Assert.IsNotNull (ioex);
 			Assert.AreEqual (ex.Message, ioex.Message);
-			Assert.AreEqual (ex.Source, ioex.Source);
 			Assert.AreEqual (ex.StackTrace, ioex.StackTrace);
 
 			Assert.IsNotNull (ioex.InnerException);
 			Assert.AreEqual (inner.Message, ioex.InnerException.Message);
-			Assert.AreEqual (inner.Source, ioex.InnerException.Source);
 			Assert.AreEqual (inner.StackTrace, ioex.InnerException.StackTrace);
 		}
 

@@ -25,6 +25,8 @@
 // THE SOFTWARE.
 
 using System;
+
+#if !SILVERLIGHT
 using System.Threading.Tasks;
 
 namespace Tempest.Tests
@@ -48,3 +50,5 @@ namespace Tempest.Tests
 		}
 	}
 }
+
+#endif

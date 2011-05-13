@@ -181,6 +181,7 @@ namespace Tempest.Tests
 			Assert.IsTrue (client.IsConnected);
 		}
 
+		#if !SILVERLIGHT
 		[Test]
 		public void ClientCtorKey()
 		{
@@ -191,5 +192,6 @@ namespace Tempest.Tests
 
 			Assert.AreEqual (key, client.PublicAuthenticationKey);
 		}
+		#endif
 	}
 }

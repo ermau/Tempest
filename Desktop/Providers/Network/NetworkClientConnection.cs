@@ -39,7 +39,6 @@ namespace Tempest.Providers.Network
 	public sealed class NetworkClientConnection
 		: NetworkConnection, IClientConnection
 	{
-		#if !SILVERLIGHT
 		public NetworkClientConnection (Protocol protocol)
 			: this (new [] { protocol })
 		{
@@ -49,7 +48,6 @@ namespace Tempest.Providers.Network
 			: this (protocols, () => new RSACrypto())
 		{
 		}
-		#endif
 
 		public NetworkClientConnection (Protocol protocol, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
 			: this (new [] { protocol }, publicKeyCryptoFactory)

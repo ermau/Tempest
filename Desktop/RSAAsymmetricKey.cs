@@ -25,12 +25,36 @@
 // THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 
+#if SILVERLIGHT
+using RSA;
+#endif
+
 namespace Tempest
 {
-	#if !SILVERLIGHT
+	#if SILVERLIGHT
+	public enum MemoryProtectionScope
+	{
+		SameProcess
+	}
+
+	public static class ProtectedMemory
+	{
+		[Conditional ("DEBUG")]
+		public static void Protect (byte[] data, MemoryProtectionScope scope)
+		{
+		}
+
+		[Conditional ("DEBUG")]
+		public static void Unprotect (byte[] data, MemoryProtectionScope scope)
+		{
+		}
+	}
+	#endif
+
 	public class RSAAsymmetricKey
 		: IAsymmetricKey
 	{
@@ -38,6 +62,7 @@ namespace Tempest
 		{
 		}
 
+		#if !SILVERLIGHT
 		public RSAAsymmetricKey (byte[] cspBlob)
 		{
 			using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
@@ -47,6 +72,7 @@ namespace Tempest
 				ImportRSAParameters (rsa.ExportParameters (true));
 			}
 		}
+		#endif
 
 		public RSAAsymmetricKey (RSAParameters parameters)
 		{
@@ -330,11 +356,18 @@ namespace Tempest
 				D = key.D,
 				DP = key.DP,
 				DQ = key.DQ,
-				InverseQ = key.InverseQ,
 				P = key.P,
 				Q = key.Q,
+
+				#if !SILVERLIGHT
+				InverseQ = key.InverseQ,
 				Exponent = key.Exponent,
-				Modulus = key.Modulus
+				Modulus = key.Modulus,
+				#else
+				IQ = key.InverseQ,
+				E = key.Exponent,
+				N = key.Modulus
+				#endif
 			};
 		}
 
@@ -376,7 +409,7 @@ namespace Tempest
 
 		private void SetupSignature()
 		{
-			using (SHA1CryptoServiceProvider sha = new SHA1CryptoServiceProvider())
+			using (SHA256Managed sha = new SHA256Managed())
 				PublicSignature = sha.ComputeHash (this.publicKey);
 		}
 
@@ -386,7 +419,13 @@ namespace Tempest
 			len += (parameters.D != null) ? parameters.D.Length : 0;
 			len += (parameters.DP != null) ? parameters.DP.Length : 0;
 			len += (parameters.DQ != null) ? parameters.DQ.Length : 0;
+			
+			#if !SILVERLIGHT
 			len += (parameters.InverseQ != null) ? parameters.InverseQ.Length : 0;
+			#else
+			len += (parameters.IQ != null) ? parameters.IQ.Length : 0;
+			#endif
+
 			len += (parameters.P != null) ? parameters.P.Length : 0;
 			len += (parameters.Q != null) ? parameters.Q.Length : 0;
 
@@ -418,12 +457,21 @@ namespace Tempest
 				index += parameters.DQ.Length;
 			}
 
+			#if !SILVERLIGHT
 			if (parameters.InverseQ != null)
 			{
 				Buffer.BlockCopy (parameters.InverseQ, 0, this.privateKey, index, parameters.InverseQ.Length);
 				this.iq = new ArraySegment<byte> (this.privateKey, index, parameters.InverseQ.Length);
 				index += parameters.InverseQ.Length;
 			}
+			#else
+			if (parameters.IQ != null)
+			{
+				Buffer.BlockCopy (parameters.IQ, 0, this.privateKey, index, parameters.IQ.Length);
+				this.iq = new ArraySegment<byte> (this.privateKey, index, parameters.IQ.Length);
+				index += parameters.IQ.Length;
+			}
+			#endif
 
 			if (parameters.P != null)
 			{
@@ -439,16 +487,24 @@ namespace Tempest
 				index += parameters.Q.Length;
 			}
 
+			#if !SILVERLIGHT
 			if (this.privateKey != null)
 				ProtectedMemory.Protect (this.privateKey, MemoryProtectionScope.SameProcess);
+			#endif
 
+			#if !SILVERLIGHT
 			this.publicKey = new byte[parameters.Modulus.Length + parameters.Exponent.Length];
 			Buffer.BlockCopy (parameters.Modulus, 0, this.publicKey, 0, parameters.Modulus.Length);
 			Buffer.BlockCopy (parameters.Exponent, 0, this.publicKey, parameters.Modulus.Length, parameters.Exponent.Length);
 			this.exponentOffset = parameters.Modulus.Length;
+			#else
+			this.publicKey = new byte[parameters.N.Length + parameters.E.Length];
+			Buffer.BlockCopy (parameters.N, 0, this.publicKey, 0, parameters.N.Length);
+			Buffer.BlockCopy (parameters.E, 0, this.publicKey, parameters.N.Length, parameters.E.Length);
+			this.exponentOffset = parameters.N.Length;
+			#endif
 
 			SetupSignature();
 		}
 	}
-	#endif
 }

@@ -48,7 +48,6 @@ namespace Tempest.Providers.Network
 	public sealed class NetworkConnectionProvider
 		: IConnectionProvider
 	{
-		#if !SILVERLIGHT
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
 		/// </summary>
@@ -76,7 +75,6 @@ namespace Tempest.Providers.Network
 			: this (protocols, endPoint, maxConnections, () => new RSACrypto())
 		{
 		}
-		#endif
 
 		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory)
 		{
@@ -96,7 +94,7 @@ namespace Tempest.Providers.Network
 
 			this.pkCryptoFactory = pkCryptoFactory;
 
-			if (protocols.Any (p => p.RequiresHandshake))
+			if (protocols.Any (p => p != null && p.RequiresHandshake))
 			{
 				ThreadPool.QueueUserWorkItem (s =>
 				{
@@ -327,6 +325,7 @@ namespace Tempest.Providers.Network
 		private Socket unreliableSocket;
 		private MessageTypes mtypes;
 
+		private readonly ManualResetEvent keyWait = new ManualResetEvent (false);
 		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
 		internal IPublicKeyCrypto pkEncryption;
@@ -382,13 +381,16 @@ namespace Tempest.Providers.Network
 					e.Dispose();
 				else
 				{
+					#if !SILVERLIGHT
 					e.AcceptSocket.Shutdown (SocketShutdown.Both);
 					e.AcceptSocket.Disconnect (true);
 					//#if !NET_4
 					//lock (ReliableSockets)
 					//#endif
 					//    ReliableSockets.Push (this.reliableSocket);
-
+					#else
+					e.ConnectSocket.Dispose();
+					#endif
 					BeginAccepting (e);
 				}
 

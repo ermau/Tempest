@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Desktop", "Desktop", "{A38C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Silverlight", "Silverlight", "{0F02AF15-BD31-42A0-8460-26FB9C518854}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempest", "Silverlight\Tempest\Tempest.csproj", "{F5B008E8-2893-40BE-85CB-3A9F58AA5121}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempest", "Silverlight\Tempest.csproj", "{F5B008E8-2893-40BE-85CB-3A9F58AA5121}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

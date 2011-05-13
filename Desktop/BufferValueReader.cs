@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -97,9 +97,9 @@ namespace Tempest
 		public byte[] ReadBytes (int count)
 		{
 			if (count < 0)
-				throw new ArgumentOutOfRangeException ("count", count, "count must be >= 0");
+				throw new ArgumentOutOfRangeException ("count", "count must be >= 0");
 			if (count + this.Position >= this.length)
-				throw new ArgumentOutOfRangeException ("count", count, "Count from position is longer than buffer.");
+				throw new ArgumentOutOfRangeException ("count", "Count from position is longer than buffer.");
 
 			byte[] b = new byte[count];
 			Buff.BlockCopy (this.buffer, this.Position, b, 0, count);

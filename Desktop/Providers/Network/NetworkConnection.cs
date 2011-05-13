@@ -188,7 +188,9 @@ namespace Tempest.Providers.Network
 					if (writerAsyncArgs.Count != 0)
 					{
 						eargs = writerAsyncArgs.Pop();
+						#if !SILVERLIGHT
 						eargs.AcceptSocket = null;
+						#endif
 					}
 					else
 					{
@@ -298,13 +300,13 @@ namespace Tempest.Providers.Network
 
 			if (this.hmac != null)
 			{
-				this.hmac.Dispose();
+				((IDisposable)this.hmac).Dispose();
 				this.hmac = null;
 			}
 
 			if (this.aes != null)
 			{
-				this.aes.Dispose();
+				((IDisposable)this.aes).Dispose();
 				this.aes = null;
 			}
 
@@ -638,11 +640,22 @@ namespace Tempest.Providers.Network
 			{
 				case (ushort)TempestMessageType.Ping:
 					Send (new PongMessage());
+					
+					#if !SILVERLIGHT
 					this.lastSent = Stopwatch.GetTimestamp();
+					#else
+					this.lastSent = DateTime.Now.Ticks;
+					#endif
 					break;
 
 				case (ushort)TempestMessageType.Pong:
-					ResponseTime = (int)Math.Round (TimeSpan.FromTicks (Stopwatch.GetTimestamp() - this.lastSent).TotalMilliseconds, 0);
+					#if !SILVERLIGHT
+					long timestamp = Stopwatch.GetTimestamp();
+					#else
+					long timestamp = DateTime.Now.Ticks;
+					#endif
+					
+					ResponseTime = (int)Math.Round (TimeSpan.FromTicks (timestamp - this.lastSent).TotalMilliseconds, 0);
 					this.pingsOut = 0;
 					break;
 
@@ -658,7 +671,7 @@ namespace Tempest.Providers.Network
 			#if TRACE
 			int c = Interlocked.Increment (ref nextCallId);
 			#endif
-			Trace.WriteLine (String.Format ("Entering {0}", Environment.StackTrace), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
+			Trace.WriteLine (String.Format ("Entering {0}", new Exception().StackTrace), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, GetType().Name, c, connectionId));
 
 			if (this.disconnecting || this.reliableSocket == null)
 			{
@@ -693,8 +706,12 @@ namespace Tempest.Providers.Network
 				{
 					Trace.WriteLine ("Shutting down socket.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
 
+					#if !SILVERLIGHT
 					this.reliableSocket.Shutdown (SocketShutdown.Both);
 					this.reliableSocket.Disconnect (true);
+					#else
+					this.reliableSocket.Close();
+					#endif
 					Recycle();
 
 					Trace.WriteLine (String.Format ("Waiting for pending ({0}) async.", pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
@@ -725,10 +742,15 @@ namespace Tempest.Providers.Network
 
 						Trace.WriteLine ("Finished waiting, disconnecting async.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
 
-						var args = new SocketAsyncEventArgs { DisconnectReuseSocket = true };
+						#if !SILVERLIGHT
+						var args = new SocketAsyncEventArgs();// { DisconnectReuseSocket = true };
 						args.Completed += OnDisconnectCompleted;
-						if (!this.reliableSocket.DisconnectAsync (args))
+						
+						if (!this.reliableSocket.DisconnectAsync (args))				
 							OnDisconnectCompleted (this.reliableSocket, args);
+						#else
+						this.reliableSocket.Close();
+						#endif
 					});
 
 					return;

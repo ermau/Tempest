@@ -25,11 +25,14 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Tempest.InternalProtocol;
+
+#if NET_4
+using System.Collections.Concurrent;
+#endif
 
 namespace Tempest
 {
@@ -280,8 +283,7 @@ namespace Tempest
 
 		private Thread messageRunnerThread;
 		private readonly AutoResetEvent wait = new AutoResetEvent (false);
-		#if NET_4
-		private readonly ConcurrentQueue<EventArgs>  mqueue = new ConcurrentQueue<EventArgs>();
+
 		private void HandleInlineEvent (EventArgs e)
 		{
 			var margs = (e as MessageEventArgs);
@@ -307,6 +309,8 @@ namespace Tempest
 			}
 		}
 		
+		#if NET_4
+		private readonly ConcurrentQueue<EventArgs>  mqueue = new ConcurrentQueue<EventArgs>();
 		private void MessageRunner()
 		{
 			while (this.running)

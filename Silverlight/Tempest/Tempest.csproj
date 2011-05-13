@@ -29,7 +29,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>Bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;TRACE;SILVERLIGHT</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;SILVERLIGHT</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
@@ -163,12 +163,6 @@
     <Compile Include="..\..\Desktop\Providers\Network\NetworkConnection.cs">
       <Link>Providers\Network\NetworkConnection.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Providers\Network\NetworkConnectionProvider.cs">
-      <Link>Providers\Network\NetworkConnectionProvider.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Providers\Network\NetworkServerConnection.cs">
-      <Link>Providers\Network\NetworkServerConnection.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\RSAAsymmetricKey.cs">
       <Link>RSAAsymmetricKey.cs</Link>
     </Compile>
@@ -190,7 +184,9 @@
     <Compile Include="..\..\Desktop\TypeExtensions.cs">
       <Link>TypeExtensions.cs</Link>
     </Compile>
+    <Compile Include="InternalBufferOverflowException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Trace.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />
   <ProjectExtensions>

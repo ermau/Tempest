@@ -214,7 +214,7 @@ namespace Tempest
 		private void InlineMessageRunner()
 		{
 			#if NET_4
-			SpinWait wait = new SpinWait();			
+			SpinWait wait = new SpinWait();
 			#endif
 
 		    while (this.running)

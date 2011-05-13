@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,15 +25,21 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+
+#if NET_4
+using System.Collections.Concurrent;
+#endif
+
+#if !SILVERLIGHT
+using System.Runtime.Serialization.Formatters.Binary;
+#endif
 
 #if !SAFE
 using System.Reflection.Emit;
@@ -59,8 +65,6 @@ namespace Tempest
 		{
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
-
-			Trace.WriteLine ("Serializing " + ((obj != null) ? obj.GetType().ToString() : "null"));
 
 			serializer (writer, obj);
 		}
@@ -185,8 +189,11 @@ namespace Tempest
 
 						return value;
 					}
+
+					#if !SILVERLIGHT
 					if (t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
 						return oserializer.SerializableDeserializer (r);
+					#endif
 					
 					value = oserializer.ctor.Invoke (null);
 					
@@ -287,11 +294,13 @@ namespace Tempest
 						return;
 					}
 
+					#if !SILVERLIGHT
 					if (t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
 					{
 						SerializableSerializer (w, v);
 						return;
 					}
+					#endif
 
 					var props = this.members;
 
@@ -343,6 +352,7 @@ namespace Tempest
 							});
 		}
 
+		#if !SILVERLIGHT
 		private object SerializableDeserializer (IValueReader reader)
 		{
 			bool isNull = false;
@@ -368,6 +378,7 @@ namespace Tempest
 				writer.WriteBytes (stream.ToArray());
 			}
 		}
+		#endif
 
 		private object Deserialize (IValueReader reader, bool skipHeader)
 		{

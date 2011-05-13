@@ -60,7 +60,7 @@ namespace Tempest
 		public byte[] ReadBytes (int count)
 		{
 			if (count < 0)
-				throw new ArgumentOutOfRangeException ("count", count, "count must be >= 0");
+				throw new ArgumentOutOfRangeException ("count", "count must be >= 0");
 
 			byte[] buffer = new byte[count];
 
@@ -121,7 +121,7 @@ namespace Tempest
 				throw new ArgumentNullException ("encoding");
 
 			byte[] data = ReadBytes();
-			return (data.Length == 0) ? null : encoding.GetString (data);
+			return (data.Length == 0) ? null : encoding.GetString (data, 0, data.Length);
 		}
 
 		public decimal ReadDecimal()

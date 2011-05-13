@@ -25,15 +25,12 @@
 // THE SOFTWARE.
 
 using System;
+using System.Linq;
+using System.Text;
+using System.Collections.Generic;
 
 #if NET_4
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-#else
-using System.Collections.Generic;
 #endif
 
 namespace Tempest
@@ -47,8 +44,8 @@ namespace Tempest
 		{
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
-
-			writer.WriteInt64 (date.ToBinary());
+			
+			writer.WriteInt64 (date.ToFileTime());
 		}
 
 		/// <summary>
@@ -59,7 +56,7 @@ namespace Tempest
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			return DateTime.FromBinary (reader.ReadInt64());
+			return DateTime.FromFileTime (reader.ReadInt64());
 		}
 
 		public static void WriteString (this IValueWriter writer, string value)

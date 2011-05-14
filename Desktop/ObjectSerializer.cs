@@ -163,8 +163,6 @@ namespace Tempest
 			}
 			else
 			{
-				oserializer.LoadMembers (t);
-
 				return (r, skipHeader) =>
 				{
 					if (!skipHeader)
@@ -184,6 +182,7 @@ namespace Tempest
 
 					if (typeof(Tempest.ISerializable).IsAssignableFrom (t))
 					{
+						oserializer.LoadCtor (t);
 						value = oserializer.ctor.Invoke (null);
 						((Tempest.ISerializable)value).Deserialize (r);
 
@@ -195,6 +194,8 @@ namespace Tempest
 						return oserializer.SerializableDeserializer (r);
 					#endif
 					
+					oserializer.LoadMembers (t);
+
 					value = oserializer.ctor.Invoke (null);
 					
 					foreach (var kvp in oserializer.members)
@@ -275,7 +276,6 @@ namespace Tempest
 			}
 			else
 			{
-				LoadMembers (t);
 				return (w, v) =>
 				{
 					if (v == null)
@@ -302,6 +302,8 @@ namespace Tempest
 					}
 					#endif
 
+					LoadMembers (t);
+
 					var props = this.members;
 
 					foreach (var kvp in props)
@@ -315,14 +317,22 @@ namespace Tempest
 			}
 		}
 
-		private void LoadMembers (Type t)
+		private void LoadCtor (Type t)
 		{
-			if (this.members != null)
+			if (this.ctor != null)
 				return;
 
 			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
 			if (this.ctor == null)
 				throw new ArgumentException (String.Format ("Type ({0}) must have an empty constructor.", t.FullName), "type");
+		}
+
+		private void LoadMembers (Type t)
+		{
+			LoadCtor (t);
+
+			if (this.members != null)
+				return;
 
 			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.NonPublic)
 							.Where (mi =>

@@ -64,7 +64,7 @@ namespace Tempest.Tests
 			var readvalue = reader.Read<SerializingTester>();
 			Assert.AreEqual (1, readvalue.Number);
 			Assert.AreEqual ("one", readvalue.Text);
-			Assert.IsFalse (readvalue.IgnoredProperty);
+			Assert.IsFalse (readvalue.PrivateSetProperty);
 			Assert.IsNull (readvalue.Numbers);
 			Assert.IsNotNull (readvalue.Child);
 
@@ -76,14 +76,14 @@ namespace Tempest.Tests
 			Assert.AreEqual (3, readvalue.Numbers[0]);
 			Assert.AreEqual (2, readvalue.Numbers[1]);
 			Assert.AreEqual (1, readvalue.Numbers[2]);
-			Assert.IsFalse (readvalue.IgnoredProperty);
+			Assert.IsFalse (readvalue.PrivateSetProperty);
 			Assert.IsNotNull (readvalue.Child);
 
 			readvalue = readvalue.Child;
 			Assert.AreEqual (3, readvalue.Number);
 			Assert.AreEqual ("Three", readvalue.Text);
 			Assert.IsNull (readvalue.Numbers);
-			Assert.IsFalse (readvalue.IgnoredProperty);
+			Assert.IsTrue (readvalue.PrivateSetProperty);
 			Assert.IsNull (readvalue.Child);
 		}
 
@@ -157,21 +157,26 @@ namespace Tempest.Tests
 			byte[] buffer = new byte[20480];
 			var writer = new BufferValueWriter (buffer);
 
-			SerializableTester test = new SerializableTester
+			SerializableTester tester = new SerializableTester
 			{
 				Name = "MONKEY!",
 				Numbers = new[] { 1, 2, 4, 8, 16, 32 }
 			};
 
-			writer.Write (test);
+			var test = new AsyncTest();
+			tester.SerializeCalled += test.PassHandler;
+
+			writer.Write (tester);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
 			var serialized = reader.Read<SerializableTester>();
 
 			Assert.IsNotNull (serialized);
-			Assert.AreEqual (test.Name, serialized.Name);
-			Assert.IsTrue (test.Numbers.SequenceEqual (serialized.Numbers), "Numbers does not match");
+			Assert.AreEqual (tester.Name, serialized.Name);
+			Assert.IsTrue (tester.Numbers.SequenceEqual (serialized.Numbers), "Numbers does not match");
+
+			test.Assert (1000);
 		}
 
 		[Test]
@@ -195,6 +200,56 @@ namespace Tempest.Tests
 			Assert.IsNotNull (serialized);
 			Assert.AreEqual (test.Name, serialized.Name);
 			Assert.IsTrue (test.Numbers.SequenceEqual (serialized.Numbers), "Numbers does not match");
+		}
+
+		private class EventSerializingTester
+		{
+			public event EventHandler TestEvent;
+			public string Text;
+		}
+
+		[Test]
+		public void WithEvent()
+		{
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+
+			EventSerializingTester test = new EventSerializingTester { Text = "thetext" };
+			test.TestEvent += (s,e) => { };
+
+			writer.Write (test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = reader.Read<EventSerializingTester>();
+
+			Assert.IsNotNull (serialized);
+			Assert.AreEqual (test.Text, serialized.Text);
+		}
+
+		public class DelegateSerializingTester
+		{
+			public Action TestAction;
+			public string Text;
+		}
+
+		[Test]
+		public void WithDelegate()
+		{
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+
+			DelegateSerializingTester test = new DelegateSerializingTester { Text = "thetext" };
+			test.TestAction = () => { };
+
+			writer.Write (test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = reader.Read<DelegateSerializingTester>();
+
+			Assert.IsNotNull (serialized);
+			Assert.AreEqual (test.Text, serialized.Text);
 		}
 
 		[Test]
@@ -252,6 +307,8 @@ namespace Tempest.Tests
 				Deserialize (reader);
 			}
 
+			public event EventHandler SerializeCalled;
+
 			public string Name
 			{
 				get;
@@ -266,6 +323,8 @@ namespace Tempest.Tests
 
 			public void Serialize (IValueWriter writer)
 			{
+				OnSerializeCalled (EventArgs.Empty);
+
 				writer.WriteString (Name);
 
 				writer.WriteInt32 (Numbers.Length);
@@ -280,6 +339,13 @@ namespace Tempest.Tests
 				Numbers = new int[reader.ReadInt32()];
 				for (int i = 0; i < Numbers.Length; ++i)
 					Numbers[i] = reader.ReadInt32();
+			}
+
+			private void OnSerializeCalled (EventArgs e)
+			{
+				var called = SerializeCalled;
+				if (called != null)
+					called (this, e);
 			}
 		}
 
@@ -300,7 +366,7 @@ namespace Tempest.Tests
 
 			public SerializingTester (bool ignored)
 			{
-				IgnoredProperty = ignored;
+				PrivateSetProperty = ignored;
 			}
 
 			public int Number;
@@ -310,7 +376,7 @@ namespace Tempest.Tests
 
 			public SerializingTester Child { get; set; }
 
-			public bool IgnoredProperty { get; private set; }
+			public bool PrivateSetProperty { get; private set; }
 		}
 	}
 }

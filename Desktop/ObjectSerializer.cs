@@ -328,7 +328,13 @@ namespace Tempest
 							.Where (mi =>
 							{
 								if (mi.MemberType == MemberTypes.Field)
-									return !((FieldInfo)mi).IsInitOnly;
+								{
+									var fi = (FieldInfo)mi;
+									if (typeof(Delegate).IsAssignableFrom (fi.FieldType.BaseType))
+									    return false;
+
+									return !fi.IsInitOnly;
+								}
 								else if (mi.MemberType == MemberTypes.Property)
 								{
 									var p = (PropertyInfo)mi;

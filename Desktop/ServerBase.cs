@@ -94,12 +94,16 @@ namespace Tempest
 			{
 				case ExecutionMode.ConnectionOrder:
 					provider.ConnectionMade += OnConnectionMade;
-					provider.ConnectionlessMessageReceived += OnConnectionlessMessageReceived;
+
+					if (provider.SupportsConnectionless)
+						provider.ConnectionlessMessageReceived += OnConnectionlessMessageReceived;
 					break;
 
 				case ExecutionMode.GlobalOrder:
 					provider.ConnectionMade += OnConnectionMadeGlobal;
-					provider.ConnectionlessMessageReceived += OnConnectionlessMessageReceivedGlobal;
+
+					if (provider.SupportsConnectionless)
+						provider.ConnectionlessMessageReceived += OnConnectionlessMessageReceivedGlobal;
 					break;
 			}
 

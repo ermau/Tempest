@@ -324,7 +324,7 @@ namespace Tempest
 			if (this.ctor == null)
 				throw new ArgumentException (String.Format ("Type ({0}) must have an empty constructor.", t.FullName), "type");
 
-			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField)
+			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.NonPublic)
 							.Where (mi =>
 							{
 								if (mi.MemberType == MemberTypes.Field)

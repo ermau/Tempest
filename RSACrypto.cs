@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 
 namespace Tempest
@@ -34,7 +35,32 @@ namespace Tempest
 	{
 		public RSACrypto()
 		{
-			this.Sha256Name = CryptoConfig.MapNameToOID (this.sha.GetType().ToString());
+			List<string> algs = new List<string>();
+
+			try
+			{
+				if (CryptoConfig.CreateFromName ("System.Security.Cryptography.SHA256CryptoServiceProvider") != null)
+					algs.Add ("SHA256");
+			}
+			catch
+			{
+			}
+
+			try
+			{
+				if (CryptoConfig.CreateFromName ("System.Security.Cryptography.SHA1CryptoServiceProvider") != null)
+					algs.Add ("SHA1");
+			}
+			catch
+			{
+			}
+
+			this.algs = algs;
+		}
+
+		public IEnumerable<String> SupportedHashAlgs
+		{
+			get { return this.algs; }
 		}
 
 		public int KeySize
@@ -58,28 +84,28 @@ namespace Tempest
 			return this.rsaCrypto.Decrypt (data, true);
 		}
 
-		public byte[] HashAndSign (byte[] data, int offset, int count)
+		public byte[] HashAndSign (string hashAlg, byte[] data, int offset, int count)
 		{
+			if (hashAlg == null)
+				throw new ArgumentNullException ("hashAlg");
 			if (data == null)
 				throw new ArgumentNullException ("data");
 
-			byte[] hash = sha.ComputeHash (data, offset, count);
+			var hasher = CryptoConfig.CreateFromName (hashAlg) as HashAlgorithm;
+			if (hasher == null)
+				throw new ArgumentException ("Hash algorithm not found", "hashAlg");
 
-			return this.rsaCrypto.SignHash (hash, Sha256Name);
+			return this.rsaCrypto.SignData (data, offset, count, hashAlg);
 		}
 
-		public bool VerifySignedHash (byte[] data, byte[] signature)
+		public bool VerifySignedHash (string hashAlg, byte[] data, byte[] signature)
 		{
 			if (data == null)
 				throw new ArgumentNullException ("data");
 			if (signature == null)
 				throw new ArgumentNullException ("signature");
 
-			if (!this.rsaCrypto.VerifyData (data, Sha256Name, signature))
-				return false;
-
-			byte[] hash = this.sha.ComputeHash (data);
-			return this.rsaCrypto.VerifyHash (hash, Sha256Name, signature);
+			return this.rsaCrypto.VerifyData (data, hashAlg, signature);
 		}
 
 		public IAsymmetricKey ExportKey (bool includePrivate)
@@ -99,9 +125,8 @@ namespace Tempest
 			this.rsaCrypto.ImportParameters (rsaKey);
 		}
 
-		private readonly SHA256Managed sha = new SHA256Managed();
 		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider (4096);
-		private readonly string Sha256Name;
+		private IEnumerable<string> algs;
 	}
 	#endif
 }

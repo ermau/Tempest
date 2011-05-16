@@ -188,7 +188,12 @@ namespace Tempest.Providers.Network
 
 			p = Interlocked.Decrement (ref this.pendingAsync);
 			Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
-			Send (new ConnectMessage { Protocols = this.protocols.Values });
+			
+			Send (new ConnectMessage
+			{
+				Protocols = this.protocols.Values,
+				SignatureHashAlgorithms = this.pkAuthentication.SupportedHashAlgs
+			});
 		}
 
 		protected override void OnTempestMessageReceived (MessageEventArgs e)
@@ -213,6 +218,7 @@ namespace Tempest.Providers.Network
 
 				case (ushort)TempestMessageType.AcknowledgeConnect:
 				    var msg = (AcknowledgeConnectMessage)e.Message;
+
 				    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (pr => pr.id);
 					NetworkId = msg.NetworkId;
 
@@ -245,15 +251,15 @@ namespace Tempest.Providers.Network
 			base.OnTempestMessageReceived(e);
 		}
 
-		protected override void SignMessage (BufferValueWriter writer, int headerLength)
+		protected override void SignMessage (string hashAlg, BufferValueWriter writer, int headerLength)
 		{
 			if (this.hmac == null)
-				writer.WriteBytes (this.pkAuthentication.HashAndSign (writer.Buffer, headerLength, writer.Length - headerLength));
+				writer.WriteBytes (this.pkAuthentication.HashAndSign (hashAlg, writer.Buffer, headerLength, writer.Length - headerLength));
 			else
-				base.SignMessage (writer, headerLength);
+				base.SignMessage (hashAlg, writer, headerLength);
 		}
 
-		protected override bool VerifyMessage (Message message, byte[] signature, byte[] data, int moffset, int length)
+		protected override bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
 			if (this.hmac == null)
 			{
@@ -266,10 +272,11 @@ namespace Tempest.Providers.Network
 				this.serverAuthenticationKey = msg.PublicAuthenticationKey;
 				this.serverAuthentication.ImportKey (this.serverAuthenticationKey);
 
-				return this.serverAuthentication.VerifySignedHash (resized, signature);
+				this.signingHashAlgorithm = msg.SignatureHashAlgorithm;
+				return this.serverAuthentication.VerifySignedHash (this.signingHashAlgorithm, resized, signature);
 			}
 			else
-				return base.VerifyMessage (message, signature, data, moffset, length);
+				return base.VerifyMessage (hashAlg, message, signature, data, moffset, length);
 		}
 
 		protected override void OnDisconnected (DisconnectedEventArgs e)

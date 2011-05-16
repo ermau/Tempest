@@ -42,6 +42,12 @@ namespace Tempest.InternalProtocol
 			get { return true; }
 		}
 
+		public string SignatureHashAlgorithm
+		{
+			get;
+			set;
+		}
+
 		public IEnumerable<Protocol> EnabledProtocols
 		{
 			get;
@@ -68,6 +74,8 @@ namespace Tempest.InternalProtocol
 
 		public override void WritePayload (IValueWriter writer)
 		{
+			writer.WriteString (SignatureHashAlgorithm);
+
 			Protocol[] protocols = EnabledProtocols.ToArray();
 			writer.WriteInt32 (protocols.Length);
 			for (int i = 0; i < protocols.Length; ++i)
@@ -81,6 +89,8 @@ namespace Tempest.InternalProtocol
 
 		public override void ReadPayload (IValueReader reader)
 		{
+			SignatureHashAlgorithm = reader.ReadString();
+
 			Protocol[] protocols = new Protocol[reader.ReadInt32()];
 			for (int i = 0; i < protocols.Length; ++i)
 				protocols[i] = new Protocol (reader);

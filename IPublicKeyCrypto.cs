@@ -24,10 +24,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System.Collections.Generic;
+
 namespace Tempest
 {
 	public interface IPublicKeyCrypto
 	{
+		/// <summary>
+		/// Gets the supported hash algorithms. ex. SHA256, SHA1
+		/// </summary>
+		IEnumerable<string> SupportedHashAlgs { get; }
+
 		/// <summary>
 		/// Gets the key size in bits.
 		/// </summary>
@@ -36,8 +43,8 @@ namespace Tempest
 		byte[] Encrypt (byte[] data);
 		byte[] Decrypt (byte[] data);
 
-		byte[] HashAndSign (byte[] data, int offset, int count);
-		bool VerifySignedHash (byte[] data, byte[] signature);
+		byte[] HashAndSign (string hashAlg, byte[] data, int offset, int count);
+		bool VerifySignedHash (string hashAlg, byte[] data, byte[] signature);
 
 		IAsymmetricKey ExportKey (bool includePrivate);
 		void ImportKey (IAsymmetricKey key);

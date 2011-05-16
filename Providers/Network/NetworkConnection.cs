@@ -244,6 +244,7 @@ namespace Tempest.Providers.Network
 		protected AesManaged aes;
 		protected HMACSHA256 hmac;
 
+		protected string signingHashAlgorithm = "SHA256";
 		protected readonly Func<IPublicKeyCrypto> publicKeyCryptoFactory;
 
 		protected IPublicKeyCrypto pkAuthentication;
@@ -366,7 +367,7 @@ namespace Tempest.Providers.Network
 			r = new BufferValueReader (message);
 		}
 
-		protected virtual void SignMessage (BufferValueWriter writer, int headerLength)
+		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer, int headerLength)
 		{
 			if (this.hmac == null)
 				throw new InvalidOperationException();
@@ -374,7 +375,7 @@ namespace Tempest.Providers.Network
 			writer.WriteBytes (this.hmac.ComputeHash (writer.Buffer, headerLength, writer.Length - headerLength));
 		}
 
-		protected virtual bool VerifyMessage (Message message, byte[] signature, byte[] data, int moffset, int length)
+		protected virtual bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
 			byte[] ourhash = this.hmac.ComputeHash (data, moffset, length);
 
@@ -405,7 +406,7 @@ namespace Tempest.Providers.Network
 				EncryptMessage (writer, ref headerLength);
 
 			if (message.Authenticated)
-				SignMessage (writer, headerLength);
+				SignMessage (this.signingHashAlgorithm, writer, headerLength);
 
 			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
@@ -526,7 +527,7 @@ namespace Tempest.Providers.Network
 					if (header.Message.Authenticated)
 					{
 						byte[] signature = reader.ReadBytes(); // Need the original reader here, sig is after payload
-						if (!VerifyMessage (header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - signature.Length - sizeof(int)))
+						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - signature.Length - sizeof(int)))
 						{
 							Disconnect (true, DisconnectedReason.MessageAuthenticationFailed);
 							Trace.WriteLine ("Exiting (message auth failed)",

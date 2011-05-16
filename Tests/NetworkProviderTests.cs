@@ -191,5 +191,33 @@ namespace Tempest.Tests
 
 			Assert.AreEqual (key, client.PublicAuthenticationKey);
 		}
+
+		[Test, Repeat (3)]
+		public void RejectSha1()
+		{
+			TearDown();
+
+			provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, (IPEndPoint)EndPoint, MaxConnections, () => new RSACrypto(), new string[] { "SHA256" } );
+			provider.Start (MessageTypes);
+
+			var test = new AsyncTest<DisconnectedEventArgs> (d => Assert.AreEqual (DisconnectedReason.FailedHandshake, d.Reason));
+
+			var client = new NetworkClientConnection (new[] { MockProtocol.Instance }, () => new MockCrypto());
+			client.Connect (EndPoint, MessageTypes);
+
+			client.Connected += test.FailHandler;
+			client.Disconnected += test.PassHandler;
+
+			test.Assert (10000);
+		}
+
+		private class MockCrypto
+			: RSACrypto, IPublicKeyCrypto
+		{
+			IEnumerable<String> IPublicKeyCrypto.SupportedHashAlgs
+			{
+				get { return new[] { "SHA1" }; }
+			}
+		}
 	}
 }

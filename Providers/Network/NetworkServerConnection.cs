@@ -38,14 +38,17 @@ namespace Tempest.Providers.Network
 	public sealed class NetworkServerConnection
 		: NetworkConnection, IServerConnection
 	{
-		internal NetworkServerConnection (IEnumerable<Protocol> protocols, Socket reliableSocket, NetworkConnectionProvider provider)
+		internal NetworkServerConnection (IEnumerable<string> signatureHashAlgs, IEnumerable<Protocol> protocols, Socket reliableSocket, NetworkConnectionProvider provider)
 			: base (protocols, provider.pkCryptoFactory)
 		{
+			if (signatureHashAlgs == null)
+				throw new ArgumentNullException ("signatureHashAlgs");
 			if (reliableSocket == null)
 				throw new ArgumentNullException ("reliableSocket");
 			if (provider == null)
 				throw new ArgumentNullException ("provider");
 
+			this.signatureHashAlgs = signatureHashAlgs;
 			this.provider = provider;
 
 			RemoteEndPoint = reliableSocket.RemoteEndPoint;
@@ -72,6 +75,7 @@ namespace Tempest.Providers.Network
 
 		private static int nextNetworkId;
 
+		private readonly IEnumerable<string> signatureHashAlgs;
 		private readonly NetworkConnectionProvider provider;
 
 		private readonly object pingSync = new object();
@@ -117,6 +121,23 @@ namespace Tempest.Providers.Network
 						return;
 					}
 
+		    		bool foundHashAlg = false;
+		    		foreach (string hashAlg in this.signatureHashAlgs)
+		    		{
+		    			if (msg.SignatureHashAlgorithms.Contains (hashAlg))
+		    			{
+		    				this.signingHashAlgorithm = hashAlg;
+		    				foundHashAlg = true;
+		    				break;
+		    			}
+		    		}
+
+					if (!foundHashAlg)
+					{
+						this.NotifyAndDisconnect (DisconnectedReason.FailedHandshake);
+						return;
+					}
+
 		    		NetworkId = Interlocked.Increment (ref nextNetworkId);
 
 					foreach (Protocol ip in msg.Protocols)
@@ -134,6 +155,7 @@ namespace Tempest.Providers.Network
 
 		            e.Connection.Send (new AcknowledgeConnectMessage
 		            {
+						SignatureHashAlgorithm = this.signingHashAlgorithm,
 		                EnabledProtocols = this.protocols.Values,
 		                NetworkId = NetworkId,
 						PublicAuthenticationKey = this.provider.PublicAuthenticationKey,
@@ -174,15 +196,15 @@ namespace Tempest.Providers.Network
 		    base.OnTempestMessageReceived(e);
 		}
 
-		protected override void SignMessage (BufferValueWriter writer, int headerLength)
+		protected override void SignMessage (string hashAlg, BufferValueWriter writer, int headerLength)
 		{
 			if (this.hmac == null)
-				writer.WriteBytes (this.provider.authentication.HashAndSign (writer.Buffer, headerLength, writer.Length - headerLength));
+				writer.WriteBytes (this.provider.authentication.HashAndSign (hashAlg, writer.Buffer, headerLength, writer.Length - headerLength));
 			else
-				base.SignMessage (writer, headerLength);
+				base.SignMessage (hashAlg, writer, headerLength);
 		}
 
-		protected override bool VerifyMessage (Message message, byte[] signature, byte[] data, int moffset, int length)
+		protected override bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
 			if (this.hmac == null)
 			{
@@ -197,10 +219,10 @@ namespace Tempest.Providers.Network
 				this.publicAuthenticationKey = key;
 				this.pkAuthentication.ImportKey (key);
 
-				return this.pkAuthentication.VerifySignedHash (resized, signature);
+				return this.pkAuthentication.VerifySignedHash (hashAlg, resized, signature);
 			}
 			else
-				return base.VerifyMessage (message, signature, data, moffset, length);
+				return base.VerifyMessage (hashAlg, message, signature, data, moffset, length);
 		}
 
 		protected override void OnMessageSent (MessageEventArgs e)

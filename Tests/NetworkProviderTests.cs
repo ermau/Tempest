@@ -202,7 +202,7 @@ namespace Tempest.Tests
 
 			var test = new AsyncTest<DisconnectedEventArgs> (d => Assert.AreEqual (DisconnectedReason.FailedHandshake, d.Reason));
 
-			var client = new NetworkClientConnection (new[] { MockProtocol.Instance }, () => new MockCrypto());
+			var client = new NetworkClientConnection (new[] { MockProtocol.Instance }, () => new MockSha1OnlyCrypto());
 			client.Connect (EndPoint, MessageTypes);
 
 			client.Connected += test.FailHandler;
@@ -211,10 +211,10 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		private class MockCrypto
+		private class MockSha1OnlyCrypto
 			: RSACrypto, IPublicKeyCrypto
 		{
-			IEnumerable<String> IPublicKeyCrypto.SupportedHashAlgs
+			IEnumerable<string> IPublicKeyCrypto.SupportedHashAlgs
 			{
 				get { return new[] { "SHA1" }; }
 			}

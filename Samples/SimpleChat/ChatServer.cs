@@ -8,35 +8,31 @@ namespace Tempest.Samples.SimpleChat
 		public ChatServer (IConnectionProvider provider)
 			: base (provider, MessageTypes.Reliable)
 		{
-			((IContext)this).RegisterMessageHandler (1, OnSetNameMessage);
-			((IContext)this).RegisterMessageHandler (2, OnChatMessage);
+			this.RegisterMessageHandler<SetNameMessage> (OnSetNameMessage);
+			this.RegisterMessageHandler<ChatMessage> (OnChatMessage);
 		}
 
 		private readonly ConcurrentDictionary<IConnection, string> chatters = new ConcurrentDictionary<IConnection, string>();
 
-		private void OnSetNameMessage (MessageEventArgs e)
+		private void OnSetNameMessage (MessageEventArgs<SetNameMessage> e)
 		{
-			var msg = (SetNameMessage)e.Message;
-
-			this.chatters[e.Connection] = msg.Name;
+			this.chatters[e.Connection] = e.Message.Name;
 		}
 
-		private void OnChatMessage (MessageEventArgs e)
+		private void OnChatMessage (MessageEventArgs<ChatMessage> e)
 		{
-			var msg = (ChatMessage)e.Message;
-
 			string sender;
 			if (!this.chatters.TryGetValue (e.Connection, out sender))
 				return;
 
-			msg.Message = sender + ": " + msg.Message;
+			e.Message.Contents = sender + ": " + e.Message.Contents;
 
 			foreach (IConnection connection in this.chatters.Keys)
 			{
 				if (connection == e.Connection)
 					continue;
 
-				connection.Send (msg);
+				connection.Send (e.Message);
 			}
 		}
 

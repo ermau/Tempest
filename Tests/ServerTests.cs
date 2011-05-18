@@ -141,6 +141,33 @@ namespace Tempest.Tests
 			var server = new MockServer (provider, MessageTypes.Reliable);
 			server.Start();
 
+			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
+			((IContext)server).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
+			
+			provider.ConnectionMade += (sender, e) => connection = e.Connection;
+			
+			var c = provider.GetClientConnection (protocol);
+			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.Send (new MockMessage () { Content = "hi" });
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void GenericMessageHandling()
+		{
+			IServerConnection connection = null;
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (MessageEventArgs<MockMessage>)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.AreEqual ("hi", me.Message.Content);
+			});
+
+			var server = new MockServer (provider, MessageTypes.Reliable);
+			server.Start();
+
 			Action<MessageEventArgs<MockMessage>> handler = e => test.PassHandler (test, e);
 			server.RegisterMessageHandler (handler);
 			
@@ -148,7 +175,7 @@ namespace Tempest.Tests
 			
 			var c = provider.GetClientConnection (protocol);
 			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
-			c.Send (new MockMessage () { Content = "hi" });
+			c.Send (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
 		}
@@ -164,6 +191,34 @@ namespace Tempest.Tests
 				Assert.AreSame (connection, me.Connection);
 				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
 				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
+			});
+
+			var server = new MockServer (MessageTypes.Reliable);
+			server.AddConnectionProvider (provider, ExecutionMode.GlobalOrder);
+			server.Start();
+
+			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
+			((IContext)server).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
+			
+			provider.ConnectionMade += (sender, e) => connection = e.Connection;
+			
+			var c = provider.GetClientConnection (protocol);
+			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.Send (new MockMessage { Content = "hi" });
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void GenericMessageHandlingGlobalOrder()
+		{
+			IServerConnection connection = null;
+
+			var test = new AsyncTest(e =>
+			{
+				var me = (MessageEventArgs<MockMessage>)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.AreEqual ("hi", me.Message.Content);
 			});
 
 			var server = new MockServer (MessageTypes.Reliable);

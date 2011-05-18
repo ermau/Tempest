@@ -103,9 +103,29 @@ namespace Tempest.Tests
 				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
 			});
 
+			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
+
+			((IContext)client).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
+			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void GenericMessageHandling()
+		{
+			var test = new AsyncTest (e =>
+			{
+				var me = (MessageEventArgs<MockMessage>)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.AreEqual ("hi", me.Message.Content);
+			});
+
 			Action<MessageEventArgs<MockMessage>> handler = e => test.PassHandler (test, e);
 
-			((IContext)client).RegisterMessageHandler<MockMessage> (handler);
+			client.RegisterMessageHandler (handler);
+
 			client.Connect (new IPEndPoint (IPAddress.Any, 0));
 			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
 
@@ -121,6 +141,27 @@ namespace Tempest.Tests
 				Assert.AreSame (connection, me.Connection);
 				Assert.IsInstanceOf (typeof(MockMessage2), me.Message);
 				Assert.AreEqual ("hi", ((MockMessage2)me.Message).Content);
+			});
+
+			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
+
+			((IContext)client).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
+			((IContext)client).RegisterMessageHandler (MockProtocol2.Instance, 1, handler);
+
+			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			connection.Receive (new MessageEventArgs (connection, new MockMessage2 { Content = "hi" }));
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void MultiProtocolGenericMessageHandling()
+		{
+			var test = new AsyncTest (e =>
+			{
+				var me = (MessageEventArgs<MockMessage2>)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.AreEqual ("hi", me.Message.Content);
 			});
 
 			Action<MessageEventArgs<MockMessage2>> handler = e => test.PassHandler (test, e);

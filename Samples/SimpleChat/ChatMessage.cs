@@ -17,7 +17,7 @@ namespace Tempest.Samples.SimpleChat
 			set;
 		}
 
-		public string Message
+		public string Contents
 		{
 			get;
 			set;
@@ -26,13 +26,13 @@ namespace Tempest.Samples.SimpleChat
 		public override void WritePayload (IValueWriter writer)
 		{
 			writer.WriteDate (Date);
-			writer.WriteString (Message);
+			writer.WriteString (this.Contents);
 		}
 
 		public override void ReadPayload (IValueReader reader)
 		{
 			Date = reader.ReadDate();
-			Message = reader.ReadString();
+			this.Contents = reader.ReadString();
 		}
 	}
 }

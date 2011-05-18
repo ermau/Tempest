@@ -150,7 +150,7 @@ namespace Tempest
 			for (int i = 0; i < messages.Count; ++i)
 			{
 				var m = messages[i];
-				var mhandlers = GetHandlers (m.Message.MessageType);
+				var mhandlers = GetHandlers (m.Message);
 				if (mhandlers == null)
 					continue;
 
@@ -231,7 +231,7 @@ namespace Tempest
 		                if (!this.running)
 		                    break;
 
-		                var mhandlers = GetHandlers (e.Message.MessageType);
+		                var mhandlers = GetHandlers (e.Message);
 		                if (mhandlers == null)
 		                    continue;
 
@@ -274,7 +274,7 @@ namespace Tempest
 						e = q.Dequeue();
 					}
 
-					var mhandlers = GetHandlers (e.Message.MessageType);
+					var mhandlers = GetHandlers (e.Message);
 					if (mhandlers == null)
 						continue;
 

@@ -34,25 +34,82 @@ namespace Tempest
 	public abstract class MessageHandler
 		: IContext
 	{
-		private readonly MutableLookup<ushort, Action<MessageEventArgs>> handlers = new MutableLookup<ushort, Action<MessageEventArgs>>();
+		private readonly MutableLookup<MessageType, Action<MessageEventArgs>> handlers = new MutableLookup<MessageType, Action<MessageEventArgs>>();
 
-		void IContext.RegisterMessageHandler (ushort messageType, Action<MessageEventArgs> handler)
+		void IContext.RegisterMessageHandler (Protocol protocol, ushort messageType, Action<MessageEventArgs> handler)
 		{
 			lock (this.handlers)
-				this.handlers.Add (messageType, handler);
+				this.handlers.Add (new MessageType (protocol, messageType), handler);
 		}
 
-		protected List<Action<MessageEventArgs>> GetHandlers (ushort messageType)
+		protected List<Action<MessageEventArgs>> GetHandlers (Message message)
 		{
 			List<Action<MessageEventArgs>> mhandlers = null;
 			lock (this.handlers)
 			{
 				IEnumerable<Action<MessageEventArgs>> thandlers;
-				if (this.handlers.TryGetValues (messageType, out thandlers))
+				if (this.handlers.TryGetValues (new MessageType (message), out thandlers))
 					mhandlers = thandlers.ToList();
 			}
 
 			return mhandlers;
+		}
+
+		private class MessageType
+			: IEquatable<MessageType>
+		{
+			public MessageType (Protocol protocol, ushort messageType)
+			{
+				this.protocol = protocol;
+				this.messageType = messageType;
+			}
+
+			public MessageType (Message msg)
+			{
+				this.protocol = msg.Protocol;
+				this.messageType = msg.MessageType;
+			}
+
+			private readonly Protocol protocol;
+			private readonly ushort messageType;
+
+			public override bool Equals(object obj)
+			{
+				if (ReferenceEquals (null, obj))
+					return false;
+				if (ReferenceEquals (this, obj))
+					return true;
+				if (obj.GetType() != typeof (MessageType))
+					return false;
+				return Equals ((MessageType)obj);
+			}
+
+			public bool Equals (MessageType other)
+			{
+				if (ReferenceEquals (null, other))
+					return false;
+				if (ReferenceEquals (this, other))
+					return true;
+				return Equals (other.protocol, this.protocol) && other.messageType == this.messageType;
+			}
+
+			public override int GetHashCode()
+			{
+				unchecked
+				{
+					return (this.protocol.GetHashCode() * 397) ^ this.messageType.GetHashCode();
+				}
+			}
+
+			public static bool operator == (MessageType left, MessageType right)
+			{
+				return Equals (left, right);
+			}
+
+			public static bool operator != (MessageType left, MessageType right)
+			{
+				return !Equals (left, right);
+			}
 		}
 	}
 }

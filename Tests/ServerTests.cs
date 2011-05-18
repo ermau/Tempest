@@ -141,8 +141,8 @@ namespace Tempest.Tests
 			var server = new MockServer (provider, MessageTypes.Reliable);
 			server.Start();
 
-			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
-			((IContext)server).RegisterMessageHandler (1, handler);
+			Action<MessageEventArgs<MockMessage>> handler = e => test.PassHandler (test, e);
+			server.RegisterMessageHandler (handler);
 			
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			
@@ -170,8 +170,8 @@ namespace Tempest.Tests
 			server.AddConnectionProvider (provider, ExecutionMode.GlobalOrder);
 			server.Start();
 
-			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
-			((IContext)server).RegisterMessageHandler (1, handler);
+			Action<MessageEventArgs<MockMessage>> handler = e => test.PassHandler (test, e);
+			server.RegisterMessageHandler (handler);
 			
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			

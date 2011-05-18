@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,9 +34,48 @@ namespace Tempest
 		/// <summary>
 		/// Registers a message handler.
 		/// </summary>
+		/// <param name="protocol">The protocol the message type belongs to.</param>
 		/// <param name="messageType">The message type to register a handler for.</param>
 		/// <param name="handler">The handler to register for the message type.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="handler"/> is <c>null</c>.</exception>
-		void RegisterMessageHandler (ushort messageType, Action<MessageEventArgs> handler);
+		void RegisterMessageHandler (Protocol protocol, ushort messageType, Action<MessageEventArgs> handler);
+	}
+
+	public class MessageEventArgs<T>
+		: ConnectionEventArgs
+		where T : Message
+	{
+		public MessageEventArgs (IConnection connection, T message)
+			: base (connection)
+		{
+			Message = message;
+		}
+
+		public T Message
+		{
+			get;
+			private set;
+		}
+	}
+
+	public static class ContextExtensions
+	{
+		/// <summary>
+		/// Registers a message handler.
+		/// </summary>
+		/// <typeparam name="T">The message type.</typeparam>
+		/// <param name="self">The context to register the message handler to.</param>
+		/// <param name="handler">The message handler to register.</param>
+		public static void RegisterMessageHandler<T> (this IContext self, Action<MessageEventArgs<T>> handler)
+			where T : Message, new()
+		{
+			if (self == null)
+				throw new ArgumentNullException ("self");
+			if (handler == null)
+				throw new ArgumentNullException ("handler");
+
+			T msg = new T();
+			self.RegisterMessageHandler (msg.Protocol, msg.MessageType, e => handler (new MessageEventArgs<T> (e.Connection, (T)e.Message)));
+		}
 	}
 }

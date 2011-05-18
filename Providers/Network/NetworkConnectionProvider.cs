@@ -319,9 +319,9 @@ namespace Tempest.Providers.Network
 		{
 			lock (this.serverConnections)
 			{
-				bool atMax = (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections);
-				if ((this.pendingConnections.Remove (connection) || this.serverConnections.Remove (connection)) && atMax)
-					BeginAccepting (null);
+			    bool atMax = (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections);
+			    if ((this.pendingConnections.Remove (connection) || this.serverConnections.Remove (connection)) && atMax)
+			        BeginAccepting (null);
 			}
 		}
 

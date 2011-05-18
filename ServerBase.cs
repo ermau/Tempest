@@ -321,7 +321,7 @@ namespace Tempest
 					return;
 			}
 
-			var mhandlers = GetHandlers (e.Message.MessageType);
+			var mhandlers = GetHandlers (e.Message);
 			if (mhandlers == null)
 				return;
 

@@ -14,7 +14,7 @@ namespace Tempest.Samples.SimpleChat
 
 			this.writer = writer;
 
-			((IContext)this).RegisterMessageHandler (2, OnChatMessage);
+			this.RegisterMessageHandler<ChatMessage> (OnChatMessage);
 		}
 
 		public void SetName (string name)
@@ -24,16 +24,14 @@ namespace Tempest.Samples.SimpleChat
 
 		public void SendMessage (string message)
 		{
-			this.connection.Send (new ChatMessage { Message = message });
+			this.connection.Send (new ChatMessage { Contents = message });
 		}
 
 		private readonly TextWriter writer;
 
-		private void OnChatMessage (MessageEventArgs e)
+		private void OnChatMessage (MessageEventArgs<ChatMessage> e)
 		{
-			var msg = (ChatMessage)e.Message;
-
-			this.writer.WriteLine (msg.Message);
+			this.writer.WriteLine (e.Message.Contents);
 		}
 	}
 }

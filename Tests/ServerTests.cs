@@ -147,7 +147,7 @@ namespace Tempest.Tests
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			
 			var c = provider.GetClientConnection (protocol);
-			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 			c.Send (new MockMessage () { Content = "hi" });
 
 			test.Assert (10000);
@@ -174,7 +174,7 @@ namespace Tempest.Tests
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			
 			var c = provider.GetClientConnection (protocol);
-			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 			c.Send (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
@@ -203,7 +203,7 @@ namespace Tempest.Tests
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			
 			var c = provider.GetClientConnection (protocol);
-			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 			c.Send (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
@@ -231,7 +231,7 @@ namespace Tempest.Tests
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			
 			var c = provider.GetClientConnection (protocol);
-			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 			c.Send (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
@@ -247,7 +247,7 @@ namespace Tempest.Tests
 			server.ConnectionMade += test.PassHandler;
 
 			var client = provider.GetClientConnection (protocol);
-			client.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 
 			test.Assert (5000);
 		}
@@ -263,7 +263,7 @@ namespace Tempest.Tests
 			server.ConnectionMade += test.PassHandler;
 
 			var client = provider.GetClientConnection (protocol);
-			client.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 
 			test.Assert (5000);
 		}

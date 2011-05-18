@@ -117,7 +117,7 @@ namespace Tempest.Providers.Network
 
 					if (!msg.Protocols.Any())
 					{
-						Disconnect (true, DisconnectedReason.FailedHandshake);
+						Disconnect (true, ConnectionResult.FailedHandshake);
 						return;
 					}
 
@@ -134,7 +134,7 @@ namespace Tempest.Providers.Network
 
 					if (!foundHashAlg)
 					{
-						this.NotifyAndDisconnect (DisconnectedReason.FailedHandshake);
+						this.NotifyAndDisconnect (ConnectionResult.FailedHandshake);
 						return;
 					}
 
@@ -145,8 +145,8 @@ namespace Tempest.Providers.Network
 						Protocol lp;
 						if (!this.protocols.TryGetValue (ip.id, out lp) || !lp.CompatibleWith (ip))
 						{
-							Send (new DisconnectMessage { Reason = DisconnectedReason.IncompatibleVersion });
-							Disconnect (false, DisconnectedReason.IncompatibleVersion);
+							Send (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion });
+							Disconnect (false, ConnectionResult.IncompatibleVersion);
 							return;
 						}
 					}
@@ -168,7 +168,7 @@ namespace Tempest.Providers.Network
 
 					if (finalConnect.AESKey == null || finalConnect.AESKey.Length == 0 || finalConnect.PublicAuthenticationKey == null)
 					{
-						Disconnect (true, DisconnectedReason.FailedHandshake);
+						Disconnect (true, ConnectionResult.FailedHandshake);
 						return;
 					}
 
@@ -181,7 +181,7 @@ namespace Tempest.Providers.Network
 					}
 					catch
 					{
-						Disconnect (true, DisconnectedReason.FailedHandshake);
+						Disconnect (true, ConnectionResult.FailedHandshake);
 						return;
 					}
 

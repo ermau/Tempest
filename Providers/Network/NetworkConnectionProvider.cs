@@ -310,7 +310,7 @@ namespace Tempest.Providers.Network
 			OnConnectionMade (made);
 			if (made.Rejected)
 			{
-				Trace.WriteLine ("Connection rejected", "NetworkConnectionProvider Connect");
+				Trace.WriteLine ("Connection rejected", "NetworkConnectionProvider ConnectAsync");
 				connection.Dispose();
 			}
 		}

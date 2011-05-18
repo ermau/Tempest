@@ -80,7 +80,7 @@ namespace Tempest.Tests
 			provider.ConnectionMade += test.PassHandler;
 
 			var client = provider.GetClientConnection (MockProtocol.Instance);
-			client.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 			
 			test.Assert (5000);
 		}

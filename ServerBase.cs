@@ -180,8 +180,8 @@ namespace Tempest
 			if (reason == null)
 				throw new ArgumentNullException ("reason");
 
-			connection.Send (new DisconnectMessage { Reason = DisconnectedReason.Custom, CustomReason = reason });
-			connection.Disconnect (false, DisconnectedReason.Custom);
+			connection.Send (new DisconnectMessage { Reason = ConnectionResult.Custom, CustomReason = reason });
+			connection.Disconnect (false, ConnectionResult.Custom);
 		}
 
 		protected volatile bool running = false;

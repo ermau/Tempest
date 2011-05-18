@@ -113,7 +113,7 @@ namespace Tempest.Tests
 				client = GetNewClientConnection();
 				client.Connected += test.PassHandler;
 				client.Disconnected += test.FailHandler;
-				client.Connect (EndPoint, MessageTypes);
+				client.ConnectAsync (EndPoint, MessageTypes);
 
 				test.Assert (3000);
 			}
@@ -125,7 +125,7 @@ namespace Tempest.Tests
 			provider.ConnectionMade += test.FailHandler;
 			client = GetNewClientConnection();
 			client.Disconnected += test.PassHandler;
-			client.Connect (EndPoint, MessageTypes);
+			client.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (3000, false);
 		}
@@ -151,7 +151,7 @@ namespace Tempest.Tests
 
 			IClientConnection client = GetNewClientConnection();
 			client.Disconnected += test.FailHandler;
-			client.Connect (EndPoint, MessageTypes);
+			client.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (3000);
 		}
@@ -173,7 +173,7 @@ namespace Tempest.Tests
 			((NetworkConnectionProvider)provider).PingFrequency = 1000;
 			var client = GetNewClientConnection();
 			client.Disconnected += test.FailHandler;
-			client.Connect (EndPoint, MessageTypes);
+			client.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (30000, false);
 			Assert.IsNotNull (connection);
@@ -200,10 +200,10 @@ namespace Tempest.Tests
 			provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, (IPEndPoint)EndPoint, MaxConnections, () => new RSACrypto(), new string[] { "SHA256" } );
 			provider.Start (MessageTypes);
 
-			var test = new AsyncTest<DisconnectedEventArgs> (d => Assert.AreEqual (DisconnectedReason.FailedHandshake, d.Reason));
+			var test = new AsyncTest<DisconnectedEventArgs> (d => Assert.AreEqual (ConnectionResult.FailedHandshake, d.Result));
 
 			var client = new NetworkClientConnection (new[] { MockProtocol.Instance }, () => new MockSha1OnlyCrypto());
-			client.Connect (EndPoint, MessageTypes);
+			client.ConnectAsync (EndPoint, MessageTypes);
 
 			client.Connected += test.FailHandler;
 			client.Disconnected += test.PassHandler;

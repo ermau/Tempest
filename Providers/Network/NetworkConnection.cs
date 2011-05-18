@@ -220,7 +220,7 @@ namespace Tempest.Providers.Network
 				ReliableSendCompleted (this.reliableSocket, eargs);
 		}
 
-		public void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
+		public void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
 		{
 			Disconnect (now, reason, null);
 		}
@@ -255,7 +255,7 @@ namespace Tempest.Providers.Network
 		protected int pendingAsync = 0;
 		protected bool disconnecting = false;
 		protected bool formallyConnected = false;
-		protected DisconnectedReason disconnectingReason;
+		protected ConnectionResult disconnectingReason;
 		protected string disconnectingCustomReason;
 
 		protected Socket reliableSocket;
@@ -529,7 +529,7 @@ namespace Tempest.Providers.Network
 						byte[] signature = reader.ReadBytes(); // Need the original reader here, sig is after payload
 						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - signature.Length - sizeof(int)))
 						{
-							Disconnect (true, DisconnectedReason.MessageAuthenticationFailed);
+							Disconnect (true, ConnectionResult.MessageAuthenticationFailed);
 							Trace.WriteLine ("Exiting (message auth failed)",
 											 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length,
 															bufferOffset, messageOffset, remainingData, connectionId));
@@ -642,7 +642,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		private void Disconnect (bool now, DisconnectedReason reason, string customReason)
+		private void Disconnect (bool now, ConnectionResult reason, string customReason)
 		{
 			#if TRACE
 			int c = Interlocked.Increment (ref nextCallId);

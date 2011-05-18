@@ -25,6 +25,8 @@
 // THE SOFTWARE.
 
 using System;
+using System.Net;
+using System.Threading;
 using Tempest.InternalProtocol;
 
 namespace Tempest
@@ -39,7 +41,7 @@ namespace Tempest
 		/// </summary>
 		/// <param name="self">The connection to notify and disconnect.</param>
 		/// <param name="reason">The reason to disconnect.</param>
-		public static void NotifyAndDisconnect (this IConnection self, DisconnectedReason reason)
+		public static void NotifyAndDisconnect (this IConnection self, ConnectionResult reason)
 		{
 			if (self == null)
 				throw new ArgumentNullException ("self");
@@ -70,6 +72,39 @@ namespace Tempest
 			};
 
 			self.MessageReceived += evcallback;
+		}
+	}
+
+	public static class ClientConnectionExtensions
+	{
+		public static ConnectionResult Connect (this IClientConnection self, EndPoint endPoint, MessageTypes messageTypes)
+		{
+			ConnectionResult result = ConnectionResult.FailedUnknown;
+			AutoResetEvent wait = new AutoResetEvent (false);
+
+			EventHandler<ClientConnectionEventArgs> connected = null;
+			EventHandler<DisconnectedEventArgs> disconnected = null;
+
+			connected = (s, e) =>
+			{
+				self.Connected -= connected;
+				self.Disconnected -= disconnected;
+				result = ConnectionResult.Success;
+				wait.Set();
+			};
+
+			disconnected = (s, e) =>
+			{
+				self.Connected -= connected;
+				self.Disconnected -= disconnected;
+				result = e.Result;
+				wait.Set();
+			};
+
+			self.ConnectAsync (endPoint, messageTypes);
+			wait.WaitOne();
+
+			return result;
 		}
 	}
 }

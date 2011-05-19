@@ -63,7 +63,7 @@ namespace Tempest.Tests
 		[Test]
 		public void ConnectNull()
 		{
-			Assert.Throws<ArgumentNullException> (() => client.Connect (null));
+			Assert.Throws<ArgumentNullException> (() => client.ConnectAsync (null));
 		}
 
 		[Test]
@@ -74,7 +74,7 @@ namespace Tempest.Tests
 			client.Connected += test.PassHandler;
 			client.Disconnected += test.FailHandler;
 
-			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 
 			test.Assert (10000);
 		}
@@ -87,7 +87,7 @@ namespace Tempest.Tests
 			client.Connected += (sender, e) => client.Disconnect (true);
 			client.Disconnected += test.PassHandler;
 
-			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 
 			test.Assert (10000);
 		}
@@ -106,7 +106,7 @@ namespace Tempest.Tests
 			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
 
 			((IContext)client).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
-			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
 
 			test.Assert (10000);
@@ -126,7 +126,7 @@ namespace Tempest.Tests
 
 			client.RegisterMessageHandler (handler);
 
-			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
 
 			test.Assert (10000);
@@ -148,7 +148,7 @@ namespace Tempest.Tests
 			((IContext)client).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
 			((IContext)client).RegisterMessageHandler (MockProtocol2.Instance, 1, handler);
 
-			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 			connection.Receive (new MessageEventArgs (connection, new MockMessage2 { Content = "hi" }));
 
 			test.Assert (10000);
@@ -169,7 +169,7 @@ namespace Tempest.Tests
 			client.RegisterMessageHandler (handler);
 			client.RegisterMessageHandler (handler);
 
-			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 			connection.Receive (new MessageEventArgs (connection, new MockMessage2 { Content = "hi" }));
 
 			test.Assert (10000);
@@ -187,7 +187,7 @@ namespace Tempest.Tests
 			};
 
 			client.RegisterMessageHandler (handler);
-			client.Connect (new IPEndPoint (IPAddress.Any, 0));
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
 
 			test.Assert (10000);

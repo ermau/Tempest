@@ -91,7 +91,7 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Attempts to connect to <paramref name="endPoint"/>.
+		/// Attempts to asynchronously connect to <paramref name="endPoint"/>.
 		/// </summary>
 		/// <param name="endPoint">The endpoint to connect to.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
@@ -101,6 +101,22 @@ namespace Tempest
 				throw new ArgumentNullException ("endPoint");
 
 			this.connection.ConnectAsync (endPoint, this.messageTypes);
+		}
+
+		/// <summary>
+		/// Attempts to connect to <paramref name="endPoint"/>.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to connect to.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
+		/// <returns>
+		/// The result of the connection attempt.
+		/// </returns>
+		public virtual ConnectionResult Connect (EndPoint endPoint)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
+
+			return this.connection.Connect (endPoint, this.messageTypes);
 		}
 
 		/// <summary>

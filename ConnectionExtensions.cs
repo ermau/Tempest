@@ -101,6 +101,8 @@ namespace Tempest
 				wait.Set();
 			};
 
+			self.Connected += connected;
+			self.Disconnected += disconnected;
 			self.ConnectAsync (endPoint, messageTypes);
 			wait.WaitOne();
 

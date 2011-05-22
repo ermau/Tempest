@@ -540,7 +540,7 @@ namespace Tempest.Providers.Network
 					r.Position = moffset;
 					header.Message.ReadPayload (r);
 
-					if (header.Message.Authenticated)
+					if (header.Message.Authenticated && this.requiresHandshake)
 					{
 						byte[] signature = reader.ReadBytes(); // Need the original reader here, sig is after payload
 						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - signature.Length - sizeof(int)))

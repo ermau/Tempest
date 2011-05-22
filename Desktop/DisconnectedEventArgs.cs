@@ -29,47 +29,6 @@ using System;
 namespace Tempest
 {
 	/// <summary>
-	/// Reasons for disconnection.
-	/// </summary>
-	public enum DisconnectedReason
-	{
-		/// <summary>
-		/// Connection lost or killed for an unknown reason.
-		/// </summary>
-		Unknown = 0,
-
-		/// <summary>
-		/// The connection failed to connect to begin with.
-		/// </summary>
-		ConnectionFailed = 1,
-
-		/// <summary>
-		/// The server does not support the client's version of the protocol.
-		/// </summary>
-		IncompatibleVersion = 2,
-		
-		/// <summary>
-		/// The client failed during the handshake.
-		/// </summary>
-		FailedHandshake = 3,
-
-		/// <summary>
-		/// A signed message failed verification.
-		/// </summary>
-		MessageAuthenticationFailed = 4,
-
-		/// <summary>
-		/// An encrypted message failed decryption.
-		/// </summary>
-		EncryptionMismatch = 5,
-
-		/// <summary>
-		/// An application specified reason.
-		/// </summary>
-		Custom = 6,
-	}
-
-	/// <summary>
 	/// Holds event data for the <see cref="IConnection.Disconnected"/> event.
 	/// </summary>
 	public class DisconnectedEventArgs
@@ -79,21 +38,21 @@ namespace Tempest
 		/// Creates a new instance of <see cref="ConnectionEventArgs"/>.
 		/// </summary>
 		/// <param name="connection">The connection of the event.</param>
-		/// <param name="reason">Reason for disconnection.</param>
+		/// <param name="reason">Result for disconnection.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="connection"/> is <c>null</c>.</exception>
-		public DisconnectedEventArgs (IConnection connection, DisconnectedReason reason)
+		public DisconnectedEventArgs (IConnection connection, ConnectionResult reason)
 			: base (connection)
 		{
-			Reason = reason;
+			this.Result = reason;
 		}
 
-		public DisconnectedEventArgs (IConnection connection, DisconnectedReason reason, string customReason)
+		public DisconnectedEventArgs (IConnection connection, ConnectionResult reason, string customReason)
 			: this (connection, reason)
 		{
 			CustomReason = customReason;
 		}
 
-		public DisconnectedReason Reason
+		public ConnectionResult Result
 		{
 			get;
 			private set;

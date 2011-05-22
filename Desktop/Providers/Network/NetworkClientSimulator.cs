@@ -139,14 +139,14 @@ namespace Tempest.Providers.Network
 			return this.connection.Tick();
 		}
 
-		public void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
+		public void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
 		{
 			this.connection.Disconnect (now, reason);
 		}
 
-		public void Connect (EndPoint endpoint, MessageTypes messageTypes)
+		public void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
-			this.connection.Connect (endpoint, messageTypes);
+			this.connection.ConnectAsync (endpoint, messageTypes);
 		}
 
 		private double sendPacketLoss;

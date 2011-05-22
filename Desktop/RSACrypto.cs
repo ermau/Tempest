@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 
 #if SILVERLIGHT
@@ -36,6 +37,41 @@ namespace Tempest
 	public class RSACrypto
 		: IPublicKeyCrypto
 	{
+		public RSACrypto()
+		{
+			List<string> algs = new List<string>();
+
+			#if !SILVERLIGHT
+			try
+			{
+				if (CryptoConfig.CreateFromName ("System.Security.Cryptography.SHA256CryptoServiceProvider") != null)
+					algs.Add ("SHA256");
+			}
+			catch
+			{
+			}
+
+			try
+			{
+				if (CryptoConfig.CreateFromName ("System.Security.Cryptography.SHA1CryptoServiceProvider") != null)
+					algs.Add ("SHA1");
+			}
+			catch
+			{
+			}
+			#else
+			algs.Add ("SHA256");
+			algs.Add ("SHA1");
+			#endif
+
+			this.algs = algs;
+		}
+
+		public IEnumerable<String> SupportedHashAlgs
+		{
+			get { return this.algs; }
+		}
+
 		public int KeySize
 		{
 			get { return 4096; }
@@ -65,22 +101,46 @@ namespace Tempest
 			#endif
 		}
 
-		public byte[] HashAndSign (byte[] data, int offset, int count)
+		public byte[] HashAndSign (string hashAlg, byte[] data, int offset, int count)
 		{
+			if (hashAlg == null)
+				throw new ArgumentNullException ("hashAlg");
 			if (data == null)
 				throw new ArgumentNullException ("data");
 
 			#if !SILVERLIGHT
-			return this.rsaCrypto.SignData (data, offset, count, Sha256Name);
+			var hasher = CryptoConfig.CreateFromName (hashAlg) as HashAlgorithm;
+			if (hasher == null)
+				throw new ArgumentException ("Hash algorithm not found", "hashAlg");
+			
+			return this.rsaCrypto.SignData (data, offset, count, hashAlg);
 			#else
 			byte[] d = new byte[count];
-			Buffer.BlockCopy (data, offset, d, 0, count);
+			Array.Copy (data, offset, d, 0, count);
 
-			return this.rsaCrypto.SignData (d, this.shaSignature);
+			return this.rsaCrypto.SignData (d, GetSignatureProvider (hashAlg));
 			#endif
 		}
 
-		public bool VerifySignedHash (byte[] data, byte[] signature)
+		#if SILVERLIGHT
+		private static ISignatureProvider GetSignatureProvider (string hashAlg)
+		{
+			ISignatureProvider signatureProvider = null;
+			switch (hashAlg)
+			{
+				case "SHA1":
+					signatureProvider = new EMSAPKCS1v1_5_SHA1();
+					break;
+
+				case "SHA256":
+					signatureProvider = new EMSAPKCS1v1_5_SHA256();
+					break;
+			}
+			return signatureProvider;
+		}
+		#endif
+
+		public bool VerifySignedHash (string hashAlg, byte[] data, byte[] signature)
 		{
 			if (data == null)
 				throw new ArgumentNullException ("data");
@@ -88,9 +148,9 @@ namespace Tempest
 				throw new ArgumentNullException ("signature");
 
 			#if !SILVERLIGHT
-			return this.rsaCrypto.VerifyData (data, Sha256Name, signature);
+			return this.rsaCrypto.VerifyData (data, hashAlg, signature);
 			#else
-			return this.rsaCrypto.VerifyData (data, signature, this.shaSignature);
+			return this.rsaCrypto.VerifyData (data, signature, GetSignatureProvider (hashAlg));
 			#endif
 		}
 
@@ -123,15 +183,11 @@ namespace Tempest
 		}
 		
 		#if !SILVERLIGHT
-		private static readonly string Sha256Name = CryptoConfig.MapNameToOID ("SHA256");
-		#else
-		private readonly EMSAPKCS1v1_5_SHA256 shaSignature = new EMSAPKCS1v1_5_SHA256();
-		#endif
-		
-		#if !SILVERLIGHT
 		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider (4096);
 		#else
 		private readonly RSA.RSACrypto rsaCrypto = new RSA.RSACrypto (4096);
 		#endif
+
+		private readonly IEnumerable<string> algs;
 	}
 }

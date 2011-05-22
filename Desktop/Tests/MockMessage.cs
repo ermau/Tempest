@@ -30,6 +30,49 @@ using System.Text;
 
 namespace Tempest.Tests
 {
+	public class MockProtocol2
+	{
+		public static Protocol Instance
+		{
+			get { return p; }
+		}
+
+		private static readonly Protocol p;
+
+		static MockProtocol2()
+		{
+			p = new Protocol (3);
+			p.Register (new[]
+			{
+				new KeyValuePair<Type, Func<Message>> (typeof (MockMessage2), () => new MockMessage2())
+			});
+		}
+	}
+
+	public class MockMessage2
+		: Message
+	{
+		public MockMessage2 ()
+			: base (MockProtocol2.Instance, 1)
+		{
+		}
+
+		public string Content
+		{
+			get; set;
+		}
+
+		public override void WritePayload (IValueWriter writer)
+		{
+			writer.WriteString (Encoding.UTF8, Content);
+		}
+
+		public override void ReadPayload (IValueReader reader)
+		{
+			Content = reader.ReadString (Encoding.UTF8);
+		}
+	}
+
 	public class MockProtocol
 	{
 		public static Protocol Instance
@@ -37,7 +80,7 @@ namespace Tempest.Tests
 			get { return p; }
 		}
 
-		private static Protocol p;
+		private static readonly Protocol p;
 		static MockProtocol()
 		{
 			p = new Protocol (2);

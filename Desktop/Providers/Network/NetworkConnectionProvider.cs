@@ -37,9 +37,6 @@ using System.Threading.Tasks;
 
 using System.Threading;
 
-#if NET_4
-using System.Threading.Tasks;
-#endif
 namespace Tempest.Providers.Network
 {
 	/// <summary>
@@ -69,14 +66,27 @@ namespace Tempest.Providers.Network
 		/// <param name="endPoint">The endpoint to listen to.</param>
 		/// <param name="maxConnections">Maximum number of connections to allow.</param>
 		/// <param name="protocols">The protocols to accept.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> or <paramref name="protocols" /> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
 		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections)
 			: this (protocols, endPoint, maxConnections, () => new RSACrypto())
 		{
 		}
 
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="NetworkConnectionProvider" /> class.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to listen to.</param>
+		/// <param name="maxConnections">Maximum number of connections to allow.</param>
+		/// <param name="protocols">The protocols to accept.</param>
+		/// <param name="pkCryptoFactory">The public key cryptography provider factory.</param>
+		/// <param name="enabledHashAlgs">
+		/// The signature hash algorithms (in order of preference) to enable from <paramref name="pkCryptoFactory"/>.
+		/// <c>null</c> or an empty collection will enable all of the signature hash algorithms.
+		/// </param>
+		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/>, <paramref name="protocols" /> or <paramref name="pkCryptoFactory" /> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IEnumerable<string> enabledHashAlgs = null)
 		{
 			if (pkCryptoFactory == null)
 				throw new ArgumentNullException ("pkCryptoFactory");
@@ -115,11 +125,14 @@ namespace Tempest.Providers.Network
 						this.authentication = this.pkCryptoFactory();
 						this.authenticationKey = this.authentication.ExportKey (true);
 						this.publicAuthenticationKey = this.authentication.ExportKey (false);
+
+						if (enabledHashAlgs == null || !enabledHashAlgs.Any())
+							this.enabledHashAlgorithms.AddRange (this.authentication.SupportedHashAlgs);
+						else // Need to maintain preference order
+							this.enabledHashAlgorithms.AddRange (enabledHashAlgs.Where(a => this.authentication.SupportedHashAlgs.Contains(a)));
 					#if NET_4
 					});
-					#endif
 
-					#if NET_4
 					authKeyGen.Wait();
 					encryptKeyGen.Wait();
 					#endif
@@ -131,8 +144,8 @@ namespace Tempest.Providers.Network
 				this.keyWait.Set();
 		}
 
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey)
-			: this (protocols, endPoint, maxConnections, pkCryptoFactory)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
+			: this (protocols, endPoint, maxConnections, pkCryptoFactory, enabledHashAlgorithms)
 		{
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
@@ -326,6 +339,7 @@ namespace Tempest.Providers.Network
 		private MessageTypes mtypes;
 
 		private readonly ManualResetEvent keyWait = new ManualResetEvent (false);
+		private readonly List<string> enabledHashAlgorithms = new List<string>();
 		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
 		internal IPublicKeyCrypto pkEncryption;
@@ -356,7 +370,7 @@ namespace Tempest.Providers.Network
 			OnConnectionMade (made);
 			if (made.Rejected)
 			{
-				Trace.WriteLine ("Connection rejected", "NetworkConnectionProvider Connect");
+				Trace.WriteLine ("Connection rejected", "NetworkConnectionProvider ConnectAsync");
 				connection.Dispose();
 			}
 		}
@@ -365,9 +379,9 @@ namespace Tempest.Providers.Network
 		{
 			lock (this.serverConnections)
 			{
-				bool atMax = (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections);
-				if ((this.pendingConnections.Remove (connection) || this.serverConnections.Remove (connection)) && atMax)
-					BeginAccepting (null);
+			    bool atMax = (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections);
+			    if ((this.pendingConnections.Remove (connection) || this.serverConnections.Remove (connection)) && atMax)
+			        BeginAccepting (null);
 			}
 		}
 
@@ -398,7 +412,7 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			var connection = new NetworkServerConnection (this.protocols, e.AcceptSocket, this);
+			var connection = new NetworkServerConnection (this.enabledHashAlgorithms, this.protocols, e.AcceptSocket, this);
 
 			lock (this.serverConnections)
 			{

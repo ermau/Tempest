@@ -91,16 +91,32 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Attempts to connect to <paramref name="endPoint"/>.
+		/// Attempts to asynchronously connect to <paramref name="endPoint"/>.
 		/// </summary>
 		/// <param name="endPoint">The endpoint to connect to.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
-		public virtual void Connect (EndPoint endPoint)
+		public virtual void ConnectAsync (EndPoint endPoint)
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
 
-			this.connection.Connect (endPoint, this.messageTypes);
+			this.connection.ConnectAsync (endPoint, this.messageTypes);
+		}
+
+		/// <summary>
+		/// Attempts to connect to <paramref name="endPoint"/>.
+		/// </summary>
+		/// <param name="endPoint">The endpoint to connect to.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
+		/// <returns>
+		/// The result of the connection attempt.
+		/// </returns>
+		public virtual ConnectionResult Connect (EndPoint endPoint)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
+
+			return this.connection.Connect (endPoint, this.messageTypes);
 		}
 
 		/// <summary>
@@ -109,7 +125,7 @@ namespace Tempest
 		/// <param name="now">Whether or not to disconnect immediately or wait for pending messages.</param>
 		public virtual void Disconnect (bool now)
 		{
-			Disconnect (now, DisconnectedReason.Unknown, null);
+			Disconnect (now, ConnectionResult.FailedUnknown, null);
 		}
 
 		/// <summary>
@@ -122,7 +138,7 @@ namespace Tempest
 			if (reason == null)
 				throw new ArgumentNullException ("reason");
 
-			Disconnect (false, DisconnectedReason.Custom, reason);
+			Disconnect (false, ConnectionResult.Custom, reason);
 		}
 
 		/// <summary>
@@ -150,7 +166,7 @@ namespace Tempest
 			for (int i = 0; i < messages.Count; ++i)
 			{
 				var m = messages[i];
-				var mhandlers = GetHandlers (m.Message.MessageType);
+				var mhandlers = GetHandlers (m.Message);
 				if (mhandlers == null)
 					continue;
 
@@ -173,10 +189,10 @@ namespace Tempest
 		protected volatile bool running;
 		private readonly MessageTypes messageTypes;
 
-		private void Disconnect (bool now, DisconnectedReason reason, string customReason)
+		private void Disconnect (bool now, ConnectionResult reason, string customReason)
 		{
-			if (reason == DisconnectedReason.Custom)
-				this.connection.Send (new DisconnectMessage { Reason = DisconnectedReason.Custom, CustomReason = customReason });
+			if (reason == ConnectionResult.Custom)
+				this.connection.Send (new DisconnectMessage { Reason = ConnectionResult.Custom, CustomReason = customReason });
 
 			this.connection.Disconnect (now, reason);
 
@@ -231,7 +247,7 @@ namespace Tempest
 		                if (!this.running)
 		                    break;
 
-		                var mhandlers = GetHandlers (e.Message.MessageType);
+		                var mhandlers = GetHandlers (e.Message);
 		                if (mhandlers == null)
 		                    continue;
 
@@ -274,7 +290,7 @@ namespace Tempest
 						e = q.Dequeue();
 					}
 
-					var mhandlers = GetHandlers (e.Message.MessageType);
+					var mhandlers = GetHandlers (e.Message);
 					if (mhandlers == null)
 						continue;
 
@@ -296,7 +312,8 @@ namespace Tempest
 		private void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
 		{
 			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
-			OnDisconnected (new ClientDisconnectedEventArgs (e.Reason, e.CustomReason));
+			Disconnect (true, e.Result, e.CustomReason);
+			OnDisconnected (new ClientDisconnectedEventArgs (e.Result, e.CustomReason));
 		}
 
 		private void OnConnectionConnected (object sender, ClientConnectionEventArgs e)
@@ -339,13 +356,13 @@ namespace Tempest
 	public class ClientDisconnectedEventArgs
 		: EventArgs
 	{
-		public ClientDisconnectedEventArgs (DisconnectedReason reason, string customReason)
+		public ClientDisconnectedEventArgs (ConnectionResult reason, string customReason)
 		{
 			Reason = reason;
 			CustomReason = customReason;
 		}
 
-		public DisconnectedReason Reason
+		public ConnectionResult Reason
 		{
 			get;
 			private set;

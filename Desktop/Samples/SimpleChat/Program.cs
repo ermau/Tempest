@@ -45,7 +45,7 @@ namespace Tempest.Samples.SimpleChat
 				{
 					switch (e.Reason)
 					{
-						case DisconnectedReason.ConnectionFailed:
+						case ConnectionResult.ConnectionFailed:
 							Console.WriteLine ("Failed to connect");
 							break;
 
@@ -57,7 +57,7 @@ namespace Tempest.Samples.SimpleChat
 					Environment.Exit (2);
 				};
 
-				client.Connect (new DnsEndPoint (clientHost, 42900));
+				client.ConnectAsync (new DnsEndPoint (clientHost, 42900));
 			}
 
 			string name = null;

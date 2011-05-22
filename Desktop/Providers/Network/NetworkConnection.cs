@@ -50,7 +50,8 @@ namespace Tempest.Providers.Network
 			if (publicKeyCryptoFactory == null)
 				throw new ArgumentNullException ("publicKeyCrypto");
 
-			if (protocols.Any (p => p.RequiresHandshake))
+			this.requiresHandshake = protocols.Any (p => p.RequiresHandshake);
+			if (this.requiresHandshake)
 			{
 				this.publicKeyCryptoFactory = publicKeyCryptoFactory;
 				Interlocked.Increment (ref this.pendingAsync);
@@ -234,7 +235,7 @@ namespace Tempest.Providers.Network
 				ReliableSendCompleted (this.reliableSocket, eargs);
 		}
 
-		public void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
+		public void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
 		{
 			Disconnect (now, reason, null);
 		}
@@ -254,10 +255,12 @@ namespace Tempest.Providers.Network
 		#endif
 
 		protected Dictionary<byte, Protocol> protocols;
+		protected bool requiresHandshake;
 
 		protected AesManaged aes;
 		protected HMACSHA256 hmac;
 
+		protected string signingHashAlgorithm = "SHA256";
 		protected readonly Func<IPublicKeyCrypto> publicKeyCryptoFactory;
 
 		protected IPublicKeyCrypto pkAuthentication;
@@ -268,7 +271,7 @@ namespace Tempest.Providers.Network
 		protected int pendingAsync = 0;
 		protected bool disconnecting = false;
 		protected bool formallyConnected = false;
-		protected DisconnectedReason disconnectingReason;
+		protected ConnectionResult disconnectingReason;
 		protected string disconnectingCustomReason;
 
 		protected Socket reliableSocket;
@@ -380,7 +383,7 @@ namespace Tempest.Providers.Network
 			r = new BufferValueReader (message);
 		}
 
-		protected virtual void SignMessage (BufferValueWriter writer, int headerLength)
+		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer, int headerLength)
 		{
 			if (this.hmac == null)
 				throw new InvalidOperationException();
@@ -388,7 +391,7 @@ namespace Tempest.Providers.Network
 			writer.WriteBytes (this.hmac.ComputeHash (writer.Buffer, headerLength, writer.Length - headerLength));
 		}
 
-		protected virtual bool VerifyMessage (Message message, byte[] signature, byte[] data, int moffset, int length)
+		protected virtual bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
 			byte[] ourhash = this.hmac.ComputeHash (data, moffset, length);
 
@@ -419,7 +422,7 @@ namespace Tempest.Providers.Network
 				EncryptMessage (writer, ref headerLength);
 
 			if (message.Authenticated)
-				SignMessage (writer, headerLength);
+				SignMessage (this.signingHashAlgorithm, writer, headerLength);
 
 			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
@@ -540,9 +543,9 @@ namespace Tempest.Providers.Network
 					if (header.Message.Authenticated)
 					{
 						byte[] signature = reader.ReadBytes(); // Need the original reader here, sig is after payload
-						if (!VerifyMessage (header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - signature.Length - sizeof(int)))
+						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - signature.Length - sizeof(int)))
 						{
-							Disconnect (true, DisconnectedReason.MessageAuthenticationFailed);
+							Disconnect (true, ConnectionResult.MessageAuthenticationFailed);
 							Trace.WriteLine ("Exiting (message auth failed)",
 											 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length,
 															bufferOffset, messageOffset, remainingData, connectionId));
@@ -666,7 +669,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		private void Disconnect (bool now, DisconnectedReason reason, string customReason)
+		private void Disconnect (bool now, ConnectionResult reason, string customReason)
 		{
 			#if TRACE
 			int c = Interlocked.Increment (ref nextCallId);
@@ -821,7 +824,7 @@ namespace Tempest.Providers.Network
 		// TODO: Better buffer limit
 		private static readonly int BufferLimit = Environment.ProcessorCount * 10;
 		private static volatile int bufferCount = 0;
-		
+
 		#if TRACE
 		protected static int nextCallId = 0;
 		protected static int nextConnectionId;

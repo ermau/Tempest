@@ -101,6 +101,35 @@ namespace Tempest.Tests
 			return new MockClientConnection (this, protocols);
 		}
 
+		public MockServerConnection GetServerConnection()
+		{
+			return GetConnections (this.protocols.Values).Item2;
+		}
+
+		public MockServerConnection GetServerConnection (Protocol protocol)
+		{
+			return GetConnections (protocol).Item2;
+		}
+
+		public Tuple<MockClientConnection, MockServerConnection> GetConnections (IEnumerable<Protocol> protocols)
+		{
+			if (protocols == null)
+				throw new ArgumentNullException ("protocols");
+			
+			MockClientConnection c = new MockClientConnection (this, protocols);
+			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+
+			return new Tuple<MockClientConnection, MockServerConnection> (c, c.connection);
+		}
+
+		public Tuple<MockClientConnection, MockServerConnection> GetConnections (Protocol protocol)
+		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
+
+			return GetConnections (new[] { protocol });
+		}
+
 		public void Dispose()
 		{
 		}
@@ -120,7 +149,7 @@ namespace Tempest.Tests
 					Protocol lp;
 					if (!this.protocols.TryGetValue (ip.id, out lp) || !lp.CompatibleWith (ip))
 					{
-						connection.Disconnect (false, DisconnectedReason.IncompatibleVersion);
+						connection.Disconnect (false, ConnectionResult.IncompatibleVersion);
 						return;
 					}
 				}
@@ -131,8 +160,8 @@ namespace Tempest.Tests
 
 			if (e.Rejected)
 			{
-				connection.Disconnect (true, DisconnectedReason.ConnectionFailed);
-				c.Disconnect (true, DisconnectedReason.ConnectionFailed);
+				connection.Disconnect (true, ConnectionResult.ConnectionFailed);
+				c.Disconnect (true, ConnectionResult.ConnectionFailed);
 			}
 		}
 
@@ -166,7 +195,7 @@ namespace Tempest.Tests
 			base.Send (message);
 		}
 
-		public override void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
+		public override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
 		{
 			if (connection == null)
 				return;
@@ -202,7 +231,7 @@ namespace Tempest.Tests
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 
-		public void Connect (EndPoint endpoint, MessageTypes messageTypes)
+		public void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
 			if (endpoint == null)
 				throw new ArgumentNullException ("endpoint");
@@ -217,7 +246,7 @@ namespace Tempest.Tests
 			}
 			else
 			{
-				OnDisconnected (new DisconnectedEventArgs (this, DisconnectedReason.ConnectionFailed));
+				OnDisconnected (new DisconnectedEventArgs (this, ConnectionResult.ConnectionFailed));
 			}
 		}
 
@@ -232,7 +261,7 @@ namespace Tempest.Tests
 			base.Send (message);
 		}
 
-		public override void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
+		public override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
 		{
 			if (connection == null)
 				return;
@@ -303,7 +332,7 @@ namespace Tempest.Tests
 			throw new NotSupportedException();
 		}
 
-		public virtual void Disconnect (bool now, DisconnectedReason reason = DisconnectedReason.Unknown)
+		public virtual void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
 		{
 			this.connected = false;
 

@@ -142,13 +142,40 @@ namespace Tempest.Tests
 			server.Start();
 
 			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
-			((IContext)server).RegisterMessageHandler (1, handler);
+			((IContext)server).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
 			
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			
 			var c = provider.GetClientConnection (protocol);
-			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 			c.Send (new MockMessage () { Content = "hi" });
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void GenericMessageHandling()
+		{
+			IServerConnection connection = null;
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (MessageEventArgs<MockMessage>)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.AreEqual ("hi", me.Message.Content);
+			});
+
+			var server = new MockServer (provider, MessageTypes.Reliable);
+			server.Start();
+
+			Action<MessageEventArgs<MockMessage>> handler = e => test.PassHandler (test, e);
+			server.RegisterMessageHandler (handler);
+			
+			provider.ConnectionMade += (sender, e) => connection = e.Connection;
+			
+			var c = provider.GetClientConnection (protocol);
+			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.Send (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
 		}
@@ -171,12 +198,40 @@ namespace Tempest.Tests
 			server.Start();
 
 			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
-			((IContext)server).RegisterMessageHandler (1, handler);
+			((IContext)server).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
 			
 			provider.ConnectionMade += (sender, e) => connection = e.Connection;
 			
 			var c = provider.GetClientConnection (protocol);
-			c.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.Send (new MockMessage { Content = "hi" });
+
+			test.Assert (10000);
+		}
+
+		[Test]
+		public void GenericMessageHandlingGlobalOrder()
+		{
+			IServerConnection connection = null;
+
+			var test = new AsyncTest(e =>
+			{
+				var me = (MessageEventArgs<MockMessage>)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.AreEqual ("hi", me.Message.Content);
+			});
+
+			var server = new MockServer (MessageTypes.Reliable);
+			server.AddConnectionProvider (provider, ExecutionMode.GlobalOrder);
+			server.Start();
+
+			Action<MessageEventArgs<MockMessage>> handler = e => test.PassHandler (test, e);
+			server.RegisterMessageHandler (handler);
+			
+			provider.ConnectionMade += (sender, e) => connection = e.Connection;
+			
+			var c = provider.GetClientConnection (protocol);
+			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 			c.Send (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
@@ -192,7 +247,7 @@ namespace Tempest.Tests
 			server.ConnectionMade += test.PassHandler;
 
 			var client = provider.GetClientConnection (protocol);
-			client.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 
 			test.Assert (5000);
 		}
@@ -208,7 +263,7 @@ namespace Tempest.Tests
 			server.ConnectionMade += test.PassHandler;
 
 			var client = provider.GetClientConnection (protocol);
-			client.Connect (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 
 			test.Assert (5000);
 		}

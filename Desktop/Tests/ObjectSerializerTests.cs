@@ -126,6 +126,7 @@ namespace Tempest.Tests
 			Assert.AreEqual (42, tester2.Number);
 		}
 
+		#if !SILVERLIGHT
 		[Test]
 		public void Serializable()
 		{
@@ -150,6 +151,7 @@ namespace Tempest.Tests
 			Assert.AreEqual (inner.Message, ioex.InnerException.Message);
 			Assert.AreEqual (inner.StackTrace, ioex.InnerException.StackTrace);
 		}
+		#endif
 
 		[Test]
 		public void ISerializable()

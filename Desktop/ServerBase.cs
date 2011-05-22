@@ -189,8 +189,8 @@ namespace Tempest
 			if (reason == null)
 				throw new ArgumentNullException ("reason");
 
-			connection.Send (new DisconnectMessage { Reason = DisconnectedReason.Custom, CustomReason = reason });
-			connection.Disconnect (false, DisconnectedReason.Custom);
+			connection.Send (new DisconnectMessage { Reason = ConnectionResult.Custom, CustomReason = reason });
+			connection.Disconnect (false, ConnectionResult.Custom);
 		}
 
 		protected volatile bool running = false;
@@ -247,7 +247,7 @@ namespace Tempest
 
 		protected virtual void OnConnectionlessMessageReceived (object sender, ConnectionlessMessageEventArgs e)
 		{
-			var mhandlers = GetConnectionlessHandlers (e.Message.MessageType);
+			var mhandlers = GetConnectionlessHandlers (e.Message);
 			if (mhandlers == null)
 				return;
 
@@ -357,7 +357,7 @@ namespace Tempest
 					return;
 			}
 
-			var mhandlers = GetHandlers (e.Message.MessageType);
+			var mhandlers = GetHandlers (e.Message);
 			if (mhandlers == null)
 				return;
 

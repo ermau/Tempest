@@ -113,11 +113,11 @@ namespace Tempest.Tests
 
 			var client = SetupClientConnection (new[] { new Protocol (5, 3) });
 
-			var test = new AsyncTest (e => Assert.AreEqual (DisconnectedReason.IncompatibleVersion, ((DisconnectedEventArgs)e).Reason));
+			var test = new AsyncTest (e => Assert.AreEqual (ConnectionResult.IncompatibleVersion, ((DisconnectedEventArgs)e).Result));
 			client.Connected += test.FailHandler;
 			client.Disconnected += test.PassHandler;
 
-			client.Connect (EndPoint, MessageTypes);
+			client.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -136,7 +136,7 @@ namespace Tempest.Tests
 			client.Connected += test.PassHandler;
 			client.Disconnected += test.FailHandler;
 
-			client.Connect (EndPoint, MessageTypes);
+			client.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -209,7 +209,7 @@ namespace Tempest.Tests
 			var test = new AsyncTest();
 			this.provider.ConnectionMade += test.PassHandler;
 			var c = GetNewClientConnection();
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -235,7 +235,7 @@ namespace Tempest.Tests
 			if (key == null)
 				Assert.Ignore();
 
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -250,7 +250,7 @@ namespace Tempest.Tests
 			var test = new AsyncTest();
 			c.Connected += test.PassHandler;
 			c.Disconnected += test.FailHandler;
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -320,7 +320,7 @@ namespace Tempest.Tests
 			};
 
 			c.Connected += (sender, e) => ThreadPool.QueueUserWorkItem (o => c.Send (new MockMessage { Content = content }));
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -355,7 +355,7 @@ namespace Tempest.Tests
 			};
 
 			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -385,7 +385,7 @@ namespace Tempest.Tests
 			c.Disconnected += test.FailHandler;
 			c.MessageSent += test.PassHandler;
 			c.Connected += (sender, e) => c.Send (new MockMessage { Content = content });
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -415,7 +415,7 @@ namespace Tempest.Tests
 
 			c.Disconnected += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -450,7 +450,7 @@ namespace Tempest.Tests
 
 			c.Disconnected += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (30000);
 		}
@@ -498,7 +498,7 @@ namespace Tempest.Tests
 
 			c.Disconnected += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (60000);
 		}
@@ -547,7 +547,7 @@ namespace Tempest.Tests
 
 			c.Disconnected += test.FailHandler;
 			c.MessageReceived += test.PassHandler;
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (60000);
 		}
@@ -562,13 +562,13 @@ namespace Tempest.Tests
 			c.Connected += test.FailHandler;
 			c.Disconnected += (s, e) =>
 			{
-				if (e.Reason == DisconnectedReason.ConnectionFailed)
+				if (e.Result == ConnectionResult.ConnectionFailed)
 					test.PassHandler (s, e);
 				else
 					test.FailHandler (s, e);
 			};
 
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (30000);
 		}
@@ -581,9 +581,9 @@ namespace Tempest.Tests
 			var test = new AsyncTest (e =>
 			{
 				var args = (DisconnectedEventArgs)e;
-				switch (args.Reason)
+				switch (args.Result)
 				{
-					case DisconnectedReason.ConnectionFailed:
+					case ConnectionResult.ConnectionFailed:
 						return false;
 
 					default:
@@ -597,7 +597,7 @@ namespace Tempest.Tests
 
 			c.Disconnected += test.PassHandler;
 			c.Connected += (sender, e) => wait.Set();
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne (10000))
 				Assert.Fail ("Failed to connect");
@@ -615,9 +615,9 @@ namespace Tempest.Tests
 			var test = new AsyncTest (e =>
 			{
 				var args = (DisconnectedEventArgs)e;
-				switch (args.Reason)
+				switch (args.Result)
 				{
-					case DisconnectedReason.ConnectionFailed:
+					case ConnectionResult.ConnectionFailed:
 						return false;
 
 					default:
@@ -629,7 +629,7 @@ namespace Tempest.Tests
 
 			c.Disconnected += test.PassHandler;
 			c.Connected += (sender, e) => c.Disconnect (true);
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -650,7 +650,7 @@ namespace Tempest.Tests
 				wait.Set();
 			};
 
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne(10000))
 				Assert.Fail ("Failed to connect");
@@ -679,7 +679,7 @@ namespace Tempest.Tests
 				wait.Set();
 			};
 
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne (10000) || sc == null)
 				Assert.Fail ("Failed to connect");
@@ -700,7 +700,7 @@ namespace Tempest.Tests
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => e.Rejected = true;
 			
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -719,7 +719,7 @@ namespace Tempest.Tests
 				e.Connection.Disconnect (true);
 			};
 			
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -742,7 +742,7 @@ namespace Tempest.Tests
 				wait.Set();
 			};
 			
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne (10000) || sc == null)
 				Assert.Fail ("Failed to connect");
@@ -767,7 +767,7 @@ namespace Tempest.Tests
 			{
 				Trace.WriteLine ("Connecting");
 				wait.Reset();
-				c.Connect (EndPoint, MessageTypes);
+				c.ConnectAsync (EndPoint, MessageTypes);
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to connect. Attempt {0}.", i + 1);
 				Trace.WriteLine ("Connected");
@@ -795,7 +795,7 @@ namespace Tempest.Tests
 
 			for (int i = 0; i < 5; ++i)
 			{
-				c.Connect (EndPoint, MessageTypes);
+				c.ConnectAsync (EndPoint, MessageTypes);
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to connect. Attempt {0}.", i);
 
@@ -808,20 +808,20 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void DisconnectAyncWithReason()
 		{
-			var test = new AsyncTest (e => ((DisconnectedEventArgs)e).Reason == DisconnectedReason.IncompatibleVersion, 2);
+			var test = new AsyncTest (e => ((DisconnectedEventArgs)e).Result == ConnectionResult.IncompatibleVersion, 2);
 
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) =>
 			{
 				e.Connection.Disconnected += test.PassHandler;
 
-				e.Connection.Send (new DisconnectMessage { Reason = DisconnectedReason.IncompatibleVersion });
-				e.Connection.Disconnect (false, DisconnectedReason.IncompatibleVersion);
+				e.Connection.Send (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion });
+				e.Connection.Disconnect (false, ConnectionResult.IncompatibleVersion);
 			};
 
 			var c = GetNewClientConnection();
 			c.Disconnected += test.PassHandler;
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -864,7 +864,7 @@ namespace Tempest.Tests
 			c.Disconnected += test.FailHandler;
 			c.MessageSent += test.PassHandler;
 			c.Connected += (sender, e) => c.Send (cmessage);
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne (10000))
 				Assert.Fail ("Failed to connect");
@@ -915,7 +915,7 @@ namespace Tempest.Tests
 
 			c.Disconnected += test.FailHandler;
 			c.Connected += (sender, e) => c.Send (cmessage);
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne(10000))
 				Assert.Fail ("Failed to connect");
@@ -960,7 +960,7 @@ namespace Tempest.Tests
 			c.Disconnected += test.FailHandler;
 			c.MessageSent += test.PassHandler;
 			c.Connected += (sender, e) => c.Send (cmessage);
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne (10000))
 				Assert.Fail ("Failed to connect");
@@ -997,7 +997,7 @@ namespace Tempest.Tests
 
 			c.Disconnected += test.FailHandler;
 			c.Connected += (sender, e) => c.Send (cmessage);
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne (10000))
 				Assert.Fail ("Failed to connect");
@@ -1043,7 +1043,7 @@ namespace Tempest.Tests
 
 			c.Disconnected += test.FailHandler;
 			c.Connected += (sender, e) => c.Send (cmessage);
-			c.Connect (EndPoint, MessageTypes);
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne (10000))
 				Assert.Fail ("Failed to connect");

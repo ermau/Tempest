@@ -75,6 +75,7 @@ namespace Tempest.Providers.Network
 
 		private static int nextNetworkId;
 
+		private bool receivedProtocols;
 		private readonly IEnumerable<string> signatureHashAlgs;
 		private readonly NetworkConnectionProvider provider;
 
@@ -155,6 +156,7 @@ namespace Tempest.Providers.Network
 					}
 
 					this.protocols = this.protocols.Values.Intersect (msg.Protocols).ToDictionary (p => p.id);
+					this.receivedProtocols = true;
 
 					if (!this.requiresHandshake)
 					{
@@ -177,7 +179,13 @@ namespace Tempest.Providers.Network
 		    		break;
 
 				case (ushort)TempestMessageType.FinalConnect:
-		    		var finalConnect = (FinalConnectMessage)e.Message;
+					if (!this.receivedProtocols)
+					{
+						Disconnect (true, ConnectionResult.FailedHandshake);
+						return;
+					}
+
+					var finalConnect = (FinalConnectMessage)e.Message;
 
 					if (finalConnect.AESKey == null || finalConnect.AESKey.Length == 0 || finalConnect.PublicAuthenticationKey == null)
 					{

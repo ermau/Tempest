@@ -39,7 +39,7 @@ namespace Tempest.Providers.Network
 		: NetworkConnection, IServerConnection
 	{
 		internal NetworkServerConnection (IEnumerable<string> signatureHashAlgs, IEnumerable<Protocol> protocols, Socket reliableSocket, NetworkConnectionProvider provider)
-			: base (protocols, () => provider.authentication, null)
+			: base (protocols, provider.pkCryptoFactory, null, false)
 		{
 			if (signatureHashAlgs == null)
 				throw new ArgumentNullException ("signatureHashAlgs");
@@ -154,14 +154,17 @@ namespace Tempest.Providers.Network
 						}
 					}
 
-		            this.protocols = this.protocols.Values.Intersect (msg.Protocols).ToDictionary (p => p.id);
+					this.protocols = this.protocols.Values.Intersect (msg.Protocols).ToDictionary (p => p.id);
 
-					if (this.provider.PublicAuthenticationKey == null)
+					if (!this.requiresHandshake)
 					{
 						e.Connection.Send (new ConnectedMessage());
 					}
 					else
 					{
+						while (!this.authReady)
+							Thread.Sleep(0);
+
 						e.Connection.Send (new AcknowledgeConnectMessage
 						{
 							SignatureHashAlgorithm = this.signingHashAlgorithm,

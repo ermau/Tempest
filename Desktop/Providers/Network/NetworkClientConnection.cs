@@ -55,12 +55,12 @@ namespace Tempest.Providers.Network
 		}
 
 		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
-			: base (protocols, publicKeyCryptoFactory, null)
+			: base (protocols, publicKeyCryptoFactory, null, true)
 		{
 		}
 
 		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
-			: base (protocols, publicKeyCryptoFactory, authKey)
+			: base (protocols, publicKeyCryptoFactory, authKey, false)
 		{
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
@@ -220,6 +220,9 @@ namespace Tempest.Providers.Network
 
 					var encryption = new AesManaged { KeySize = 256 };
 					encryption.GenerateKey();
+
+					while (!this.authReady)
+						Thread.Sleep (0);
 					
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
 					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption);

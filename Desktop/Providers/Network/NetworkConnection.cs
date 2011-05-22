@@ -43,7 +43,7 @@ namespace Tempest.Providers.Network
 	public abstract class NetworkConnection
 		: IConnection
 	{
-		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
+		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey, bool generateKey)
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
@@ -55,15 +55,18 @@ namespace Tempest.Providers.Network
 			if (this.requiresHandshake)
 			{
 				this.publicKeyCryptoFactory = publicKeyCryptoFactory;
-				Interlocked.Increment (ref this.pendingAsync);
+				
 				ThreadPool.QueueUserWorkItem (s =>
 				{
 					this.pkAuthentication = this.publicKeyCryptoFactory();
 
 					if (this.authenticationKey == null)
 					{
-						this.publicAuthenticationKey =  this.pkAuthentication.ExportKey (false);
-						this.authenticationKey = this.pkAuthentication.ExportKey (true);
+						if (generateKey)
+						{
+							this.publicAuthenticationKey = this.pkAuthentication.ExportKey (false);
+							this.authenticationKey = this.pkAuthentication.ExportKey (true);
+						}
 					}
 					else
 					{
@@ -71,7 +74,7 @@ namespace Tempest.Providers.Network
 						this.publicAuthenticationKey = this.pkAuthentication.ExportKey (false);
 					}
 
-					Interlocked.Decrement (ref this.pendingAsync);
+					this.authReady = true;
 				});
 			}
 
@@ -245,6 +248,7 @@ namespace Tempest.Providers.Network
 			Dispose (true);
 		}
 
+		protected bool authReady;
 		protected bool disposed;
 
 		private const int BaseHeaderLength = 7;

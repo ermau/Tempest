@@ -50,6 +50,7 @@ namespace Tempest.Providers.Network
 			if (publicKeyCryptoFactory == null)
 				throw new ArgumentNullException ("publicKeyCrypto");
 
+			this.authenticationKey = authKey;
 			this.requiresHandshake = protocols.Any (p => p.RequiresHandshake);
 			if (this.requiresHandshake)
 			{
@@ -59,14 +60,13 @@ namespace Tempest.Providers.Network
 				{
 					this.pkAuthentication = this.publicKeyCryptoFactory();
 
-					if (authKey == null)
+					if (this.authenticationKey == null)
 					{
 						this.publicAuthenticationKey =  this.pkAuthentication.ExportKey (false);
 						this.authenticationKey = this.pkAuthentication.ExportKey (true);
 					}
 					else
 					{
-						this.authenticationKey = authKey;
 						this.pkAuthentication.ImportKey (authKey);
 						this.publicAuthenticationKey = this.pkAuthentication.ExportKey (false);
 					}

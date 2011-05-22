@@ -115,7 +115,7 @@ namespace Tempest.Tests
 				client.Disconnected += test.FailHandler;
 				client.ConnectAsync (EndPoint, MessageTypes);
 
-				test.Assert (3000);
+				test.Assert (10000);
 			}
 
 			if (!wait.WaitOne (30000))
@@ -127,7 +127,7 @@ namespace Tempest.Tests
 			client.Disconnected += test.PassHandler;
 			client.ConnectAsync (EndPoint, MessageTypes);
 
-			test.Assert (3000, false);
+			test.Assert (10000, false);
 		}
 
 		[Test, Repeat (3)]
@@ -153,7 +153,7 @@ namespace Tempest.Tests
 			client.Disconnected += test.FailHandler;
 			client.ConnectAsync (EndPoint, MessageTypes);
 
-			test.Assert (3000);
+			test.Assert (10000);
 		}
 
 		[Test, Repeat (3)]

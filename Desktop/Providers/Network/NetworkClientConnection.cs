@@ -183,7 +183,12 @@ namespace Tempest.Providers.Network
 
 			var connectMsg = new ConnectMessage { Protocols = this.protocols.Values };
 			if (this.requiresHandshake)
+			{
+				while (!this.authReady)
+					Thread.Sleep(0);
+
 				connectMsg.SignatureHashAlgorithms = this.pkAuthentication.SupportedHashAlgs;
+			}
 
 			Send (connectMsg);
 		}
@@ -220,9 +225,6 @@ namespace Tempest.Providers.Network
 
 					var encryption = new AesManaged { KeySize = 256 };
 					encryption.GenerateKey();
-
-					while (!this.authReady)
-						Thread.Sleep (0);
 					
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
 					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption);

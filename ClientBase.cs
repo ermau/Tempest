@@ -313,7 +313,7 @@ namespace Tempest
 		{
 			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
 			Disconnect (true, e.Result, e.CustomReason);
-			//OnDisconnected (new ClientDisconnectedEventArgs (e.Result, e.CustomReason));
+			OnDisconnected (new ClientDisconnectedEventArgs (e.Result, e.CustomReason));
 		}
 
 		private void OnConnectionConnected (object sender, ClientConnectionEventArgs e)

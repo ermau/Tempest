@@ -107,16 +107,17 @@ namespace Tempest
 		/// Attempts to connect to <paramref name="endPoint"/>.
 		/// </summary>
 		/// <param name="endPoint">The endpoint to connect to.</param>
+		/// <param name="timeout">Maximum number of milliseconds to wait for a connection.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
 		/// <returns>
 		/// The result of the connection attempt.
 		/// </returns>
-		public virtual ConnectionResult Connect (EndPoint endPoint)
+		public virtual ConnectionResult Connect (EndPoint endPoint, int timeout = -1)
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
 
-			return this.connection.Connect (endPoint, this.messageTypes);
+			return this.connection.Connect (endPoint, this.messageTypes, timeout);
 		}
 
 		/// <summary>

@@ -77,7 +77,7 @@ namespace Tempest
 
 	public static class ClientConnectionExtensions
 	{
-		public static ConnectionResult Connect (this IClientConnection self, EndPoint endPoint, MessageTypes messageTypes)
+		public static ConnectionResult Connect (this IClientConnection self, EndPoint endPoint, MessageTypes messageTypes, int timeout = -1)
 		{
 			ConnectionResult result = ConnectionResult.FailedUnknown;
 			AutoResetEvent wait = new AutoResetEvent (false);
@@ -104,7 +104,7 @@ namespace Tempest
 			self.Connected += connected;
 			self.Disconnected += disconnected;
 			self.ConnectAsync (endPoint, messageTypes);
-			wait.WaitOne();
+			wait.WaitOne (timeout);
 
 			return result;
 		}

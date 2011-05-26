@@ -549,7 +549,7 @@ namespace Tempest.Tests
 			c.MessageReceived += test.PassHandler;
 			c.ConnectAsync (EndPoint, MessageTypes);
 
-			test.Assert (60000);
+			test.Assert (80000);
 		}
 
 		[Test, Repeat (25)]

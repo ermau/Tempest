@@ -128,7 +128,6 @@ namespace Tempest
 				writer.WriteBytes (D);
 				writer.WriteBytes (DP);
 				writer.WriteBytes (DQ);
-				writer.WriteBytes (DQ);
 				writer.WriteBytes (InverseQ);
 				writer.WriteBytes (P);
 				writer.WriteBytes (Q);

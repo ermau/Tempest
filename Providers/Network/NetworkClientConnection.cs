@@ -90,39 +90,42 @@ namespace Tempest.Providers.Network
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
-			SocketAsyncEventArgs args;
-			bool connected;
-
-			Trace.WriteLine (String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
-
-			while (this.pendingAsync > 0)
-				Thread.Sleep (0);
-
-			lock (this.stateSync)
+			ThreadPool.QueueUserWorkItem (s =>
 			{
-				if (IsConnected)
-					throw new InvalidOperationException ("Already connected");
+				SocketAsyncEventArgs args;
+				bool connected;
 
-				RemoteEndPoint = endpoint;
+				Trace.WriteLine (String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
 
-				args = new SocketAsyncEventArgs();
-				args.RemoteEndPoint = endpoint;
-				args.Completed += ConnectCompleted;
+				while (this.pendingAsync > 0)
+					Thread.Sleep (0);
 
-				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+				lock (this.stateSync)
+				{
+					if (IsConnected)
+						throw new InvalidOperationException ("Already connected");
 
-				int p = Interlocked.Increment (ref this.pendingAsync);
-				Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
-				connected = !this.reliableSocket.ConnectAsync (args);
-			}
+					RemoteEndPoint = endpoint;
 
-			if (connected)
-			{
-				Trace.WriteLine ("Connected synchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
-				ConnectCompleted (this.reliableSocket, args);
-			}
-			else
-				Trace.WriteLine ("Connecting asynchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					args = new SocketAsyncEventArgs();
+					args.RemoteEndPoint = endpoint;
+					args.Completed += ConnectCompleted;
+
+					this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+					int p = Interlocked.Increment (ref this.pendingAsync);
+					Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					connected = !this.reliableSocket.ConnectAsync (args);
+				}
+
+				if (connected)
+				{
+					Trace.WriteLine ("Connected synchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					ConnectCompleted (this.reliableSocket, args);
+				}
+				else
+					Trace.WriteLine ("Connecting asynchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+			});
 		}
 		
 		private int pingFrequency;

@@ -102,6 +102,7 @@ namespace Tempest.Tests
 
 			object[] values = new object[] { 15, "hi", new SerializingTester { Text = "asdf", Number = 5 }};
 			writer.Write (values);
+			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
 			object[] readValues = reader.Read<object[]>();
@@ -124,6 +125,7 @@ namespace Tempest.Tests
 			var writer = new BufferValueWriter (buffer);
 
 			writer.Write ((object)20f);
+			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
 			object value = reader.Read<object>();
@@ -253,6 +255,53 @@ namespace Tempest.Tests
 
 			Assert.IsNotNull (serialized);
 			Assert.AreEqual (test.Name, serialized.Name);
+		}
+
+		[Test]
+		public void ValueReaderCtor()
+		{
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+
+			ValueReaderTester test = new ValueReaderTester ("TheName");
+
+			writer.Write (test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = reader.Read<ValueReaderTester>();
+
+			Assert.AreEqual (test.Name, serialized.Name);
+		}
+
+		public class ValueReaderTester
+			: ISerializable
+		{
+			public ValueReaderTester (string name)
+			{
+				Name = name;
+			}
+
+			public ValueReaderTester (IValueReader reader)
+			{
+				Deserialize (reader);
+			}
+
+			public string Name
+			{
+				get;
+				set;
+			}
+
+			public void Serialize (IValueWriter writer)
+			{
+				writer.WriteString (Name);
+			}
+
+			public void Deserialize (IValueReader reader)
+			{
+				Name = reader.ReadString();
+			}
 		}
 
 		public class PrivateCtorTester

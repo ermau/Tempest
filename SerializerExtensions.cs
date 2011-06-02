@@ -122,6 +122,23 @@ namespace Tempest
 
 			return elements;
 		}
+		
+		public static void Write (this IValueWriter writer, object element, Type serializeAs)
+		{
+			Write (writer, element, new FixedSerializer (serializeAs));
+		}
+
+		public static void Write (this IValueWriter writer, object element, ISerializer serializer)
+		{
+			if (writer == null)
+				throw new ArgumentNullException ("writer");
+			if (element == null)
+				throw new ArgumentNullException ("element");
+			if (serializer == null)
+				throw new ArgumentNullException ("serializer");
+
+			serializer.Serialize (element, writer);
+		}
 
 		public static void Write<T> (this IValueWriter writer, T element)
 		{

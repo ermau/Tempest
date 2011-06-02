@@ -24,8 +24,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
+
 namespace Tempest
 {
+	/// <summary>
+	/// Contract for a type that serializes another type.
+	/// </summary>
+	public interface ISerializer
+	{
+		/// <summary>
+		/// Serializes <paramref name="element"/> using <paramref name="writer"/>.
+		/// </summary>
+		/// <param name="element">The element to serialize.</param>
+		/// <param name="writer">The writer to use to serialize.</param>
+		void Serialize (object element, IValueWriter writer);
+
+		/// <summary>
+		/// Deserializes an element with <paramref name="reader"/>.
+		/// </summary>
+		/// <param name="reader">The reader to use to deserialize.</param>
+		/// <returns>The deserialized element.</returns>
+		object Deserialize (IValueReader reader);
+	}
+
 	/// <summary>
 	/// Contract for a type that serializes another type.
 	/// </summary>
@@ -64,5 +86,29 @@ namespace Tempest
 				return (T)ObjectSerializer.GetSerializer (typeof (T)).Deserialize (reader);
 			}
 		}
+	}
+
+	internal class FixedSerializer
+		: ISerializer
+	{
+		public FixedSerializer (Type type)
+		{
+			if (type == null)
+				throw new ArgumentNullException ("type");
+
+			this.serializer = ObjectSerializer.GetSerializer (type);
+		}
+
+		public void Serialize (object element, IValueWriter writer)
+		{
+			this.serializer.Serialize (writer, element);
+		}
+
+		public object Deserialize (IValueReader reader)
+		{
+			return this.serializer.Deserialize (reader);
+		}
+
+		private readonly ObjectSerializer serializer;
 	}
 }

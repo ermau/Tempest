@@ -95,6 +95,44 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void MixedObjectArray()
+		{
+			byte[] buffer = new byte[1024];
+			var writer = new BufferValueWriter (buffer);
+
+			object[] values = new object[] { 15, "hi", new SerializingTester { Text = "asdf", Number = 5 }};
+			writer.Write (values);
+
+			var reader = new BufferValueReader (buffer);
+			object[] readValues = reader.Read<object[]>();
+
+			Assert.IsNotNull (readValues);
+			Assert.AreEqual (values.Length, readValues.Length);
+			Assert.AreEqual (values[0], readValues[0]);
+			Assert.AreEqual (values[1], readValues[1]);
+
+			var test = values[2] as SerializingTester;
+			Assert.IsNotNull (test);
+			Assert.AreEqual ("asdf", test.Text);
+			Assert.AreEqual (5, test.Number);
+		}
+
+		[Test]
+		public void PrimitiveAsObject()
+		{
+			byte[] buffer = new byte[1024];
+			var writer = new BufferValueWriter (buffer);
+
+			writer.Write ((object)20f);
+
+			var reader = new BufferValueReader (buffer);
+			object value = reader.Read<object>();
+
+			Assert.IsNotNull (value);
+			Assert.AreEqual (20f, value);
+		}
+
+		[Test]
 		public void MostDerived()
 		{
 			object[] values = new object[2];

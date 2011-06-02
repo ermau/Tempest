@@ -173,6 +173,11 @@ namespace Tempest
 			return serializer.Deserialize (reader);
 		}
 
+		public static object Read (this IValueReader reader)
+		{
+			return Read<object> (reader);
+		}
+
 		public static object Read (this IValueReader reader, Type type)
 		{
 			if (reader == null)

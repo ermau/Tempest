@@ -78,7 +78,11 @@ namespace Tempest
 		{
 			public void Serialize (T element, IValueWriter writer)
 			{
-				ObjectSerializer.GetSerializer (element.GetType()).Serialize (writer, element);
+				Type etype = element.GetType();
+				if (etype.IsValueType && typeof(T) == typeof(object))
+					etype = typeof (object);
+
+				ObjectSerializer.GetSerializer (etype).Serialize (writer, element);
 			}
 
 			public T Deserialize (IValueReader reader)

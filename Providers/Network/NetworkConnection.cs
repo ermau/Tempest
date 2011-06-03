@@ -212,7 +212,7 @@ namespace Tempest.Providers.Network
 				
 				eargs.Completed += ReliableSendCompleted;
 				int p = Interlocked.Increment (ref this.pendingAsync);
-				Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{1} Send({0})", message, this.typeName));
+				Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{1}:{2} Send({0})", message, this.typeName, this.connectionId));
 				sent = !this.reliableSocket.SendAsync (eargs);
 			}
 
@@ -283,23 +283,26 @@ namespace Tempest.Providers.Network
 
 		protected virtual void Recycle()
 		{
-			NetworkId = 0;
-
-			if (this.hmac != null)
+			lock (this.stateSync)
 			{
-				this.hmac.Dispose();
-				this.hmac = null;
-			}
+				NetworkId = 0;
 
-			if (this.aes != null)
-			{
-				this.aes.Dispose();
-				this.aes = null;
-			}
+				if (this.hmac != null)
+				{
+					this.hmac.Dispose();
+					this.hmac = null;
+				}
 
-			this.reliableSocket = null;
-			this.rmessageOffset = 0;
-			this.rmessageLoaded = 0;
+				if (this.aes != null)
+				{
+					this.aes.Dispose();
+					this.aes = null;
+				}
+
+				this.reliableSocket = null;
+				this.rmessageOffset = 0;
+				this.rmessageLoaded = 0;
+			}
 		}
 
 		protected virtual void OnMessageReceived (MessageEventArgs e)
@@ -422,7 +425,14 @@ namespace Tempest.Providers.Network
 		/// </remarks>
 		protected bool TryGetHeader (byte[] buffer, int offset, int remaining, out MessageHeader header)
 		{
+			#if TRACE
+			int c = Interlocked.Increment (ref nextCallId);
+			#endif
+
 			header = null;
+
+			Trace.WriteLine ("Entering", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
+			                                remaining, connectionId));
 
 			ushort type;
 			int mlen;
@@ -433,11 +443,22 @@ namespace Tempest.Providers.Network
 
 				Protocol p;
 				if (!this.protocols.TryGetValue (buffer[offset], out p))
+				{
+					Trace.WriteLine ("Exiting (Protocol " + buffer[offset] + " not found)", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
+			                                remaining, connectionId));
 					return true;
+				}
 
 				Message msg = p.Create (type);
 				if (msg == null)
+				{
+					Trace.WriteLine ("Exiting (Message " + type + " not found)", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
+			                                remaining, connectionId));
 					return true;
+				}
+
+				Trace.WriteLine ("Have " + msg.GetType().Name, String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
+			                                remaining, connectionId));
 
 				offset += BaseHeaderLength;
 
@@ -451,11 +472,18 @@ namespace Tempest.Providers.Network
 
 					headerLength += length;
 					if (remaining < headerLength)
+					{
+						Trace.WriteLine ("Exiting (message not buffered)", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
+			                                remaining, connectionId));
 						return false;
+					}
 
 					Buffer.BlockCopy (buffer, offset, iv, 0, length);
 					offset += length;
 				}
+
+				Trace.WriteLine ("Exiting", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
+			                                remaining, connectionId));
 
 				header = new MessageHeader (p, msg, mlen, headerLength, iv);
 				return true;
@@ -481,7 +509,12 @@ namespace Tempest.Providers.Network
 			{
 				MessageHeader header;
 				if (!TryGetHeader (buffer, messageOffset, remainingData, out header))
+				{
+					Trace.WriteLine ("Failed to get header",
+					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length,
+					                                bufferOffset, messageOffset, remainingData, connectionId));
 					break;
+				}
 
 				if (header == null)
 				{
@@ -504,6 +537,9 @@ namespace Tempest.Providers.Network
 
 				if (remainingData < length)
 				{
+					Trace.WriteLine ("Message not fully received",
+					                 String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length,
+					                                bufferOffset, messageOffset, remainingData, connectionId));
 					bufferOffset += remainingData;
 					break;
 				}
@@ -594,12 +630,6 @@ namespace Tempest.Providers.Network
 				Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
 
 				this.rmessageLoaded += e.BytesTransferred;
-
-				int bufferOffset = e.Offset;
-				BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded,
-				                ref this.rreader);
-				e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
-
 				lock (this.stateSync)
 				{
 					if (!IsConnected)
@@ -607,6 +637,11 @@ namespace Tempest.Providers.Network
 						Trace.WriteLine ("Exiting (not connected)", String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
 						return;
 					}
+					
+					int bufferOffset = e.Offset;
+					BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded,
+									ref this.rreader);
+					e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
 
 					p = Interlocked.Increment (ref this.pendingAsync);
 					Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));

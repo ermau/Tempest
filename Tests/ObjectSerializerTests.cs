@@ -274,6 +274,27 @@ namespace Tempest.Tests
 			Assert.AreEqual (test.Name, serialized.Name);
 		}
 
+		[Test]
+		public void Decimal()
+		{
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+
+			DecimalTester test = new DecimalTester { Value = 5.6m };
+			writer.Write (test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = reader.Read<DecimalTester>();
+
+			Assert.AreEqual (test.Value, serialized.Value);
+		}
+
+		public class DecimalTester
+		{
+			public decimal Value;
+		}
+
 		public class ValueReaderTester
 			: ISerializable
 		{

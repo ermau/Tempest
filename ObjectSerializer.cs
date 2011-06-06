@@ -130,11 +130,11 @@ namespace Tempest
 					return (r, sh) => r.ReadSingle();
 				if (t == typeof(double))
 					return (r, sh) => r.ReadDouble();
-				if (t == typeof(decimal))
-					return (r, sh) => r.ReadDecimal ();
 
 				throw new ArgumentOutOfRangeException ("type"); // Shouldn't happen.
 			}
+			else if (t == typeof(decimal))
+				return (r, sh) => r.ReadDecimal ();
 			else if (t == typeof(DateTime))
 				return (r, sh) => r.ReadDate();
 			else if (t == typeof(string))
@@ -234,12 +234,12 @@ namespace Tempest
 				else if (t == typeof (float))
 					return (w, v, sh) => w.WriteSingle ((float)v);
 				else if (t == typeof (double))
-					return (w, v, sh) => w.WriteDouble ((double)v);
-				else if (t == typeof (decimal))
-					return (w, v, sh) => w.WriteDecimal ((decimal)v);
+					return (w, v, sh) => w.WriteDouble ((double)v);				
 
 				throw new ArgumentOutOfRangeException ("type"); // Shouldn't happen.
 			}
+			else if (t == typeof (decimal))
+				return (w, v, sh) => w.WriteDecimal ((decimal)v);
 			else if (t == typeof (DateTime))
 				return (w, v, sh) => w.WriteDate ((DateTime)(object)v);
 			else if (t == typeof (string))

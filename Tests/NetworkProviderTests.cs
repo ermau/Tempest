@@ -181,17 +181,6 @@ namespace Tempest.Tests
 			Assert.IsTrue (client.IsConnected);
 		}
 
-		[Test]
-		public void ClientCtorKey()
-		{
-			var crypto = new RSACrypto();
-			var key = crypto.ExportKey (true);
-
-			var client = new NetworkClientConnection (new[] { MockProtocol.Instance }, () => new RSACrypto(), key);
-
-			Assert.AreEqual (key, client.PublicAuthenticationKey);
-		}
-
 		[Test, Repeat (3)]
 		public void RejectSha1()
 		{

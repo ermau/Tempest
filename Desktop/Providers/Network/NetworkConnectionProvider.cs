@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 #if NET_4
 using System.Threading.Tasks;
@@ -129,7 +130,7 @@ namespace Tempest.Providers.Network
 						if (enabledHashAlgs == null || !enabledHashAlgs.Any())
 							this.enabledHashAlgorithms.AddRange (this.authentication.SupportedHashAlgs);
 						else // Need to maintain preference order
-							this.enabledHashAlgorithms.AddRange (enabledHashAlgs.Where(a => this.authentication.SupportedHashAlgs.Contains(a)));
+							this.enabledHashAlgorithms.AddRange (enabledHashAlgs.Where (a => this.authentication.SupportedHashAlgs.Contains (a)));
 					#if NET_4
 					});
 

@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using Tempest.InternalProtocol;
@@ -37,7 +38,7 @@ namespace Tempest
 	public static class ConnectionExtensions
 	{
 		/// <summary>
-		/// Notifys the connection of the reason of disconnection and disconnects.
+		/// Notifies the connection of the reason of disconnection and disconnects.
 		/// </summary>
 		/// <param name="self">The connection to notify and disconnect.</param>
 		/// <param name="reason">The reason to disconnect.</param>
@@ -73,11 +74,31 @@ namespace Tempest
 
 			self.MessageReceived += evcallback;
 		}
+
+		/// <summary>
+		/// Sends a message to all of the connections.
+		/// </summary>
+		/// <param name="connections">The connections to send to.</param>
+		/// <param name="msg">The message to send.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <para><paramref name="connections"/> is <c>null</c>.</para><para>--or--</para>
+		/// <para><paramref name="msg"/> is <c>null</c>.</para>
+		/// </exception>
+		public static void Send (this IEnumerable<IConnection> connections, Message msg)
+		{
+			if (connections == null)
+					throw new ArgumentNullException ("connections");
+			if (msg == null)
+					throw new ArgumentNullException ("msg");
+
+			foreach (IConnection c in connections)
+					c.Send (msg);
+		}
 	}
 
 	public static class ClientConnectionExtensions
 	{
-		public static ConnectionResult Connect (this IClientConnection self, EndPoint endPoint, MessageTypes messageTypes)
+		public static ConnectionResult Connect (this IClientConnection self, EndPoint endPoint, MessageTypes messageTypes, int timeout = -1)
 		{
 			ConnectionResult result = ConnectionResult.FailedUnknown;
 			AutoResetEvent wait = new AutoResetEvent (false);
@@ -104,7 +125,7 @@ namespace Tempest
 			self.Connected += connected;
 			self.Disconnected += disconnected;
 			self.ConnectAsync (endPoint, messageTypes);
-			wait.WaitOne();
+			wait.WaitOne (timeout);
 
 			return result;
 		}

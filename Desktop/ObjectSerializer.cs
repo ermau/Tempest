@@ -66,7 +66,7 @@ namespace Tempest
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
 
-			serializer (writer, obj);
+			serializer (writer, obj, false);
 		}
 
 		public T Deserialize<T> (IValueReader reader)
@@ -86,7 +86,7 @@ namespace Tempest
 		}
 
 		private Func<IValueReader, bool, object> deserializer;
-		private Action<IValueWriter, object> serializer;
+		private Action<IValueWriter, object, bool> serializer;
 
 		private void GenerateSerialization()
 		{
@@ -97,9 +97,9 @@ namespace Tempest
 		private class SerializationPair
 		{
 			public readonly Func<IValueReader, bool, object> Deserializer;
-			public readonly Action<IValueWriter, object> Serializer;
+			public readonly Action<IValueWriter, object, bool> Serializer;
 
-			public SerializationPair (Func<IValueReader, bool, object> des, Action<IValueWriter, object> ser)
+			public SerializationPair (Func<IValueReader, bool, object> des, Action<IValueWriter, object, bool> ser)
 			{
 				Deserializer = des;
 				Serializer = ser;
@@ -108,7 +108,7 @@ namespace Tempest
 
 		private ConstructorInfo ctor;
 		private Dictionary<MemberInfo, SerializationPair> members;
-		private Type elementType;
+		private bool deserializingConstructor;
 
 		private static Func<IValueReader, bool, object> GetDeserializer (Type t, ObjectSerializer oserializer)
 		{
@@ -136,11 +136,11 @@ namespace Tempest
 					return (r, sh) => r.ReadSingle();
 				if (t == typeof(double))
 					return (r, sh) => r.ReadDouble();
-				if (t == typeof(decimal))
-					return (r, sh) => r.ReadDecimal ();
 
 				throw new ArgumentOutOfRangeException ("type"); // Shouldn't happen.
 			}
+			else if (t == typeof(decimal))
+				return (r, sh) => r.ReadDecimal ();
 			else if (t == typeof(DateTime))
 				return (r, sh) => r.ReadDate();
 			else if (t == typeof(string))
@@ -182,9 +182,13 @@ namespace Tempest
 
 					if (typeof(Tempest.ISerializable).IsAssignableFrom (t))
 					{
-						oserializer.LoadCtor (t);
-						value = oserializer.ctor.Invoke (null);
-						((Tempest.ISerializable)value).Deserialize (r);
+						if (!oserializer.deserializingConstructor)
+						{
+							value = oserializer.ctor.Invoke (null);
+							((Tempest.ISerializable)value).Deserialize (r);
+						}
+						else
+							value = oserializer.ctor.Invoke (new object[] { r });
 
 						return value;
 					}
@@ -212,44 +216,44 @@ namespace Tempest
 			}
 		}
 
-		private Action<IValueWriter, object> GetSerializer()
+		private Action<IValueWriter, object, bool> GetSerializer()
 		{
 			var t = this.type;
 
 			if (t.IsPrimitive)
 			{
 				if (t == typeof (bool))
-					return (w, v) => w.WriteBool ((bool)v);
+					return (w, v, sh) => w.WriteBool ((bool)v);
 				if (t == typeof (byte))
-					return (w, v) => w.WriteByte ((byte)v);
+					return (w, v, sh) => w.WriteByte ((byte)v);
 				else if (t == typeof (sbyte))
-					return (w, v) => w.WriteSByte ((sbyte)v);
+					return (w, v, sh) => w.WriteSByte ((sbyte)v);
 				else if (t == typeof (short))
-					return (w, v) => w.WriteInt16 ((short)v);
+					return (w, v, sh) => w.WriteInt16 ((short)v);
 				else if (t == typeof (ushort))
-					return (w, v) => w.WriteUInt16 ((ushort)v);
+					return (w, v, sh) => w.WriteUInt16 ((ushort)v);
 				else if (t == typeof (int))
-					return (w, v) => w.WriteInt32 ((int)v);
+					return (w, v, sh) => w.WriteInt32 ((int)v);
 				else if (t == typeof (uint))
-					return (w, v) => w.WriteUInt32 ((uint)v);
+					return (w, v, sh) => w.WriteUInt32 ((uint)v);
 				else if (t == typeof (long))
-					return (w, v) => w.WriteInt64 ((long)v);
+					return (w, v, sh) => w.WriteInt64 ((long)v);
 				else if (t == typeof (ulong))
-					return (w, v) => w.WriteUInt64 ((ulong)v);
+					return (w, v, sh) => w.WriteUInt64 ((ulong)v);
 				else if (t == typeof (float))
-					return (w, v) => w.WriteSingle ((float)v);
+					return (w, v, sh) => w.WriteSingle ((float)v);
 				else if (t == typeof (double))
-					return (w, v) => w.WriteDouble ((double)v);
-				else if (t == typeof (decimal))
-					return (w, v) => w.WriteDecimal ((decimal)v);
+					return (w, v, sh) => w.WriteDouble ((double)v);				
 
 				throw new ArgumentOutOfRangeException ("type"); // Shouldn't happen.
 			}
+			else if (t == typeof (decimal))
+				return (w, v, sh) => w.WriteDecimal ((decimal)v);
 			else if (t == typeof (DateTime))
-				return (w, v) => w.WriteDate ((DateTime)(object)v);
+				return (w, v, sh) => w.WriteDate ((DateTime)(object)v);
 			else if (t == typeof (string))
 			{
-				return (w, v) =>
+				return (w, v, sh) =>
 				{
 					w.WriteBool (v != null);
 					if (v != null)
@@ -258,7 +262,7 @@ namespace Tempest
 			}
 			else if (t.IsArray || t == typeof(Array))
 			{
-				return (w, v) =>
+				return (w, v, sh) =>
 				{
 					if (v == null)
 					{
@@ -270,22 +274,47 @@ namespace Tempest
 
 					Array a = (Array)v;
 					w.WriteInt32 (a.Length);
-					for (int i = 0; i < a.Length; ++i)
-						w.Write (a.GetValue (i));
+
+					if (t.IsPrimitive)
+					{
+						for (int i = 0; i < a.Length; ++i)
+							w.Write (a.GetValue (i));
+					}
+					else
+					{
+						var etype = t.GetElementType();
+						for (int i = 0; i < a.Length; ++i)
+							w.Write (a.GetValue (i), etype);
+					}
 				};
 			}
 			else
 			{
-				return (w, v) =>
+				LoadMembers (t);
+				return (w, v, sh) =>
 				{
-					if (v == null)
+					if (!sh)
 					{
-						w.WriteBool (false);
-						return;
+						if (v == null)
+						{
+							w.WriteBool (false);
+							return;
+						}
+
+						var actualType = v.GetType();
+
+						w.WriteBool (true);
+						w.WriteString (String.Format ("{0}, {1}", actualType.FullName, actualType.Assembly.GetName().Name));
+
+						if (!t.IsAssignableFrom (actualType))
+							throw new ArgumentException();
+
+						if (actualType != t)
+						{
+							GetSerializer (actualType).serializer (w, v, true);
+							return;
+						}
 					}
-					
-					w.WriteBool (true);
-					w.WriteString (String.Format ("{0}, {1}", t.FullName, t.Assembly.GetName().Name));
 
 					var serializable = (v as Tempest.ISerializable);
 					if (serializable != null)
@@ -295,7 +324,7 @@ namespace Tempest
 					}
 
 					#if !SILVERLIGHT
-					if (t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
+					if (t != typeof(object) && t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
 					{
 						SerializableSerializer (w, v);
 						return;
@@ -309,30 +338,24 @@ namespace Tempest
 					foreach (var kvp in props)
 					{
 						if (kvp.Key.MemberType == MemberTypes.Field)
-							kvp.Value.Serializer (w, ((FieldInfo)kvp.Key).GetValue (v));
+							kvp.Value.Serializer (w, ((FieldInfo)kvp.Key).GetValue (v), false);
 						else if (kvp.Key.MemberType == MemberTypes.Property)
-							kvp.Value.Serializer (w, ((PropertyInfo)kvp.Key).GetValue (v, null));
+							kvp.Value.Serializer (w, ((PropertyInfo)kvp.Key).GetValue (v, null), false);
 					}
 				};
 			}
 		}
 
-		private void LoadCtor (Type t)
+		private void LoadMembers (Type t)
 		{
 			if (this.ctor != null)
 				return;
 
-			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
-			if (this.ctor == null)
-				throw new ArgumentException (String.Format ("Type ({0}) must have an empty constructor.", t.FullName), "type");
-		}
+			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new [] { typeof (IValueReader) }, null) ??
+						t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
 
-		private void LoadMembers (Type t)
-		{
-			LoadCtor (t);
 
-			if (this.members != null)
-				return;
+			this.deserializingConstructor = this.ctor.GetParameters().Length == 1;
 
 			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.NonPublic)
 							.Where (mi =>
@@ -396,6 +419,11 @@ namespace Tempest
 		}
 		#endif
 
+		private void Serialize (IValueWriter writer, object value, bool skipHeader)
+		{
+			this.serializer (writer, value, skipHeader);
+		}
+
 		private object Deserialize (IValueReader reader, bool skipHeader)
 		{
 			return this.deserializer (reader, skipHeader);
@@ -416,6 +444,7 @@ namespace Tempest
 		}
 
 		private static readonly ObjectSerializer baseSerializer = new ObjectSerializer (typeof(object));
+
 		internal static ObjectSerializer GetSerializer (Type type)
 		{
 			if (type == typeof(object) || type.IsInterface || type.IsAbstract)

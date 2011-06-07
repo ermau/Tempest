@@ -95,6 +95,46 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void MixedObjectArray()
+		{
+			byte[] buffer = new byte[1024];
+			var writer = new BufferValueWriter (buffer);
+
+			object[] values = new object[] { 15, "hi", new SerializingTester { Text = "asdf", Number = 5 }};
+			writer.Write (values);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			object[] readValues = reader.Read<object[]>();
+
+			Assert.IsNotNull (readValues);
+			Assert.AreEqual (values.Length, readValues.Length);
+			Assert.AreEqual (values[0], readValues[0]);
+			Assert.AreEqual (values[1], readValues[1]);
+
+			var test = values[2] as SerializingTester;
+			Assert.IsNotNull (test);
+			Assert.AreEqual ("asdf", test.Text);
+			Assert.AreEqual (5, test.Number);
+		}
+
+		[Test]
+		public void PrimitiveAsObject()
+		{
+			byte[] buffer = new byte[1024];
+			var writer = new BufferValueWriter (buffer);
+
+			writer.Write ((object)20f);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			object value = reader.Read<object>();
+
+			Assert.IsNotNull (value);
+			Assert.AreEqual (20f, value);
+		}
+
+		[Test]
 		public void MostDerived()
 		{
 			object[] values = new object[2];
@@ -270,6 +310,74 @@ namespace Tempest.Tests
 
 			Assert.IsNotNull (serialized);
 			Assert.AreEqual (test.Name, serialized.Name);
+		}
+
+		[Test]
+		public void ValueReaderCtor()
+		{
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+
+			ValueReaderTester test = new ValueReaderTester ("TheName");
+
+			writer.Write (test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = reader.Read<ValueReaderTester>();
+
+			Assert.AreEqual (test.Name, serialized.Name);
+		}
+
+		[Test]
+		public void Decimal()
+		{
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+
+			DecimalTester test = new DecimalTester { Value = 5.6m };
+			writer.Write (test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = reader.Read<DecimalTester>();
+
+			Assert.AreEqual (test.Value, serialized.Value);
+		}
+
+		public class DecimalTester
+		{
+			public decimal Value;
+		}
+
+		public class ValueReaderTester
+			: ISerializable
+		{
+			public ValueReaderTester (string name)
+			{
+				Name = name;
+			}
+
+			public ValueReaderTester (IValueReader reader)
+			{
+				Deserialize (reader);
+			}
+
+			public string Name
+			{
+				get;
+				set;
+			}
+
+			public void Serialize (IValueWriter writer)
+			{
+				writer.WriteString (Name);
+			}
+
+			public void Deserialize (IValueReader reader)
+			{
+				Name = reader.ReadString();
+			}
 		}
 
 		public class PrivateCtorTester

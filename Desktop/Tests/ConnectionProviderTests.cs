@@ -255,6 +255,41 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
+		[Test, Repeat (3)]
+		public void ConnectFromDisconnected()
+		{
+			this.provider.Start (MessageTypes);
+
+			var wait = new ManualResetEvent (false);
+			var test = new AsyncTest();
+
+			var c = GetNewClientConnection();
+			bool first = false;
+			c.Connected += (s, e) =>
+			{
+				if (!first)
+				{
+					first = true;
+					wait.Set();
+				}
+				else
+				{
+					test.PassHandler (s, e);
+				}
+			};
+
+			c.Disconnected += (s, e) => c.ConnectAsync (EndPoint, MessageTypes);
+
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (5000))
+				Assert.Fail ("Failed to connect");
+
+			c.Disconnect (true);
+
+			test.Assert (5000);
+		}
+
 		[Test]
 		public void InlineSupport()
 		{
@@ -549,7 +584,7 @@ namespace Tempest.Tests
 			c.MessageReceived += test.PassHandler;
 			c.ConnectAsync (EndPoint, MessageTypes);
 
-			test.Assert (60000);
+			test.Assert (80000);
 		}
 
 		[Test, Repeat (25)]

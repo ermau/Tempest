@@ -286,7 +286,7 @@ namespace Tempest.Providers.Network
 			//#endif
 			//    NetworkConnectionProvider.ReliableSockets.Push (this.reliableSocket);
 
-			this.reliableSocket = null;
+			base.Recycle();
 		}
 	}
 }

@@ -66,6 +66,7 @@
     <Compile Include="ResettingMemoryStream.cs" />
     <Compile Include="ServerTests.cs" />
     <Compile Include="StreamReaderWriterTests.cs" />
+    <Compile Include="TypeMapTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Tempest.csproj">

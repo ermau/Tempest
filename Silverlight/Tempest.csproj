@@ -187,6 +187,9 @@
     <Compile Include="..\Desktop\TypeExtensions.cs">
       <Link>TypeExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\Desktop\TypeMap.cs">
+      <Link>TypeMap.cs</Link>
+    </Compile>
     <Compile Include="InternalBufferOverflowException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Trace.cs" />

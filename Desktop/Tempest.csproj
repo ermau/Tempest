@@ -91,6 +91,7 @@
     <Compile Include="StreamValueWriter.cs" />
     <Compile Include="InternalProtocol\TempestMessage.cs" />
     <Compile Include="TypeExtensions.cs" />
+    <Compile Include="TypeMap.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

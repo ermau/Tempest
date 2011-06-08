@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -79,6 +81,44 @@ namespace Tempest.Tests
 
 			Assert.IsFalse (map.TryGetTypeId (typeof (int), out id2));
 			Assert.AreEqual (id, id2);
+		}
+
+		[Test]
+		public void GetNew()
+		{
+			var map = new TypeMap();
+
+			int id;
+			map.TryGetTypeId (typeof (string), out id);
+
+			Assert.Contains (new KeyValuePair<Type, int> (typeof(string), 0), map.GetNewTypes().ToList());
+		}
+
+		[Test]
+		public void GetNewMultiple()
+		{
+			var map = new TypeMap();
+
+			int id;
+			map.TryGetTypeId (typeof (string), out id);
+			map.TryGetTypeId (typeof (int), out id);
+
+			var newItems = map.GetNewTypes().ToList();
+			Assert.Contains (new KeyValuePair<Type, int> (typeof(string), 0), newItems);
+			Assert.Contains (new KeyValuePair<Type, int> (typeof(int), 1), newItems);
+		}
+
+		[Test]
+		public void GetNewRepeated()
+		{
+			var map = new TypeMap();
+
+			int id;
+			map.TryGetTypeId (typeof (string), out id);
+
+			var newItems = map.GetNewTypes().ToList();
+			Assert.Contains (new KeyValuePair<Type, int> (typeof(string), 0), newItems);
+			Assert.That (newItems, Is.Not.Contains (new KeyValuePair<Type, int> (typeof(string), 0)));
 		}
 	}
 }

@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Tempest
 {
@@ -34,6 +35,21 @@ namespace Tempest
 	/// </summary>
 	public class TypeMap
 	{
+		/// <summary>
+		/// Gets the <see cref="Type"/>s and their IDs that have been added since <see cref="GetNewTypes"/> was last called.
+		/// </summary>
+		public IEnumerable<KeyValuePair<Type, int>> GetNewTypes()
+		{
+			List<KeyValuePair<Type, int>> newTypes;
+			lock (this.map)
+			{
+				newTypes = this.newMappigns.ToList();
+				this.newMappigns.Clear();
+			}
+
+			return newTypes;
+		}
+
 		/// <summary>
 		/// Attempts to get the <paramref name="id"/> of the <paramref name="type"/>, or assigns a new one.
 		/// </summary>
@@ -47,7 +63,10 @@ namespace Tempest
 			{
 				bool found = this.map.TryGetValue (type, out id);
 				if (!found)
-					this.map.Add (type, id = this.nextId++);
+				{
+					this.newMappigns.Add (type, id = this.nextId);
+					this.map.Add (type, this.nextId++);
+				}
 
 				return !found;
 			}
@@ -55,5 +74,6 @@ namespace Tempest
 
 		private int nextId = 0;
 		private readonly Dictionary<Type, int> map = new Dictionary<Type, int>();
+		private readonly Dictionary<Type, int> newMappigns = new Dictionary<Type, int>();
 	}
 }

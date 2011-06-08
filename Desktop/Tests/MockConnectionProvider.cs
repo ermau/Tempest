@@ -195,16 +195,16 @@ namespace Tempest.Tests
 			base.Send (message);
 		}
 
-		public override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
+		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
 			if (connection == null)
 				return;
 
 			var c = connection;
 			connection = null;
-			c.Disconnect (now, reason);
+			c.Disconnect (now, reason, customReason);
 
-			base.Disconnect (now, reason);
+			base.Disconnect (now, reason, customReason);
 		}
 	}
 
@@ -261,16 +261,16 @@ namespace Tempest.Tests
 			base.Send (message);
 		}
 
-		public override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
+		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
 			if (connection == null)
 				return;
 
 			var c = connection;
 			connection = null;
-			c.Disconnect (now, reason);
+			c.Disconnect (now, reason, customReason);
 			
-			base.Disconnect (now, reason);
+			base.Disconnect (now, reason, customReason);
 		}
 
 		internal MockServerConnection connection;
@@ -332,11 +332,31 @@ namespace Tempest.Tests
 			throw new NotSupportedException();
 		}
 
-		public virtual void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
+		public void Disconnect()
+		{
+			Disconnect (true);
+		}
+
+		public void Disconnect (ConnectionResult reason, string customReason = null)
+		{
+			Disconnect (true, reason, customReason);
+		}
+
+		public void DisconnectAsync()
+		{
+			Disconnect (false);
+		}
+
+		public void DisconnectAsync (ConnectionResult reason, string customReason = null)
+		{
+			Disconnect (false, reason, customReason);
+		}
+
+		protected internal virtual void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
 			this.connected = false;
 
-			var e = new DisconnectedEventArgs (this, reason);
+			var e = new DisconnectedEventArgs (this, reason, customReason);
 			if (now)
 				OnDisconnected (e);
 			else
@@ -365,7 +385,7 @@ namespace Tempest.Tests
 
 				case (ushort)TempestMessageType.Disconnect:
 					var msg = (DisconnectMessage)e.Message;
-					Disconnect (true, msg.Reason);
+					Disconnect (true, msg.Reason, msg.CustomReason);
 					break;
 			}
 		}

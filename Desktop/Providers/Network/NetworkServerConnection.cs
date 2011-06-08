@@ -88,7 +88,7 @@ namespace Tempest.Providers.Network
 
 			if (this.pingsOut >= 2)
 			{
-				Disconnect (true); // Connection timed out
+				Disconnect(); // Connection timed out
 				return;
 			}
 
@@ -99,7 +99,7 @@ namespace Tempest.Providers.Network
 		{
 			if (!this.formallyConnected)
 			{
-				Disconnect (true);
+				Disconnect();
 				return;
 			}
 
@@ -118,7 +118,7 @@ namespace Tempest.Providers.Network
 
 					if (!msg.Protocols.Any())
 					{
-						Disconnect (true, ConnectionResult.FailedHandshake);
+						Disconnect (ConnectionResult.FailedHandshake);
 						return;
 					}
 
@@ -149,8 +149,7 @@ namespace Tempest.Providers.Network
 						Protocol lp;
 						if (!this.protocols.TryGetValue (ip.id, out lp) || !lp.CompatibleWith (ip))
 						{
-							Send (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion });
-							Disconnect (false, ConnectionResult.IncompatibleVersion);
+							this.NotifyAndDisconnect (ConnectionResult.IncompatibleVersion);
 							return;
 						}
 					}
@@ -181,7 +180,7 @@ namespace Tempest.Providers.Network
 				case (ushort)TempestMessageType.FinalConnect:
 					if (!this.receivedProtocols)
 					{
-						Disconnect (true, ConnectionResult.FailedHandshake);
+						Disconnect (ConnectionResult.FailedHandshake);
 						return;
 					}
 
@@ -189,7 +188,7 @@ namespace Tempest.Providers.Network
 
 					if (finalConnect.AESKey == null || finalConnect.AESKey.Length == 0 || finalConnect.PublicAuthenticationKey == null)
 					{
-						Disconnect (true, ConnectionResult.FailedHandshake);
+						Disconnect (ConnectionResult.FailedHandshake);
 						return;
 					}
 
@@ -202,7 +201,7 @@ namespace Tempest.Providers.Network
 					}
 					catch
 					{
-						Disconnect (true, ConnectionResult.FailedHandshake);
+						Disconnect (ConnectionResult.FailedHandshake);
 						return;
 					}
 

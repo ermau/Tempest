@@ -194,10 +194,13 @@ namespace Tempest
 		private void Disconnect (bool now, ConnectionResult reason, string customReason)
 		{
 			this.disconnecting = true;
-			this.connection.Disconnect (now, reason);
-
-			if (!now)
+			if (now)
+				this.connection.Disconnect (reason, customReason);
+			else
+			{
+				this.connection.DisconnectAsync (reason, customReason);
 				return;
+			}
 
 			this.running = false;
 

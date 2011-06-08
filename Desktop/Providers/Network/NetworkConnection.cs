@@ -238,9 +238,24 @@ namespace Tempest.Providers.Network
 				ReliableSendCompleted (this.reliableSocket, eargs);
 		}
 
-		public void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
+		public void DisconnectAsync()
 		{
-			Disconnect (now, reason, null);
+			Disconnect (false);
+		}
+
+		public void DisconnectAsync (ConnectionResult reason, string customReason = null)
+		{
+			Disconnect (false, reason, customReason);
+		}
+
+		public void Disconnect()
+		{
+			Disconnect (true);
+		}
+
+		public void Disconnect (ConnectionResult reason, string customReason = null)
+		{
+			Disconnect (true, reason, customReason);
 		}
 
 		public void Dispose()
@@ -714,7 +729,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		private void Disconnect (bool now, ConnectionResult reason, string customReason)
+		private void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
 			#if TRACE
 			int c = Interlocked.Increment (ref nextCallId);

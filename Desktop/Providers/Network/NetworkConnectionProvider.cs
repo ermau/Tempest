@@ -442,7 +442,7 @@ namespace Tempest.Providers.Network
 				if (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections)
 				{
 					Trace.WriteLine (String.Format ("At MaxConnections ({0}), disconnecting", MaxConnections), String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
-					connection.Disconnect (true);
+					connection.Disconnect();
 					return;
 				}
 

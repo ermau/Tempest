@@ -152,7 +152,7 @@ namespace Tempest.Providers.Network
 			{
 				p = Interlocked.Decrement (ref this.pendingAsync);
 				Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
-				Disconnect (true, ConnectionResult.ConnectionFailed);
+				Disconnect (ConnectionResult.ConnectionFailed);
 				OnConnectionFailed (new ClientConnectionEventArgs (this));
 				return;
 			}
@@ -293,7 +293,7 @@ namespace Tempest.Providers.Network
 		private void ActivityCallback (object state)
 		{
 			if (!this.disconnecting && DateTime.Now.Subtract (this.lastReceived).TotalMilliseconds > this.pingFrequency * 2)
-				Disconnect (true);
+				Disconnect();
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

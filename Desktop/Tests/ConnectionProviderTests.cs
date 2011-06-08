@@ -292,7 +292,7 @@ namespace Tempest.Tests
 			if (!wait.WaitOne (5000))
 				Assert.Fail ("Failed to connect");
 
-			c.Disconnect (true);
+			c.Disconnect();
 
 			test.Assert (5000);
 		}
@@ -594,7 +594,7 @@ namespace Tempest.Tests
 			test.Assert (80000);
 		}
 
-		[Test, Repeat (25)]
+		[Test, Repeat (3)]
 		public void ConnectionFailed()
 		{
 			Assert.IsFalse (provider.IsRunning);
@@ -644,7 +644,7 @@ namespace Tempest.Tests
 			if (!wait.WaitOne (10000))
 				Assert.Fail ("Failed to connect");
 			
-			c.Disconnect (true);
+			c.Disconnect();
 
 			test.Assert (10000);
 		}
@@ -670,7 +670,7 @@ namespace Tempest.Tests
 			var c = GetNewClientConnection();
 
 			c.Disconnected += test.PassHandler;
-			c.Connected += (sender, e) => c.Disconnect (true);
+			c.Connected += (sender, e) => c.Disconnect();
 			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
@@ -697,7 +697,7 @@ namespace Tempest.Tests
 			if (!wait.WaitOne(10000))
 				Assert.Fail ("Failed to connect");
 
-			c.Disconnect (true);
+			c.Disconnect();
 			
 			test.Assert (10000);
 		}
@@ -726,7 +726,7 @@ namespace Tempest.Tests
 			if (!wait.WaitOne (10000) || sc == null)
 				Assert.Fail ("Failed to connect");
 
-			sc.Disconnect (true);
+			sc.Disconnect();
 
 			test.Assert (10000);
 		}
@@ -758,7 +758,7 @@ namespace Tempest.Tests
 			this.provider.ConnectionMade += (sender, e) =>
 			{
 				e.Connection.Disconnected += test.PassHandler;
-				e.Connection.Disconnect (true);
+				e.Connection.Disconnect();
 			};
 			
 			c.ConnectAsync (EndPoint, MessageTypes);
@@ -789,7 +789,7 @@ namespace Tempest.Tests
 			if (!wait.WaitOne (10000) || sc == null)
 				Assert.Fail ("Failed to connect");
 
-			sc.Disconnect (true);
+			sc.Disconnect();
 
 			test.Assert (10000);
 		}
@@ -816,7 +816,7 @@ namespace Tempest.Tests
 
 				Trace.WriteLine ("Disconnecting");
 				wait.Reset();
-				c.Disconnect (true);
+				c.Disconnect();
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to disconnect. Attempt {0}.", i + 1);
 
@@ -841,7 +841,7 @@ namespace Tempest.Tests
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to connect. Attempt {0}.", i);
 
-				c.Disconnect (false);
+				c.DisconnectAsync();
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
 			}
@@ -858,7 +858,7 @@ namespace Tempest.Tests
 				e.Connection.Disconnected += test.PassHandler;
 
 				e.Connection.Send (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion });
-				e.Connection.Disconnect (false, ConnectionResult.IncompatibleVersion);
+				e.Connection.DisconnectAsync (ConnectionResult.IncompatibleVersion);
 			};
 
 			var c = GetNewClientConnection();

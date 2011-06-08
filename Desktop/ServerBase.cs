@@ -190,7 +190,7 @@ namespace Tempest
 				throw new ArgumentNullException ("reason");
 
 			connection.Send (new DisconnectMessage { Reason = ConnectionResult.Custom, CustomReason = reason });
-			connection.Disconnect (false, ConnectionResult.Custom);
+			connection.DisconnectAsync (ConnectionResult.Custom, reason);
 		}
 
 		protected volatile bool running = false;

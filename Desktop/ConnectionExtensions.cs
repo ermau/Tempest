@@ -48,7 +48,7 @@ namespace Tempest
 				throw new ArgumentNullException ("self");
 
 			self.Send (new DisconnectMessage { Reason = reason });
-			self.Disconnect (false, reason);
+			self.DisconnectAsync (reason);
 		}
 
 		public static void On<TMessage> (this IConnection self, Func<TMessage, bool> predicate, Action<TMessage, MessageEventArgs> callback)

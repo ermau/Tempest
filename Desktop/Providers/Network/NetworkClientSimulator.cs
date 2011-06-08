@@ -139,9 +139,24 @@ namespace Tempest.Providers.Network
 			return this.connection.Tick();
 		}
 
-		public void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown)
+		public void Disconnect()
 		{
-			this.connection.Disconnect (now, reason);
+			this.connection.Disconnect();
+		}
+
+		public void Disconnect (ConnectionResult reason, string customReason)
+		{
+			this.connection.Disconnect (reason, customReason);
+		}
+
+		public void DisconnectAsync()
+		{
+			this.connection.DisconnectAsync();
+		}
+
+		public void DisconnectAsync (ConnectionResult reason, string customReason)
+		{
+			this.connection.DisconnectAsync (reason, customReason);
 		}
 
 		public void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)

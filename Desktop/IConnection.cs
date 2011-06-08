@@ -113,11 +113,34 @@ namespace Tempest
 		IEnumerable<MessageEventArgs> Tick();
 
 		/// <summary>
-		/// Closes the connection.
+		/// Immediately closes the connection.
 		/// </summary>
-		/// <param name="now">Determines whether the connection is severed immediately or if pending messages are allowed to be sent.</param>
+		void Disconnect();
+
+		/// <summary>
+		/// Immediately closes the connection.
+		/// </summary>
 		/// <param name="reason">Reason for the disconnection.</param>
-		void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown);
+		/// <param name="customReason">A custom reason, if any.</param>
+		/// <exception cref="ArgumentNullException">
+		/// If <paramref name="reason"/> == <see cref="ConnectionResult.Custom"/> and <paramref name="customReason"/> is <c>null</c>.
+		/// </exception>
+		void Disconnect (ConnectionResult reason, string customReason = null);
+
+		/// <summary>
+		/// Asynchronously closes the connection.
+		/// </summary>
+		void DisconnectAsync();
+
+		/// <summary>
+		/// Asynchronously closes the connection.
+		/// </summary>
+		/// <param name="reason">Reason for the disconnection.</param>
+		/// <param name="customReason">A custom reason, if any.</param>
+		/// <exception cref="ArgumentNullException">
+		/// If <paramref name="reason"/> == <see cref="ConnectionResult.Custom"/> and <paramref name="customReason"/> is <c>null</c>.
+		/// </exception>
+		void DisconnectAsync (ConnectionResult reason, string customReason = null);
 	}
 
 	/// <summary>

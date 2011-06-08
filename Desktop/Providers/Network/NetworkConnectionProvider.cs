@@ -258,25 +258,35 @@ namespace Tempest.Providers.Network
 
 		public void Start (MessageTypes types)
 		{
+			Trace.WriteLine ("Entering", "NetworkConnectionProvider Start");
 			if (this.running)
+			{
+				Trace.WriteLine ("Exiting (already running)", "NetworkConnectionProvider Start");
 				return;
+			}
 
 			this.running = true;
 			this.mtypes = types;
 
+			Trace.WriteLine ("Waiting for keys..", "NetworkConnectionProvider Start");
 			this.keyWait.WaitOne();
+			Trace.WriteLine ("Keys ready", "NetworkConnectionProvider Start");
 			
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{
+				Trace.WriteLine ("Setting up reliable socket", "NetworkConnectionProvider Start");
 				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				this.reliableSocket.Bind (this.endPoint);
 				this.reliableSocket.Listen ((int)SocketOptionName.MaxConnections);
 				
+				Trace.WriteLine ("Reliable socket ready, accepting", "NetworkConnectionProvider Start");
 				BeginAccepting (null);
 			}
 
 			if ((types & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
+
+			Trace.WriteLine ("Exiting", "NetworkConnectionProvider Start");
 		}
 
 		public void SendConnectionlessMessage (Message message, EndPoint endPoint)
@@ -291,19 +301,25 @@ namespace Tempest.Providers.Network
 
 		public void Stop()
 		{
+			Trace.WriteLine ("Entering", "NetworkConnectionProvider Stop");
 			if (!this.running)
+			{
+				Trace.WriteLine ("Exiting (not running)", "NetworkConnectionProvider Stop");
 				return;
+			}
 
 			this.running = false;
 
 			if (this.reliableSocket != null)
 			{
+				Trace.WriteLine ("Closing reliable socket", "NetworkConnectionProvider Stop");
 				this.reliableSocket.Close();
 				this.reliableSocket = null;
 			}
 
 			if (this.unreliableSocket != null)
 			{
+				Trace.WriteLine ("Closing unreliable socket", "NetworkConnectionProvider Stop");
 				this.unreliableSocket.Close();
 				this.unreliableSocket = null;
 			}
@@ -318,8 +334,11 @@ namespace Tempest.Providers.Network
 				this.pendingConnections.Clear();
 			}
 			
+			Trace.WriteLine ("Disposing connections", "NetworkConnectionProvider Stop");
 			foreach (NetworkServerConnection c in connections)
 				c.Dispose();
+
+			Trace.WriteLine ("Exiting", "NetworkConnectionProvider Stop");
 		}
 
 		public void Dispose()

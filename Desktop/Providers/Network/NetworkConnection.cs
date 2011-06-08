@@ -296,9 +296,14 @@ namespace Tempest.Providers.Network
 			if (this.disposed)
 				return;
 
+			this.disposed = true;
 			Disconnect (true);
 
-			this.disposed = true;
+			Trace.WriteLine (String.Format ("Waiting for {0} pending asyncs", this.pendingAsync), String.Format ("{0}:{1} Dispose()", this.typeName, connectionId));
+			while (this.pendingAsync > 0)
+				Thread.Sleep (1);
+
+			Trace.WriteLine ("Disposed", String.Format ("{0}:{1} Dispose()", this.typeName, connectionId));
 		}
 
 		protected virtual void Recycle()

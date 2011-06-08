@@ -652,19 +652,20 @@ namespace Tempest.Providers.Network
 				this.rmessageLoaded += e.BytesTransferred;
 				lock (this.stateSync)
 				{
-					if (!IsConnected)
-					{
-						Trace.WriteLine ("Exiting (not connected)", String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
-						return;
-					}
-					
 					int bufferOffset = e.Offset;
 					BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded,
 									ref this.rreader);
 					e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
 
+					if (!IsConnected)
+					{
+						Trace.WriteLine ("Exiting (not connected)", String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
+						return;
+					}
+
 					p = Interlocked.Increment (ref this.pendingAsync);
 					Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
+
 					async = this.reliableSocket.ReceiveAsync (e);
 				}
 			} while (!async);

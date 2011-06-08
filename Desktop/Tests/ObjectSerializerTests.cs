@@ -33,6 +33,14 @@ namespace Tempest.Tests
 	[TestFixture]
 	public class ObjectSerializerTests
 	{
+		private static ISerializationContext context;
+		
+		[SetUp]
+		public void Setup()
+		{
+			context = SerializationContextTests.GetContext (MockProtocol.Instance);
+		}
+
 		[Test]
 		public void Serializing()
 		{
@@ -55,13 +63,13 @@ namespace Tempest.Tests
 				Number = 1,
 				Text = "one"
 			};
-
-			writer.Write (value);
+			
+			writer.Write (context, value);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
 
-			var readvalue = reader.Read<SerializingTester>();
+			var readvalue = SerializerExtensions.Read<SerializingTester> (reader, context);
 			Assert.AreEqual (1, readvalue.Number);
 			Assert.AreEqual ("one", readvalue.Text);
 			Assert.IsFalse (readvalue.PrivateSetProperty);
@@ -101,11 +109,11 @@ namespace Tempest.Tests
 			var writer = new BufferValueWriter (buffer);
 
 			object[] values = new object[] { 15, "hi", new SerializingTester { Text = "asdf", Number = 5 }};
-			writer.Write (values);
+			writer.Write (context, values);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			object[] readValues = reader.Read<object[]>();
+			object[] readValues = SerializerExtensions.Read<object[]> (reader, context);
 
 			Assert.IsNotNull (readValues);
 			Assert.AreEqual (values.Length, readValues.Length);
@@ -124,11 +132,11 @@ namespace Tempest.Tests
 			byte[] buffer = new byte[1024];
 			var writer = new BufferValueWriter (buffer);
 
-			writer.Write ((object)20f);
+			writer.Write (context, (object)20f);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			object value = reader.Read<object>();
+			object value = SerializerExtensions.Read<object> (reader, context);
 
 			Assert.IsNotNull (value);
 			Assert.AreEqual (20f, value);
@@ -144,11 +152,11 @@ namespace Tempest.Tests
 			byte[] buffer = new byte[20480];
 			var writer = new BufferValueWriter(buffer);
 			
-			writer.Write (values);
+			writer.Write (context, values);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			object[] values2 = reader.Read<object[]>();
+			object[] values2 = SerializerExtensions.Read<object[]> (reader, context);
 
 			Assert.IsNotNull (values2);
 			Assert.AreEqual (values.Length, values2.Length);
@@ -176,12 +184,12 @@ namespace Tempest.Tests
 			byte[] buffer = new byte[20480];
 			var writer = new BufferValueWriter (buffer);
 			
-			writer.Write (ex);
+			writer.Write (context, ex);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
 
-			InvalidOperationException ioex = reader.Read<InvalidOperationException>();
+			InvalidOperationException ioex = SerializerExtensions.Read<InvalidOperationException> (reader, context);
 
 			Assert.IsNotNull (ioex);
 			Assert.AreEqual (ex.Message, ioex.Message);
@@ -208,11 +216,11 @@ namespace Tempest.Tests
 			var test = new AsyncTest();
 			tester.SerializeCalled += test.PassHandler;
 
-			writer.Write (tester);
+			writer.Write (context, tester);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			var serialized = reader.Read<SerializableTester>();
+			var serialized = SerializerExtensions.Read<SerializableTester> (reader, context);
 
 			Assert.IsNotNull (serialized);
 			Assert.AreEqual (tester.Name, serialized.Name);
@@ -233,11 +241,11 @@ namespace Tempest.Tests
 				Numbers = new[] { 1, 2, 4, 8, 16, 32 }
 			};
 
-			writer.Write (test);
+			writer.Write (context, test);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			var serialized = reader.Read<ISerializableTester>();
+			var serialized = SerializerExtensions.Read<ISerializableTester> (reader, context);
 
 			Assert.IsNotNull (serialized);
 			Assert.AreEqual (test.Name, serialized.Name);
@@ -259,11 +267,11 @@ namespace Tempest.Tests
 			EventSerializingTester test = new EventSerializingTester { Text = "thetext" };
 			test.TestEvent += (s,e) => { };
 
-			writer.Write (test);
+			writer.Write (context, test);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			var serialized = reader.Read<EventSerializingTester>();
+			var serialized = SerializerExtensions.Read<EventSerializingTester> (reader, context);
 
 			Assert.IsNotNull (serialized);
 			Assert.AreEqual (test.Text, serialized.Text);
@@ -284,11 +292,11 @@ namespace Tempest.Tests
 			DelegateSerializingTester test = new DelegateSerializingTester { Text = "thetext" };
 			test.TestAction = () => { };
 
-			writer.Write (test);
+			writer.Write (context, test);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			var serialized = reader.Read<DelegateSerializingTester>();
+			var serialized = SerializerExtensions.Read<DelegateSerializingTester> (reader, context);
 
 			Assert.IsNotNull (serialized);
 			Assert.AreEqual (test.Text, serialized.Text);
@@ -302,11 +310,11 @@ namespace Tempest.Tests
 
 			byte[] buffer = new byte[20480];
 			var writer = new BufferValueWriter (buffer);
-			writer.Write (test);
+			writer.Write (context, test);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			var serialized = reader.Read<PrivateCtorTester>();
+			var serialized = SerializerExtensions.Read<PrivateCtorTester> (reader, context);
 
 			Assert.IsNotNull (serialized);
 			Assert.AreEqual (test.Name, serialized.Name);
@@ -320,11 +328,11 @@ namespace Tempest.Tests
 
 			ValueReaderTester test = new ValueReaderTester ("TheName");
 
-			writer.Write (test);
+			writer.Write (context, test);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			var serialized = reader.Read<ValueReaderTester>();
+			var serialized = SerializerExtensions.Read<ValueReaderTester> (reader, context);
 
 			Assert.AreEqual (test.Name, serialized.Name);
 		}
@@ -336,11 +344,11 @@ namespace Tempest.Tests
 			var writer = new BufferValueWriter (buffer);
 
 			DecimalTester test = new DecimalTester { Value = 5.6m };
-			writer.Write (test);
+			writer.Write (context, test);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			var serialized = reader.Read<DecimalTester>();
+			var serialized = SerializerExtensions.Read<DecimalTester> (reader, context);
 
 			Assert.AreEqual (test.Value, serialized.Value);
 		}
@@ -360,7 +368,7 @@ namespace Tempest.Tests
 
 			public ValueReaderTester (IValueReader reader)
 			{
-				Deserialize (reader);
+				Deserialize (context, reader);
 			}
 
 			public string Name
@@ -369,12 +377,12 @@ namespace Tempest.Tests
 				set;
 			}
 
-			public void Serialize (IValueWriter writer)
+			public void Serialize (ISerializationContext context, IValueWriter writer)
 			{
 				writer.WriteString (Name);
 			}
 
-			public void Deserialize (IValueReader reader)
+			public void Deserialize (ISerializationContext context, IValueReader reader)
 			{
 				Name = reader.ReadString();
 			}
@@ -414,7 +422,7 @@ namespace Tempest.Tests
 
 			protected SerializableTester (IValueReader reader)
 			{
-				Deserialize (reader);
+				Deserialize (context, reader);
 			}
 
 			public event EventHandler SerializeCalled;
@@ -431,7 +439,7 @@ namespace Tempest.Tests
 				set;
 			}
 
-			public void Serialize (IValueWriter writer)
+			public void Serialize (ISerializationContext context, IValueWriter writer)
 			{
 				OnSerializeCalled (EventArgs.Empty);
 
@@ -442,7 +450,7 @@ namespace Tempest.Tests
 					writer.WriteInt32 (Numbers[i]);
 			}
 
-			public void Deserialize (IValueReader reader)
+			public void Deserialize (ISerializationContext context, IValueReader reader)
 			{
 				Name = reader.ReadString();
 

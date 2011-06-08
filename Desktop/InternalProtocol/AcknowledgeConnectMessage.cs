@@ -72,35 +72,35 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
-		public override void WritePayload (IValueWriter writer)
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 			writer.WriteString (SignatureHashAlgorithm);
 
 			Protocol[] protocols = EnabledProtocols.ToArray();
 			writer.WriteInt32 (protocols.Length);
 			for (int i = 0; i < protocols.Length; ++i)
-				protocols[i].Serialize (writer);
+				protocols[i].Serialize (context, writer);
 
 			writer.WriteInt32 (NetworkId);
 
-			writer.Write (PublicEncryptionKey);
-			writer.Write (PublicAuthenticationKey);
+			writer.Write (context, this.PublicEncryptionKey);
+			writer.Write (context, this.PublicAuthenticationKey);
 		}
 
-		public override void ReadPayload (IValueReader reader)
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
 			SignatureHashAlgorithm = reader.ReadString();
 
 			Protocol[] protocols = new Protocol[reader.ReadInt32()];
 			for (int i = 0; i < protocols.Length; ++i)
-				protocols[i] = new Protocol (reader);
+				protocols[i] = new Protocol (context, reader);
 
 			EnabledProtocols = protocols;
 
 			NetworkId = reader.ReadInt32();
 
-			PublicEncryptionKey = reader.Read<IAsymmetricKey>();
-			PublicAuthenticationKey = reader.Read<IAsymmetricKey>();
+			PublicEncryptionKey = reader.Read<IAsymmetricKey> (context);
+			PublicAuthenticationKey = reader.Read<IAsymmetricKey> (context);
 		}
 	}
 }

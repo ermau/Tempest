@@ -91,9 +91,9 @@ namespace Tempest
 			this.compatible = new HashSet<int> (compatibleVersions);
 		}
 
-		internal Protocol (IValueReader reader)
+		internal Protocol (ISerializationContext context, IValueReader reader)
 		{
-			Deserialize (reader);
+			Deserialize (context, reader);
 		}
 
 		/// <summary>
@@ -148,13 +148,13 @@ namespace Tempest
 			return id == protocol.id;
 		}
 
-		public void Serialize (IValueWriter writer)
+		public void Serialize (ISerializationContext context, IValueWriter writer)
 		{
 			writer.WriteByte (this.id);
 			writer.WriteInt32 (this.version);
 		}
 
-		public void Deserialize (IValueReader reader)
+		public void Deserialize (ISerializationContext context, IValueReader reader)
 		{
 			this.id = reader.ReadByte();
 			this.version = reader.ReadInt32();

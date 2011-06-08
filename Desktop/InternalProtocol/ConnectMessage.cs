@@ -55,7 +55,7 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
-		public override void WritePayload (IValueWriter writer)
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 			if (writer.WriteBool(SignatureHashAlgorithms != null))
 			{
@@ -68,10 +68,10 @@ namespace Tempest.InternalProtocol
 			Protocol[] protocols = Protocols.ToArray();
 			writer.WriteInt32 (protocols.Length);
 			for (int i = 0 ; i < protocols.Length; ++i)
-				protocols[i].Serialize (writer);
+				protocols[i].Serialize (context, writer);
 		}
 
-		public override void ReadPayload (IValueReader reader)
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
 			if (reader.ReadBool())
 			{
@@ -84,7 +84,7 @@ namespace Tempest.InternalProtocol
 
 			Protocol[] protocols = new Protocol[reader.ReadInt32()];
 			for (int i = 0; i < protocols.Length; ++i)
-				protocols[i] = new Protocol (reader);
+				protocols[i] = new Protocol (context, reader);
 
 			Protocols = protocols;
 		}

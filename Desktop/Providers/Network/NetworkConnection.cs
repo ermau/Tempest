@@ -421,7 +421,7 @@ namespace Tempest.Providers.Network
 			writer.WriteUInt16 (message.MessageType);
 			writer.Length += sizeof (int); // length  placeholder
 
-			message.WritePayload (writer);
+			message.WritePayload (null, writer); // TODO
 
 			int headerLength = BaseHeaderLength;
 
@@ -578,7 +578,7 @@ namespace Tempest.Providers.Network
 						DecryptMessage (header, ref r, ref message, ref moffset);
 
 					r.Position = moffset;
-					header.Message.ReadPayload (r);
+					header.Message.ReadPayload (null, r); // TODO CONTEXT
 
 					if (header.Message.Authenticated && this.requiresHandshake)
 					{

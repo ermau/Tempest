@@ -62,12 +62,12 @@ namespace Tempest.Tests
 			get; set;
 		}
 
-		public override void WritePayload (IValueWriter writer)
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 			writer.WriteString (Encoding.UTF8, Content);
 		}
 
-		public override void ReadPayload (IValueReader reader)
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
 			Content = reader.ReadString (Encoding.UTF8);
 		}
@@ -108,12 +108,12 @@ namespace Tempest.Tests
 			get; set;
 		}
 
-		public override void WritePayload (IValueWriter writer)
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 			writer.WriteString (Encoding.UTF8, Content);
 		}
 
-		public override void ReadPayload (IValueReader reader)
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
 			Content = reader.ReadString (Encoding.UTF8);
 		}
@@ -139,13 +139,13 @@ namespace Tempest.Tests
 			set;
 		}
 
-		public override void WritePayload (IValueWriter writer)
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 			writer.WriteString (Message);
 			writer.WriteInt32 (Number);
 		}
 
-		public override void ReadPayload (IValueReader reader)
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
 			Message = reader.ReadString();
 			Number = reader.ReadInt32();
@@ -207,11 +207,11 @@ namespace Tempest.Tests
 		{
 		}
 
-		public override void WritePayload (IValueWriter writer)
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 		}
 
-		public override void ReadPayload (IValueReader reader)
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
 		}
 	}

@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
 namespace Tempest
 {
@@ -55,6 +56,11 @@ namespace Tempest
 		{
 			get;
 			private set;
+		}
+
+		public IEnumerable<KeyValuePair<Type, int>> GetNewTypes()
+		{
+			return this.map.GetNewTypes();
 		}
 
 		public bool TryGetTypeId (Type type, out int id)

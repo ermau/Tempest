@@ -101,15 +101,17 @@ namespace Tempest
 		/// <summary>
 		/// Writes the message payload with <paramref name="writer"/>.
 		/// </summary>
+		/// <param name="context"></param>
 		/// <param name="writer">The writer to use for writing the payload.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="writer"/> is <c>null</c>.</exception>
-		public abstract void WritePayload (IValueWriter writer);
+		public abstract void WritePayload (ISerializationContext context, IValueWriter writer);
 
 		/// <summary>
 		/// Reads the message payload with <paramref name="reader"/>.
 		/// </summary>
+		/// <param name="context"></param>
 		/// <param name="reader">The reader to use for reading the payload.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="reader"/> is <c>null</c>.</exception>
-		public abstract void ReadPayload (IValueReader reader);
+		public abstract void ReadPayload (ISerializationContext context, IValueReader reader);
 	}
 }

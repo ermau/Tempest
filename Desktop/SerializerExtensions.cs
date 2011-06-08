@@ -75,7 +75,7 @@ namespace Tempest
 			return reader.ReadString (Encoding.UTF8);
 		}
 
-		public static void WriteEnumerable<T> (this IValueWriter writer, IEnumerable<T> enumerable)
+		public static void WriteEnumerable<T> (this IValueWriter writer, ISerializationContext context, IEnumerable<T> enumerable)
 			where T : ISerializable
 		{
 			if (writer == null)
@@ -86,10 +86,10 @@ namespace Tempest
 			T[] elements = enumerable.ToArray();
 			writer.WriteInt32 (elements.Length);
 			for (int i = 0; i < elements.Length; ++i)
-				elements[i].Serialize (writer);
+				elements[i].Serialize (context, writer);
 		}
 
-		public static IEnumerable<T> ReadEnumerable<T> (this IValueReader reader, Func<T> elementFactory)
+		public static IEnumerable<T> ReadEnumerable<T> (this IValueReader reader, ISerializationContext context, Func<T> elementFactory)
 			where T : ISerializable
 		{
 			if (reader == null)
@@ -100,32 +100,34 @@ namespace Tempest
 			int length = reader.ReadInt32();
 			T[] elements = new T[length];
 			for (int i = 0; i < elements.Length; ++i)
-				(elements[i] = elementFactory()).Deserialize (reader);
+				(elements[i] = elementFactory()).Deserialize (context, reader);
 
 			return elements;
 		}
 
-		public static IEnumerable<T> ReadEnumerable<T> (this IValueReader reader, Func<IValueReader, T> elementFactory)
+		public static IEnumerable<T> ReadEnumerable<T> (this IValueReader reader, ISerializationContext context, Func<ISerializationContext, IValueReader, T> elementFactory)
 		{
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
+			if (context == null)
+				throw new ArgumentNullException ("context");
 			if (elementFactory == null)
 				throw new ArgumentNullException ("elementFactory");
 
 			int length = reader.ReadInt32();
 			T[] elements = new T[length];
 			for (int i = 0; i < elements.Length; ++i)
-				elements[i] = elementFactory (reader);
+				elements[i] = elementFactory (context, reader);
 
 			return elements;
 		}
 		
-		public static void Write (this IValueWriter writer, object element, Type serializeAs)
+		public static void Write (this IValueWriter writer, ISerializationContext context, object element, Type serializeAs)
 		{
-			Write (writer, element, new FixedSerializer (serializeAs));
+			Write (writer, context, element, new FixedSerializer (serializeAs));
 		}
 
-		public static void Write (this IValueWriter writer, object element, ISerializer serializer)
+		public static void Write (this IValueWriter writer, ISerializationContext context, object element, ISerializer serializer)
 		{
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
@@ -134,53 +136,53 @@ namespace Tempest
 			if (serializer == null)
 				throw new ArgumentNullException ("serializer");
 
-			serializer.Serialize (element, writer);
+			serializer.Serialize (context, writer, element);
 		}
 
-		public static void Write<T> (this IValueWriter writer, T element)
+		public static void Write<T> (this IValueWriter writer, ISerializationContext context, T element)
 		{
-			Write (writer, element, Serializer<T>.Default);
+			Write (writer, context, element, Serializer<T>.Default);
 		}
 
-		public static void Write<T> (this IValueWriter writer, T element, ISerializer<T> serializer)
+		public static void Write<T> (this IValueWriter writer, ISerializationContext context, T element, ISerializer<T> serializer)
 		{
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
 			if (serializer == null)
 				throw new ArgumentNullException ("serializer");
 
-			serializer.Serialize (element, writer);
+			serializer.Serialize (context, writer, element);
 		}
 
-		public static T Read<T> (this IValueReader reader)
+		public static T Read<T> (this IValueReader reader, ISerializationContext context)
 		{
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			return Read (reader, Serializer<T>.Default);
+			return Read (reader, context, Serializer<T>.Default);
 		}
 
-		public static T Read<T> (this IValueReader reader, ISerializer<T> serializer)
+		public static T Read<T> (this IValueReader reader, ISerializationContext context, ISerializer<T> serializer)
 		{
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 			if (serializer == null)
 				throw new ArgumentNullException ("serializer");
 
-			return serializer.Deserialize (reader);
+			return serializer.Deserialize (context, reader);
 		}
 
-		public static object Read (this IValueReader reader)
+		public static object Read (this IValueReader reader, ISerializationContext context)
 		{
-			return Read<object> (reader);
+			return Read<object> (reader, context);
 		}
 
-		public static object Read (this IValueReader reader, Type type)
+		public static object Read (this IValueReader reader, ISerializationContext context, Type type)
 		{
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			return ObjectSerializer.GetSerializer (type).Deserialize (reader);
+			return ObjectSerializer.GetSerializer (type).Deserialize (context, reader);
 		}
 	}
 }

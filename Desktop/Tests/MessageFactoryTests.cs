@@ -98,11 +98,11 @@ namespace Tempest.Tests
 			{
 			}
 
-			public override void WritePayload(IValueWriter writer)
+			public override void WritePayload(ISerializationContext context, IValueWriter writer)
 			{
 			}
 
-			public override void ReadPayload(IValueReader reader)
+			public override void ReadPayload(ISerializationContext context, IValueReader reader)
 			{
 			}
 		}
@@ -121,14 +121,14 @@ namespace Tempest.Tests
 				set;
 			}
 
-			public override void WritePayload(IValueWriter writer)
+			public override void WritePayload(ISerializationContext context, IValueWriter writer)
 			{
-				writer.Write (Element);
+				writer.Write (context, Element);
 			}
 
-			public override void ReadPayload(IValueReader reader)
+			public override void ReadPayload(ISerializationContext context, IValueReader reader)
 			{
-				Element = reader.Read<T>();
+				Element = reader.Read<T>(context);
 			}
 		}
 

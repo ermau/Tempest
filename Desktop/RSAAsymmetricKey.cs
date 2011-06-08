@@ -79,9 +79,9 @@ namespace Tempest
 			ImportRSAParameters (parameters);
 		}
 
-		public RSAAsymmetricKey (IValueReader reader)
+		public RSAAsymmetricKey (ISerializationContext context, IValueReader reader)
 		{
-			Deserialize (reader);
+			Deserialize (context, reader);
 		}
 
 		public byte[] PublicSignature
@@ -147,7 +147,7 @@ namespace Tempest
 			}
 		}
 		
-		public void Serialize (IValueWriter writer)
+		public void Serialize (ISerializationContext context, IValueWriter writer)
 		{
 			if (writer.WriteBool (D != null))
 			{
@@ -188,7 +188,7 @@ namespace Tempest
 			}
 		}
 
-		public void Deserialize (IValueReader reader)
+		public void Deserialize (ISerializationContext context, IValueReader reader)
 		{
 			if (reader.ReadBool())
 			{

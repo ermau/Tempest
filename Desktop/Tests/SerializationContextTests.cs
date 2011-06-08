@@ -31,6 +31,11 @@ namespace Tempest.Tests
 	[TestFixture]
 	public class SerializationContextTests
 	{
+		public static ISerializationContext GetContext (Protocol protocol)
+		{
+			return new SerializationContext (new MockClientConnection (new MockConnectionProvider (protocol)), protocol, new TypeMap());
+		}
+
 		[Test]
 		public void CtorNull()
 		{

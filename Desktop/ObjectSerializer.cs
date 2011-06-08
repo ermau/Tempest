@@ -61,32 +61,32 @@ namespace Tempest
 			GenerateSerialization();
 		}
 
-		public void Serialize (IValueWriter writer, object obj)
+		public void Serialize (ISerializationContext context, IValueWriter writer, object obj)
 		{
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
 
-			serializer (writer, obj, false);
+			serializer (context, writer, obj, false);
 		}
 
-		public T Deserialize<T> (IValueReader reader)
+		public T Deserialize<T> (ISerializationContext context, IValueReader reader)
 		{
 			if (typeof(T) != this.type)
 				throw new ArgumentException ("Type does not match serializer type");
 
-			return (T)Deserialize (reader);
+			return (T)Deserialize (context, reader);
 		}
 
-		public object Deserialize (IValueReader reader)
+		public object Deserialize (ISerializationContext context, IValueReader reader)
 		{
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			return deserializer (reader, false);
+			return deserializer (context, reader, false);
 		}
 
-		private Func<IValueReader, bool, object> deserializer;
-		private Action<IValueWriter, object, bool> serializer;
+		private Func<ISerializationContext, IValueReader, bool, object> deserializer;
+		private Action<ISerializationContext, IValueWriter, object, bool> serializer;
 
 		private void GenerateSerialization()
 		{
@@ -96,10 +96,10 @@ namespace Tempest
 
 		private class SerializationPair
 		{
-			public readonly Func<IValueReader, bool, object> Deserializer;
-			public readonly Action<IValueWriter, object, bool> Serializer;
+			public readonly Func<ISerializationContext, IValueReader, bool, object> Deserializer;
+			public readonly Action<ISerializationContext, IValueWriter, object, bool> Serializer;
 
-			public SerializationPair (Func<IValueReader, bool, object> des, Action<IValueWriter, object, bool> ser)
+			public SerializationPair (Func<ISerializationContext, IValueReader, bool, object> des, Action<ISerializationContext, IValueWriter, object, bool> ser)
 			{
 				Deserializer = des;
 				Serializer = ser;
@@ -110,60 +110,60 @@ namespace Tempest
 		private Dictionary<MemberInfo, SerializationPair> members;
 		private bool deserializingConstructor;
 
-		private static Func<IValueReader, bool, object> GetDeserializer (Type t, ObjectSerializer oserializer)
+		private static Func<ISerializationContext, IValueReader, bool, object> GetDeserializer (Type t, ObjectSerializer oserializer)
 		{
 			if (t.IsPrimitive)
 			{
 				if (t == typeof(bool))
-					return (r, sh) => r.ReadBool();
+					return (c, r, sh) => r.ReadBool();
 				if (t == typeof(byte))
-					return (r, sh) => r.ReadByte();
+					return (c, r, sh) => r.ReadByte();
 				if (t == typeof(sbyte))
-					return (r, sh) => r.ReadSByte();
+					return (c, r, sh) => r.ReadSByte();
 				if (t == typeof(short))
-					return (r, sh) => r.ReadInt16();
+					return (c, r, sh) => r.ReadInt16();
 				if (t == typeof(ushort))
-					return (r, sh) => r.ReadUInt16();
+					return (c, r, sh) => r.ReadUInt16();
 				if (t == typeof(int))
-					return (r, sh) => r.ReadInt32 ();
+					return (c, r, sh) => r.ReadInt32 ();
 				if (t == typeof(uint))
-					return (r, sh) => r.ReadUInt32();
+					return (c, r, sh) => r.ReadUInt32();
 				if (t == typeof(long))
-					return (r, sh) => r.ReadInt64();
+					return (c, r, sh) => r.ReadInt64();
 				if (t == typeof(ulong))
-					return (r, sh) => r.ReadUInt64();
+					return (c, r, sh) => r.ReadUInt64();
 				if (t == typeof(float))
-					return (r, sh) => r.ReadSingle();
+					return (c, r, sh) => r.ReadSingle();
 				if (t == typeof(double))
-					return (r, sh) => r.ReadDouble();
+					return (c, r, sh) => r.ReadDouble();
 
 				throw new ArgumentOutOfRangeException ("type"); // Shouldn't happen.
 			}
 			else if (t == typeof(decimal))
-				return (r, sh) => r.ReadDecimal ();
+				return (c, r, sh) => r.ReadDecimal ();
 			else if (t == typeof(DateTime))
-				return (r, sh) => r.ReadDate();
+				return (c, r, sh) => r.ReadDate();
 			else if (t == typeof(string))
-				return (r, sh) => !r.ReadBool() ? null : r.ReadString (Encoding.UTF8);
+				return (c, r, sh) => !r.ReadBool() ? null : r.ReadString (Encoding.UTF8);
 			else if (t.IsArray || t == typeof(Array))
 			{
 				Type etype = t.GetElementType();
 
-				return (r, sh) =>
+				return (c, r, sh) =>
 				{
 					if (!r.ReadBool())
 						return null;
 
 					Array a = Array.CreateInstance (etype, r.ReadInt32());
 					for (int i = 0; i < a.Length; ++i)
-						a.SetValue (r.Read (etype), i);
+						a.SetValue (r.Read (c, etype), i);
 
 					return a;
 				};
 			}
 			else
 			{
-				return (r, skipHeader) =>
+				return (c, r, skipHeader) =>
 				{
 					if (!skipHeader)
 					{
@@ -175,7 +175,7 @@ namespace Tempest
 							return null;
 
 						if (actualType != t)
-							return GetSerializer (actualType).deserializer (r, true);
+							return GetSerializer (actualType).deserializer (c, r, true);
 					}
 
 					object value;
@@ -185,7 +185,7 @@ namespace Tempest
 						if (!oserializer.deserializingConstructor)
 						{
 							value = oserializer.ctor.Invoke (null);
-							((Tempest.ISerializable)value).Deserialize (r);
+							((Tempest.ISerializable)value).Deserialize (c, r);
 						}
 						else
 							value = oserializer.ctor.Invoke (new object[] { r });
@@ -204,7 +204,7 @@ namespace Tempest
 					
 					foreach (var kvp in oserializer.members)
 					{
-						object mvalue = kvp.Value.Deserializer (r, false);
+						object mvalue = kvp.Value.Deserializer (c, r, false);
 						if (kvp.Key.MemberType == MemberTypes.Field)
 							((FieldInfo)kvp.Key).SetValue (value, mvalue);
 						else if (kvp.Key.MemberType == MemberTypes.Property)
@@ -216,44 +216,44 @@ namespace Tempest
 			}
 		}
 
-		private Action<IValueWriter, object, bool> GetSerializer()
+		private Action<ISerializationContext, IValueWriter, object, bool> GetSerializer()
 		{
 			var t = this.type;
 
 			if (t.IsPrimitive)
 			{
 				if (t == typeof (bool))
-					return (w, v, sh) => w.WriteBool ((bool)v);
+					return (c, w, v, sh) => w.WriteBool ((bool)v);
 				if (t == typeof (byte))
-					return (w, v, sh) => w.WriteByte ((byte)v);
+					return (c, w, v, sh) => w.WriteByte ((byte)v);
 				else if (t == typeof (sbyte))
-					return (w, v, sh) => w.WriteSByte ((sbyte)v);
+					return (c, w, v, sh) => w.WriteSByte ((sbyte)v);
 				else if (t == typeof (short))
-					return (w, v, sh) => w.WriteInt16 ((short)v);
+					return (c, w, v, sh) => w.WriteInt16 ((short)v);
 				else if (t == typeof (ushort))
-					return (w, v, sh) => w.WriteUInt16 ((ushort)v);
+					return (c, w, v, sh) => w.WriteUInt16 ((ushort)v);
 				else if (t == typeof (int))
-					return (w, v, sh) => w.WriteInt32 ((int)v);
+					return (c, w, v, sh) => w.WriteInt32 ((int)v);
 				else if (t == typeof (uint))
-					return (w, v, sh) => w.WriteUInt32 ((uint)v);
+					return (c, w, v, sh) => w.WriteUInt32 ((uint)v);
 				else if (t == typeof (long))
-					return (w, v, sh) => w.WriteInt64 ((long)v);
+					return (c, w, v, sh) => w.WriteInt64 ((long)v);
 				else if (t == typeof (ulong))
-					return (w, v, sh) => w.WriteUInt64 ((ulong)v);
+					return (c, w, v, sh) => w.WriteUInt64 ((ulong)v);
 				else if (t == typeof (float))
-					return (w, v, sh) => w.WriteSingle ((float)v);
+					return (c, w, v, sh) => w.WriteSingle ((float)v);
 				else if (t == typeof (double))
-					return (w, v, sh) => w.WriteDouble ((double)v);				
+					return (c, w, v, sh) => w.WriteDouble ((double)v);				
 
 				throw new ArgumentOutOfRangeException ("type"); // Shouldn't happen.
 			}
 			else if (t == typeof (decimal))
-				return (w, v, sh) => w.WriteDecimal ((decimal)v);
+				return (c, w, v, sh) => w.WriteDecimal ((decimal)v);
 			else if (t == typeof (DateTime))
-				return (w, v, sh) => w.WriteDate ((DateTime)(object)v);
+				return (c, w, v, sh) => w.WriteDate ((DateTime)(object)v);
 			else if (t == typeof (string))
 			{
-				return (w, v, sh) =>
+				return (c, w, v, sh) =>
 				{
 					w.WriteBool (v != null);
 					if (v != null)
@@ -262,7 +262,7 @@ namespace Tempest
 			}
 			else if (t.IsArray || t == typeof(Array))
 			{
-				return (w, v, sh) =>
+				return (c, w, v, sh) =>
 				{
 					if (v == null)
 					{
@@ -278,20 +278,20 @@ namespace Tempest
 					if (t.IsPrimitive)
 					{
 						for (int i = 0; i < a.Length; ++i)
-							w.Write (a.GetValue (i));
+							w.Write (c, a.GetValue (i));
 					}
 					else
 					{
 						var etype = t.GetElementType();
 						for (int i = 0; i < a.Length; ++i)
-							w.Write (a.GetValue (i), etype);
+							w.Write (c, a.GetValue (i), etype);
 					}
 				};
 			}
 			else
 			{
 				LoadMembers (t);
-				return (w, v, sh) =>
+				return (c, w, v, sh) =>
 				{
 					if (!sh)
 					{
@@ -311,7 +311,7 @@ namespace Tempest
 
 						if (actualType != t)
 						{
-							GetSerializer (actualType).serializer (w, v, true);
+							GetSerializer (actualType).serializer (c, w, v, true);
 							return;
 						}
 					}
@@ -319,7 +319,7 @@ namespace Tempest
 					var serializable = (v as Tempest.ISerializable);
 					if (serializable != null)
 					{
-						serializable.Serialize (w);
+						serializable.Serialize (c, w);
 						return;
 					}
 
@@ -338,9 +338,9 @@ namespace Tempest
 					foreach (var kvp in props)
 					{
 						if (kvp.Key.MemberType == MemberTypes.Field)
-							kvp.Value.Serializer (w, ((FieldInfo)kvp.Key).GetValue (v), false);
+							kvp.Value.Serializer (c, w, ((FieldInfo)kvp.Key).GetValue (v), false);
 						else if (kvp.Key.MemberType == MemberTypes.Property)
-							kvp.Value.Serializer (w, ((PropertyInfo)kvp.Key).GetValue (v, null), false);
+							kvp.Value.Serializer (c, w, ((PropertyInfo)kvp.Key).GetValue (v, null), false);
 					}
 				};
 			}
@@ -419,14 +419,14 @@ namespace Tempest
 		}
 		#endif
 
-		private void Serialize (IValueWriter writer, object value, bool skipHeader)
+		private void Serialize (ISerializationContext context, IValueWriter writer, object value, bool skipHeader)
 		{
-			this.serializer (writer, value, skipHeader);
+			this.serializer (context, writer, value, skipHeader);
 		}
 
-		private object Deserialize (IValueReader reader, bool skipHeader)
+		private object Deserialize (ISerializationContext context, IValueReader reader, bool skipHeader)
 		{
-			return this.deserializer (reader, skipHeader);
+			return this.deserializer (context, reader, skipHeader);
 		}
 
 		#if NET_4

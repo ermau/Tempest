@@ -42,15 +42,17 @@ namespace Tempest.Tests
 			var writer = new StreamValueWriter (stream);
 			var reader = new StreamValueReader (stream);
 
-			self.WritePayload (writer);
+			var msg = new T();
+			var context = SerializationContextTests.GetContext (msg.Protocol);
+
+			self.WritePayload (context, writer);
 			long len = stream.Position;
 			stream.Position = 0;
 
-			self = new T();
-			self.ReadPayload (reader);
+			msg.ReadPayload (context, reader);
 			Assert.AreEqual (len, stream.Position);
 
-			return self;
+			return msg;
 		}
 	}
 }

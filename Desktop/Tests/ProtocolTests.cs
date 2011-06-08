@@ -95,12 +95,13 @@ namespace Tempest.Tests
 			byte[] buffer = new byte[1024];
 			var writer = new BufferValueWriter (buffer);
 
+			var c = SerializationContextTests.GetContext (MockProtocol.Instance);
 			var p = new Protocol (42, 248);
-			p.Serialize (writer);
+			p.Serialize (c, writer);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
-			var p2 = new Protocol (reader);
+			var p2 = new Protocol (c, reader);
 
 			Assert.AreEqual (p.id, p2.id);
 			Assert.AreEqual (p.Version, p2.Version);

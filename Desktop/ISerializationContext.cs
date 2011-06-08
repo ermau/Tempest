@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
 namespace Tempest
 {
@@ -47,6 +48,11 @@ namespace Tempest
 		/// this represents the actual version of the protocol negotiated to communicate with.
 		/// </remarks>
 		Protocol Protocol { get; }
+
+		/// <summary>
+		/// Gets the <see cref="Type"/>s and their IDs that have been added since <see cref="GetNewTypes"/> was last called.
+		/// </summary>
+		IEnumerable<KeyValuePair<Type, int>> GetNewTypes();
 
 		/// <summary>
 		/// Attempts to get the <paramref name="id"/> of the <paramref name="type"/>, or assigns a new one.

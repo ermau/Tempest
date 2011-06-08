@@ -158,6 +158,9 @@
     <Compile Include="..\..\Desktop\Tests\ResettingMemoryStream.cs">
       <Link>ResettingMemoryStream.cs</Link>
     </Compile>
+    <Compile Include="..\..\Desktop\Tests\SerializationContextTests.cs">
+      <Link>SerializationContextTests.cs</Link>
+    </Compile>
     <Compile Include="..\..\Desktop\Tests\ServerTests.cs">
       <Link>ServerTests.cs</Link>
     </Compile>

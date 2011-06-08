@@ -34,11 +34,11 @@ namespace Tempest.InternalProtocol
 		{
 		}
 
-		public override void WritePayload (IValueWriter writer)
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 		}
 
-		public override void ReadPayload (IValueReader reader)
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
 		}
 	}

@@ -36,16 +36,18 @@ namespace Tempest
 		/// <summary>
 		/// Serializes <paramref name="element"/> using <paramref name="writer"/>.
 		/// </summary>
-		/// <param name="element">The element to serialize.</param>
+		/// <param name="context">The serialization context.</param>
 		/// <param name="writer">The writer to use to serialize.</param>
-		void Serialize (object element, IValueWriter writer);
+		/// <param name="element">The element to serialize.</param>
+		void Serialize (ISerializationContext context, IValueWriter writer, object element);
 
 		/// <summary>
 		/// Deserializes an element with <paramref name="reader"/>.
 		/// </summary>
+		/// <param name="context">The serialization context.</param>
 		/// <param name="reader">The reader to use to deserialize.</param>
 		/// <returns>The deserialized element.</returns>
-		object Deserialize (IValueReader reader);
+		object Deserialize (ISerializationContext context, IValueReader reader);
 	}
 
 	/// <summary>
@@ -57,16 +59,18 @@ namespace Tempest
 		/// <summary>
 		/// Serializes <paramref name="element"/> using <paramref name="writer"/>.
 		/// </summary>
-		/// <param name="element">The element to serialize.</param>
+		/// <param name="context">The serialization context.</param>
 		/// <param name="writer">The writer to use to serialize.</param>
-		void Serialize (T element, IValueWriter writer);
+		/// <param name="element">The element to serialize.</param>
+		void Serialize (ISerializationContext context, IValueWriter writer, T element);
 
 		/// <summary>
 		/// Deserializes an element with <paramref name="reader"/>.
 		/// </summary>
+		/// <param name="context">The serialization context.</param>
 		/// <param name="reader">The reader to use to deserialize.</param>
 		/// <returns>The deserialized element.</returns>
-		T Deserialize (IValueReader reader);
+		T Deserialize (ISerializationContext context, IValueReader reader);
 	}
 
 	public static class Serializer<T>
@@ -76,18 +80,18 @@ namespace Tempest
 		private class DefaultSerializer
 			: ISerializer<T>
 		{
-			public void Serialize (T element, IValueWriter writer)
+			public void Serialize (ISerializationContext context, IValueWriter writer, T element)
 			{
 				Type etype = element.GetType();
 				if (etype.IsValueType && typeof(T) == typeof(object))
 					etype = typeof (object);
 
-				ObjectSerializer.GetSerializer (etype).Serialize (writer, element);
+				ObjectSerializer.GetSerializer (etype).Serialize (context, writer, element);
 			}
 
-			public T Deserialize (IValueReader reader)
+			public T Deserialize (ISerializationContext context, IValueReader reader)
 			{
-				return (T)ObjectSerializer.GetSerializer (typeof (T)).Deserialize (reader);
+				return (T)ObjectSerializer.GetSerializer (typeof (T)).Deserialize (context, reader);
 			}
 		}
 	}
@@ -103,14 +107,14 @@ namespace Tempest
 			this.serializer = ObjectSerializer.GetSerializer (type);
 		}
 
-		public void Serialize (object element, IValueWriter writer)
+		public void Serialize (ISerializationContext context, IValueWriter writer, object element)
 		{
-			this.serializer.Serialize (writer, element);
+			this.serializer.Serialize (context, writer, element);
 		}
 
-		public object Deserialize (IValueReader reader)
+		public object Deserialize (ISerializationContext context, IValueReader reader)
 		{
-			return this.serializer.Deserialize (reader);
+			return this.serializer.Deserialize (context, reader);
 		}
 
 		private readonly ObjectSerializer serializer;

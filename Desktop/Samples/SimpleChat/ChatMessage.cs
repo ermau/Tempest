@@ -23,13 +23,13 @@ namespace Tempest.Samples.SimpleChat
 			set;
 		}
 
-		public override void WritePayload (IValueWriter writer)
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 			writer.WriteDate (Date);
 			writer.WriteString (this.Contents);
 		}
 
-		public override void ReadPayload (IValueReader reader)
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
 			Date = reader.ReadDate();
 			this.Contents = reader.ReadString();

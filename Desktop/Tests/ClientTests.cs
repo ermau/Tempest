@@ -66,7 +66,7 @@ namespace Tempest.Tests
 			Assert.Throws<ArgumentNullException> (() => client.ConnectAsync (null));
 		}
 
-		[Test]
+		[Test, Repeat (3)]
 		public void Connected()
 		{
 			var test = new AsyncTest();
@@ -79,10 +79,14 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test]
-		public void Disconneted()
+		[Test, Repeat (3)]
+		public void Disconnect()
 		{
-			var test = new AsyncTest();
+			var test = new AsyncTest<ClientDisconnectedEventArgs> (e =>
+			{
+				Assert.AreEqual (ConnectionResult.Custom, e.Reason);
+				Assert.IsTrue (e.Requested);
+			});
 
 			client.Connected += (sender, e) => client.Disconnect (true);
 			client.Disconnected += test.PassHandler;
@@ -92,7 +96,60 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test]
+		[Test, Repeat (3)]
+		public void DisconnectWithReason()
+		{
+			var test = new AsyncTest<ClientDisconnectedEventArgs> (e =>
+			{
+				Assert.AreEqual ("reason", e.CustomReason);
+				Assert.AreEqual (ConnectionResult.Custom, e.Reason);
+				Assert.IsTrue (e.Requested);
+			});
+
+			client.Connected += (sender, e) => client.DisconnectWithReason ("reason");
+			client.Disconnected += test.PassHandler;
+
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void DisconnectFromHandlerThread()
+		{
+			var test = new AsyncTest();
+
+			Action<MessageEventArgs<MockMessage>> handler = e =>
+			{
+				client.Disconnect (true);
+				test.PassHandler (null, EventArgs.Empty);
+			};
+
+			client.RegisterMessageHandler (handler);
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
+			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void DisconnectedFromConnection()
+		{
+			var test = new AsyncTest<ClientDisconnectedEventArgs> (e =>
+			{
+				Assert.IsFalse (e.Requested);
+				Assert.AreEqual (ConnectionResult.EncryptionMismatch, e.Reason);
+			});
+
+			client.Connected += (s, e) => connection.Disconnect (true, ConnectionResult.EncryptionMismatch);
+			client.Disconnected += test.PassHandler;
+
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
+
+			test.Assert (1000);
+		}
+
+		[Test, Repeat (3)]
 		public void MessageHandling()
 		{
 			var test = new AsyncTest (e =>
@@ -112,7 +169,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test]
+		[Test, Repeat (3)]
 		public void GenericMessageHandling()
 		{
 			var test = new AsyncTest (e =>
@@ -132,7 +189,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test]
+		[Test, Repeat (3)]
 		public void MultiProtocolMessageHandling()
 		{
 			var test = new AsyncTest (e =>
@@ -154,7 +211,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test]
+		[Test, Repeat (3)]
 		public void MultiProtocolGenericMessageHandling()
 		{
 			var test = new AsyncTest (e =>
@@ -171,24 +228,6 @@ namespace Tempest.Tests
 
 			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 			connection.Receive (new MessageEventArgs (connection, new MockMessage2 { Content = "hi" }));
-
-			test.Assert (10000);
-		}
-
-		[Test]
-		public void DisconnectFromHandlerThread()
-		{
-			var test = new AsyncTest();
-
-			Action<MessageEventArgs<MockMessage>> handler = e =>
-			{
-				client.Disconnect (true);
-				test.PassHandler (null, EventArgs.Empty);
-			};
-
-			client.RegisterMessageHandler (handler);
-			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
-			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
 
 			test.Assert (10000);
 		}

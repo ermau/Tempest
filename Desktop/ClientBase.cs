@@ -126,7 +126,7 @@ namespace Tempest
 		/// <param name="now">Whether or not to disconnect immediately or wait for pending messages.</param>
 		public virtual void Disconnect (bool now)
 		{
-			Disconnect (now, ConnectionResult.FailedUnknown, null);
+			Disconnect (now, ConnectionResult.Custom, "Requested");
 		}
 
 		/// <summary>
@@ -139,6 +139,7 @@ namespace Tempest
 			if (reason == null)
 				throw new ArgumentNullException ("reason");
 
+			this.connection.Send (new DisconnectMessage { Reason = ConnectionResult.Custom, CustomReason = reason });
 			Disconnect (false, ConnectionResult.Custom, reason);
 		}
 
@@ -192,16 +193,11 @@ namespace Tempest
 
 		private void Disconnect (bool now, ConnectionResult reason, string customReason)
 		{
-			if (reason == ConnectionResult.Custom)
-				this.connection.Send (new DisconnectMessage { Reason = ConnectionResult.Custom, CustomReason = customReason });
-
+			this.disconnecting = true;
 			this.connection.Disconnect (now, reason);
 
 			if (!now)
-			{
-				this.disconnecting = true;
 				return;
-			}
 
 			this.running = false;
 
@@ -314,7 +310,7 @@ namespace Tempest
 		{
 			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
 			Disconnect (true, e.Result, e.CustomReason);
-			OnDisconnected (new ClientDisconnectedEventArgs (e.Result, e.CustomReason));
+			OnDisconnected (new ClientDisconnectedEventArgs (e.Result == ConnectionResult.Custom, e.Result, e.CustomReason));
 		}
 
 		private void OnConnectionConnected (object sender, ClientConnectionEventArgs e)
@@ -357,10 +353,20 @@ namespace Tempest
 	public class ClientDisconnectedEventArgs
 		: EventArgs
 	{
-		public ClientDisconnectedEventArgs (ConnectionResult reason, string customReason)
+		public ClientDisconnectedEventArgs (bool requested, ConnectionResult reason, string customReason)
 		{
+			Requested = requested;
 			Reason = reason;
 			CustomReason = customReason;
+		}
+
+		/// <summary>
+		/// Gets whether the disconnection was requested by ClientBase.
+		/// </summary>
+		public bool Requested
+		{
+			get;
+			private set;
 		}
 
 		public ConnectionResult Reason

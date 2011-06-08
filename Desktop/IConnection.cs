@@ -124,6 +124,7 @@ namespace Tempest
 	/// Reasons for disconnection.
 	/// </summary>
 	public enum ConnectionResult
+		: byte
 	{
 		/// <summary>
 		/// Connection lost or killed for an unknown reason.

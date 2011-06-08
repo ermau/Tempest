@@ -55,6 +55,7 @@
     <Compile Include="IAsymmetricKey.cs" />
     <Compile Include="IPublicKeyCrypto.cs" />
     <Compile Include="ISerializable.cs" />
+    <Compile Include="ISerializationContext.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="IServerContext.cs" />
     <Compile Include="MessageHeader.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="BufferValueWriter.cs" />
     <Compile Include="ClientBase.cs" />
     <Compile Include="RSACrypto.cs" />
+    <Compile Include="SerializationContext.cs" />
     <Compile Include="SerializerExtensions.cs" />
     <Compile Include="IClientConnection.cs" />
     <Compile Include="IConnection.cs" />

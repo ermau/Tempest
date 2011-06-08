@@ -121,6 +121,9 @@
     <Compile Include="..\Desktop\ISerializable.cs">
       <Link>ISerializable.cs</Link>
     </Compile>
+    <Compile Include="..\Desktop\ISerializationContext.cs">
+      <Link>ISerializationContext.cs</Link>
+    </Compile>
     <Compile Include="..\Desktop\ISerializer.cs">
       <Link>ISerializer.cs</Link>
     </Compile>
@@ -171,6 +174,9 @@
     </Compile>
     <Compile Include="..\Desktop\RSACrypto.cs">
       <Link>RSACrypto.cs</Link>
+    </Compile>
+    <Compile Include="..\Desktop\SerializationContext.cs">
+      <Link>SerializationContext.cs</Link>
     </Compile>
     <Compile Include="..\Desktop\SerializerExtensions.cs">
       <Link>SerializerExtensions.cs</Link>

@@ -64,6 +64,7 @@
     <Compile Include="ProtocolTests.cs" />
     <Compile Include="ReaderWriterPairTests.cs" />
     <Compile Include="ResettingMemoryStream.cs" />
+    <Compile Include="SerializationContextTests.cs" />
     <Compile Include="ServerTests.cs" />
     <Compile Include="StreamReaderWriterTests.cs" />
     <Compile Include="TypeMapTests.cs" />

@@ -278,7 +278,14 @@ namespace Tempest.Tests
 				}
 			};
 
-			c.Disconnected += (s, e) => c.ConnectAsync (EndPoint, MessageTypes);
+			EventHandler<DisconnectedEventArgs> dhandler = null;
+			dhandler = (s, e) =>
+			{
+				c.Disconnected -= dhandler;
+				c.ConnectAsync (this.EndPoint, this.MessageTypes);
+			};
+
+			c.Disconnected += dhandler;
 
 			c.ConnectAsync (EndPoint, MessageTypes);
 
@@ -787,7 +794,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (10)]
+		[Test, Repeat (3)]
 		public void DisconnectAndReconnect()
 		{
 			var wait = new ManualResetEvent (false);
@@ -817,7 +824,7 @@ namespace Tempest.Tests
 			}
 		}
 
-		[Test, Repeat (10)]
+		[Test, Repeat (3)]
 		public void DisconnectAndReconnectAsync()
 		{
 			AutoResetEvent wait = new AutoResetEvent (false);

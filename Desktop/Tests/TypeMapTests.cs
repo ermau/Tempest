@@ -37,7 +37,7 @@ namespace Tempest.Tests
 		public void TryGetTypeIdNull()
 		{
 			var map = new TypeMap();
-			int id;
+			ushort id;
 			Assert.Throws<ArgumentNullException> (() => map.TryGetTypeId (null, out id));
 		}
 
@@ -46,7 +46,7 @@ namespace Tempest.Tests
 		{
 			var map = new TypeMap();
 
-			int id;
+			ushort id;
 			Assert.IsTrue (map.TryGetTypeId (typeof (string), out id));
 			Assert.AreEqual (0, id);
 		}
@@ -56,7 +56,7 @@ namespace Tempest.Tests
 		{
 			var map = new TypeMap();
 
-			int id, id2;
+			ushort id, id2;
 			Assert.IsTrue (map.TryGetTypeId (typeof (string), out id));
 			Assert.AreEqual (0, id);
 			
@@ -69,7 +69,7 @@ namespace Tempest.Tests
 		{
 			var map = new TypeMap();
 
-			int id, id2;
+			ushort id, id2;
 			Assert.IsTrue (map.TryGetTypeId (typeof (string), out id));
 			Assert.AreEqual (0, id);
 
@@ -88,7 +88,7 @@ namespace Tempest.Tests
 		{
 			var map = new TypeMap();
 
-			int id;
+			ushort id;
 			map.TryGetTypeId (typeof (string), out id);
 
 			Assert.Contains (new KeyValuePair<Type, int> (typeof(string), 0), map.GetNewTypes().ToList());
@@ -99,7 +99,7 @@ namespace Tempest.Tests
 		{
 			var map = new TypeMap();
 
-			int id;
+			ushort id;
 			map.TryGetTypeId (typeof (string), out id);
 			map.TryGetTypeId (typeof (int), out id);
 
@@ -113,7 +113,7 @@ namespace Tempest.Tests
 		{
 			var map = new TypeMap();
 
-			int id;
+			ushort id;
 			map.TryGetTypeId (typeof (string), out id);
 
 			var newItems = map.GetNewTypes().ToList();

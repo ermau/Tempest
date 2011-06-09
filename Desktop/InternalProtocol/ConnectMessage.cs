@@ -57,7 +57,7 @@ namespace Tempest.InternalProtocol
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
-			if (writer.WriteBool(SignatureHashAlgorithms != null))
+			if (writer.WriteBool (SignatureHashAlgorithms != null))
 			{
 				string[] algs = SignatureHashAlgorithms.ToArray();
 				writer.WriteInt32 (algs.Length);

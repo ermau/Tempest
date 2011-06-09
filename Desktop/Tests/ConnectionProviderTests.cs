@@ -504,7 +504,7 @@ namespace Tempest.Tests
 			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
 				Assert.Ignore();
 
-			const int messages = 10000;
+			const int messages = 1000;
 			int message = 0;
 
 			var test = new AsyncTest (e =>
@@ -552,7 +552,7 @@ namespace Tempest.Tests
 			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
 				Assert.Ignore();
 
-			const int messages = 10000;
+			const int messages = 1000;
 			int number = 0;
 
 			var test = new AsyncTest (e =>

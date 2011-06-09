@@ -58,7 +58,7 @@ namespace Tempest.Tests
 		public void CtorTypeMap()
 		{
 			var map = new TypeMap();
-			int id;
+			ushort id;
 			map.TryGetTypeId (typeof (string), out id);
 			map.TryGetTypeId (typeof (int), out id);
 
@@ -66,7 +66,7 @@ namespace Tempest.Tests
 
 			var context = new SerializationContext (c, MockProtocol.Instance, map);
 
-			int id2;
+			ushort id2;
 			Assert.IsFalse (context.TryGetTypeId (typeof (int), out id2));
 			Assert.AreEqual (id, id2);
 		}

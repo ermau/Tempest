@@ -58,12 +58,12 @@ namespace Tempest
 			private set;
 		}
 
-		public IEnumerable<KeyValuePair<Type, int>> GetNewTypes()
+		public IEnumerable<KeyValuePair<Type, ushort>> GetNewTypes()
 		{
 			return this.map.GetNewTypes();
 		}
 
-		public bool TryGetTypeId (Type type, out int id)
+		public bool TryGetTypeId (Type type, out ushort id)
 		{
 			return this.map.TryGetTypeId (type, out id);
 		}

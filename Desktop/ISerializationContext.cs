@@ -52,7 +52,7 @@ namespace Tempest
 		/// <summary>
 		/// Gets the <see cref="Type"/>s and their IDs that have been added since <see cref="GetNewTypes"/> was last called.
 		/// </summary>
-		IEnumerable<KeyValuePair<Type, int>> GetNewTypes();
+		IEnumerable<KeyValuePair<Type, ushort>> GetNewTypes();
 
 		/// <summary>
 		/// Attempts to get the <paramref name="id"/> of the <paramref name="type"/>, or assigns a new one.
@@ -61,6 +61,6 @@ namespace Tempest
 		/// <param name="id">The id of the <paramref name="type"/>.</param>
 		/// <returns><c>true</c> if the type is new and needs to be transmitted, <c>false</c> otherwise.</returns>
 		/// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
-		bool TryGetTypeId (Type type, out int id);
+		bool TryGetTypeId (Type type, out ushort id);
 	}
 }

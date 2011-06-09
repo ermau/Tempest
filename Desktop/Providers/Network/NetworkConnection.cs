@@ -441,9 +441,32 @@ namespace Tempest.Providers.Network
 			writer.WriteUInt16 (message.MessageType);
 			writer.Length += sizeof (int); // length  placeholder
 
-			message.WritePayload (null, writer); // TODO
+			var context = new SerializationContext (this, this.protocols[message.Protocol.id], new TypeMap());
+
+			message.WritePayload (context, writer);
 
 			int headerLength = BaseHeaderLength;
+
+			var types = context.GetNewTypes().OrderBy (kvp => kvp.Value).ToList();
+			if (types.Count > 0)
+			{
+				if (types.Count > Int16.MaxValue)
+					throw new ArgumentException ("Too many different types for serialization");
+
+				int payloadLen = writer.Length;
+				byte[] payload = writer.Buffer;
+				writer = new BufferValueWriter (new byte[1024 + writer.Length]);
+				writer.WriteByte (message.Protocol.id);
+				writer.WriteUInt16 (message.MessageType);
+				writer.Length += sizeof (int);
+				writer.WriteUInt16 ((ushort)types.Count);
+				for (int i = 0; i < types.Count; ++i)
+					writer.WriteString (types[i].Key.GetSimpleName());
+
+				headerLength = writer.Length;
+
+				Buffer.BlockCopy (payload, BaseHeaderLength, writer.Buffer, headerLength, payloadLen - BaseHeaderLength);
+			}
 
 			if (message.Encrypted)
 				EncryptMessage (writer, ref headerLength);
@@ -453,7 +476,11 @@ namespace Tempest.Providers.Network
 
 			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
-			Buffer.BlockCopy (BitConverter.GetBytes (length), 0, rawMessage, BaseHeaderLength - sizeof(int), sizeof(int));
+			int len = length << 1;
+			if (types.Count > 0)
+				len |= 1; // serialization header
+
+			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, BaseHeaderLength - sizeof(int), sizeof(int));
 
 			return rawMessage;
 		}
@@ -474,13 +501,17 @@ namespace Tempest.Providers.Network
 			Trace.WriteLine ("Entering", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
 			                                remaining, connectionId));
 
+			BufferValueReader reader = new BufferValueReader (buffer, offset + 1, remaining);
+
 			ushort type;
 			int mlen;
 			try
 			{
-				type = BitConverter.ToUInt16 (buffer, offset + 1);
-				mlen = BitConverter.ToInt32 (buffer, offset + 1 + sizeof (ushort));
-
+				type = reader.ReadUInt16();
+				mlen = reader.ReadInt32();
+				bool hasTypeHeader = (mlen & 1) == 1;
+				mlen >>= 1;
+				
 				Protocol p;
 				if (!this.protocols.TryGetValue (buffer[offset], out p))
 				{
@@ -497,12 +528,29 @@ namespace Tempest.Providers.Network
 					return true;
 				}
 
-				Trace.WriteLine ("Have " + msg.GetType().Name, String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
+				Trace.WriteLine (String.Format ("Have {0} ({1:N0})", msg.GetType().Name, mlen), String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
 			                                remaining, connectionId));
 
-				offset += BaseHeaderLength;
-
 				int headerLength = BaseHeaderLength;
+
+				TypeMap map;
+				if (hasTypeHeader)
+				{
+					Trace.WriteLine ("Has type header, reading types", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
+					                                remaining, connectionId));
+
+					ushort numTypes = reader.ReadUInt16();
+					var types = new Dictionary<Type, ushort> (numTypes);
+					for (ushort i = 0; i < numTypes; ++i)
+						types[Type.GetType (reader.ReadString())] = i;
+
+					headerLength = reader.Position - offset;
+					map = new TypeMap (types);
+				}
+				else
+					map = new TypeMap();
+
+				var context = new SerializationContext (this, p, map);
 
 				byte[] iv = null;
 				if (msg.Encrypted && this.aes != null)
@@ -518,14 +566,14 @@ namespace Tempest.Providers.Network
 						return false;
 					}
 
-					Buffer.BlockCopy (buffer, offset, iv, 0, length);
-					offset += length;
+					Buffer.BlockCopy (buffer, reader.Position, iv, 0, length);
+					reader.Position += length;
 				}
 
 				Trace.WriteLine ("Exiting", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
 			                                remaining, connectionId));
 
-				header = new MessageHeader (p, msg, mlen, headerLength, iv);
+				header = new MessageHeader (p, msg, mlen, headerLength, context, iv);
 				return true;
 			}
 			catch (Exception ex)
@@ -598,7 +646,7 @@ namespace Tempest.Providers.Network
 						DecryptMessage (header, ref r, ref message, ref moffset);
 
 					r.Position = moffset;
-					header.Message.ReadPayload (null, r); // TODO CONTEXT
+					header.Message.ReadPayload (header.SerializationContext, r);
 
 					if (header.Message.Authenticated && this.requiresHandshake)
 					{

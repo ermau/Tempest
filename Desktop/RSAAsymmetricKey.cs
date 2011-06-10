@@ -190,6 +190,9 @@ namespace Tempest
 
 		public void Deserialize (ISerializationContext context, IValueReader reader)
 		{
+			if (reader == null)
+				throw new ArgumentNullException ("reader");
+
 			if (reader.ReadBool())
 			{
 				D = reader.ReadBytes();
@@ -209,6 +212,11 @@ namespace Tempest
 
 		public void Deserialize (IValueReader reader, IPublicKeyCrypto crypto)
 		{
+			if (reader == null)
+				throw new ArgumentNullException ("reader");
+			if (crypto == null)
+				throw new ArgumentNullException ("crypto");
+
 			if (reader.ReadBool())
 			{
 				D = crypto.Decrypt (reader.ReadBytes());

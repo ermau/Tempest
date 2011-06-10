@@ -194,6 +194,8 @@ namespace Tempest.Providers.Network
 			}
 
 			Send (connectMsg);
+
+			Trace.WriteLine ("Exiting", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 		}
 
 		protected override void OnTempestMessageReceived (MessageEventArgs e)

@@ -289,7 +289,7 @@ namespace Tempest.Tests
 
 			c.ConnectAsync (EndPoint, MessageTypes);
 
-			if (!wait.WaitOne (5000))
+			if (!wait.WaitOne (10000))
 				Assert.Fail ("Failed to connect");
 
 			c.Disconnect();

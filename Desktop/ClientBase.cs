@@ -217,6 +217,8 @@ namespace Tempest
 
 			if (runner != null && Thread.CurrentThread != runner)
 				runner.Join();
+
+			this.disconnecting = false;
 		}
 
 		private void ConnectionOnMessageReceived (object sender, MessageEventArgs e)

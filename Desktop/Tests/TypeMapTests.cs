@@ -38,7 +38,7 @@ namespace Tempest.Tests
 		{
 			var map = new TypeMap();
 			ushort id;
-			Assert.Throws<ArgumentNullException> (() => map.TryGetTypeId (null, out id));
+			Assert.Throws<ArgumentNullException> (() => map.GetTypeId (null, out id));
 		}
 
 		[Test]
@@ -47,7 +47,7 @@ namespace Tempest.Tests
 			var map = new TypeMap();
 
 			ushort id;
-			Assert.IsTrue (map.TryGetTypeId (typeof (string), out id));
+			Assert.IsTrue (map.GetTypeId (typeof (string), out id));
 			Assert.AreEqual (0, id);
 		}
 
@@ -57,10 +57,10 @@ namespace Tempest.Tests
 			var map = new TypeMap();
 
 			ushort id, id2;
-			Assert.IsTrue (map.TryGetTypeId (typeof (string), out id));
+			Assert.IsTrue (map.GetTypeId (typeof (string), out id));
 			Assert.AreEqual (0, id);
 			
-			Assert.IsFalse (map.TryGetTypeId (typeof (string), out id2));
+			Assert.IsFalse (map.GetTypeId (typeof (string), out id2));
 			Assert.AreEqual (id, id2);
 		}
 
@@ -70,16 +70,16 @@ namespace Tempest.Tests
 			var map = new TypeMap();
 
 			ushort id, id2;
-			Assert.IsTrue (map.TryGetTypeId (typeof (string), out id));
+			Assert.IsTrue (map.GetTypeId (typeof (string), out id));
 			Assert.AreEqual (0, id);
 
-			Assert.IsFalse (map.TryGetTypeId (typeof (string), out id2));
+			Assert.IsFalse (map.GetTypeId (typeof (string), out id2));
 			Assert.AreEqual (id, id2);
 
-			Assert.IsTrue (map.TryGetTypeId (typeof (int), out id));
+			Assert.IsTrue (map.GetTypeId (typeof (int), out id));
 			Assert.AreNotEqual (id2, id);
 
-			Assert.IsFalse (map.TryGetTypeId (typeof (int), out id2));
+			Assert.IsFalse (map.GetTypeId (typeof (int), out id2));
 			Assert.AreEqual (id, id2);
 		}
 
@@ -89,9 +89,13 @@ namespace Tempest.Tests
 			var map = new TypeMap();
 
 			ushort id;
-			map.TryGetTypeId (typeof (string), out id);
+			map.GetTypeId (typeof (string), out id);
 
-			Assert.Contains (new KeyValuePair<Type, int> (typeof(string), 0), map.GetNewTypes().ToList());
+			var exp = new KeyValuePair<Type, int> (typeof (string), 0);
+			var kvp = map.GetNewTypes().ToList().Single();
+			
+			Assert.AreEqual (exp.Key, kvp.Key);
+			Assert.AreEqual (exp.Value, kvp.Value);
 		}
 
 		[Test]
@@ -100,12 +104,18 @@ namespace Tempest.Tests
 			var map = new TypeMap();
 
 			ushort id;
-			map.TryGetTypeId (typeof (string), out id);
-			map.TryGetTypeId (typeof (int), out id);
+			map.GetTypeId (typeof (string), out id);
+			map.GetTypeId (typeof (int), out id);
 
 			var newItems = map.GetNewTypes().ToList();
-			Assert.Contains (new KeyValuePair<Type, int> (typeof(string), 0), newItems);
-			Assert.Contains (new KeyValuePair<Type, int> (typeof(int), 1), newItems);
+
+			var exp = new KeyValuePair<Type, int> (typeof (string), 0);
+			Assert.AreEqual (exp.Key, newItems[0].Key);
+			Assert.AreEqual (exp.Value, newItems[0].Value);
+
+			exp = new KeyValuePair<Type, int> (typeof (int), 1);
+			Assert.AreEqual (exp.Key, newItems[1].Key);
+			Assert.AreEqual (exp.Value, newItems[1].Value);
 		}
 
 		[Test]
@@ -114,11 +124,15 @@ namespace Tempest.Tests
 			var map = new TypeMap();
 
 			ushort id;
-			map.TryGetTypeId (typeof (string), out id);
+			map.GetTypeId (typeof (string), out id);
 
-			var newItems = map.GetNewTypes().ToList();
-			Assert.Contains (new KeyValuePair<Type, int> (typeof(string), 0), newItems);
-			Assert.That (newItems, Is.Not.Contains (new KeyValuePair<Type, int> (typeof(string), 0)));
+			var exp = new KeyValuePair<Type, int> (typeof (string), 0);
+			var kvp = map.GetNewTypes().ToList().Single();
+			
+			Assert.AreEqual (exp.Key, kvp.Key);
+			Assert.AreEqual (exp.Value, kvp.Value);
+
+			Assert.IsFalse (map.GetNewTypes().Any());
 		}
 	}
 }

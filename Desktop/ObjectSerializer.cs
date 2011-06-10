@@ -167,12 +167,22 @@ namespace Tempest
 				{
 					if (!skipHeader)
 					{
-						if (!r.ReadBool())
-							return null;
-					
-						Type actualType = Type.GetType (r.ReadString());
-						if (actualType == null || !t.IsAssignableFrom (actualType))
-							return null;
+						//if (!r.ReadBool())
+						//	return null;
+
+						ushort objectHeader = r.ReadUInt16();
+						if ((objectHeader & 1) == 0)
+						    return null;
+
+						objectHeader >>= 1;
+
+						Type actualType;
+						if (!c.TryGetType (objectHeader, out actualType))
+						    return null;
+						
+						//Type actualType = Type.GetType (r.ReadString());
+						//if (actualType == null || !t.IsAssignableFrom (actualType))
+						//    return null;
 
 						if (actualType != t)
 							return GetSerializer (actualType).deserializer (c, r, true);
@@ -295,16 +305,29 @@ namespace Tempest
 				{
 					if (!sh)
 					{
-						if (v == null)
+						ushort objectHeader = 0;
+						//if (v == null)
+						//{
+						//    w.WriteBool (false);
+						//    return;
+						//}
+
+						Type actualType = null;
+						if (v != null)
 						{
-							w.WriteBool (false);
-							return;
+						    actualType = v.GetType();
+						    c.GetTypeId (actualType, out objectHeader);
+
+						    objectHeader <<= 1;
+						    objectHeader |= 1;
 						}
 
-						var actualType = v.GetType();
+						w.WriteUInt16 (objectHeader);
+						if (v == null)
+						    return;
 
-						w.WriteBool (true);
-						w.WriteString (String.Format ("{0}, {1}", actualType.FullName, actualType.Assembly.GetName().Name));
+						//w.WriteBool (true);
+						//w.WriteString (String.Format ("{0}, {1}", actualType.FullName, actualType.Assembly.GetName().Name));
 
 						if (!t.IsAssignableFrom (actualType))
 							throw new ArgumentException();

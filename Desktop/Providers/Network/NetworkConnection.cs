@@ -450,22 +450,22 @@ namespace Tempest.Providers.Network
 			var types = context.GetNewTypes().OrderBy (kvp => kvp.Value).ToList();
 			if (types.Count > 0)
 			{
-				if (types.Count > Int16.MaxValue)
-					throw new ArgumentException ("Too many different types for serialization");
+			    if (types.Count > Int16.MaxValue)
+			        throw new ArgumentException ("Too many different types for serialization");
 
-				int payloadLen = writer.Length;
-				byte[] payload = writer.Buffer;
-				writer = new BufferValueWriter (new byte[1024 + writer.Length]);
-				writer.WriteByte (message.Protocol.id);
-				writer.WriteUInt16 (message.MessageType);
-				writer.Length += sizeof (int);
-				writer.WriteUInt16 ((ushort)types.Count);
-				for (int i = 0; i < types.Count; ++i)
-					writer.WriteString (types[i].Key.GetSimpleName());
+			    int payloadLen = writer.Length;
+			    byte[] payload = writer.Buffer;
+			    writer = new BufferValueWriter (new byte[1024 + writer.Length]);
+			    writer.WriteByte (message.Protocol.id);
+			    writer.WriteUInt16 (message.MessageType);
+			    writer.Length += sizeof (int);
+			    writer.WriteUInt16 ((ushort)types.Count);
+			    for (int i = 0; i < types.Count; ++i)
+			        writer.WriteString (types[i].Key.GetSimpleName());
 
-				headerLength = writer.Length;
+			    headerLength = writer.Length;
 
-				Buffer.BlockCopy (payload, BaseHeaderLength, writer.Buffer, headerLength, payloadLen - BaseHeaderLength);
+				writer.InsertBytes (headerLength, payload, BaseHeaderLength, payloadLen - BaseHeaderLength);
 			}
 
 			if (message.Encrypted)
@@ -478,7 +478,7 @@ namespace Tempest.Providers.Network
 			length = writer.Length;
 			int len = length << 1;
 			if (types.Count > 0)
-				len |= 1; // serialization header
+			    len |= 1; // serialization header
 
 			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, BaseHeaderLength - sizeof(int), sizeof(int));
 
@@ -536,16 +536,16 @@ namespace Tempest.Providers.Network
 				TypeMap map;
 				if (hasTypeHeader)
 				{
-					Trace.WriteLine ("Has type header, reading types", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
-					                                remaining, connectionId));
+				    Trace.WriteLine ("Has type header, reading types", String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset,
+				                                    remaining, connectionId));
 
-					ushort numTypes = reader.ReadUInt16();
-					var types = new Dictionary<Type, ushort> (numTypes);
-					for (ushort i = 0; i < numTypes; ++i)
-						types[Type.GetType (reader.ReadString())] = i;
+				    ushort numTypes = reader.ReadUInt16();
+				    var types = new Dictionary<Type, ushort> (numTypes);
+				    for (ushort i = 0; i < numTypes; ++i)
+				        types[Type.GetType (reader.ReadString())] = i;
 
-					headerLength = reader.Position - offset;
-					map = new TypeMap (types);
+				    headerLength = reader.Position - offset;
+				    map = new TypeMap (types);
 				}
 				else
 					map = new TypeMap();

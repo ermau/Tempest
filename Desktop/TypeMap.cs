@@ -39,12 +39,14 @@ namespace Tempest
 		{
 			this.map = new Dictionary<Type, ushort>();
 			this.newMappings = new Dictionary<Type, ushort>();
+			this.reverseMap = new Dictionary<ushort, Type>();
 		}
 
 		public TypeMap (IDictionary<Type, ushort> mapping)
 		{
 			this.map = new Dictionary<Type, ushort> (mapping);
 			this.newMappings = new Dictionary<Type, ushort> (mapping);
+			this.reverseMap = new Dictionary<ushort, Type> (mapping.ToDictionary (kvp => kvp.Value, kvp => kvp.Key));
 		}
 
 		/// <summary>
@@ -69,7 +71,7 @@ namespace Tempest
 		/// <param name="id">The id of the <paramref name="type"/>.</param>
 		/// <returns><c>true</c> if the type is new and needs to be transmitted, <c>false</c> otherwise.</returns>
 		/// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
-		public bool TryGetTypeId (Type type, out ushort id)
+		public bool GetTypeId (Type type, out ushort id)
 		{
 			lock (this.map)
 			{
@@ -77,6 +79,7 @@ namespace Tempest
 				if (!found)
 				{
 					this.newMappings.Add (type, id = this.nextId);
+					this.reverseMap.Add (this.nextId, type);
 					this.map.Add (type, this.nextId++);
 				}
 
@@ -84,7 +87,20 @@ namespace Tempest
 			}
 		}
 
+		/// <summary>
+		/// Attempts to get the <paramref name="type"/> for <paramref name="id"/>.
+		/// </summary>
+		/// <param name="id">The id to search for.</param>
+		/// <param name="type">The type, if found.</param>
+		/// <returns><c>true</c> if the type was found</returns>
+		public bool TryGetType (ushort id, out Type type)
+		{
+			lock (this.map)
+				return this.reverseMap.TryGetValue (id, out type);
+		}
+
 		private ushort nextId = 0;
+		private readonly Dictionary<ushort, Type> reverseMap;
 		private readonly Dictionary<Type, ushort> map;
 		private readonly Dictionary<Type, ushort> newMappings;
 	}

@@ -63,9 +63,14 @@ namespace Tempest
 			return this.map.GetNewTypes();
 		}
 
-		public bool TryGetTypeId (Type type, out ushort id)
+		public bool TryGetType (ushort id, out Type type)
 		{
-			return this.map.TryGetTypeId (type, out id);
+			return this.map.TryGetType (id, out type);
+		}
+
+		public bool GetTypeId (Type type, out ushort id)
+		{
+			return this.map.GetTypeId (type, out id);
 		}
 
 		private readonly TypeMap map;

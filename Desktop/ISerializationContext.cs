@@ -61,6 +61,14 @@ namespace Tempest
 		/// <param name="id">The id of the <paramref name="type"/>.</param>
 		/// <returns><c>true</c> if the type is new and needs to be transmitted, <c>false</c> otherwise.</returns>
 		/// <exception cref="ArgumentNullException"><paramref name="type"/> is <c>null</c>.</exception>
-		bool TryGetTypeId (Type type, out ushort id);
+		bool GetTypeId (Type type, out ushort id);
+
+		/// <summary>
+		/// Attempts to get the <paramref name="type"/> for <paramref name="id"/>.
+		/// </summary>
+		/// <param name="id">The id to search for.</param>
+		/// <param name="type">The type, if found.</param>
+		/// <returns><c>true</c> if the type was found</returns>
+		bool TryGetType (ushort id, out Type type);
 	}
 }

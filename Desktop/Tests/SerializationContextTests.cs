@@ -59,15 +59,15 @@ namespace Tempest.Tests
 		{
 			var map = new TypeMap();
 			ushort id;
-			map.TryGetTypeId (typeof (string), out id);
-			map.TryGetTypeId (typeof (int), out id);
+			map.GetTypeId (typeof (string), out id);
+			map.GetTypeId (typeof (int), out id);
 
 			var c = new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance));
 
 			var context = new SerializationContext (c, MockProtocol.Instance, map);
 
 			ushort id2;
-			Assert.IsFalse (context.TryGetTypeId (typeof (int), out id2));
+			Assert.IsFalse (context.GetTypeId (typeof (int), out id2));
 			Assert.AreEqual (id, id2);
 		}
 	}

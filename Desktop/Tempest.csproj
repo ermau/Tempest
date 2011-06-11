@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArrayExtensions.cs" />
+    <Compile Include="CollectionExtensions.cs" />
     <Compile Include="DisconnectedEventArgs.cs" />
     <Compile Include="ConnectionExtensions.cs" />
     <Compile Include="InternalProtocol\AcknowledgeConnectMessage.cs" />

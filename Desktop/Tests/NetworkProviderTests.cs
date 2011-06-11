@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Threading;
 using NUnit.Framework;
 using Tempest.Providers.Network;
@@ -196,6 +197,49 @@ namespace Tempest.Tests
 
 			client.Connected += test.FailHandler;
 			client.Disconnected += test.PassHandler;
+
+			test.Assert (10000);
+		}
+		
+		[Test, Repeat (3)]
+		public void SuppliedServerKey()
+		{
+			TearDown();
+
+			var crypto = new RSACryptoServiceProvider();
+			byte[] csp = crypto.ExportCspBlob (true);
+			var key = new RSAAsymmetricKey (csp);
+
+			provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, (IPEndPoint) EndPoint, MaxConnections, () => new RSACrypto(), key);
+			provider.Start (MessageTypes);
+
+			var c = new NetworkClientConnection (MockProtocol.Instance);
+
+			var test = new AsyncTest (2);
+
+			provider.ConnectionMade += test.PassHandler;
+			c.Connected += test.PassHandler;
+
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void SuppliedClientKey()
+		{
+			provider.Start (MessageTypes);
+
+			var crypto = new RSACryptoServiceProvider();
+			byte[] csp = crypto.ExportCspBlob (true);
+			var key = new RSAAsymmetricKey (csp);
+
+			var c = new NetworkClientConnection (MockProtocol.Instance, () => new RSACrypto(), key);
+
+			var test = new AsyncTest<ConnectionMadeEventArgs> (e => Assert.IsTrue (e.ClientPublicKey.PublicSignature.SequenceEqual (key.PublicSignature)));
+			provider.ConnectionMade += test.PassHandler;
+
+			c.ConnectAsync (EndPoint, MessageTypes);
 
 			test.Assert (10000);
 		}

@@ -177,7 +177,7 @@ namespace Tempest
 						objectHeader >>= 1;
 
 						Type actualType;
-						if (!c.TryGetType (objectHeader, out actualType))
+						if (!c.TypeMap.TryGetType (objectHeader, out actualType))
 						    return null;
 						
 						//Type actualType = Type.GetType (r.ReadString());
@@ -316,7 +316,7 @@ namespace Tempest
 						if (v != null)
 						{
 						    actualType = v.GetType();
-						    c.GetTypeId (actualType, out objectHeader);
+						    c.TypeMap.GetTypeId (actualType, out objectHeader);
 
 						    objectHeader <<= 1;
 						    objectHeader |= 1;

@@ -447,7 +447,7 @@ namespace Tempest.Providers.Network
 
 			int headerLength = BaseHeaderLength;
 
-			var types = context.GetNewTypes().OrderBy (kvp => kvp.Value).ToList();
+			var types = context.TypeMap.GetNewTypes().OrderBy (kvp => kvp.Value).ToList();
 			if (types.Count > 0)
 			{
 			    if (types.Count > Int16.MaxValue)

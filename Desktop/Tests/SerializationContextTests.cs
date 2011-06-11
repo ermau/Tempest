@@ -66,9 +66,7 @@ namespace Tempest.Tests
 
 			var context = new SerializationContext (c, MockProtocol.Instance, map);
 
-			ushort id2;
-			Assert.IsFalse (context.GetTypeId (typeof (int), out id2));
-			Assert.AreEqual (id, id2);
+			Assert.AreSame (map, context.TypeMap);
 		}
 	}
 }

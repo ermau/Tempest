@@ -33,7 +33,8 @@ namespace Tempest
 	/// <summary>
 	/// Represents a map of <see cref="Type"/>s to identifiers for shorter bitstream references.
 	/// </summary>
-	public class TypeMap
+	public sealed class TypeMap
+		: ISerializable
 	{
 		public TypeMap()
 		{
@@ -97,6 +98,26 @@ namespace Tempest
 		{
 			lock (this.map)
 				return this.reverseMap.TryGetValue (id, out type);
+		}
+
+		public void Serialize (ISerializationContext context, IValueWriter writer)
+		{
+			lock (this.map)
+			{
+				writer.WriteUInt16 ((ushort)this.map.Count);
+				foreach (var kvp in this.map.OrderBy (kvp => kvp.Value))
+					writer.WriteString (kvp.Key.GetSimpleName());
+			}
+		}
+
+		public void Deserialize (ISerializationContext context, IValueReader reader)
+		{
+			lock (this.map)
+			{
+				ushort count = reader.ReadUInt16();
+				for (ushort i = 0; i < count; ++i)
+					this.map.Add (Type.GetType (reader.ReadString()), i);
+			}
 		}
 
 		private ushort nextId = 0;

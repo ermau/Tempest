@@ -244,6 +244,49 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
+		[Test, Repeat (3)]
+		public void SuppliedServer4096Key()
+		{
+			TearDown();
+
+			var crypto = new RSACryptoServiceProvider (4096);
+			byte[] csp = crypto.ExportCspBlob (true);
+			var key = new RSAAsymmetricKey (csp);
+
+			provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, (IPEndPoint) EndPoint, MaxConnections, () => new RSACrypto(), key);
+			provider.Start (MessageTypes);
+
+			var c = new NetworkClientConnection (MockProtocol.Instance);
+
+			var test = new AsyncTest (2);
+
+			provider.ConnectionMade += test.PassHandler;
+			c.Connected += test.PassHandler;
+
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void SuppliedClient4096Key()
+		{
+			provider.Start (MessageTypes);
+
+			var crypto = new RSACryptoServiceProvider (4096);
+			byte[] csp = crypto.ExportCspBlob (true);
+			var key = new RSAAsymmetricKey (csp);
+
+			var c = new NetworkClientConnection (MockProtocol.Instance, () => new RSACrypto(), key);
+
+			var test = new AsyncTest<ConnectionMadeEventArgs> (e => Assert.IsTrue (e.ClientPublicKey.PublicSignature.SequenceEqual (key.PublicSignature)));
+			provider.ConnectionMade += test.PassHandler;
+
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			test.Assert (10000);
+		}
+
 		private class MockSha1OnlyCrypto
 			: RSACrypto, IPublicKeyCrypto
 		{

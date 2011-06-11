@@ -198,7 +198,7 @@ namespace Tempest
 							((Tempest.ISerializable)value).Deserialize (c, r);
 						}
 						else
-							value = oserializer.ctor.Invoke (new object[] { r });
+							value = oserializer.ctor.Invoke (new object[] { c, r });
 
 						return value;
 					}
@@ -374,11 +374,13 @@ namespace Tempest
 			if (this.ctor != null)
 				return;
 
-			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new [] { typeof (IValueReader) }, null) ??
+			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new [] { typeof(ISerializationContext), typeof (IValueReader) }, null) ??
 						t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
 
+			if (this.ctor == null)
+				throw new ArgumentException ("No empty or (ISerializationContext,IValueReader) constructor found for " + t.Name);
 
-			this.deserializingConstructor = this.ctor.GetParameters().Length == 1;
+			this.deserializingConstructor = this.ctor.GetParameters().Length == 2;
 
 			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.NonPublic)
 							.Where (mi =>

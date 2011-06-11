@@ -39,6 +39,7 @@ namespace Tempest.Tests
 		[Test]
 		public void CtorNull()
 		{
+			Assert.Throws<ArgumentNullException> (() => new SerializationContext (null));
 			Assert.Throws<ArgumentNullException> (() => new SerializationContext (null, MockProtocol.Instance, new TypeMap()));
 			Assert.Throws<ArgumentNullException> (() => new SerializationContext (new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance)), null, new TypeMap()));
 			Assert.Throws<ArgumentNullException> (() => new SerializationContext (new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance)), MockProtocol.Instance, null));

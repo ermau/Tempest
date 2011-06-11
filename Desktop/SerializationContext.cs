@@ -25,25 +25,30 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 
 namespace Tempest
 {
 	public class SerializationContext
 		: ISerializationContext
 	{
+		public SerializationContext (TypeMap map)
+		{
+			if (map == null)
+				throw new ArgumentNullException ("map");
+
+			this.map = map;
+		}
+
 		public SerializationContext (IConnection connection, Protocol protocol, TypeMap map)
+			: this (map)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
-			if (map == null)
-				throw new ArgumentNullException ("map");
 			
 			Connection = connection;
 			Protocol = protocol;
-			this.map = map;
 		}
 
 		public IConnection Connection

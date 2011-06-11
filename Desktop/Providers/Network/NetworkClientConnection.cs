@@ -59,6 +59,13 @@ namespace Tempest.Providers.Network
 		{
 		}
 
+		public NetworkClientConnection (Protocol protocol, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
+			: base (new [] { protocol }, publicKeyCryptoFactory, authKey, false)
+		{
+			if (authKey == null)
+				throw new ArgumentNullException ("authKey");
+		}
+
 		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
 			: base (protocols, publicKeyCryptoFactory, authKey, false)
 		{

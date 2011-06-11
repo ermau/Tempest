@@ -124,7 +124,11 @@ namespace Tempest.Providers.Network
 					{
 					#endif
 						this.authentication = this.pkCryptoFactory();
-						this.authenticationKey = this.authentication.ExportKey (true);
+						if (this.authenticationKey == null)
+							this.authenticationKey = this.authentication.ExportKey (true);
+						else
+							this.authentication.ImportKey (this.authenticationKey);
+
 						this.publicAuthenticationKey = this.authentication.ExportKey (false);
 
 						if (enabledHashAlgs == null || !enabledHashAlgs.Any())
@@ -152,40 +156,6 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("authKey");
 
 			this.authenticationKey = authKey;
-
-			if (this.protocols.Any (p => p.RequiresHandshake))
-			{
-				ThreadPool.QueueUserWorkItem (s =>
-				{
-					#if NET_4
-					Task encryptKeyGen = Task.Factory.StartNew (() =>
-					{
-					#endif
-						this.pkEncryption = this.pkCryptoFactory();
-						this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
-					#if NET_4
-					});
-					#endif
-
-					#if NET_4
-					Task authKeyLoad = Task.Factory.StartNew (() =>
-					{
-					#endif
-						this.authentication = this.pkCryptoFactory();
-						this.authentication.ImportKey (authKey);
-						this.publicAuthenticationKey = this.authentication.ExportKey (false);
-					#if NET_4
-					});
-					#endif
-
-					#if NET_4
-					authKeyLoad.Wait();
-					encryptKeyGen.Wait();
-					#endif
-
-					this.keyWait.Set();
-				});
-			}
 		}
 
 		public event EventHandler PingFrequencyChanged;

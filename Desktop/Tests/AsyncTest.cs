@@ -76,6 +76,15 @@ namespace Tempest.Tests
 			this.passTest = e => NAssert.Pass();
 		}
 
+		public AsyncTest (int passTimes)
+			: this (true)
+		{
+			if (passTimes < 0)
+				throw new ArgumentOutOfRangeException ("passTimes");
+
+			this.timesToPass = passTimes;
+		}
+
 		public AsyncTest (bool multiple)
 			: this (e => true, multiple)
 		{

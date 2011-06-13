@@ -45,7 +45,7 @@ namespace Tempest
 			if (writer == null)
 				throw new ArgumentNullException ("writer");
 			
-			writer.WriteInt64 (date.ToFileTime());
+			writer.WriteInt64 (date.Ticks);
 		}
 
 		/// <summary>
@@ -56,7 +56,7 @@ namespace Tempest
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			return DateTime.FromFileTime (reader.ReadInt64());
+			return new DateTime (reader.ReadInt64());
 		}
 
 		public static void WriteString (this IValueWriter writer, string value)

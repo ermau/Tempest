@@ -116,7 +116,11 @@ namespace Tempest
 			{
 				ushort count = reader.ReadUInt16();
 				for (ushort i = 0; i < count; ++i)
-					this.map.Add (Type.GetType (reader.ReadString()), i);
+				{
+					Type t = Type.GetType (reader.ReadString());
+					this.map.Add (t, i);
+					this.reverseMap.Add (i, t);
+				}
 			}
 		}
 

@@ -42,6 +42,32 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void CtorNull()
+		{
+			Assert.Throws<ArgumentNullException> (() => new TypeMap (null));
+		}
+
+		[Test]
+		public void Ctor()
+		{
+			var dict = new Dictionary<Type, ushort> { { typeof (string), 0 }, { typeof (int), 1 } };
+			TypeMap map = null;
+			Assert.DoesNotThrow (() => map = new TypeMap (dict));
+
+			Type type;
+			Assert.IsTrue (map.TryGetType (0, out type));
+			Assert.AreEqual (typeof (string), type);
+			Assert.IsTrue (map.TryGetType (1, out type));
+			Assert.AreEqual (typeof (int), type);
+
+			ushort id;
+			Assert.IsFalse (map.GetTypeId (typeof (string), out id));
+			Assert.AreEqual (0, id);
+			Assert.IsFalse (map.GetTypeId (typeof (int), out id));
+			Assert.AreEqual (1, id);
+		}
+
+		[Test]
 		public void First()
 		{
 			var map = new TypeMap();
@@ -133,6 +159,34 @@ namespace Tempest.Tests
 			Assert.AreEqual (exp.Value, kvp.Value);
 
 			Assert.IsFalse (map.GetNewTypes().Any());
+		}
+
+		[Test]
+		public void Serialization()
+		{
+			var dict = new Dictionary<Type, ushort> { { typeof (string), 0 }, { typeof (int), 1 } };
+			TypeMap map = new TypeMap (dict);
+
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+			map.Serialize (null, writer);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			map = new TypeMap();
+			map.Deserialize (null, reader);
+
+			Type type;
+			Assert.IsTrue (map.TryGetType (0, out type));
+			Assert.AreEqual (typeof (string), type);
+			Assert.IsTrue (map.TryGetType (1, out type));
+			Assert.AreEqual (typeof (int), type);
+
+			ushort id;
+			Assert.IsFalse (map.GetTypeId (typeof (string), out id));
+			Assert.AreEqual (0, id);
+			Assert.IsFalse (map.GetTypeId (typeof (int), out id));
+			Assert.AreEqual (1, id);
 		}
 	}
 }

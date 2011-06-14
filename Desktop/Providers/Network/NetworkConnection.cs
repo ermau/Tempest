@@ -806,10 +806,11 @@ namespace Tempest.Providers.Network
 				{
 					Trace.WriteLine ("Socket not connected, finishing cleanup.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
 
-					Recycle();
-
 					while (this.pendingAsync > 1) // If called from *Completed, there'll be a pending.
 						Thread.Sleep (0);
+
+					// Shouldn't cleanup while we're still running messages.
+					Recycle();
 
 					this.disconnecting = false;
 				}

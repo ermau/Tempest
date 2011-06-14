@@ -366,7 +366,7 @@ namespace Tempest.Tests
 				Name = name;
 			}
 
-			public ValueReaderTester (IValueReader reader)
+			public ValueReaderTester (ISerializationContext context, IValueReader reader)
 			{
 				Deserialize (context, reader);
 			}

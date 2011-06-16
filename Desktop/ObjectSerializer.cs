@@ -145,6 +145,11 @@ namespace Tempest
 				return (c, r, sh) => r.ReadDate();
 			else if (t == typeof(string))
 				return (c, r, sh) => !r.ReadBool() ? null : r.ReadString (Encoding.UTF8);
+			else if (t.IsEnum)
+			{
+				Type btype = Enum.GetUnderlyingType (t);
+				return GetDeserializer (btype, oserializer);
+			}
 			else if (t.IsArray || t == typeof(Array))
 			{
 				Type etype = t.GetElementType();
@@ -167,9 +172,6 @@ namespace Tempest
 				{
 					if (!skipHeader)
 					{
-						//if (!r.ReadBool())
-						//	return null;
-
 						ushort objectHeader = r.ReadUInt16();
 						if ((objectHeader & 1) == 0)
 						    return null;
@@ -179,10 +181,6 @@ namespace Tempest
 						Type actualType;
 						if (!c.TypeMap.TryGetType (objectHeader, out actualType))
 						    return null;
-						
-						//Type actualType = Type.GetType (r.ReadString());
-						//if (actualType == null || !t.IsAssignableFrom (actualType))
-						//    return null;
 
 						if (actualType != t)
 							return GetSerializer (actualType).deserializer (c, r, true);
@@ -228,8 +226,11 @@ namespace Tempest
 
 		private Action<ISerializationContext, IValueWriter, object, bool> GetSerializer()
 		{
-			var t = this.type;
+			return GetSerializerAction (this.type);
+		}
 
+		private Action<ISerializationContext, IValueWriter, object, bool> GetSerializerAction (Type t)
+		{
 			if (t.IsPrimitive)
 			{
 				if (t == typeof (bool))
@@ -269,6 +270,11 @@ namespace Tempest
 					if (v != null)
 						w.WriteString (Encoding.UTF8, (string)v);
 				};
+			}
+			else if (t.IsEnum)
+			{
+				Type btype = Enum.GetUnderlyingType (t);
+				return GetSerializerAction (btype);
 			}
 			else if (t.IsArray || t == typeof(Array))
 			{

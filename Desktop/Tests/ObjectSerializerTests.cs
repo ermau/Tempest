@@ -102,6 +102,28 @@ namespace Tempest.Tests
 			Serializing();
 		}
 
+		enum TestEnum
+			: byte
+		{
+			Low = 1,
+			High = 5
+		}
+
+		[Test]
+		public void Enum()
+		{
+			byte[] buffer = new byte[1024];
+			var writer = new BufferValueWriter (buffer);
+			writer.Write (context, TestEnum.High);
+			int len = writer.Length;
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+
+			Assert.AreEqual (TestEnum.High, reader.Read<TestEnum> (context));
+			Assert.AreEqual (len, reader.Position);
+		}
+
 		[Test]
 		public void MixedObjectArray()
 		{

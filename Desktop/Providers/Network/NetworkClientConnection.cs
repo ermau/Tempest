@@ -78,11 +78,8 @@ namespace Tempest.Providers.Network
 
 		public void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
-			#if TRACE
-			int c = Interlocked.Increment (ref nextCallId);
-			#endif
-
-			Trace.WriteLine ("Entering", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+			int c = GetNextCallId();
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
 
 			if (endpoint == null)
 				throw new ArgumentNullException ("endpoint");
@@ -94,7 +91,7 @@ namespace Tempest.Providers.Network
 				SocketAsyncEventArgs args;
 				bool connected;
 
-				Trace.WriteLine (String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
 
 				while (this.pendingAsync > 0)
 					Thread.Sleep (0);
@@ -113,17 +110,17 @@ namespace Tempest.Providers.Network
 					this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 					int p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
 					connected = !this.reliableSocket.ConnectAsync (args);
 				}
 
 				if (connected)
 				{
-					Trace.WriteLine ("Connected synchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Connected synchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
 					ConnectCompleted (this.reliableSocket, args);
 				}
 				else
-					Trace.WriteLine ("Connecting asynchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
 			});
 		}
 		
@@ -147,18 +144,15 @@ namespace Tempest.Providers.Network
 
 		private void ConnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
-			#if TRACE
-			int c = Interlocked.Increment (ref nextCallId);
-			#endif
-
-			Trace.WriteLine ("Entering", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+			int c = GetNextCallId();
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 
 			int p;
 
 			if (e.SocketError != SocketError.Success)
 			{
 				p = Interlocked.Decrement (ref this.pendingAsync);
-				Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 				Disconnect (ConnectionResult.ConnectionFailed);
 				OnConnectionFailed (new ClientConnectionEventArgs (this));
 				return;
@@ -174,14 +168,14 @@ namespace Tempest.Providers.Network
 			{
 				if (!IsConnected)
 				{
-					Trace.WriteLine ("Already disconnected", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Already disconnected", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 					p = Interlocked.Decrement (ref this.pendingAsync);
-					Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 					return;
 				}
 
 				p = Interlocked.Increment (ref this.pendingAsync);
-				Trace.WriteLine (String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 				recevied = !this.reliableSocket.ReceiveAsync (e);
 			}
 
@@ -189,7 +183,7 @@ namespace Tempest.Providers.Network
 				ReliableReceiveCompleted (this.reliableSocket, e);
 
 			p = Interlocked.Decrement (ref this.pendingAsync);
-			Trace.WriteLine (String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 
 			var connectMsg = new ConnectMessage { Protocols = this.protocols.Values };
 			if (this.requiresHandshake)
@@ -202,7 +196,7 @@ namespace Tempest.Providers.Network
 
 			Send (connectMsg);
 
-			Trace.WriteLine ("Exiting", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 		}
 
 		protected override void OnTempestMessageReceived (MessageEventArgs e)

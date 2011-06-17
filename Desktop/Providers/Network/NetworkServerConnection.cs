@@ -61,7 +61,7 @@ namespace Tempest.Providers.Network
 			asyncArgs.Completed += ReliableReceiveCompleted;
 
 			int p = Interlocked.Increment (ref this.pendingAsync);
-			Trace.WriteLine (String.Format ("Increment pending: {0}", p), "new NetworkServerConnection:" + connectionId);
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), "new NetworkServerConnection:" + connectionId);
 
 			if (!this.reliableSocket.ReceiveAsync (asyncArgs))
 				ReliableReceiveCompleted (this, asyncArgs);
@@ -84,7 +84,7 @@ namespace Tempest.Providers.Network
 
 		private void PingCallback (object state)
 		{
-			Trace.WriteLine ("Entering", String.Format ("NetworkServerConnection:{1} PingCallback({0})", this.pingsOut, connectionId));
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("NetworkServerConnection:{1} PingCallback({0})", this.pingsOut, connectionId));
 
 			if (this.pingsOut >= 2)
 			{

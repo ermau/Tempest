@@ -39,5 +39,27 @@ namespace Tempest
 		public static void WriteLine (string message, string category)
 		{
 		}
+
+		[Conditional ("TRACE")]
+		public static void WriteLineIf (bool condition, string message)
+		{
+		}
+
+		[Conditional ("TRACE")]
+		public static void WriteLineIf (bool condition, string message, string category)
+		{
+		}
+	}
+
+	public class TraceSwitch
+	{
+		public TraceSwitch (string name, string description)
+		{
+		}
+
+		public bool TraceVerbose
+		{
+			get { return false; }
+		}
 	}
 }

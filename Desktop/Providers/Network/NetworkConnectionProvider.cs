@@ -228,35 +228,35 @@ namespace Tempest.Providers.Network
 
 		public void Start (MessageTypes types)
 		{
-			Trace.WriteLine ("Entering", "NetworkConnectionProvider Start");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Entering", "NetworkConnectionProvider Start");
 			if (this.running)
 			{
-				Trace.WriteLine ("Exiting (already running)", "NetworkConnectionProvider Start");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting (already running)", "NetworkConnectionProvider Start");
 				return;
 			}
 
 			this.running = true;
 			this.mtypes = types;
 
-			Trace.WriteLine ("Waiting for keys..", "NetworkConnectionProvider Start");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Waiting for keys..", "NetworkConnectionProvider Start");
 			this.keyWait.WaitOne();
-			Trace.WriteLine ("Keys ready", "NetworkConnectionProvider Start");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Keys ready", "NetworkConnectionProvider Start");
 			
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{
-				Trace.WriteLine ("Setting up reliable socket", "NetworkConnectionProvider Start");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Setting up reliable socket", "NetworkConnectionProvider Start");
 				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				this.reliableSocket.Bind (this.endPoint);
 				this.reliableSocket.Listen ((int)SocketOptionName.MaxConnections);
 				
-				Trace.WriteLine ("Reliable socket ready, accepting", "NetworkConnectionProvider Start");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Reliable socket ready, accepting", "NetworkConnectionProvider Start");
 				BeginAccepting (null);
 			}
 
 			if ((types & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
-			Trace.WriteLine ("Exiting", "NetworkConnectionProvider Start");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting", "NetworkConnectionProvider Start");
 		}
 
 		public void SendConnectionlessMessage (Message message, EndPoint endPoint)
@@ -271,10 +271,10 @@ namespace Tempest.Providers.Network
 
 		public void Stop()
 		{
-			Trace.WriteLine ("Entering", "NetworkConnectionProvider Stop");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Entering", "NetworkConnectionProvider Stop");
 			if (!this.running)
 			{
-				Trace.WriteLine ("Exiting (not running)", "NetworkConnectionProvider Stop");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting (not running)", "NetworkConnectionProvider Stop");
 				return;
 			}
 
@@ -282,14 +282,14 @@ namespace Tempest.Providers.Network
 
 			if (this.reliableSocket != null)
 			{
-				Trace.WriteLine ("Closing reliable socket", "NetworkConnectionProvider Stop");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Closing reliable socket", "NetworkConnectionProvider Stop");
 				this.reliableSocket.Close();
 				this.reliableSocket = null;
 			}
 
 			if (this.unreliableSocket != null)
 			{
-				Trace.WriteLine ("Closing unreliable socket", "NetworkConnectionProvider Stop");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Closing unreliable socket", "NetworkConnectionProvider Stop");
 				this.unreliableSocket.Close();
 				this.unreliableSocket = null;
 			}
@@ -304,11 +304,11 @@ namespace Tempest.Providers.Network
 				this.pendingConnections.Clear();
 			}
 			
-			Trace.WriteLine ("Disposing connections", "NetworkConnectionProvider Stop");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Disposing connections", "NetworkConnectionProvider Stop");
 			foreach (NetworkServerConnection c in connections)
 				c.Dispose();
 
-			Trace.WriteLine ("Exiting", "NetworkConnectionProvider Stop");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting", "NetworkConnectionProvider Stop");
 		}
 
 		public void Dispose()
@@ -360,7 +360,7 @@ namespace Tempest.Providers.Network
 			OnConnectionMade (made);
 			if (made.Rejected)
 			{
-				Trace.WriteLine ("Connection rejected", "NetworkConnectionProvider ConnectAsync");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Connection rejected", "NetworkConnectionProvider ConnectAsync");
 				connection.Dispose();
 			}
 		}
@@ -377,7 +377,7 @@ namespace Tempest.Providers.Network
 
 		private void Accept (object sender, SocketAsyncEventArgs e)
 		{
-			Trace.WriteLine ("Entering", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Entering", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
 
 			if (!this.running || e.SocketError != SocketError.Success)
 			{
@@ -398,7 +398,7 @@ namespace Tempest.Providers.Network
 					BeginAccepting (e);
 				}
 
-				Trace.WriteLine ("Exiting", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
 				return;
 			}
 
@@ -411,7 +411,7 @@ namespace Tempest.Providers.Network
 
 				if (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections)
 				{
-					Trace.WriteLine (String.Format ("At MaxConnections ({0}), disconnecting", MaxConnections), String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
+					Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, String.Format ("At MaxConnections ({0}), disconnecting", MaxConnections), String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
 					connection.Disconnect();
 					return;
 				}

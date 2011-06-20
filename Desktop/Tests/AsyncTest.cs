@@ -107,7 +107,7 @@ namespace Tempest.Tests
 		public AsyncTest (Action<EventArgs> passTest, int times)
 			: this (passTest, true)
 		{
-			if (times <= 0)
+			if (times < 0)
 				throw new ArgumentOutOfRangeException ("times");
 
 			this.timesToPass = times;

@@ -132,6 +132,16 @@ namespace Tempest.Providers.Network
 			private set;
 		}
 
+		public long BytesSent
+		{
+			get { return this.bytesSent; }
+		}
+
+		public long BytesReceived
+		{
+			get { return this.bytesReceived; }
+		}
+
 		public MessagingModes Modes
 		{
 			get { return MessagingModes.Async; }
@@ -300,6 +310,9 @@ namespace Tempest.Providers.Network
 		private int rmessageOffset = 0;
 		private int rmessageLoaded = 0;
 
+		private long bytesReceived;
+		private long bytesSent;
+
 		internal int NetworkId
 		{
 			get;
@@ -343,6 +356,8 @@ namespace Tempest.Providers.Network
 				this.reliableSocket = null;
 				this.rmessageOffset = 0;
 				this.rmessageLoaded = 0;
+				this.bytesReceived = 0;
+				this.bytesSent = 0;
 			}
 		}
 
@@ -703,6 +718,8 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
+				Interlocked.Add (ref this.bytesReceived, e.BytesTransferred);
+
 				p = Interlocked.Decrement (ref this.pendingAsync);
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
 
@@ -883,6 +900,8 @@ namespace Tempest.Providers.Network
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error)", String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
 				return;
 			}
+
+			Interlocked.Add (ref this.bytesSent, e.BytesTransferred);
 
 			if (!(message is TempestMessage))
 				OnMessageSent (new MessageEventArgs (this, message));

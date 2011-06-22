@@ -89,6 +89,21 @@ namespace Tempest
 				elements[i].Serialize (context, writer);
 		}
 
+		public static void WriteEnumerable<T> (this IValueWriter writer, ISerializationContext context, ISerializer<T> serializer, IEnumerable<T> enumerable)
+		{
+			if (writer == null)
+				throw new ArgumentNullException ("writer");
+			if (serializer == null)
+				throw new ArgumentNullException ("serializer");
+			if (enumerable == null)
+				throw new ArgumentNullException ("enumerable");
+
+			T[] elements = enumerable.ToArray();
+			writer.WriteInt32 (elements.Length);
+			for (int i = 0; i < elements.Length; ++i)
+				serializer.Serialize (context, writer, elements[i]);
+		}
+
 		public static IEnumerable<T> ReadEnumerable<T> (this IValueReader reader, ISerializationContext context, Func<T> elementFactory)
 			where T : ISerializable
 		{
@@ -101,6 +116,23 @@ namespace Tempest
 			T[] elements = new T[length];
 			for (int i = 0; i < elements.Length; ++i)
 				(elements[i] = elementFactory()).Deserialize (context, reader);
+
+			return elements;
+		}
+
+		public static IEnumerable<T> ReadEnumerable<T> (this IValueReader reader, ISerializationContext context, ISerializer<T> serializer)
+		{
+			if (reader == null)
+				throw new ArgumentNullException ("reader");
+			if (context == null)
+				throw new ArgumentNullException ("context");
+			if (serializer == null)
+				throw new ArgumentNullException ("serializer");
+
+			int length = reader.ReadInt32();
+			T[] elements = new T[length];
+			for (int i = 0; i < elements.Length; ++i)
+				elements[i] = serializer.Deserialize (context, reader);
 
 			return elements;
 		}

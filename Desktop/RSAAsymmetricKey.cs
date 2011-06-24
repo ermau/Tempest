@@ -208,6 +208,8 @@ namespace Tempest
 				this.publicKey = reader.ReadBytes();
 				this.exponentOffset = reader.ReadInt32();
 			}
+
+			SetupSignature();
 		}
 
 		public void Deserialize (IValueReader reader, IPublicKeyCrypto crypto)

@@ -34,6 +34,8 @@ namespace Tempest.Tests
 			AssertArrayMatches (p.Modulus, key.Modulus);
 			AssertArrayMatches (p.P, key.P);
 			AssertArrayMatches (p.Q, key.Q);
+
+			Assert.IsNotNull (key.PublicSignature);
 		}
 
 		[Test]
@@ -62,6 +64,8 @@ namespace Tempest.Tests
 			AssertArrayMatches (p.Modulus, key.Modulus);
 			AssertArrayMatches (p.P, key.P);
 			AssertArrayMatches (p.Q, key.Q);
+
+			Assert.IsNotNull (key.PublicSignature);
 		}
 
 		private void AssertArrayMatches<T> (T[] expected, T[] actual)

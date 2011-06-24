@@ -687,14 +687,15 @@ namespace Tempest.Providers.Network
 				remainingData -= length;
 			}
 
+			// BUG: This runs every time a ReceiveAsync completes without having received the whole message
 			if (remainingData > 0 || messageOffset + BaseHeaderLength >= buffer.Length)
 			{
-				byte[] newBuffer = new byte[(length > buffer.Length) ? length : buffer.Length];
-				reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);
-				Buffer.BlockCopy (buffer, messageOffset, newBuffer, 0, remainingData);
-				buffer = newBuffer;
-				bufferOffset = remainingData;
-				messageOffset = 0;
+			    byte[] newBuffer = new byte[(length > buffer.Length) ? length : buffer.Length];
+			    reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);
+			    Buffer.BlockCopy (buffer, messageOffset, newBuffer, 0, remainingData);
+			    buffer = newBuffer;
+			    bufferOffset = remainingData;
+			    messageOffset = 0;
 			}
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));

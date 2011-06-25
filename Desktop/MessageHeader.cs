@@ -59,6 +59,9 @@ namespace Tempest
 			private set;
 		}
 
+		/// <summary>
+		/// Gets the total length of the message (including <see cref="HeaderLength"/>).
+		/// </summary>
 		public int MessageLength
 		{
 			get;

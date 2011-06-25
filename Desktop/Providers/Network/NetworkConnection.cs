@@ -575,7 +575,7 @@ namespace Tempest.Providers.Network
 					headerLength += length;
 					if (remaining < headerLength)
 					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message not buffered)",
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)",
 											String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset, remaining, connectionId));
 						return false;
 					}
@@ -604,10 +604,11 @@ namespace Tempest.Providers.Network
 
 			this.lastReceived = DateTime.Now;
 
+			MessageHeader header = null;
+
 			int length = 0;
 			while (remainingData >= BaseHeaderLength)
 			{
-				MessageHeader header;
 				if (!TryGetHeader (buffer, messageOffset, remainingData, out header))
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Failed to get header",
@@ -687,15 +688,27 @@ namespace Tempest.Providers.Network
 				remainingData -= length;
 			}
 
-			// BUG: This runs every time a ReceiveAsync completes without having received the whole message
 			if (remainingData > 0 || messageOffset + BaseHeaderLength >= buffer.Length)
 			{
-			    byte[] newBuffer = new byte[(length > buffer.Length) ? length : buffer.Length];
-			    reader = new BufferValueReader (newBuffer, 0, newBuffer.Length);
-			    Buffer.BlockCopy (buffer, messageOffset, newBuffer, 0, remainingData);
-			    buffer = newBuffer;
-			    bufferOffset = remainingData;
-			    messageOffset = 0;
+				int knownRoomNeeded = (remainingData > BaseHeaderLength) ? remainingData : BaseHeaderLength;
+				if (header != null)
+					knownRoomNeeded = header.MessageLength;
+
+				if (messageOffset + knownRoomNeeded < buffer.Length)
+					return;
+
+				byte[] destinationBuffer = buffer;
+				if (knownRoomNeeded > buffer.Length)
+				{
+					destinationBuffer = new byte[header.MessageLength];
+					reader = new BufferValueReader (destinationBuffer);
+				}
+
+				Buffer.BlockCopy (buffer, messageOffset, destinationBuffer, 0, remainingData);
+				messageOffset = 0;
+				reader.Position = 0;
+				bufferOffset = remainingData;
+				buffer = destinationBuffer;
 			}
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));

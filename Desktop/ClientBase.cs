@@ -237,8 +237,8 @@ namespace Tempest
 
 		    while (this.running)
 		    {
-		        IEnumerable<MessageEventArgs> messages = this.connection.Tick();
-		        while (this.running && messages.Any())
+		        List<MessageEventArgs> messages = this.connection.Tick().ToList();
+		        if (this.running && messages.Any())
 		        {
 					#if NET_4
 					wait.Reset();

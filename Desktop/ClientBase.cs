@@ -57,7 +57,6 @@ namespace Tempest
 			else
 			{
 				this.mqueue = new Queue<MessageEventArgs>();
-				this.mwait = new AutoResetEvent (false);
 				this.connection.MessageReceived += ConnectionOnMessageReceived;
 				this.mode = MessagingModes.Async;
 			}
@@ -100,6 +99,14 @@ namespace Tempest
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
 
+			if (this.mode == MessagingModes.Async)
+			{
+				var newWait = new AutoResetEvent (false);
+				AutoResetEvent oldWait = Interlocked.Exchange (ref this.mwait, newWait);
+				if (oldWait != null)
+					oldWait.Set();
+			}
+
 			this.connection.ConnectAsync (endPoint, this.messageTypes);
 		}
 
@@ -116,6 +123,14 @@ namespace Tempest
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
+
+			if (this.mode == MessagingModes.Async)
+			{
+				var newWait = new AutoResetEvent (false);
+				AutoResetEvent oldWait = Interlocked.Exchange (ref this.mwait, newWait);
+				if (oldWait != null)
+					oldWait.Set();
+			}
 
 			return this.connection.Connect (endPoint, this.messageTypes, timeout);
 		}
@@ -186,7 +201,7 @@ namespace Tempest
 		private readonly bool polling;
 
 		private readonly Queue<MessageEventArgs> mqueue;
-		private readonly AutoResetEvent mwait;
+		private AutoResetEvent mwait;
 		private Thread messageRunner;
 		protected volatile bool running;
 		private readonly MessageTypes messageTypes;
@@ -206,15 +221,15 @@ namespace Tempest
 
 			if (this.mode == MessagingModes.Async)
 			{
-				this.mwait.Set();
-					
+				AutoResetEvent wait = Interlocked.Exchange (ref this.mwait, null);
+				if (wait != null)
+					wait.Set();
+
 				lock (this.mqueue)
 					this.mqueue.Clear();
 			}
 
-			Thread runner = this.messageRunner;
-			this.messageRunner = null;
-
+			Thread runner = Interlocked.Exchange (ref this.messageRunner, null);
 			if (runner != null && Thread.CurrentThread != runner)
 				runner.Join();
 
@@ -226,7 +241,9 @@ namespace Tempest
 			lock (this.mqueue)
 				this.mqueue.Enqueue (e);
 
-			this.mwait.Set();
+			AutoResetEvent wait = this.mwait;
+			if (wait != null)
+				wait.Set();
 		}
 
 		private void InlineMessageRunner()
@@ -307,7 +324,11 @@ namespace Tempest
 				}
 
 				if (q.Count == 0)
-					this.mwait.WaitOne();
+				{
+					AutoResetEvent wait = this.mwait;
+					if (wait != null)
+						wait.WaitOne();
+				}
 			}
 		}
 
@@ -324,10 +345,12 @@ namespace Tempest
 
 			if (!this.polling)
 			{
-				this.messageRunner = (this.mode == MessagingModes.Inline) ? new Thread (InlineMessageRunner) : new Thread (AsyncMessageRunner);
-				this.messageRunner.Name = "Client Message Runner";
-				this.messageRunner.IsBackground = true;
-				this.messageRunner.Start();
+				Thread runner = (this.mode == MessagingModes.Inline) ? new Thread (InlineMessageRunner) : new Thread (AsyncMessageRunner);
+				runner.Name = "Client Message Runner";
+				runner.IsBackground = true;
+				runner.Start();
+
+				this.messageRunner = runner;
 			}
 
 			OnConnected (EventArgs.Empty);

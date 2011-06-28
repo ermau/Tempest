@@ -467,7 +467,7 @@ namespace Tempest.Tests
 		{
 			StringBuilder contentBuilder = new StringBuilder();
 			Random r = new Random (42);
-			for (int i = 0; i < 20480; ++i)
+			for (int i = 0; i < 1000000; ++i)
 				contentBuilder.Append ((char)r.Next (0, 128));
 
 			string content = contentBuilder.ToString();
@@ -966,6 +966,57 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
+		public void AuthenticatedLongMessage()
+		{
+			Random r = new Random();
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < 1000000; ++i)
+				builder.Append ((char)r.Next (1, 20));
+
+			string message = builder.ToString();
+			var cmessage = new AuthenticatedMessage
+			{
+				Message = message,
+				Number = 42
+			};
+
+			var c = GetNewClientConnection();
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+
+				var msg = (me.Message as AuthenticatedMessage);
+				Assert.IsNotNull (msg);
+				Assert.IsTrue (msg.Authenticated);
+				Assert.AreEqual (cmessage.Message, msg.Message);
+				Assert.AreEqual (cmessage.Number, msg.Number);
+			});
+
+			IConnection sc;
+			ManualResetEvent wait = new ManualResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				sc.MessageReceived += test.PassHandler;
+				sc.Disconnected += test.FailHandler;
+				wait.Set();
+			};
+
+			this.provider.Start (MessageTypes);
+
+			c.Disconnected += test.FailHandler;
+			c.MessageSent += test.PassHandler;
+			c.Connected += (sender, e) => c.Send (cmessage);
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (10000))
+				Assert.Fail ("Failed to connect");
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
 		public void AuthenticatedMessage()
 		{
 			var cmessage = new AuthenticatedMessage
@@ -1049,6 +1100,59 @@ namespace Tempest.Tests
 
 		[Test, Repeat (3)]
 		public void EncryptedAndAuthenticatedMessage()
+		{
+
+			Random r = new Random();
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < 1000000; ++i)
+				builder.Append ((char)r.Next (1, 20));
+
+			string message = builder.ToString();
+			var cmessage = new AuthenticatedAndEncryptedMessage
+			{
+				Message = message,
+				Number = 42
+			};
+
+			var c = GetNewClientConnection();
+			
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+
+				var msg = (me.Message as AuthenticatedAndEncryptedMessage);
+				Assert.IsNotNull (msg);
+				Assert.IsTrue (msg.Encrypted);
+				Assert.IsTrue (msg.Authenticated);
+				Assert.AreEqual (cmessage.Message, msg.Message);
+				Assert.AreEqual (cmessage.Number, msg.Number);
+			});
+
+			IConnection sc;
+			ManualResetEvent wait = new ManualResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				sc.MessageReceived += test.PassHandler;
+				sc.Disconnected += test.FailHandler;
+				wait.Set();
+			};
+
+			this.provider.Start (MessageTypes);
+
+			c.Disconnected += test.FailHandler;
+			c.Connected += (sender, e) => c.Send (cmessage);
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (10000))
+				Assert.Fail ("Failed to connect");
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void EncryptedAndAuthenticatedLongMessage()
 		{
 			var cmessage = new AuthenticatedAndEncryptedMessage()
 			{

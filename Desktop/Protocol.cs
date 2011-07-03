@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Tempest
 {
@@ -88,7 +89,7 @@ namespace Tempest
 			if (compatibleVersions == null)
 				throw new ArgumentNullException ("compatibleVersions");
 
-			this.compatible = new HashSet<int> (compatibleVersions);
+			this.compatible = compatibleVersions.ToDictionary (v => v, v => true);
 		}
 
 		internal Protocol (ISerializationContext context, IValueReader reader)
@@ -116,7 +117,7 @@ namespace Tempest
 			if (this.compatible == null)
 				return false;
 
-			return this.compatible.Contains (versionToCheck);
+			return this.compatible.ContainsKey (versionToCheck);
 		}
 
 		/// <summary>
@@ -192,6 +193,8 @@ namespace Tempest
 
 		private int version;
 		internal byte id;
-		private readonly HashSet<int> compatible;
+
+		/// <remarks>WP7 doesn't have HashSet.</remarks>
+		private readonly Dictionary<int, bool> compatible;
 	}
 }

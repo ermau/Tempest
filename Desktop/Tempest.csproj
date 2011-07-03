@@ -94,6 +94,7 @@
     <Compile Include="StreamValueReader.cs" />
     <Compile Include="StreamValueWriter.cs" />
     <Compile Include="InternalProtocol\TempestMessage.cs" />
+    <Compile Include="Timer.cs" />
     <Compile Include="TypeExtensions.cs" />
     <Compile Include="TypeMap.cs" />
   </ItemGroup>

@@ -25,11 +25,12 @@
 // THE SOFTWARE.
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 
 #if SILVERLIGHT
 using RSA;
 using RSA.SignatureProviders;
+#else
+using System.Security.Cryptography;
 #endif
 
 namespace Tempest

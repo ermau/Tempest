@@ -27,10 +27,11 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Cryptography;
 
 #if SILVERLIGHT
 using RSA;
+#else
+using System.Security.Cryptography;
 #endif
 
 namespace Tempest
@@ -298,7 +299,7 @@ namespace Tempest
 
 		private void SetupSignature()
 		{
-			using (SHA256Managed sha = new SHA256Managed())
+			using (System.Security.Cryptography.SHA256Managed sha = new System.Security.Cryptography.SHA256Managed())
 				PublicSignature = sha.ComputeHash (this.publicKey);
 		}
 

@@ -70,7 +70,7 @@ namespace Tempest.Providers.Network
 
 			provider.PingFrequencyChanged += ProviderOnPingFrequencyChanged;
 
-			this.pingTimer = new Timer (PingCallback, null, provider.PingFrequency, provider.PingFrequency);
+			this.pingTimer = new Timer (provider.PingFrequency, PingCallback);
 		}
 
 		private static int nextNetworkId;
@@ -82,7 +82,7 @@ namespace Tempest.Providers.Network
 		private readonly object pingSync = new object();
 		private Timer pingTimer;
 
-		private void PingCallback (object state)
+		private void PingCallback()
 		{
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("NetworkServerConnection:{1} PingCallback({0})", this.pingsOut, connectionId));
 
@@ -259,7 +259,7 @@ namespace Tempest.Providers.Network
 			lock (this.pingSync)
 			{
 				if (this.pingTimer != null)
-					this.pingTimer.Change (0, this.provider.PingFrequency);
+					this.pingTimer.Interval = this.provider.PingFrequency;
 			}
 		}
 

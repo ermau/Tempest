@@ -125,7 +125,7 @@ namespace Tempest.Providers.Network
 		}
 		
 		private int pingFrequency;
-		private Timer activityTimer;
+		private Tempest.Timer activityTimer;
 
 		private IPublicKeyCrypto serverAuthentication;
 		private IAsymmetricKey serverAuthenticationKey;
@@ -211,10 +211,10 @@ namespace Tempest.Providers.Network
 							this.activityTimer.Dispose();
 
 						if (ping.Interval != 0)
-							this.activityTimer = new Timer (ActivityCallback, null, ping.Interval, ping.Interval);
+							this.activityTimer = new Tempest.Timer (ping.Interval, ActivityCallback);
 					}
 					else if (ping.Interval != this.pingFrequency)
-						this.activityTimer.Change (ping.Interval, ping.Interval);
+						this.activityTimer.Interval = ping.Interval;
 					
 					this.pingFrequency = ((PingMessage)e.Message).Interval;
 					break;
@@ -293,7 +293,7 @@ namespace Tempest.Providers.Network
 			base.OnDisconnected(e);
 		}
 
-		private void ActivityCallback (object state)
+		private void ActivityCallback()
 		{
 			if (!this.disconnecting && DateTime.Now.Subtract (this.lastReceived).TotalMilliseconds > this.pingFrequency * 2)
 				Disconnect();

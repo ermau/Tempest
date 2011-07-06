@@ -31,6 +31,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Tempest.InternalProtocol;
 using System.Threading;
 
@@ -166,88 +167,27 @@ namespace Tempest.Providers.Network
 
 		public virtual void Send (Message message)
 		{
-			if (message == null)
-				throw new ArgumentNullException ("message");
-			if (!IsConnected)
-				return;
+			SendMessage (message);
+		}
 
-			SocketAsyncEventArgs eargs = null;
-			#if NET_4
-			if (!writerAsyncArgs.TryPop (out eargs))
-			{
-				while (eargs == null)
-				{
-					int count = bufferCount;
-					if (count == BufferLimit)
-					{
-						SpinWait wait = new SpinWait();
-						while (!writerAsyncArgs.TryPop (out eargs))
-							wait.SpinOnce();
+		public Task<TResponse> Send<TResponse> (Message message)
+			where TResponse : Message
+		{
+			var tcs = new TaskCompletionSource<Message>();
+			SendMessage (message, false, tcs);
 
-						eargs.AcceptSocket = null;
-					}
-					else if (count == Interlocked.CompareExchange (ref bufferCount, count + 1, count))
-					{
-						eargs = new SocketAsyncEventArgs();
-						eargs.SetBuffer (new byte[1024], 0, 1024);
-					}
-				}
-			}
-			else
-				eargs.AcceptSocket = null;
-			#else
-			while (eargs == null)
-			{
-				lock (writerAsyncArgs)
-				{
-					if (writerAsyncArgs.Count != 0)
-					{
-						eargs = writerAsyncArgs.Pop();
-						#if !SILVERLIGHT
-						eargs.AcceptSocket = null;
-						#endif
-					}
-					else
-					{
-						if (bufferCount != BufferLimit)
-						{
-							bufferCount++;
-							eargs = new SocketAsyncEventArgs();
-							eargs.SetBuffer (new byte[1024], 0, 1024);
-						}
-					}
-				}
-			}
-			#endif
+			return tcs.Task.ContinueWith (t => (TResponse)t.Result);
+		}
 
-			int length;
-			byte[] buffer = GetBytes (message, out length, eargs.Buffer);
+		public void SendResponse (Message originalMessage, Message response)
+		{
+			if (originalMessage == null)
+				throw new ArgumentNullException ("originalMessage");
+			if (response == null)
+				throw new ArgumentNullException ("response");
 
-			eargs.SetBuffer (buffer, 0, length);
-			eargs.UserToken = message;
-
-			bool sent;
-			lock (this.stateSync)
-			{
-				if (!IsConnected)
-				{
-					#if !NET_4
-					lock (writerAsyncArgs)
-					#endif
-					writerAsyncArgs.Push (eargs);
-
-					return;
-				}
-				
-				eargs.Completed += ReliableSendCompleted;
-				int p = Interlocked.Increment (ref this.pendingAsync);
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), String.Format ("{1}:{2} Send({0})", message, this.typeName, this.connectionId));
-
-				sent = !this.reliableSocket.SendAsync (eargs);
-			}
-
-			if (sent)
-				ReliableSendCompleted (this.reliableSocket, eargs);
+			response.MessageId = originalMessage.MessageId;
+			SendMessage (response, true);
 		}
 
 		public void DisconnectAsync()
@@ -278,7 +218,9 @@ namespace Tempest.Providers.Network
 		protected bool authReady;
 		protected bool disposed;
 
-		private const int BaseHeaderLength = 7;
+		private const int ResponseFlag = 16777216;
+		private const int MaxMessageId = 8388608;
+		private const int BaseHeaderLength = 11;
 		private int maxMessageLength = 1048576;
 
 		protected int connectionId;
@@ -303,6 +245,10 @@ namespace Tempest.Providers.Network
 		protected bool formallyConnected = false;
 		protected ConnectionResult disconnectingReason;
 		protected string disconnectingCustomReason;
+
+		protected readonly object messageIdSync = new object();
+		protected int nextMessageId;
+		protected int lastMessageId;
 
 		protected Socket reliableSocket;
 
@@ -397,14 +343,16 @@ namespace Tempest.Providers.Network
 				encryptor = this.aes.CreateEncryptor();
 			}
 
-			int r = ((writer.Length - BaseHeaderLength) % encryptor.OutputBlockSize);
+			const int workingHeaderLength = BaseHeaderLength;// - sizeof (int); // Need to encrypt message id
+
+			int r = ((writer.Length - workingHeaderLength) % encryptor.OutputBlockSize);
 			if (r != 0)
 				writer.Pad (encryptor.OutputBlockSize - r);
 
-			byte[] payload = encryptor.TransformFinalBlock (writer.Buffer, BaseHeaderLength, writer.Length - BaseHeaderLength);
+			byte[] payload = encryptor.TransformFinalBlock (writer.Buffer, workingHeaderLength, writer.Length - workingHeaderLength);
 
-			writer.Length = BaseHeaderLength;
-			writer.InsertBytes (BaseHeaderLength, iv, 0, iv.Length);
+			writer.Length = workingHeaderLength;
+			writer.InsertBytes (workingHeaderLength, iv, 0, iv.Length);
 			writer.WriteBytes (payload);
 
 			headerLength += iv.Length;
@@ -451,12 +399,17 @@ namespace Tempest.Providers.Network
 			return true;
 		}
 
-		protected byte[] GetBytes (Message message, out int length, byte[] buffer)
+		protected byte[] GetBytes (Message message, out int length, byte[] buffer, bool isResponse)
 		{
+			int messageId = message.MessageId;
+			if (isResponse)
+				messageId |= ResponseFlag;
+
 			BufferValueWriter writer = new BufferValueWriter (buffer);
 			writer.WriteByte (message.Protocol.id);
 			writer.WriteUInt16 (message.MessageType);
 			writer.Length += sizeof (int); // length  placeholder
+			writer.WriteInt32 (messageId);
 
 			var context = new SerializationContext (this, this.protocols[message.Protocol.id], new TypeMap());
 
@@ -476,6 +429,7 @@ namespace Tempest.Providers.Network
 			    writer.WriteByte (message.Protocol.id);
 			    writer.WriteUInt16 (message.MessageType);
 			    writer.Length += sizeof (int);
+				writer.WriteInt32 (messageId);
 			    writer.WriteUInt16 ((ushort)types.Count);
 			    for (int i = 0; i < types.Count; ++i)
 			        writer.WriteString (types[i].Key.GetSimpleName());
@@ -487,8 +441,7 @@ namespace Tempest.Providers.Network
 
 			if (message.Encrypted)
 				EncryptMessage (writer, ref headerLength);
-
-			if (message.Authenticated)
+			else if (message.Authenticated)
 				SignMessage (this.signingHashAlgorithm, writer, headerLength);
 
 			byte[] rawMessage = writer.Buffer;
@@ -500,6 +453,111 @@ namespace Tempest.Providers.Network
 			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, BaseHeaderLength - sizeof(int), sizeof(int));
 
 			return rawMessage;
+		}
+
+		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();
+		private void SendMessage (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null)
+		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+			if (!this.IsConnected)
+				return;
+
+			SocketAsyncEventArgs eargs = null;
+			#if NET_4
+			if (!writerAsyncArgs.TryPop (out eargs))
+			{
+				while (eargs == null)
+				{
+					int count = bufferCount;
+					if (count == BufferLimit)
+					{
+						SpinWait wait = new SpinWait();
+						while (!writerAsyncArgs.TryPop (out eargs))
+							wait.SpinOnce();
+
+						eargs.AcceptSocket = null;
+					}
+					else if (count == Interlocked.CompareExchange (ref bufferCount, count + 1, count))
+					{
+						eargs = new SocketAsyncEventArgs();
+						eargs.SetBuffer (new byte[1024], 0, 1024);
+					}
+				}
+			}
+			else
+				eargs.AcceptSocket = null;
+			#else
+			while (eargs == null)
+			{
+				lock (writerAsyncArgs)
+				{
+					if (writerAsyncArgs.Count != 0)
+					{
+						eargs = writerAsyncArgs.Pop();
+						#if !SILVERLIGHT
+						eargs.AcceptSocket = null;
+						#endif
+					}
+					else
+					{
+						if (bufferCount != BufferLimit)
+						{
+							bufferCount++;
+							eargs = new SocketAsyncEventArgs();
+							eargs.SetBuffer (new byte[1024], 0, 1024);
+						}
+					}
+				}
+			}
+			#endif
+
+			if (!isResponse)
+			{
+				lock (this.messageIdSync)
+				{
+					if (this.lastMessageId == MaxMessageId)
+						this.lastMessageId = 0;
+					else
+						message.MessageId = this.lastMessageId++;
+				}
+			}
+			
+			if (future != null)
+			{
+				lock (this.messageResponses)
+					this.messageResponses.Add (message.MessageId, future);
+			}
+
+			int length;
+			byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
+
+			eargs.SetBuffer (buffer, 0, length);
+			eargs.UserToken = message;
+
+			bool sent;
+			lock (this.stateSync)
+			{
+				if (!this.IsConnected)
+				{
+					#if !NET_4
+					lock (writerAsyncArgs)
+					#endif
+					writerAsyncArgs.Push (eargs);
+
+					return;
+				}
+
+				eargs.Completed += ReliableSendCompleted;
+				int p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p),
+				                   String.Format ("{1}:{2} Send({0})", message, this.typeName, this.connectionId));
+
+				sent = !this.reliableSocket.SendAsync (eargs);
+			}
+
+			if (sent)
+				ReliableSendCompleted (this.reliableSocket, eargs);
 		}
 
 		/// <returns><c>true</c> if there was sufficient data to retrieve the message's header.</returns>
@@ -516,14 +574,14 @@ namespace Tempest.Providers.Network
 			header = null;
 			BufferValueReader reader = new BufferValueReader (buffer, offset + 1, remaining);
 
-			ushort type;
-			int mlen;
 			try
 			{
-				type = reader.ReadUInt16();
-				mlen = reader.ReadInt32();
+				ushort type = reader.ReadUInt16();
+				int mlen = reader.ReadInt32();
 				bool hasTypeHeader = (mlen & 1) == 1;
 				mlen >>= 1;
+
+				int identV = reader.ReadInt32();
 				
 				Protocol p;
 				if (!this.protocols.TryGetValue (buffer[offset], out p))
@@ -588,7 +646,15 @@ namespace Tempest.Providers.Network
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting",
 									String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset, remaining, connectionId));
 
-				header = new MessageHeader (p, msg, mlen, headerLength, context, iv);
+				header = new MessageHeader (p, msg, context)
+				{
+					MessageLength = mlen,
+					HeaderLength = headerLength,
+					IV = iv,
+					MessageId = identV ^ ResponseFlag,
+					IsResponse = (identV & ResponseFlag) == ResponseFlag
+				};
+
 				return true;
 			}
 			catch (Exception ex)
@@ -634,6 +700,26 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
+				if (!header.IsResponse)
+				{
+					if (header.MessageId < this.lastMessageId)
+					{
+						Disconnect (true);
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (replay attack / reliable out of order)",
+											String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+						return;
+					}
+				
+					this.lastMessageId = header.MessageId;
+				}
+				else if (header.MessageId > this.nextMessageId)
+				{
+					Disconnect (true);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (replay attack / reliable out of order)",
+										String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					return;
+				}
+
 				if (remainingData < length)
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Message not fully received",
@@ -658,7 +744,7 @@ namespace Tempest.Providers.Network
 					r.Position = moffset;
 					header.Message.ReadPayload (header.SerializationContext, r);
 
-					if (header.Message.Authenticated && this.requiresHandshake)
+					if (!header.Message.Encrypted && header.Message.Authenticated && this.requiresHandshake)
 					{
 						byte[] signature = reader.ReadBytes(); // Need the original reader here, sig is after payload
 						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - signature.Length - sizeof(int)))
@@ -680,7 +766,19 @@ namespace Tempest.Providers.Network
 
 				var tmessage = (header.Message as TempestMessage);
 				if (tmessage == null)
+				{
 					OnMessageReceived (new MessageEventArgs (this, header.Message));
+					if (header.IsResponse)
+					{
+						bool found;
+						TaskCompletionSource<Message> tcs;
+						lock (this.messageResponses)
+							found = this.messageResponses.TryGetValue (header.MessageId, out tcs);
+
+						if (found)
+							tcs.SetResult (header.Message);
+					}
+				}
 				else
 					OnTempestMessageReceived (new MessageEventArgs (this, header.Message));
 

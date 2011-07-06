@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Tempest.Providers.Network
 {
@@ -132,6 +133,16 @@ namespace Tempest.Providers.Network
 			}
 
 			this.connection.Send (message);
+		}
+
+		public Task<TResponse> Send<TResponse> (Message message) where TResponse : Message
+		{
+			throw new NotImplementedException();
+		}
+
+		public void SendResponse (Message originalMessage, Message response)
+		{
+			throw new NotImplementedException();
 		}
 
 		public IEnumerable<MessageEventArgs> Tick()

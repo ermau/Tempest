@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using Tempest.InternalProtocol;
 
 namespace Tempest.Tests
@@ -325,6 +326,16 @@ namespace Tempest.Tests
 		public virtual void Send (Message message)
 		{
 			OnMessageSent (new MessageEventArgs (this, message));
+		}
+
+		public Task<TResponse> Send<TResponse>(Message message) where TResponse : Message
+		{
+			throw new NotImplementedException();
+		}
+
+		public void SendResponse(Message originalMessage, Message response)
+		{
+			throw new NotImplementedException();
 		}
 
 		public IEnumerable<MessageEventArgs> Tick()

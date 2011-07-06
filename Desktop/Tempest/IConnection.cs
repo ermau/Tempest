@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Tempest
 {
@@ -104,6 +105,11 @@ namespace Tempest
 		/// <param name="message">The message to send.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
 		void Send (Message message);
+
+		Task<TResponse> Send<TResponse> (Message message) where TResponse : Message;
+		//Task<TResponse> Send<TResponse> (Message message, int timeout) where TResponse : Message;
+
+		void SendResponse (Message originalMessage, Message response);
 
 		/// <summary>
 		/// Sends and receives all pending messages.

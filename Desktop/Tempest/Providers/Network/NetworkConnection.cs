@@ -305,6 +305,8 @@ namespace Tempest.Providers.Network
 				this.rmessageLoaded = 0;
 				this.bytesReceived = 0;
 				this.bytesSent = 0;
+				this.lastMessageId = 0;
+				this.nextMessageId = 0;
 			}
 		}
 
@@ -409,6 +411,8 @@ namespace Tempest.Providers.Network
 			writer.WriteByte (message.Protocol.id);
 			writer.WriteUInt16 (message.MessageType);
 			writer.Length += sizeof (int); // length  placeholder
+			const int lengthOffset = 1 + sizeof (ushort);
+
 			writer.WriteInt32 (messageId);
 
 			var context = new SerializationContext (this, this.protocols[message.Protocol.id], new TypeMap());
@@ -450,7 +454,7 @@ namespace Tempest.Providers.Network
 			if (types.Count > 0)
 			    len |= 1; // serialization header
 
-			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, BaseHeaderLength - sizeof(int), sizeof(int));
+			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, lengthOffset, sizeof(int));
 
 			return rawMessage;
 		}
@@ -516,10 +520,10 @@ namespace Tempest.Providers.Network
 			{
 				lock (this.messageIdSync)
 				{
-					if (this.lastMessageId == MaxMessageId)
-						this.lastMessageId = 0;
+					if (this.nextMessageId == MaxMessageId)
+						this.nextMessageId = 0;
 					else
-						message.MessageId = this.lastMessageId++;
+						message.MessageId = this.nextMessageId++;
 				}
 			}
 			
@@ -651,14 +655,18 @@ namespace Tempest.Providers.Network
 					MessageLength = mlen,
 					HeaderLength = headerLength,
 					IV = iv,
-					MessageId = identV ^ ResponseFlag,
+					MessageId = identV & ~ResponseFlag,
 					IsResponse = (identV & ResponseFlag) == ResponseFlag
 				};
+				
+				msg.MessageId = header.MessageId;
 
 				return true;
 			}
 			catch (Exception ex)
 			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error): " + ex,
+									String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset, remaining, connectionId));
 				header = null;
 				return true;
 			}
@@ -709,8 +717,8 @@ namespace Tempest.Providers.Network
 											String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
 						return;
 					}
-				
-					this.lastMessageId = header.MessageId;
+
+					this.lastMessageId = (header.MessageId != MaxMessageId) ? header.MessageId : 0; // BUG: Skipped messages will break this
 				}
 				else if (header.MessageId > this.nextMessageId)
 				{

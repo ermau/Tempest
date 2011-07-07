@@ -1196,5 +1196,45 @@ namespace Tempest.Tests
 
 			test.Assert (10000);
 		}
+
+		[Test, Repeat (3)]
+		public void SendAndRespond()
+		{
+			var cmessage = new MockMessage();
+			cmessage.Content = "Blah";
+
+			var c = GetNewClientConnection();
+			
+			var test = new AsyncTest<MessageEventArgs<MockMessage>>  (e =>
+			{
+				Assert.IsNotNull (e.Message);
+				Assert.AreEqual ("Response", e.Message.Content);
+			});
+
+			IConnection sc = null;
+			ManualResetEvent wait = new ManualResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				sc.MessageReceived += (ms, me) =>
+				{
+					var msg = (me.Message as MockMessage);
+					me.Connection.SendResponse (msg, new MockMessage { Content = "Response" });
+				};
+				sc.Disconnected += test.FailHandler;
+				wait.Set();
+			};
+
+			this.provider.Start (MessageTypes);
+
+			c.Disconnected += test.FailHandler;
+			c.Connected += (sender, e) => c.Send<MockMessage> (cmessage).ContinueWith (t => test.PassHandler (sc, new MessageEventArgs<MockMessage> (sc, t.Result)));
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (10000))
+				Assert.Fail ("Failed to connect");
+
+			test.Assert (10000);
+		}
 	}
 }

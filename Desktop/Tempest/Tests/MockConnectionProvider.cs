@@ -196,6 +196,13 @@ namespace Tempest.Tests
 			base.Send (message);
 		}
 
+		public override void SendResponse (Message originalMessage, Message response)
+		{
+			response.MessageId = originalMessage.MessageId;
+			connection.ReceiveResponse (new MessageEventArgs (connection, response));
+			OnMessageSent (new MessageEventArgs (this, response));
+		}
+
 		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
 			if (connection == null)
@@ -262,6 +269,13 @@ namespace Tempest.Tests
 			base.Send (message);
 		}
 
+		public override void SendResponse (Message originalMessage, Message response)
+		{
+			response.MessageId = originalMessage.MessageId;
+			connection.ReceiveResponse (new MessageEventArgs (connection, response));
+			OnMessageSent (new MessageEventArgs (this, response));
+		}
+
 		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
 			if (connection == null)
@@ -322,21 +336,32 @@ namespace Tempest.Tests
 		public event EventHandler<MessageEventArgs> MessageReceived;
 		public event EventHandler<MessageEventArgs> MessageSent;
 		public event EventHandler<DisconnectedEventArgs> Disconnected;
-		
+
+		private int messageId;
 		public virtual void Send (Message message)
 		{
+			message.MessageId = Interlocked.Increment (ref this.messageId);
 			OnMessageSent (new MessageEventArgs (this, message));
 		}
 
-		public Task<TResponse> Send<TResponse>(Message message) where TResponse : Message
+		private readonly Dictionary<int, TaskCompletionSource<Message>> responses = new Dictionary<int, TaskCompletionSource<Message>>();
+		public Task<TResponse> Send<TResponse> (Message message) where TResponse : Message
 		{
-			throw new NotImplementedException();
+			var tcs = new TaskCompletionSource<TResponse>();
+			var otcs = new TaskCompletionSource<Message>();
+			otcs.Task.ContinueWith (t => tcs.SetResult ((TResponse)t.Result));
+
+			int mid = Interlocked.Increment (ref this.messageId);
+			lock (this.responses)
+				this.responses.Add (mid, otcs);
+
+			message.MessageId = mid;
+			OnMessageSent (new MessageEventArgs (this, message));
+
+			return tcs.Task;
 		}
 
-		public void SendResponse(Message originalMessage, Message response)
-		{
-			throw new NotImplementedException();
-		}
+		public abstract void SendResponse (Message originalMessage, Message response);
 
 		public IEnumerable<MessageEventArgs> Tick()
 		{
@@ -372,6 +397,19 @@ namespace Tempest.Tests
 				OnDisconnected (e);
 			else
 				ThreadPool.QueueUserWorkItem (s => OnDisconnected ((DisconnectedEventArgs)s), e);
+		}
+
+		internal void ReceiveResponse (MessageEventArgs e)
+		{
+			bool response = false;
+			TaskCompletionSource<Message> tcs;
+			lock (this.responses)
+				response = this.responses.TryGetValue (e.Message.MessageId, out tcs);
+
+			if (response)
+				tcs.SetResult (e.Message);
+
+			Receive (e);
 		}
 
 		internal void Receive (MessageEventArgs e)

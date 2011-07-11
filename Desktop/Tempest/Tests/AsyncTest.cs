@@ -95,7 +95,11 @@ namespace Tempest.Tests
 			if (passTest == null)
 				throw new ArgumentNullException ("passTest");
 			
-			this.passTest = passTest;
+			this.passTest = e =>
+			{
+				passTest (e);
+				Interlocked.Increment (ref this.passCount);
+			};
 		}
 
 		public AsyncTest (Action<EventArgs> passTest, bool multiple)
@@ -211,7 +215,7 @@ namespace Tempest.Tests
 					Thread.Sleep (1);
 				}
 
-				if (this.passCount < this.timesToPass)
+				if (this.passCount < this.timesToPass && !Debugger.IsAttached)
 					NAssert.Fail ("Failed to pass required number of times.");
 				if (failIfNotPassed && !Debugger.IsAttached)
 					NAssert.Fail ("Asynchronous operation timed out.");

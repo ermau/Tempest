@@ -414,11 +414,19 @@ namespace Tempest.Tests
 
 		internal void Receive (MessageEventArgs e)
 		{
+			var context = new SerializationContext (new TypeMap());
+			var writer = new BufferValueWriter (new byte[1024]);
+			e.Message.WritePayload (context, writer);
+
+			var reader = new BufferValueReader (writer.Buffer);
+			var message = e.Message.Protocol.Create (e.Message.MessageType);
+			message.ReadPayload (context, reader);
+
 			var tmessage = (e.Message as TempestMessage);
 			if (tmessage == null)
-				OnMessageReceived (e);
+				OnMessageReceived (new MessageEventArgs (e.Connection, message));
 			else
-				OnTempestMessageReceived (e);
+				OnTempestMessageReceived (new MessageEventArgs (e.Connection, message));
 		}
 
 		protected virtual void OnTempestMessageReceived (MessageEventArgs e)

@@ -40,23 +40,61 @@ namespace Tempest
 		/// <summary>
 		/// Writes a date value.
 		/// </summary>
+		[Obsolete ("Use WriteUniversalDate or WriteLocalDate")]
 		public static void WriteDate (this IValueWriter writer, DateTime date)
 		{
-			if (writer == null)
-				throw new ArgumentNullException ("writer");
-			
-			writer.WriteInt64 (date.Ticks);
+			WriteLocalDate (writer, date);
 		}
 
 		/// <summary>
 		/// Reads a date value.
 		/// </summary>
+		[Obsolete ("Use ReadUniversalDate or ReadLocalDate")]
 		public static DateTime ReadDate (this IValueReader reader)
+		{
+			return ReadLocalDate (reader).Item2;
+		}
+
+		public static void WriteUniversalDate (this IValueWriter writer, DateTime date)
+		{
+			if (writer == null)
+				throw new ArgumentNullException ("writer");
+
+			if (date.Kind != DateTimeKind.Utc)
+				date = date.ToUniversalTime();
+
+			writer.WriteInt64 (date.Ticks);
+		}
+
+		public static DateTime ReadUniversalDate (this IValueReader reader)
 		{
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 
-			return new DateTime (reader.ReadInt64());
+			return new DateTime (reader.ReadInt64(), DateTimeKind.Utc);
+		}
+
+		public static void WriteLocalDate (this IValueWriter writer, DateTime date)
+		{
+			WriteLocalDate (writer, date, TimeZoneInfo.Local);
+		}
+
+		public static void WriteLocalDate (this IValueWriter writer, DateTime date, TimeZoneInfo timeZone)
+		{
+			if (writer == null)
+				throw new ArgumentNullException ("writer");
+
+			writer.WriteString (timeZone.ToSerializedString());
+			writer.WriteInt64 (date.ToLocalTime().Ticks);
+		}
+
+		public static Tuple<TimeZoneInfo, DateTime> ReadLocalDate (this IValueReader reader)
+		{
+			if (reader == null)
+				throw new ArgumentNullException ("reader");
+
+			return new Tuple<TimeZoneInfo, DateTime> (TimeZoneInfo.FromSerializedString (reader.ReadString()),
+			                                          new DateTime (reader.ReadInt64(), DateTimeKind.Unspecified));
 		}
 
 		public static void WriteString (this IValueWriter writer, string value)

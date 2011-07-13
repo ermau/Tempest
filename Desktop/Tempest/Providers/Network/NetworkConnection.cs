@@ -155,6 +155,11 @@ namespace Tempest.Providers.Network
 			protected set;
 		}
 
+		public abstract IAsymmetricKey RemoteKey
+		{
+			get;
+		}
+
 		public IAsymmetricKey PublicAuthenticationKey
 		{
 			get { return this.publicAuthenticationKey; }

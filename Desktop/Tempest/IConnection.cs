@@ -78,6 +78,12 @@ namespace Tempest
 		EndPoint RemoteEndPoint { get; }
 
 		/// <summary>
+		/// Gets the remote authentication key for this connection.
+		/// </summary>
+		/// <remarks><c>null</c> if the transport did not handshake.</remarks>
+		IAsymmetricKey RemoteKey { get; }
+
+		/// <summary>
 		/// Gets the response time in milliseconds for the connection. -1 if unsupported.
 		/// </summary>
 		int ResponseTime { get; }

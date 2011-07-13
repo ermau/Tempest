@@ -94,6 +94,11 @@ namespace Tempest.Providers.Network
 			get { return this.connection.RemoteEndPoint; }
 		}
 
+		public IAsymmetricKey RemoteKey
+		{
+			get { return this.connection.RemoteKey; }
+		}
+
 		public event EventHandler<MessageEventArgs> MessageReceived
 		{
 			add { this.connection.MessageReceived += value; }

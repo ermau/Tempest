@@ -333,6 +333,11 @@ namespace Tempest.Tests
 			private set;
 		}
 
+		public IAsymmetricKey RemoteKey
+		{
+			get { throw new NotSupportedException(); }
+		}
+
 		public event EventHandler<MessageEventArgs> MessageReceived;
 		public event EventHandler<MessageEventArgs> MessageSent;
 		public event EventHandler<DisconnectedEventArgs> Disconnected;

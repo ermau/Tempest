@@ -73,6 +73,11 @@ namespace Tempest.Providers.Network
 			this.pingTimer = new Timer (provider.PingFrequency, PingCallback);
 		}
 
+		public override IAsymmetricKey RemoteKey
+		{
+			get { return this.publicAuthenticationKey; }
+		}
+
 		private static int nextNetworkId;
 
 		private bool receivedProtocols;

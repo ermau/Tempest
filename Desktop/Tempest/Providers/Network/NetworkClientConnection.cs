@@ -76,6 +76,11 @@ namespace Tempest.Providers.Network
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
 
+		public override IAsymmetricKey RemoteKey
+		{
+			get { return this.serverAuthenticationKey; }
+		}
+
 		public void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
 			int c = GetNextCallId();

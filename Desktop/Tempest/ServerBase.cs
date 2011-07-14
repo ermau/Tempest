@@ -180,6 +180,9 @@ namespace Tempest
 					}
 				}
 			}
+
+			lock (this.connections)
+				this.connections.Clear();
 		}
 
 		public void DisconnectWithReason (IConnection connection, string reason)

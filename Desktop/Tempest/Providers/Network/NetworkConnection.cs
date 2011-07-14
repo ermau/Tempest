@@ -94,6 +94,7 @@ namespace Tempest.Providers.Network
 			#if TRACE
 			this.connectionId = Interlocked.Increment (ref nextConnectionId);
 			this.typeName = GetType().Name;
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Empty, this.typeName + ":" + this.connectionId + " Ctor");
 			#endif
 		}
 

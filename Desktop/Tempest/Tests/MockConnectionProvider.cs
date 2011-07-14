@@ -298,6 +298,31 @@ namespace Tempest.Tests
 		}
 	}
 
+	public class MockAsymmetricKey
+		: IAsymmetricKey
+	{
+		public void Serialize(ISerializationContext context, IValueWriter writer)
+		{
+		}
+
+		public void Deserialize(ISerializationContext context, IValueReader reader)
+		{
+		}
+
+		public byte[] PublicSignature
+		{
+			get { return new byte[0]; }
+		}
+
+		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto)
+		{
+		}
+
+		public void Deserialize (IValueReader reader, IPublicKeyCrypto crypto)
+		{
+		}
+	}
+
 	public abstract class MockConnection
 		: IConnection
 	{
@@ -335,7 +360,7 @@ namespace Tempest.Tests
 
 		public IAsymmetricKey RemoteKey
 		{
-			get { throw new NotSupportedException(); }
+			get { return new MockAsymmetricKey(); }
 		}
 
 		public event EventHandler<MessageEventArgs> MessageReceived;

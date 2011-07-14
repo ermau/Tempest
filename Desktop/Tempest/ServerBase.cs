@@ -226,22 +226,36 @@ namespace Tempest
 				this.connections.Add (e.Connection, ExecutionMode.GlobalOrder);
 			
 			e.Connection.MessageReceived += OnGlobalMessageReceived;
-			e.Connection.Disconnected += OnConnectionDisconnected;
+			e.Connection.Disconnected += OnConnectionDisconnectedGlobal;
 
 			var cmade = ConnectionMade;
 			if (cmade != null)
 				cmade (this, e);
 		}
 
-		protected virtual void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
+		protected virtual void OnConnectionDisconnectedGlobal (object sender, DisconnectedEventArgs e)
 		{
-			ExecutionMode mode;
 			lock (this.connections)
 			{
-				if (!this.connections.TryGetValue (e.Connection, out mode))
+				if (!this.connections.Remove (e.Connection))
 					return;
+			}
 
-				this.connections.Remove (e.Connection);
+			#if !NET_4
+			lock (this.mqueue)
+			#endif
+			this.mqueue.Enqueue (e);
+
+			e.Connection.MessageReceived -= OnConnectionMessageReceived;
+			e.Connection.Disconnected -= OnConnectionDisconnectedGlobal;
+		}
+
+		protected virtual void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
+		{
+			lock (this.connections)
+			{
+				if (!this.connections.Remove (e.Connection))
+					return;
 			}
 
 			e.Connection.MessageReceived -= OnConnectionMessageReceived;

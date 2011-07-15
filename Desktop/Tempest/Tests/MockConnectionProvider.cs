@@ -192,15 +192,23 @@ namespace Tempest.Tests
 			if (!IsConnected)
 				return;
 
-			connection.Receive (new MessageEventArgs (connection, message));
 			base.Send (message);
+			connection.Receive (new MessageEventArgs (connection, message));
+		}
+
+		public override Task<TResponse> Send<TResponse> (Message message)
+		{
+			Task<TResponse> task = base.Send<TResponse> (message);
+			Send (message);
+			return task;
 		}
 
 		public override void SendResponse (Message originalMessage, Message response)
 		{
 			response.MessageId = originalMessage.MessageId;
-			connection.ReceiveResponse (new MessageEventArgs (connection, response));
+			
 			OnMessageSent (new MessageEventArgs (this, response));
+			connection.ReceiveResponse (new MessageEventArgs (connection, response));
 		}
 
 		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
@@ -265,15 +273,23 @@ namespace Tempest.Tests
 			if (!IsConnected)
 				return;
 			
-			connection.Receive (new MessageEventArgs (connection, message));
 			base.Send (message);
+			connection.Receive (new MessageEventArgs (connection, message));
+		}
+
+		public override Task<TResponse> Send<TResponse> (Message message)
+		{
+			Task<TResponse> task = base.Send<TResponse> (message);
+			connection.Receive (new MessageEventArgs (connection, message));
+			return task;
 		}
 
 		public override void SendResponse (Message originalMessage, Message response)
 		{
 			response.MessageId = originalMessage.MessageId;
-			connection.ReceiveResponse (new MessageEventArgs (connection, response));
+			
 			OnMessageSent (new MessageEventArgs (this, response));
+			connection.ReceiveResponse (new MessageEventArgs (connection, response));
 		}
 
 		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
@@ -375,7 +391,7 @@ namespace Tempest.Tests
 		}
 
 		private readonly Dictionary<int, TaskCompletionSource<Message>> responses = new Dictionary<int, TaskCompletionSource<Message>>();
-		public Task<TResponse> Send<TResponse> (Message message) where TResponse : Message
+		public virtual Task<TResponse> Send<TResponse> (Message message) where TResponse : Message
 		{
 			var tcs = new TaskCompletionSource<TResponse>();
 			var otcs = new TaskCompletionSource<Message>();
@@ -451,6 +467,7 @@ namespace Tempest.Tests
 			var reader = new BufferValueReader (writer.Buffer);
 			var message = e.Message.Protocol.Create (e.Message.MessageType);
 			message.ReadPayload (context, reader);
+			message.MessageId = e.Message.MessageId;
 
 			var tmessage = (e.Message as TempestMessage);
 			if (tmessage == null)

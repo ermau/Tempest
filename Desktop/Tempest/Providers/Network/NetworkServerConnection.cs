@@ -159,6 +159,8 @@ namespace Tempest.Providers.Network
 
 					if (!this.requiresHandshake)
 					{
+						this.formallyConnected = true;
+						this.provider.Connect (this);
 						e.Connection.Send (new ConnectedMessage());
 					}
 					else

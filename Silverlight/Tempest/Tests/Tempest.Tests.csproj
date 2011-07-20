@@ -104,67 +104,67 @@
     <Reference Include="System.Windows.Browser" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\Desktop\Tests\AsyncTest.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\AsyncTest.cs">
       <Link>AsyncTest.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\BufferReaderWriterTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\BufferReaderWriterTests.cs">
       <Link>BufferReaderWriterTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\ClientTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ClientTests.cs">
       <Link>ClientTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\ConnectionProviderExtensions.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ConnectionProviderExtensions.cs">
       <Link>ConnectionProviderExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\ConnectionProviderTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ConnectionProviderTests.cs">
       <Link>ConnectionProviderTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\ExtensionsTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ExtensionsTests.cs">
       <Link>ExtensionsTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\MessageExtensions.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MessageExtensions.cs">
       <Link>MessageExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\MessageFactoryTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MessageFactoryTests.cs">
       <Link>MessageFactoryTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\MockClient.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MockClient.cs">
       <Link>MockClient.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\MockConnectionProvider.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MockConnectionProvider.cs">
       <Link>MockConnectionProvider.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\MockConnectionProviderTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MockConnectionProviderTests.cs">
       <Link>MockConnectionProviderTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\MockMessage.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MockMessage.cs">
       <Link>MockMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\MockServer.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MockServer.cs">
       <Link>MockServer.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\MutableLookupTest.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MutableLookupTest.cs">
       <Link>MutableLookupTest.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\ObjectSerializerTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ObjectSerializerTests.cs">
       <Link>ObjectSerializerTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\ProtocolTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ProtocolTests.cs">
       <Link>ProtocolTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\ReaderWriterPairTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ReaderWriterPairTests.cs">
       <Link>ReaderWriterPairTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\ResettingMemoryStream.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ResettingMemoryStream.cs">
       <Link>ResettingMemoryStream.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\SerializationContextTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\SerializationContextTests.cs">
       <Link>SerializationContextTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\ServerTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ServerTests.cs">
       <Link>ServerTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tests\StreamReaderWriterTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\StreamReaderWriterTests.cs">
       <Link>StreamReaderWriterTests.cs</Link>
     </Compile>
     <Compile Include="App.xaml.cs">

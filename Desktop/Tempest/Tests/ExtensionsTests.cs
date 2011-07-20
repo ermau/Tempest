@@ -33,19 +33,19 @@ namespace Tempest.Tests
 	public class ExtensionsTests
 	{
 		[Test]
-		public void ReadWriteDate()
+		public void ReadWriteUniversalDate()
 		{
 			byte[] buffer = new byte[20480];
 			var writer = new BufferValueWriter (buffer);
 
 			DateTime d = DateTime.Now;
 
-			writer.WriteDate (d);
+			writer.WriteUniversalDate (d);
 			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
 
-			Assert.AreEqual (d, reader.ReadDate());
+			Assert.AreEqual (d.ToUniversalTime(), reader.ReadUniversalDate());
 		}
 	}
 }

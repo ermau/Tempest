@@ -37,24 +37,6 @@ namespace Tempest
 {
 	public static class SerializerExtensions
 	{
-		/// <summary>
-		/// Writes a date value.
-		/// </summary>
-		[Obsolete ("Use WriteUniversalDate or WriteLocalDate")]
-		public static void WriteDate (this IValueWriter writer, DateTime date)
-		{
-			WriteLocalDate (writer, date);
-		}
-
-		/// <summary>
-		/// Reads a date value.
-		/// </summary>
-		[Obsolete ("Use ReadUniversalDate or ReadLocalDate")]
-		public static DateTime ReadDate (this IValueReader reader)
-		{
-			return ReadLocalDate (reader).Item2;
-		}
-
 		public static void WriteUniversalDate (this IValueWriter writer, DateTime date)
 		{
 			if (writer == null)
@@ -74,6 +56,31 @@ namespace Tempest
 			return new DateTime (reader.ReadInt64(), DateTimeKind.Utc);
 		}
 
+		/// <summary>
+		/// Writes a date value.
+		/// </summary>
+		public static void WriteDate (this IValueWriter writer, DateTime date)
+		{
+			#if !SILVERLIGHT && !WINDOWS_PHONE
+			WriteLocalDate (writer, date);
+			#else
+			writer.WriteInt64 (date.Ticks);
+			#endif
+		}
+
+		/// <summary>
+		/// Reads a date value.
+		/// </summary>
+		public static DateTime ReadDate (this IValueReader reader)
+		{
+			#if !SILVERLIGHT && !WINDOWS_PHONE
+			return ReadLocalDate (reader).Item2;
+			#else
+			return new DateTime (reader.ReadInt64(), DateTimeKind.Unspecified);
+			#endif
+		}
+
+		#if !SILVERLIGHT && !WINDOWS_PHONE
 		public static void WriteLocalDate (this IValueWriter writer, DateTime date)
 		{
 			WriteLocalDate (writer, date, TimeZoneInfo.Local);
@@ -96,6 +103,7 @@ namespace Tempest
 			return new Tuple<TimeZoneInfo, DateTime> (TimeZoneInfo.FromSerializedString (reader.ReadString()),
 			                                          new DateTime (reader.ReadInt64(), DateTimeKind.Unspecified));
 		}
+		#endif
 
 		public static void WriteString (this IValueWriter writer, string value)
 		{

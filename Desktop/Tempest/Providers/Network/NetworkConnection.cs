@@ -384,12 +384,12 @@ namespace Tempest.Providers.Network
 			r = new BufferValueReader (message);
 		}
 
-		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer, int headerLength)
+		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer)
 		{
 			if (this.hmac == null)
 				throw new InvalidOperationException();
 
-			writer.WriteBytes (this.hmac.ComputeHash (writer.Buffer, headerLength, writer.Length - headerLength));
+			writer.WriteBytes (this.hmac.ComputeHash (writer.Buffer, 0, writer.Length));
 		}
 
 		protected virtual bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
@@ -451,9 +451,19 @@ namespace Tempest.Providers.Network
 			}
 
 			if (message.Encrypted)
+			{
+				for (int i = lengthOffset; i < lengthOffset + sizeof(int); ++i)
+					writer.Buffer[i] = 0;
+
 				EncryptMessage (writer, ref headerLength);
+			}
 			else if (message.Authenticated)
-				SignMessage (this.signingHashAlgorithm, writer, headerLength);
+			{
+				for (int i = lengthOffset; i < lengthOffset + sizeof(int); ++i)
+					writer.Buffer[i] = 0;
+
+				SignMessage (this.signingHashAlgorithm, writer);
+			}
 
 			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
@@ -597,6 +607,18 @@ namespace Tempest.Providers.Network
 				int mlen = reader.ReadInt32();
 				bool hasTypeHeader = (mlen & 1) == 1;
 				mlen >>= 1;
+
+				if (mlen <= 0)
+				{
+					Trace.WriteLineIf (NTrace.TraceVerbose,
+										"Exiting (length invalid)",
+										String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset, remaining, connectionId));
+					return true;
+				}
+
+				// Zero out length for message signing comparison
+				for (int i = reader.Position - sizeof(int); i < reader.Position; ++i)
+					buffer[i] = 0;
 
 				int identV = reader.ReadInt32();
 				
@@ -765,10 +787,11 @@ namespace Tempest.Providers.Network
 					r.Position = moffset;
 					header.Message.ReadPayload (header.SerializationContext, r);
 
-					if (!header.Message.Encrypted && header.Message.Authenticated && this.requiresHandshake)
+					if (!header.Message.Encrypted && header.Message.Authenticated)
 					{
+						int payloadLength = reader.Position;
 						byte[] signature = reader.ReadBytes(); // Need the original reader here, sig is after payload
-						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset + header.HeaderLength, header.MessageLength - header.HeaderLength - signature.Length - sizeof(int)))
+						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset, payloadLength - messageOffset))
 						{
 							Disconnect (true, ConnectionResult.MessageAuthenticationFailed);
 							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message auth failed)",

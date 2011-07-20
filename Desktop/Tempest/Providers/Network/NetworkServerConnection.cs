@@ -223,12 +223,12 @@ namespace Tempest.Providers.Network
 		    base.OnTempestMessageReceived(e);
 		}
 
-		protected override void SignMessage (string hashAlg, BufferValueWriter writer, int headerLength)
+		protected override void SignMessage (string hashAlg, BufferValueWriter writer)
 		{
 			if (this.hmac == null)
-				writer.WriteBytes (this.provider.authentication.HashAndSign (hashAlg, writer.Buffer, headerLength, writer.Length - headerLength));
+				writer.WriteBytes (this.provider.authentication.HashAndSign (hashAlg, writer.Buffer, 0, writer.Length));
 			else
-				base.SignMessage (hashAlg, writer, headerLength);
+				base.SignMessage (hashAlg, writer);
 		}
 
 		protected override bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)

@@ -31,11 +31,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 using Tempest.InternalProtocol;
 using System.Threading;
 
 #if NET_4
+using System.Threading.Tasks;
 using System.Collections.Concurrent;
 #endif
 
@@ -175,6 +175,7 @@ namespace Tempest.Providers.Network
 			SendMessage (message);
 		}
 
+		#if NET_4
 		public Task<TResponse> Send<TResponse> (Message message)
 			where TResponse : Message
 		{
@@ -194,6 +195,7 @@ namespace Tempest.Providers.Network
 			response.MessageId = originalMessage.MessageId;
 			SendMessage (response, true);
 		}
+		#endif
 
 		public void DisconnectAsync()
 		{
@@ -464,8 +466,12 @@ namespace Tempest.Providers.Network
 			return rawMessage;
 		}
 
-		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();
+		#if NET_4
+		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();		
 		private void SendMessage (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null)
+		#else
+		private void SendMessage (Message message, bool isResponse = false)
+		#endif
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -532,11 +538,13 @@ namespace Tempest.Providers.Network
 				}
 			}
 			
+			#if NET_4
 			if (future != null)
 			{
 				lock (this.messageResponses)
 					this.messageResponses.Add (message.MessageId, future);
 			}
+			#endif
 
 			int length;
 			byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
@@ -781,6 +789,7 @@ namespace Tempest.Providers.Network
 				if (tmessage == null)
 				{
 					OnMessageReceived (new MessageEventArgs (this, header.Message));
+					#if NET_4
 					if (header.IsResponse)
 					{
 						bool found;
@@ -791,6 +800,7 @@ namespace Tempest.Providers.Network
 						if (found)
 							tcs.SetResult (header.Message);
 					}
+					#endif
 				}
 				else
 					OnTempestMessageReceived (new MessageEventArgs (this, header.Message));

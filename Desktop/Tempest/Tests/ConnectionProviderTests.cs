@@ -1197,6 +1197,7 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
+		#if NET_4
 		[Test, Repeat (3)]
 		public void SendAndRespond()
 		{
@@ -1236,5 +1237,6 @@ namespace Tempest.Tests
 
 			test.Assert (10000);
 		}
+		#endif
 	}
 }

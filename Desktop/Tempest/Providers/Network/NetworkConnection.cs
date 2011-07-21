@@ -603,6 +603,15 @@ namespace Tempest.Providers.Network
 
 			try
 			{
+				Protocol p;
+				if (!this.protocols.TryGetValue (buffer[offset], out p))
+				{
+					Trace.WriteLineIf (NTrace.TraceVerbose,
+										"Exiting (Protocol " + buffer[offset] + " not found)",
+										String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset, remaining, connectionId));
+					return true;
+				}
+
 				ushort type = reader.ReadUInt16();
 				int mlen = reader.ReadInt32();
 				bool hasTypeHeader = (mlen & 1) == 1;
@@ -616,20 +625,7 @@ namespace Tempest.Providers.Network
 					return true;
 				}
 
-				// Zero out length for message signing comparison
-				for (int i = reader.Position - sizeof(int); i < reader.Position; ++i)
-					buffer[i] = 0;
-
 				int identV = reader.ReadInt32();
-				
-				Protocol p;
-				if (!this.protocols.TryGetValue (buffer[offset], out p))
-				{
-					Trace.WriteLineIf (NTrace.TraceVerbose,
-										"Exiting (Protocol " + buffer[offset] + " not found)",
-										String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset, remaining, connectionId));
-					return true;
-				}
 
 				Message msg = p.Create (type);
 				if (msg == null)
@@ -789,6 +785,10 @@ namespace Tempest.Providers.Network
 
 					if (!header.Message.Encrypted && header.Message.Authenticated)
 					{
+						// Zero out length for message signing comparison
+						for (int i = 3 + messageOffset; i < 7 + messageOffset; ++i)
+							buffer[i] = 0;
+
 						int payloadLength = reader.Position;
 						byte[] signature = reader.ReadBytes(); // Need the original reader here, sig is after payload
 						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset, payloadLength - messageOffset))

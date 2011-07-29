@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncTest.cs" />
+    <Compile Include="AsyncTestTests.cs" />
     <Compile Include="BufferReaderWriterTests.cs" />
     <Compile Include="ClientTests.cs" />
     <Compile Include="ConnectionProviderExtensions.cs" />

@@ -109,7 +109,7 @@ namespace Tempest.Tests
 			AsyncTest test;
 			for (int i = 0; i < MaxConnections; ++i)
 			{
-				test  = new AsyncTest (true);
+				test  = new AsyncTest();
 
 				client = GetNewClientConnection();
 				client.Connected += test.PassHandler;

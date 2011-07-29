@@ -128,10 +128,7 @@ namespace Tempest.Tests
 			this.passTest = e =>
 			{
 				if (passPredicate (e))
-				{
-					this.passed = true;
 					Interlocked.Increment (ref this.passCount);
-				}
 				else if (!this.multiple)
 					NAssert.Fail();
 			};
@@ -173,6 +170,14 @@ namespace Tempest.Tests
 			failed = true;
 		}
 
+		/// <summary>
+		/// Explicitly fails the test with <paramref name="ex"/>.
+		/// </summary>
+		/// <param name="ex">The exception to fail with.</param>
+		/// <remarks>
+		/// <exception cref="ArgumentNullException"><paramref name="ex"/> is <c>null</c>.</exception>
+		/// If <paramref name="ex"/> is <c>null</c>, it will raise the <see cref="ArgumentNullException"/> exception on assert.
+		/// </remarks>
 		public void FailWith (Exception ex)
 		{
 			if (this.complete)
@@ -184,14 +189,33 @@ namespace Tempest.Tests
 			this.exception = ex;
 		}
 
+		/// <summary>
+		/// Explicitly fails the test with <paramref name="message"/>.
+		/// </summary>
+		/// <param name="message">The message to fail with.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
+		/// <remarks>
+		/// If <paramref name="message"/> is <c>null</c>, it will raise the <see cref="ArgumentNullException"/> exception on assert.
+		/// </remarks>
 		public void FailWith (string message)
 		{
 			if (this.complete)
 				return;
 
-			this.exception = new AssertionException (message);
+			if (message == null)
+				this.exception = new ArgumentNullException ("message");
+			else
+				this.exception = new AssertionException (message);
 		}
 
+		/// <summary>
+		/// Waits for a pass or failure and raises any async exceptions.
+		/// </summary>
+		/// <param name="timeout">How much time to wait, in milliseconds.</param>
+		/// <param name="failIfNotPassed">Whether or not to fail if <see cref="NUnit.Framework.Assert.Pass()"/> is not called.</param>
+		/// <remarks>
+		/// <see cref="AsyncTest"/> will call <see cref="NUnit.Framework.Assert.Pass()" /> in non-multiple scenarios automatically.
+		/// </remarks>
 		public void Assert (int timeout, bool failIfNotPassed = true)
 		{
 			try

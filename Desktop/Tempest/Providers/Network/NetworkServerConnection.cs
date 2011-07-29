@@ -63,10 +63,10 @@ namespace Tempest.Providers.Network
 			int p = Interlocked.Increment (ref this.pendingAsync);
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), "new NetworkServerConnection:" + connectionId);
 
+			this.rreader = new BufferValueReader (this.rmessageBuffer);
+
 			if (!this.reliableSocket.ReceiveAsync (asyncArgs))
 				ReliableReceiveCompleted (this, asyncArgs);
-
-			this.rreader = new BufferValueReader (this.rmessageBuffer);
 
 			provider.PingFrequencyChanged += ProviderOnPingFrequencyChanged;
 

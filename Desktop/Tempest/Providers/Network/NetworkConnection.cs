@@ -314,6 +314,9 @@ namespace Tempest.Providers.Network
 				this.bytesSent = 0;
 				this.lastMessageId = 0;
 				this.nextMessageId = 0;
+
+				lock (this.messageResponses)
+					this.messageResponses.Clear();
 			}
 		}
 
@@ -818,7 +821,11 @@ namespace Tempest.Providers.Network
 						bool found;
 						TaskCompletionSource<Message> tcs;
 						lock (this.messageResponses)
+						{
 							found = this.messageResponses.TryGetValue (header.MessageId, out tcs);
+							if (found)
+								this.messageResponses.Remove (header.MessageId);
+						}
 
 						if (found)
 							tcs.SetResult (header.Message);

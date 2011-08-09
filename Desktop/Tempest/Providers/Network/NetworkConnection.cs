@@ -315,8 +315,10 @@ namespace Tempest.Providers.Network
 				this.lastMessageId = 0;
 				this.nextMessageId = 0;
 
+				#if NET_4
 				lock (this.messageResponses)
 					this.messageResponses.Clear();
+				#endif
 			}
 		}
 

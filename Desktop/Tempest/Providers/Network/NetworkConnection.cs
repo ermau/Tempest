@@ -374,6 +374,9 @@ namespace Tempest.Providers.Network
 
 		protected void DecryptMessage (MessageHeader header, ref BufferValueReader r, ref byte[] message, ref int moffset)
 		{
+			int c = GetNextCallId();
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5},{6})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length, moffset));
+
 			byte[] payload = r.ReadBytes();
 
 			ICryptoTransform decryptor;
@@ -387,6 +390,8 @@ namespace Tempest.Providers.Network
 			moffset = 0;
 
 			r = new BufferValueReader (message);
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5},{6})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length, moffset));
 		}
 
 		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer)
@@ -711,7 +716,8 @@ namespace Tempest.Providers.Network
 		private void BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader)
 		{
 			int c = GetNextCallId();
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+			string callCategory = String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			this.lastReceived = DateTime.Now;
 
@@ -722,16 +728,14 @@ namespace Tempest.Providers.Network
 			{
 				if (!TryGetHeader (buffer, messageOffset, remainingData, out header))
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Failed to get header",
-										String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Failed to get header", callCategory);
 					break;
 				}
 
 				if (header == null)
 				{
 					Disconnect (true);
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not found)",
-										String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not found)", callCategory);
 					return;
 				}
 
@@ -739,8 +743,7 @@ namespace Tempest.Providers.Network
 				if (length > maxMessageLength)
 				{
 					Disconnect (true);
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (bad message size)",
-										String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (bad message size)", callCategory);
 					return;
 				}
 
@@ -749,8 +752,7 @@ namespace Tempest.Providers.Network
 					if (header.MessageId < this.lastMessageId)
 					{
 						Disconnect (true);
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (replay attack / reliable out of order)",
-											String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (replay attack / reliable out of order)", callCategory);
 						return;
 					}
 
@@ -759,15 +761,13 @@ namespace Tempest.Providers.Network
 				else if (header.MessageId > this.nextMessageId)
 				{
 					Disconnect (true);
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (replay attack / reliable out of order)",
-										String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (replay attack / reliable out of order)", callCategory);
 					return;
 				}
 
 				if (remainingData < length)
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Message not fully received",
-										String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Message not fully received", callCategory);
 					bufferOffset += remainingData;
 					break;
 				}
@@ -781,12 +781,15 @@ namespace Tempest.Providers.Network
 					byte[] message = buffer;
 					BufferValueReader r = reader;
 
-					r.Position = moffset;
 					if (header.Message.Encrypted)
+					{
+						r.Position = moffset;
 						DecryptMessage (header, ref r, ref message, ref moffset);
+					}
 
 					r.Position = moffset;
 					header.Message.ReadPayload (header.SerializationContext, r);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Payload read {0:N0} bytes", r.Position - moffset), callCategory);
 
 					if (!header.Message.Encrypted && header.Message.Authenticated)
 					{
@@ -799,8 +802,7 @@ namespace Tempest.Providers.Network
 						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset, payloadLength - messageOffset))
 						{
 							Disconnect (true, ConnectionResult.MessageAuthenticationFailed);
-							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message auth failed)",
-												String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message auth failed)", callCategory);
 							return;
 						}
 					}
@@ -808,8 +810,7 @@ namespace Tempest.Providers.Network
 				catch (Exception ex)
 				{
 					Disconnect (true);
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting for error: " + ex,
-										String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting for error: " + ex, callCategory);
 					return;
 				}
 
@@ -865,7 +866,7 @@ namespace Tempest.Providers.Network
 				buffer = destinationBuffer;
 			}
 
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, connectionId));
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}
 
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)

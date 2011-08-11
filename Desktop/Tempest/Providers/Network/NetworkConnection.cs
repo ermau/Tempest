@@ -836,6 +836,8 @@ namespace Tempest.Providers.Network
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format("Room needed: {0:N0} bytes", knownRoomNeeded), callCategory);
 				if (messageOffset + knownRoomNeeded < buffer.Length)
 				{
+					// bufferOffset is only moved on complete headers, so it's still == messageOffset.
+					bufferOffset = messageOffset + remainingData;
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (sufficient room)", callCategory);
 					return;
 				}

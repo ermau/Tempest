@@ -497,7 +497,7 @@ namespace Tempest.Tests
 			test.Assert (30000);
 		}
 
-		[Test]
+		[Test, Repeat (3)]
 		public void Stress()
 		{
 			var c = GetNewClientConnection();
@@ -545,7 +545,7 @@ namespace Tempest.Tests
 			test.Assert (60000);
 		}
 
-		[Test]
+		[Test, Repeat (3)]
 		public void StressAuthenticatedAndEncrypted()
 		{
 			var c = GetNewClientConnection();

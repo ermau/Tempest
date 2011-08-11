@@ -372,10 +372,10 @@ namespace Tempest.Providers.Network
 			headerLength += iv.Length;
 		}
 
-		protected void DecryptMessage (MessageHeader header, ref BufferValueReader r, ref byte[] message, ref int moffset)
+		protected void DecryptMessage (MessageHeader header, ref BufferValueReader r, ref byte[] message)
 		{
 			int c = GetNextCallId();
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5},{6})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length, moffset));
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length));
 
 			byte[] payload = r.ReadBytes();
 
@@ -387,11 +387,10 @@ namespace Tempest.Providers.Network
 			}
 
 			message = decryptor.TransformFinalBlock (payload, 0, payload.Length);
-			moffset = 0;
 
 			r = new BufferValueReader (message);
 
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5},{6})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length, moffset));
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length));
 		}
 
 		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer)
@@ -602,21 +601,21 @@ namespace Tempest.Providers.Network
 		/// If <see cref="TryGetHeader"/> returns <c>true</c> and <paramref name="header"/> is <c>null</c>,
 		/// disconnect.
 		/// </remarks>
-		protected bool TryGetHeader (byte[] buffer, int offset, int remaining, out MessageHeader header)
+		protected bool TryGetHeader (BufferValueReader reader, int remaining, out MessageHeader header)
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{0}:{5} {1}:TryGetHeader({2},{3},{4})", this.typeName, c, buffer.Length, offset, remaining, this.connectionId);
+			string callCategory = String.Format ("{0}:{4} {1}:TryGetHeader({2},{3})", this.typeName, c, reader.Position, remaining, this.connectionId);
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);			
 
 			header = null;
-			BufferValueReader reader = new BufferValueReader (buffer, offset + 1, remaining);
 
 			try
 			{
+				byte pid = reader.ReadByte();
 				Protocol p;
-				if (!this.protocols.TryGetValue (buffer[offset], out p))
+				if (!this.protocols.TryGetValue (pid, out p))
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Protocol " + buffer[offset] + " not found)", callCategory);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Protocol " + pid + " not found)", callCategory);
 					return true;
 				}
 
@@ -649,12 +648,14 @@ namespace Tempest.Providers.Network
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Has type header, reading types", callCategory);
 
+					int start = reader.Position;
+
 				    ushort numTypes = reader.ReadUInt16();
 				    var types = new Dictionary<Type, ushort> (numTypes);
 				    for (ushort i = 0; i < numTypes; ++i)
 				        types[Type.GetType (reader.ReadString())] = i;
 
-				    headerLength = reader.Position - offset;
+				    headerLength = headerLength + (reader.Position - start);
 				    map = new TypeMap (types);
 				}
 				else
@@ -666,7 +667,7 @@ namespace Tempest.Providers.Network
 				if (msg.Encrypted && this.aes != null)
 				{
 					int length = this.aes.IV.Length;
-					iv = new byte[length];
+					iv = reader.ReadBytes (length);
 
 					headerLength += length;
 					if (remaining < headerLength)
@@ -674,9 +675,6 @@ namespace Tempest.Providers.Network
 						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
 						return false;
 					}
-
-					Buffer.BlockCopy (buffer, reader.Position, iv, 0, length);
-					reader.Position += length;
 				}
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting",
@@ -716,7 +714,7 @@ namespace Tempest.Providers.Network
 			int length = 0;
 			while (remainingData >= BaseHeaderLength)
 			{
-				if (!TryGetHeader (buffer, messageOffset, remainingData, out header))
+				if (!TryGetHeader (reader, remainingData, out header))
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Failed to get header", callCategory);
 					break;
@@ -767,19 +765,13 @@ namespace Tempest.Providers.Network
 
 				try
 				{
-					int moffset = messageOffset + header.HeaderLength;
 					byte[] message = buffer;
 					BufferValueReader r = reader;
 
 					if (header.Message.Encrypted)
-					{
-						r.Position = moffset;
-						DecryptMessage (header, ref r, ref message, ref moffset);
-					}
+						DecryptMessage (header, ref r, ref message);
 
-					r.Position = moffset;
 					header.Message.ReadPayload (header.SerializationContext, r);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Payload read {0:N0} bytes", r.Position - moffset), callCategory);
 
 					if (!header.Message.Encrypted && header.Message.Authenticated)
 					{

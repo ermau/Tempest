@@ -827,10 +827,10 @@ namespace Tempest.Providers.Network
 
 			if (remainingData > 0 || messageOffset + BaseHeaderLength >= buffer.Length)
 			{
-				Trace.WriteLineIf (NTrace.TraceVerbose, (remainingData > 0) ? "Data remaining" : "Insufficient room for a header", callCategory);
+				Trace.WriteLineIf (NTrace.TraceVerbose, (remainingData > 0) ? String.Format ("Data remaining: {0:N0}", remainingData) : "Insufficient room for a header", callCategory);
 
 				int knownRoomNeeded = (remainingData > BaseHeaderLength) ? remainingData : BaseHeaderLength;
-				if (header != null)
+				if (header != null && remainingData >= BaseHeaderLength)
 					knownRoomNeeded = header.MessageLength;
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format("Room needed: {0:N0} bytes", knownRoomNeeded), callCategory);

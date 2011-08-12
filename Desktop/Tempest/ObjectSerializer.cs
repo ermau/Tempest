@@ -180,7 +180,7 @@ namespace Tempest
 
 						Type actualType;
 						if (!c.TypeMap.TryGetType (objectHeader, out actualType))
-						    return null;
+							throw new Exception ("Type not found in TypeMap");
 
 						if (actualType != t)
 							return GetSerializer (actualType).deserializer (c, r, true);

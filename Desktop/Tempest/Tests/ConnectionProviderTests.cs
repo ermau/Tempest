@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -968,12 +969,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void AuthenticatedLongMessage()
 		{
-			Random r = new Random();
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < 1000000; ++i)
-				builder.Append ((char)r.Next (1, 20));
-
-			string message = builder.ToString();
+			var message = GetLongString();
 			var cmessage = new AuthenticatedMessage
 			{
 				Message = message,
@@ -1197,6 +1193,40 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
+		[Test, Repeat (3)]
+		public void AuthenticatedTypeHeaderedMessage()
+		{
+			var cmessage = new AuthenticatedTypeHeaderedMessage
+			{
+				Object = new ArrayList()
+			};
+
+			AssertMessageReceived (cmessage, msg =>
+			{
+				Assert.IsFalse (msg.Encrypted);
+				Assert.IsTrue (msg.Authenticated);
+				Assert.IsInstanceOf<ArrayList> (msg.Object);
+			});
+		}
+
+		[Test, Repeat (3)]
+		public void AuthenticatedTypeHeaderedMessageLong()
+		{
+			var cmessage = new AuthenticatedTypeHeaderedMessage
+			{
+				Object = GetLongString()
+			};
+
+			AssertMessageReceived (cmessage, msg =>
+			{
+				Assert.IsFalse (msg.Encrypted);
+				Assert.IsTrue (msg.Authenticated);
+				Assert.IsInstanceOf<string> (msg.Object);
+				Assert.AreEqual (cmessage.Object, msg.Object);
+			});
+
+		}
+
 		#if NET_4
 		[Test, Repeat (3)]
 		public void SendAndRespond()
@@ -1238,5 +1268,52 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 		#endif
+
+		private static string GetLongString (int length = 1000000)
+		{
+			Random r = new Random();
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < length; ++i)
+				builder.Append ((char)r.Next (1, 20));
+
+			return builder.ToString();
+		}
+
+		private void AssertMessageReceived<T> (T message, Action<T> testResults)
+			where T : Message
+		{
+			var c = GetNewClientConnection();
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+
+				var msg = (me.Message as T);
+				Assert.IsNotNull (msg);
+				testResults (msg);
+			});
+
+			IConnection sc;
+			ManualResetEvent wait = new ManualResetEvent (false);
+			this.provider.ConnectionMade += (s, e) =>
+			{
+				sc = e.Connection;
+				sc.MessageReceived += test.PassHandler;
+				sc.Disconnected += test.FailHandler;
+				wait.Set();
+			};
+
+			this.provider.Start (MessageTypes);
+
+			c.Disconnected += test.FailHandler;
+			c.Connected += (sender, e) => c.Send (message);
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			if (!wait.WaitOne (10000))
+				Assert.Fail ("Failed to connect");
+
+			test.Assert (10000);
+		}
 	}
 }

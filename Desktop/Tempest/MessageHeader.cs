@@ -30,18 +30,15 @@ namespace Tempest
 {
 	public class MessageHeader
 	{
-		internal MessageHeader (Protocol protocol, Message message, ISerializationContext serializationContext)
+		internal MessageHeader (Protocol protocol, Message message)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
 			if (message == null)
 				throw new ArgumentNullException ("message");
-			if (serializationContext == null)
-				throw new ArgumentNullException ("serializationContext");
 
 			Protocol = protocol;
 			Message = message;
-			SerializationContext = serializationContext;
 		}
 
 		public Protocol Protocol
@@ -74,7 +71,7 @@ namespace Tempest
 		public ISerializationContext SerializationContext
 		{
 			get;
-			private set;
+			internal set;
 		}
 
 		public byte[] IV

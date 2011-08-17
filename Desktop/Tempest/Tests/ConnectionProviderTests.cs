@@ -617,6 +617,99 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
+		public void StressRandomLongAuthenticatedMessage()
+		{
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+
+			const int messages = 1000;
+			int number = 0;
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (c, me.Connection);
+
+				Assert.AreEqual (number, ((AuthenticatedMessage)me.Message).Number);
+				Assert.IsTrue ((((AuthenticatedMessage)me.Message).Message.Length >= 7500));
+
+				if (++number == messages)
+					Assert.Pass();
+			}, messages);
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
+			{
+				try
+				{
+					var r = new Random (42);
+					for (int i = 0; i < messages; ++i)
+					{
+						if (i > Int32.MaxValue)
+							System.Diagnostics.Debugger.Break();
+
+						e.Connection.Send (new AuthenticatedMessage { Number = i, Message = GetLongString (r.Next(7500, 100000)) });
+					}
+				}
+				catch (Exception ex)
+				{
+					test.FailWith (ex);
+				}
+			})).Start();
+
+			c.Disconnected += test.FailHandler;
+			c.MessageReceived += test.PassHandler;
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			test.Assert (900000);
+		}
+
+		[Test, Repeat (3)]
+		public void StressRandomLongTypeHeaderedAuthenticatedMessage()
+		{
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+
+			const int messages = 1000;
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (c, me.Connection);
+			}, messages);
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
+			{
+				try
+				{
+					var r = new Random (42);
+					for (int i = 0; i < messages; ++i)
+					{
+						if (i > Int32.MaxValue)
+							System.Diagnostics.Debugger.Break();
+
+						e.Connection.Send (new AuthenticatedTypeHeaderedMessage { Object = GetLongString (r.Next (7500, 100000)) });
+					}
+				}
+				catch (Exception ex)
+				{
+					test.FailWith (ex);
+				}
+			})).Start();
+
+			c.Disconnected += test.FailHandler;
+			c.MessageReceived += test.PassHandler;
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			test.Assert (900000);
+		}
+
+		[Test, Repeat (3)]
 		public void DisconnectFromClientOnClient()
 		{
 			this.provider.Start (MessageTypes);

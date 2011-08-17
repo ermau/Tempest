@@ -31,6 +31,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text;
 using Tempest.InternalProtocol;
 using System.Threading;
 
@@ -393,17 +394,27 @@ namespace Tempest.Providers.Network
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length));
 		}
 
-		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer)
+		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer)	
 		{
 			if (this.hmac == null)
 				throw new InvalidOperationException();
+			
+			int c = GetNextCallId();
+			string callCategory = String.Format ("{0}:{2} {1}:SignMessage ({3},{4})", this.typeName, c, connectionId, hashAlg, writer.Length);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
+
 
 			writer.WriteBytes (this.hmac.ComputeHash (writer.Buffer, 0, writer.Length));
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}
 
 		protected virtual bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
 			byte[] ourhash = this.hmac.ComputeHash (data, moffset, length);
+			int c = GetNextCallId();
+			string callCateogry = String.Format ("{0}:{2} {1}:VerifyMessage({3},{4},{5},{6},{7},{8})", this.typeName, c, connectionId, hashAlg, message, signature.Length, data.Length, moffset, length);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCateogry);
 
 			if (signature.Length != ourhash.Length)
 				return false;
@@ -411,9 +422,13 @@ namespace Tempest.Providers.Network
 			for (int i = 0; i < signature.Length; i++)
 			{
 				if (signature[i] != ourhash[i])
+				{
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (false)", callCateogry);
 					return false;
+				}
 			}
 
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (true)", callCateogry);
 			return true;
 		}
 
@@ -426,7 +441,7 @@ namespace Tempest.Providers.Network
 			BufferValueWriter writer = new BufferValueWriter (buffer);
 			writer.WriteByte (message.Protocol.id);
 			writer.WriteUInt16 (message.MessageType);
-			writer.Length += sizeof (int); // length  placeholder
+			writer.Length += sizeof (int); // length placeholder
 			const int lengthOffset = 1 + sizeof (ushort);
 
 			writer.WriteInt32 (messageId);
@@ -440,22 +455,25 @@ namespace Tempest.Providers.Network
 			var types = context.TypeMap.GetNewTypes().OrderBy (kvp => kvp.Value).ToList();
 			if (types.Count > 0)
 			{
-			    if (types.Count > Int16.MaxValue)
-			        throw new ArgumentException ("Too many different types for serialization");
+				if (types.Count > Int16.MaxValue)
+					throw new ArgumentException ("Too many different types for serialization");
 
-			    int payloadLen = writer.Length;
-			    byte[] payload = writer.Buffer;
-			    writer = new BufferValueWriter (new byte[1024 + writer.Length]);
-			    writer.WriteByte (message.Protocol.id);
-			    writer.WriteUInt16 (message.MessageType);
-			    writer.Length += sizeof (int);
+				int payloadLen = writer.Length;
+				byte[] payload = writer.Buffer;
+				writer = new BufferValueWriter (new byte[1024 + writer.Length]);
+				writer.WriteByte (message.Protocol.id);
+				writer.WriteUInt16 (message.MessageType);
+				writer.Length += sizeof (int); // length placeholder
 				writer.WriteInt32 (messageId);
-			    writer.WriteUInt16 ((ushort)types.Count);
-			    for (int i = 0; i < types.Count; ++i)
-			        writer.WriteString (types[i].Key.GetSimpleName());
 
-			    headerLength = writer.Length;
+				writer.Length += sizeof (ushort); // type header length placeholder
+				writer.WriteUInt16 ((ushort)types.Count);
+				for (int i = 0; i < types.Count; ++i)
+					writer.WriteString (types[i].Key.GetSimpleName());
 
+				Buffer.BlockCopy (BitConverter.GetBytes ((ushort)(writer.Length - BaseHeaderLength)), 0, writer.Buffer, BaseHeaderLength, sizeof (ushort));
+
+				headerLength = writer.Length;
 				writer.InsertBytes (headerLength, payload, BaseHeaderLength, payloadLen - BaseHeaderLength);
 			}
 
@@ -478,7 +496,7 @@ namespace Tempest.Providers.Network
 			length = writer.Length;
 			int len = length << 1;
 			if (types.Count > 0)
-			    len |= 1; // serialization header
+				len |= 1; // serialization header
 
 			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, lengthOffset, sizeof(int));
 
@@ -639,6 +657,15 @@ namespace Tempest.Providers.Network
 					return true;
 				}
 
+				header = new MessageHeader (p, msg)
+				{
+					MessageLength = mlen,
+					MessageId = identV & ~ResponseFlag,
+					IsResponse = (identV & ResponseFlag) == ResponseFlag
+				};
+
+				msg.MessageId = header.MessageId;
+
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have {0} ({1:N0})", msg.GetType().Name, mlen), callCategory);
 
 				int headerLength = BaseHeaderLength;
@@ -648,14 +675,26 @@ namespace Tempest.Providers.Network
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Has type header, reading types", callCategory);
 
-					int start = reader.Position;
+					if (remaining < headerLength + (sizeof(ushort) * 2))
+					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
+						return false;
+					}
+
+					ushort typeheaderLength = reader.ReadUInt16();
+					headerLength += typeheaderLength;
+
+					if (remaining < headerLength)
+					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
+						return false;
+					}
 
 				    ushort numTypes = reader.ReadUInt16();
 				    var types = new Dictionary<Type, ushort> (numTypes);
 				    for (ushort i = 0; i < numTypes; ++i)
 				        types[Type.GetType (reader.ReadString())] = i;
-
-				    headerLength = headerLength + (reader.Position - start);
+				    
 				    map = new TypeMap (types);
 				}
 				else
@@ -675,21 +714,14 @@ namespace Tempest.Providers.Network
 						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
 						return false;
 					}
+
+					header.IV = iv;
 				}
 
-				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting",
-									callCategory);
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 
-				header = new MessageHeader (p, msg, context)
-				{
-					MessageLength = mlen,
-					HeaderLength = headerLength,
-					IV = iv,
-					MessageId = identV & ~ResponseFlag,
-					IsResponse = (identV & ResponseFlag) == ResponseFlag
-				};
-				
-				msg.MessageId = header.MessageId;
+				header.SerializationContext = context;
+				header.HeaderLength = headerLength;
 
 				return true;
 			}

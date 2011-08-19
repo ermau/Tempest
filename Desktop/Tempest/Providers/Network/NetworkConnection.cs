@@ -308,6 +308,9 @@ namespace Tempest.Providers.Network
 					this.aes = null;
 				}
 
+				if (this.reliableSocket != null)
+					this.reliableSocket.Dispose();
+
 				this.reliableSocket = null;
 				this.rmessageOffset = 0;
 				this.rmessageLoaded = 0;
@@ -394,7 +397,7 @@ namespace Tempest.Providers.Network
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length));
 		}
 
-		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer)	
+		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer)
 		{
 			if (this.hmac == null)
 				throw new InvalidOperationException();
@@ -690,12 +693,12 @@ namespace Tempest.Providers.Network
 						return false;
 					}
 
-				    ushort numTypes = reader.ReadUInt16();
-				    var types = new Dictionary<Type, ushort> (numTypes);
-				    for (ushort i = 0; i < numTypes; ++i)
-				        types[Type.GetType (reader.ReadString())] = i;
+					ushort numTypes = reader.ReadUInt16();
+					var types = new Dictionary<Type, ushort> (numTypes);
+					for (ushort i = 0; i < numTypes; ++i)
+						types[Type.GetType (reader.ReadString())] = i;
 				    
-				    map = new TypeMap (types);
+					map = new TypeMap (types);
 				}
 				else
 					map = new TypeMap();
@@ -1113,8 +1116,7 @@ namespace Tempest.Providers.Network
 
 			lock (this.stateSync)
 			{
-				Trace.WriteLineIf (NTrace.TraceVerbose, "Got lock", String.Format ("{2}:{4} {3}:OnDisconnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
-
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Got state lock", String.Format ("{2}:{4} {3}:OnDisconnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
 				this.disconnecting = false;
 				Recycle();
 			}

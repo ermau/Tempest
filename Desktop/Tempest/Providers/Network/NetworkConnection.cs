@@ -1017,12 +1017,12 @@ namespace Tempest.Providers.Network
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Shutting down socket.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
 
-					#if !SILVERLIGHT
-					this.reliableSocket.Shutdown (SocketShutdown.Both);
-					this.reliableSocket.Disconnect (true);
-					#else
+					//#if !SILVERLIGHT
+					//this.reliableSocket.Shutdown (SocketShutdown.Both);
+					//this.reliableSocket.Disconnect (true);
+					//#else
 					this.reliableSocket.Close();
-					#endif
+					//#endif
 					Recycle();
 
 					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async.", pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));

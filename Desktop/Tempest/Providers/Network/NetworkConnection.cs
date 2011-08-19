@@ -298,14 +298,20 @@ namespace Tempest.Providers.Network
 
 				if (this.hmac != null)
 				{
-					((IDisposable)this.hmac).Dispose();
-					this.hmac = null;
+					lock (this.hmac)
+					{
+						((IDisposable)this.hmac).Dispose();
+						this.hmac = null;
+					}
 				}
 
 				if (this.aes != null)
 				{
-					((IDisposable)this.aes).Dispose();
-					this.aes = null;
+					lock (this.aes)
+					{
+						((IDisposable)this.aes).Dispose();
+						this.aes = null;
+					}
 				}
 
 				if (this.reliableSocket != null)
@@ -406,18 +412,29 @@ namespace Tempest.Providers.Network
 			string callCategory = String.Format ("{0}:{2} {1}:SignMessage ({3},{4})", this.typeName, c, connectionId, hashAlg, writer.Length);
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
+			byte[] hash;
+			lock (this.hmac)
+				 hash = this.hmac.ComputeHash (writer.Buffer, 0, writer.Length);
 
-			writer.WriteBytes (this.hmac.ComputeHash (writer.Buffer, 0, writer.Length));
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Got hash:  " + GetHex (hash), callCategory);
+
+			writer.WriteBytes (hash);
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}
 
 		protected virtual bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
-			byte[] ourhash = this.hmac.ComputeHash (data, moffset, length);
 			int c = GetNextCallId();
 			string callCateogry = String.Format ("{0}:{2} {1}:VerifyMessage({3},{4},{5},{6},{7},{8})", this.typeName, c, connectionId, hashAlg, message, signature.Length, data.Length, moffset, length);
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCateogry);
+
+			byte[] ourhash;
+			lock (this.hmac)
+				ourhash = this.hmac.ComputeHash (data, moffset, length);
+			
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Their hash: " + GetHex (signature), callCateogry);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Our hash:   " + GetHex (ourhash), callCateogry);
 
 			if (signature.Length != ourhash.Length)
 				return false;
@@ -433,6 +450,20 @@ namespace Tempest.Providers.Network
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (true)", callCateogry);
 			return true;
+		}
+
+		private string GetHex (byte[] array)
+		{
+			//return array.Aggregate (String.Empty, (s, b) => s + b.ToString ("X2"));
+			char[] hex = new char[array.Length * 2];
+			for (int i = 0; i < array.Length; ++i)
+			{
+			    string x2 = array[i].ToString ("X2");
+			    hex[i * 2] = x2[0];
+			    hex[(i * 2) + 1] = x2[1];
+			}
+			
+			return new string (hex);
 		}
 
 		protected byte[] GetBytes (Message message, out int length, byte[] buffer, bool isResponse)
@@ -608,7 +639,7 @@ namespace Tempest.Providers.Network
 				eargs.Completed += ReliableSendCompleted;
 				int p = Interlocked.Increment (ref this.pendingAsync);
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p),
-				                   String.Format ("{1}:{2} Send({0})", message, this.typeName, this.connectionId));
+				                   String.Format ("{1}:{2} Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId));
 
 				sent = !this.reliableSocket.SendAsync (eargs);
 			}
@@ -669,7 +700,7 @@ namespace Tempest.Providers.Network
 
 				msg.MessageId = header.MessageId;
 
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have {0} ({1:N0})", msg.GetType().Name, mlen), callCategory);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have {0}:{2} ({1:N0})", msg.GetType().Name, mlen, msg.MessageId), callCategory);
 
 				int headerLength = BaseHeaderLength;
 
@@ -784,7 +815,7 @@ namespace Tempest.Providers.Network
 				else if (header.MessageId > this.nextMessageId)
 				{
 					Disconnect (true);
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (replay attack / reliable out of order)", callCategory);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (response is replay attack / reliable out of order)", callCategory);
 					return;
 				}
 

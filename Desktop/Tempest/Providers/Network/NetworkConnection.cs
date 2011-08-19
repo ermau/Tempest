@@ -537,6 +537,8 @@ namespace Tempest.Providers.Network
 			return rawMessage;
 		}
 
+		private readonly object sendSync = new object();
+
 		#if NET_4
 		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();		
 		private void SendMessage (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null)
@@ -598,50 +600,53 @@ namespace Tempest.Providers.Network
 			}
 			#endif
 
-			if (!isResponse)
-			{
-				lock (this.messageIdSync)
-				{
-					if (this.nextMessageId == MaxMessageId)
-						this.nextMessageId = 0;
-					else
-						message.MessageId = this.nextMessageId++;
-				}
-			}
-			
-			#if NET_4
-			if (future != null)
-			{
-				lock (this.messageResponses)
-					this.messageResponses.Add (message.MessageId, future);
-			}
-			#endif
-
-			int length;
-			byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
-
-			eargs.SetBuffer (buffer, 0, length);
-			eargs.UserToken = message;
-
 			bool sent;
-			lock (this.stateSync)
+			lock (this.sendSync)
 			{
-				if (!this.IsConnected)
+				if (!isResponse)
 				{
-					#if !NET_4
-					lock (writerAsyncArgs)
-					#endif
-					writerAsyncArgs.Push (eargs);
-
-					return;
+					lock (this.messageIdSync)
+					{
+						if (this.nextMessageId == MaxMessageId)
+							this.nextMessageId = 0;
+						else
+							message.MessageId = this.nextMessageId++;
+					}
 				}
+			
+				#if NET_4
+				if (future != null)
+				{
+					lock (this.messageResponses)
+						this.messageResponses.Add (message.MessageId, future);
+				}
+				#endif
 
-				eargs.Completed += ReliableSendCompleted;
-				int p = Interlocked.Increment (ref this.pendingAsync);
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p),
-				                   String.Format ("{1}:{2} Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId));
+				int length;
+				byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
 
-				sent = !this.reliableSocket.SendAsync (eargs);
+				eargs.SetBuffer (buffer, 0, length);
+				eargs.UserToken = message;
+
+				lock (this.stateSync)
+				{
+					if (!this.IsConnected)
+					{
+						#if !NET_4
+						lock (writerAsyncArgs)
+						#endif
+						writerAsyncArgs.Push (eargs);
+
+						return;
+					}
+
+					eargs.Completed += ReliableSendCompleted;
+					int p = Interlocked.Increment (ref this.pendingAsync);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p),
+									   String.Format ("{1}:{2} Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId));
+
+					sent = !this.reliableSocket.SendAsync (eargs);
+				}
 			}
 
 			if (sent)

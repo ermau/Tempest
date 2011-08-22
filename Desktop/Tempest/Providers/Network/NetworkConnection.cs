@@ -552,11 +552,12 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("message");
 			if (!this.IsConnected)
 				return;
-			if (timeout > 0)
-				throw new NotSupportedException ("Response timeout not support");
 
 			SocketAsyncEventArgs eargs = null;
 			#if NET_4
+			if (timeout > 0)
+				throw new NotSupportedException ("Response timeout not support");
+
 			if (!writerAsyncArgs.TryPop (out eargs))
 			{
 				while (eargs == null)

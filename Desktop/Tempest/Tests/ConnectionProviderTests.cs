@@ -901,20 +901,21 @@ namespace Tempest.Tests
 
 			for (int i = 0; i < 5; ++i)
 			{
-				Trace.WriteLine ("Connecting");
+				Trace.WriteLine ("Connecting " + i);
+
 				wait.Reset();
 				c.ConnectAsync (EndPoint, MessageTypes);
 				if (!wait.WaitOne (10000))
-					Assert.Fail ("Failed to connect. Attempt {0}.", i + 1);
-				Trace.WriteLine ("Connected");
+					Assert.Fail ("Failed to connect. Attempt {0}.", i);
 
-				Trace.WriteLine ("Disconnecting");
+				Trace.WriteLine ("Connected & disconnecting " + i);
+
 				wait.Reset();
 				c.Disconnect();
 				if (!wait.WaitOne (10000))
-					Assert.Fail ("Failed to disconnect. Attempt {0}.", i + 1);
+					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
 
-				Trace.WriteLine ("Disconnected");
+				Trace.WriteLine ("Disconnected " + i);
 			}
 		}
 
@@ -931,13 +932,19 @@ namespace Tempest.Tests
 
 			for (int i = 0; i < 5; ++i)
 			{
+				Trace.WriteLine ("Connecting " + i);
+
 				c.ConnectAsync (EndPoint, MessageTypes);
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to connect. Attempt {0}.", i);
 
+				Trace.WriteLine ("Connected & disconnecting " + i);
+
 				c.DisconnectAsync();
 				if (!wait.WaitOne (10000))
 					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
+
+				Trace.WriteLine ("Disconnected " + i);
 			}
 		}
 

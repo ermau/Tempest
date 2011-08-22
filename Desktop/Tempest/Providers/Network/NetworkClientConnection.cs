@@ -184,11 +184,11 @@ namespace Tempest.Providers.Network
 				recevied = !this.reliableSocket.ReceiveAsync (e);
 			}
 
-			if (recevied)
-				ReliableReceiveCompleted (this.reliableSocket, e);
-
 			p = Interlocked.Decrement (ref this.pendingAsync);
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+
+			if (recevied)
+				ReliableReceiveCompleted (this.reliableSocket, e);
 
 			var connectMsg = new ConnectMessage { Protocols = this.protocols.Values };
 			if (this.requiresHandshake)

@@ -944,7 +944,7 @@ namespace Tempest.Providers.Network
 				int p;
 				if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
 				{
-					Disconnect (true);
+					Disconnect (true); // This is right, don't mess with it anymore.
 					p = Interlocked.Decrement (ref this.pendingAsync);
 					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error)", callCategory);

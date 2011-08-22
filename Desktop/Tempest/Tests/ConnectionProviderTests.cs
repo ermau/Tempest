@@ -518,7 +518,7 @@ namespace Tempest.Tests
 
 				if (message == messages)
 					Assert.Pass();
-			}, true);
+			}, messages);
 
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
@@ -567,7 +567,7 @@ namespace Tempest.Tests
 
 				if (++number == messages)
 					Assert.Pass();
-			}, true);
+			}, messages);
 
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>

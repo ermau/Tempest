@@ -29,6 +29,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 
+#if NET_4
+using System.Threading.Tasks;
+#endif
+
 namespace Tempest
 {
 	[Flags]
@@ -77,6 +81,12 @@ namespace Tempest
 		EndPoint RemoteEndPoint { get; }
 
 		/// <summary>
+		/// Gets the remote authentication key for this connection.
+		/// </summary>
+		/// <remarks><c>null</c> if the transport did not handshake.</remarks>
+		IAsymmetricKey RemoteKey { get; }
+
+		/// <summary>
 		/// Gets the response time in milliseconds for the connection. -1 if unsupported.
 		/// </summary>
 		int ResponseTime { get; }
@@ -104,6 +114,33 @@ namespace Tempest
 		/// <param name="message">The message to send.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
 		void Send (Message message);
+
+		#if NET_4
+		/// <summary>
+		/// Sends a <paramref name="message"/> on this connection and returns a <see cref="Task{TResponse}" /> for the direct response to this <paramref name="message"/>.
+		/// </summary>
+		/// <typeparam name="TResponse">The type of message being expected in response.</typeparam>
+		/// <param name="message">The message to send.</param>
+		/// <param name="timeout">The timeout to apply in </param>
+		/// <returns>A <see cref="Task{TResponse}" /> for the direct response to <paramref name="message"/>.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
+		/// <seealso cref="SendResponse"/>
+		Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message;
+
+		/// <summary>
+		/// Sends a <paramref name="response"/> to <paramref name="originalMessage"/>.
+		/// </summary>
+		/// <param name="originalMessage"></param>
+		/// <param name="response"></param>
+		/// <exception cref="ArgumentNullException">
+		/// <para><paramref name="originalMessage"/> is <c>null</c>.</para>
+		/// <para>-- or --</para>
+		/// <para><paramref name="response"/> is <c>null</c>.</para>
+		/// </exception>
+		/// <exception cref="ArgumentException"><paramref name="originalMessage" />'s <see cref="Message.IsResponse"/> is <c>true</c>.</exception>
+		/// <seealso cref="SendFor{TResponse}"/>
+		void SendResponse (Message originalMessage, Message response);
+		#endif
 
 		/// <summary>
 		/// Sends and receives all pending messages.

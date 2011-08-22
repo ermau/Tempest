@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 
@@ -360,6 +361,27 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void SerializableTypeContainingNonSerializableField()
+		{
+			byte[] buffer = new byte[20480];
+			var writer = new BufferValueWriter (buffer);
+
+			ObjectSerializer serializer = ObjectSerializer.GetSerializer (typeof (SerializableWithNonSerializableField));
+
+			var test = new SerializableWithNonSerializableField (2, 3, "hi");
+
+			serializer.Serialize (context, writer, test);
+			writer.Flush();
+
+			var reader = new BufferValueReader (buffer);
+			var serialized = (SerializableWithNonSerializableField)serializer.Deserialize (context, reader);
+
+			Assert.AreEqual (2, serialized.X);
+			Assert.AreEqual (3, serialized.Y);
+			Assert.AreEqual ("hi", serialized.Content);
+		}
+
+		[Test]
 		public void Decimal()
 		{
 			byte[] buffer = new byte[20480];
@@ -487,6 +509,52 @@ namespace Tempest.Tests
 				if (called != null)
 					called (this, e);
 			}
+		}
+
+		public class SerializableWithNonSerializableField
+			: ISerializable
+		{
+			public SerializableWithNonSerializableField (int x, int y, string content)
+			{
+				this.serializable = x;
+				this.notSerializable = new KeyValuePair<int, string> (y, content);
+			}
+
+			private SerializableWithNonSerializableField (ISerializationContext context, IValueReader reader)
+			{
+				Deserialize (context, reader);
+			}
+
+			public int X
+			{
+				get { return this.serializable; }
+			}
+
+			public int Y
+			{
+				get { return this.notSerializable.Key; }
+			}
+
+			public string Content
+			{
+				get { return this.notSerializable.Value; }
+			}
+
+			public void Serialize (ISerializationContext context, IValueWriter writer)
+			{
+				writer.WriteInt32 (this.serializable);
+				writer.WriteInt32 (this.notSerializable.Key);
+				writer.WriteString (this.notSerializable.Value);
+			}
+
+			public void Deserialize (ISerializationContext context, IValueReader reader)
+			{
+				this.serializable = reader.ReadInt32();
+				this.notSerializable = new KeyValuePair<int, string> (reader.ReadInt32(), reader.ReadString());
+			}
+
+			private int serializable;
+			private KeyValuePair<int, string> notSerializable;
 		}
 
 		public class MoreDerivedSerializingTester

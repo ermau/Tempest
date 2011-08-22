@@ -180,7 +180,7 @@ namespace Tempest
 
 						Type actualType;
 						if (!c.TypeMap.TryGetType (objectHeader, out actualType))
-						    return null;
+							throw new Exception ("Type not found in TypeMap");
 
 						if (actualType != t)
 							return GetSerializer (actualType).deserializer (c, r, true);
@@ -190,6 +190,7 @@ namespace Tempest
 
 					if (typeof(Tempest.ISerializable).IsAssignableFrom (t))
 					{
+						oserializer.LoadCtor (t);
 						if (!oserializer.deserializingConstructor)
 						{
 							value = oserializer.ctor.Invoke (null);
@@ -306,7 +307,6 @@ namespace Tempest
 			}
 			else
 			{
-				LoadMembers (t);
 				return (c, w, v, sh) =>
 				{
 					if (!sh)
@@ -377,16 +377,10 @@ namespace Tempest
 
 		private void LoadMembers (Type t)
 		{
-			if (this.ctor != null)
+			LoadCtor (t);
+
+			if (this.members != null)
 				return;
-
-			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new [] { typeof(ISerializationContext), typeof (IValueReader) }, null) ??
-						t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
-
-			if (this.ctor == null)
-				throw new ArgumentException ("No empty or (ISerializationContext,IValueReader) constructor found for " + t.Name);
-
-			this.deserializingConstructor = this.ctor.GetParameters().Length == 2;
 
 			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.NonPublic)
 							.Where (mi =>
@@ -420,6 +414,20 @@ namespace Tempest
 
 								return new SerializationPair (os.Deserialize, os.Serialize);
 							});
+		}
+
+		private void LoadCtor (Type t)
+		{
+			if (this.ctor != null)
+				return;
+
+			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new[] { typeof (ISerializationContext), typeof (IValueReader) }, null)
+						?? t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
+
+			if (this.ctor == null)
+				throw new ArgumentException ("No empty or (ISerializationContext,IValueReader) constructor found for " + t.Name);
+
+			this.deserializingConstructor = this.ctor.GetParameters().Length == 2;
 		}
 
 		#if !SILVERLIGHT

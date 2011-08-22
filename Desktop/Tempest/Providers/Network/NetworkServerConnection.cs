@@ -63,14 +63,23 @@ namespace Tempest.Providers.Network
 			int p = Interlocked.Increment (ref this.pendingAsync);
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), "new NetworkServerConnection:" + connectionId);
 
+			this.rreader = new BufferValueReader (this.rmessageBuffer);
+
 			if (!this.reliableSocket.ReceiveAsync (asyncArgs))
 				ReliableReceiveCompleted (this, asyncArgs);
 
-			this.rreader = new BufferValueReader (this.rmessageBuffer);
-
 			provider.PingFrequencyChanged += ProviderOnPingFrequencyChanged;
 
-			this.pingTimer = new Timer (provider.PingFrequency, PingCallback);
+			lock (this.pingSync)
+			{
+				this.pingTimer = new Timer (provider.PingFrequency, PingCallback);
+				this.pingTimer.Start();
+			}
+		}
+
+		public override IAsymmetricKey RemoteKey
+		{
+			get { return this.publicAuthenticationKey; }
 		}
 
 		private static int nextNetworkId;
@@ -218,12 +227,12 @@ namespace Tempest.Providers.Network
 		    base.OnTempestMessageReceived(e);
 		}
 
-		protected override void SignMessage (string hashAlg, BufferValueWriter writer, int headerLength)
+		protected override void SignMessage (string hashAlg, BufferValueWriter writer)
 		{
 			if (this.hmac == null)
-				writer.WriteBytes (this.provider.authentication.HashAndSign (hashAlg, writer.Buffer, headerLength, writer.Length - headerLength));
+				writer.WriteBytes (this.provider.authentication.HashAndSign (hashAlg, writer.Buffer, 0, writer.Length));
 			else
-				base.SignMessage (hashAlg, writer, headerLength);
+				base.SignMessage (hashAlg, writer);
 		}
 
 		protected override bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)

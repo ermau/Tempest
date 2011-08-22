@@ -76,6 +76,11 @@ namespace Tempest.Providers.Network
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
 
+		public override IAsymmetricKey RemoteKey
+		{
+			get { return this.serverAuthenticationKey; }
+		}
+
 		public void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
 			int c = GetNextCallId();
@@ -179,11 +184,11 @@ namespace Tempest.Providers.Network
 				recevied = !this.reliableSocket.ReceiveAsync (e);
 			}
 
-			if (recevied)
-				ReliableReceiveCompleted (this.reliableSocket, e);
-
 			p = Interlocked.Decrement (ref this.pendingAsync);
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+
+			if (recevied)
+				ReliableReceiveCompleted (this.reliableSocket, e);
 
 			var connectMsg = new ConnectMessage { Protocols = this.protocols.Values };
 			if (this.requiresHandshake)
@@ -211,7 +216,10 @@ namespace Tempest.Providers.Network
 							this.activityTimer.Dispose();
 
 						if (ping.Interval != 0)
+						{
 							this.activityTimer = new Tempest.Timer (ping.Interval, ActivityCallback);
+							this.activityTimer.Start();
+						}
 					}
 					else if (ping.Interval != this.pingFrequency)
 						this.activityTimer.Interval = ping.Interval;
@@ -254,12 +262,12 @@ namespace Tempest.Providers.Network
 			base.OnTempestMessageReceived(e);
 		}
 
-		protected override void SignMessage (string hashAlg, BufferValueWriter writer, int headerLength)
+		protected override void SignMessage (string hashAlg, BufferValueWriter writer)
 		{
 			if (this.hmac == null)
-				writer.WriteBytes (this.pkAuthentication.HashAndSign (hashAlg, writer.Buffer, headerLength, writer.Length - headerLength));
+				writer.WriteBytes (this.pkAuthentication.HashAndSign (hashAlg, writer.Buffer, 0, writer.Length));
 			else
-				base.SignMessage (hashAlg, writer, headerLength);
+				base.SignMessage (hashAlg, writer);
 		}
 
 		protected override bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)

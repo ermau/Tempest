@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@
 // THE SOFTWARE.
 
 using System;
-using System.Linq;
 
 namespace Tempest
 {
@@ -96,6 +95,26 @@ namespace Tempest
 		{
 			get;
 			private set;
+		}
+
+		/// <summary>
+		/// Gets or sets the message identifier (or identifier of message being responded to).
+		/// </summary>
+		/// <seealso cref="IsResponse"/>
+		internal int MessageId
+		{
+			get;
+			set;
+		}
+
+		/// <summary>
+		/// Gets or sets whether this message is a response to <see cref="MessageId"/>.
+		/// </summary>
+		/// <seealso cref="MessageId"/>
+		internal bool IsResponse
+		{
+			get;
+			set;
 		}
 
 		/// <summary>

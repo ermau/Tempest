@@ -28,6 +28,10 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 
+#if NET_4
+using System.Threading.Tasks;
+#endif
+
 namespace Tempest.Providers.Network
 {
 	class NetworkClientSimulator
@@ -93,6 +97,11 @@ namespace Tempest.Providers.Network
 			get { return this.connection.RemoteEndPoint; }
 		}
 
+		public IAsymmetricKey RemoteKey
+		{
+			get { return this.connection.RemoteKey; }
+		}
+
 		public event EventHandler<MessageEventArgs> MessageReceived
 		{
 			add { this.connection.MessageReceived += value; }
@@ -133,6 +142,18 @@ namespace Tempest.Providers.Network
 
 			this.connection.Send (message);
 		}
+
+		#if NET_4
+		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
+		{
+			throw new NotImplementedException();
+		}
+
+		public void SendResponse (Message originalMessage, Message response)
+		{
+			throw new NotImplementedException();
+		}
+		#endif
 
 		public IEnumerable<MessageEventArgs> Tick()
 		{

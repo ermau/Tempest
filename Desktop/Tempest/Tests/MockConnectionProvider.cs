@@ -31,6 +31,10 @@ using System.Net;
 using System.Threading;
 using Tempest.InternalProtocol;
 
+#if NET_4
+using System.Threading.Tasks;
+#endif
+
 namespace Tempest.Tests
 {
 	public class MockConnectionProvider
@@ -191,9 +195,26 @@ namespace Tempest.Tests
 			if (!IsConnected)
 				return;
 
-			connection.Receive (new MessageEventArgs (connection, message));
 			base.Send (message);
+			connection.Receive (new MessageEventArgs (connection, message));
 		}
+
+		#if NET_4
+		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
+		{
+			Task<TResponse> task = base.SendFor<TResponse> (message, timeout);
+			Send (message);
+			return task;
+		}
+
+		public override void SendResponse (Message originalMessage, Message response)
+		{
+			response.MessageId = originalMessage.MessageId;
+			
+			OnMessageSent (new MessageEventArgs (this, response));
+			connection.ReceiveResponse (new MessageEventArgs (connection, response));
+		}
+		#endif
 
 		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
@@ -257,9 +278,26 @@ namespace Tempest.Tests
 			if (!IsConnected)
 				return;
 			
-			connection.Receive (new MessageEventArgs (connection, message));
 			base.Send (message);
+			connection.Receive (new MessageEventArgs (connection, message));
 		}
+
+		#if NET_4
+		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
+		{
+			Task<TResponse> task = base.SendFor<TResponse> (message, timeout);
+			connection.Receive (new MessageEventArgs (connection, message));
+			return task;
+		}
+
+		public override void SendResponse (Message originalMessage, Message response)
+		{
+			response.MessageId = originalMessage.MessageId;
+			
+			OnMessageSent (new MessageEventArgs (this, response));
+			connection.ReceiveResponse (new MessageEventArgs (connection, response));
+		}
+		#endif
 
 		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
@@ -280,6 +318,31 @@ namespace Tempest.Tests
 			EventHandler<ClientConnectionEventArgs> handler = Connected;
 			if (handler != null)
 				handler (this, e);
+		}
+	}
+
+	public class MockAsymmetricKey
+		: IAsymmetricKey
+	{
+		public void Serialize(ISerializationContext context, IValueWriter writer)
+		{
+		}
+
+		public void Deserialize(ISerializationContext context, IValueReader reader)
+		{
+		}
+
+		public byte[] PublicSignature
+		{
+			get { return new byte[0]; }
+		}
+
+		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto)
+		{
+		}
+
+		public void Deserialize (IValueReader reader, IPublicKeyCrypto crypto)
+		{
 		}
 	}
 
@@ -318,14 +381,47 @@ namespace Tempest.Tests
 			private set;
 		}
 
+		public IAsymmetricKey RemoteKey
+		{
+			get { return new MockAsymmetricKey(); }
+		}
+
 		public event EventHandler<MessageEventArgs> MessageReceived;
 		public event EventHandler<MessageEventArgs> MessageSent;
 		public event EventHandler<DisconnectedEventArgs> Disconnected;
-		
+
+		private int messageId;
 		public virtual void Send (Message message)
 		{
+			message.MessageId = Interlocked.Increment (ref this.messageId);
 			OnMessageSent (new MessageEventArgs (this, message));
 		}
+
+		#if NET_4
+		private readonly Dictionary<int, TaskCompletionSource<Message>> responses = new Dictionary<int, TaskCompletionSource<Message>>();
+		public virtual Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
+		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+			if (timeout > 0)
+				throw new NotSupportedException();
+
+			var tcs = new TaskCompletionSource<TResponse>();
+			var otcs = new TaskCompletionSource<Message>();
+			otcs.Task.ContinueWith (t => tcs.SetResult ((TResponse)t.Result));
+
+			int mid = Interlocked.Increment (ref this.messageId);
+			lock (this.responses)
+				this.responses.Add (mid, otcs);
+
+			message.MessageId = mid;
+			OnMessageSent (new MessageEventArgs (this, message));
+
+			return tcs.Task;
+		}
+
+		public abstract void SendResponse (Message originalMessage, Message response);
+		#endif
 
 		public IEnumerable<MessageEventArgs> Tick()
 		{
@@ -363,13 +459,37 @@ namespace Tempest.Tests
 				ThreadPool.QueueUserWorkItem (s => OnDisconnected ((DisconnectedEventArgs)s), e);
 		}
 
+		#if NET_4
+		internal void ReceiveResponse (MessageEventArgs e)
+		{
+			bool response = false;
+			TaskCompletionSource<Message> tcs;
+			lock (this.responses)
+				response = this.responses.TryGetValue (e.Message.MessageId, out tcs);
+
+			if (response)
+				tcs.SetResult (e.Message);
+
+			Receive (e);
+		}
+		#endif
+
 		internal void Receive (MessageEventArgs e)
 		{
+			var context = new SerializationContext (new TypeMap());
+			var writer = new BufferValueWriter (new byte[1024]);
+			e.Message.WritePayload (context, writer);
+
+			var reader = new BufferValueReader (writer.Buffer);
+			var message = e.Message.Protocol.Create (e.Message.MessageType);
+			message.ReadPayload (context, reader);
+			message.MessageId = e.Message.MessageId;
+
 			var tmessage = (e.Message as TempestMessage);
 			if (tmessage == null)
-				OnMessageReceived (e);
+				OnMessageReceived (new MessageEventArgs (e.Connection, message));
 			else
-				OnTempestMessageReceived (e);
+				OnTempestMessageReceived (new MessageEventArgs (e.Connection, message));
 		}
 
 		protected virtual void OnTempestMessageReceived (MessageEventArgs e)

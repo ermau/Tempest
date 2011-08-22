@@ -30,21 +30,15 @@ namespace Tempest
 {
 	public class MessageHeader
 	{
-		internal MessageHeader (Protocol protocol, Message message, int messageLength, int headerLength, ISerializationContext serializationContext, byte[] iv)
+		internal MessageHeader (Protocol protocol, Message message)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
 			if (message == null)
 				throw new ArgumentNullException ("message");
-			if (serializationContext == null)
-				throw new ArgumentNullException ("serializationContext");
 
 			Protocol = protocol;
 			Message = message;
-			MessageLength = messageLength;
-			HeaderLength = headerLength;
-			SerializationContext = serializationContext;
-			IV = iv;
 		}
 
 		public Protocol Protocol
@@ -65,25 +59,40 @@ namespace Tempest
 		public int MessageLength
 		{
 			get;
-			private set;
+			internal set;
 		}
 
 		public int HeaderLength
 		{
 			get;
-			private set;
+			internal set;
 		}
 
 		public ISerializationContext SerializationContext
 		{
 			get;
-			private set;
+			internal set;
 		}
 
 		public byte[] IV
 		{
 			get;
-			private set;
+			internal set;
+		}
+
+		/// <summary>
+		/// Gets whether the message is a response to another message or not.
+		/// </summary>
+		public bool IsResponse
+		{
+			get;
+			internal set;
+		}
+
+		public int MessageId
+		{
+			get;
+			internal set;
 		}
 	}
 }

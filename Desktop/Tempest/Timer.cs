@@ -34,6 +34,9 @@ namespace Tempest
 
 		public void Start()
 		{
+			if (!this.alive)
+				throw new ObjectDisposedException ("Timer");
+
 			lock (this.sync)
 			{
 				if (this.timerThread == null)
@@ -51,11 +54,19 @@ namespace Tempest
 
 		public void Stop()
 		{
+			if (!this.alive)
+				throw new ObjectDisposedException ("Timer");
+
 			this.running = false;
 		}
 
 		public void Dispose()
 		{
+			if (!this.alive)
+				return;
+
+			Stop();
+
 			this.alive = false;
 
 			Thread t = null;
@@ -88,7 +99,7 @@ namespace Tempest
 				Thread.Sleep (Interval / 4);
 				if (!this.running)
 					last = DateTime.Now;
-				else if (last.Subtract (DateTime.Now).TotalMilliseconds > Interval)
+				else if (DateTime.Now.Subtract (last).TotalMilliseconds > Interval)
 				{
 					callback();
 					last = DateTime.Now;

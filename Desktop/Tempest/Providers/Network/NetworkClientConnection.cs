@@ -216,7 +216,10 @@ namespace Tempest.Providers.Network
 							this.activityTimer.Dispose();
 
 						if (ping.Interval != 0)
+						{
 							this.activityTimer = new Tempest.Timer (ping.Interval, ActivityCallback);
+							this.activityTimer.Start();
+						}
 					}
 					else if (ping.Interval != this.pingFrequency)
 						this.activityTimer.Interval = ping.Interval;

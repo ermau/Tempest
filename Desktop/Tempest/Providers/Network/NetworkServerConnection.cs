@@ -70,7 +70,11 @@ namespace Tempest.Providers.Network
 
 			provider.PingFrequencyChanged += ProviderOnPingFrequencyChanged;
 
-			this.pingTimer = new Timer (provider.PingFrequency, PingCallback);
+			lock (this.pingSync)
+			{
+				this.pingTimer = new Timer (provider.PingFrequency, PingCallback);
+				this.pingTimer.Start();
+			}
 		}
 
 		public override IAsymmetricKey RemoteKey

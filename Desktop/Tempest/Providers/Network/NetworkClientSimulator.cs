@@ -144,7 +144,7 @@ namespace Tempest.Providers.Network
 		}
 
 		#if NET_4
-		public Task<TResponse> Send<TResponse> (Message message) where TResponse : Message
+		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
 		{
 			throw new NotImplementedException();
 		}

@@ -200,9 +200,9 @@ namespace Tempest.Tests
 		}
 
 		#if NET_4
-		public override Task<TResponse> Send<TResponse> (Message message)
+		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
 		{
-			Task<TResponse> task = base.Send<TResponse> (message);
+			Task<TResponse> task = base.SendFor<TResponse> (message, timeout);
 			Send (message);
 			return task;
 		}
@@ -283,9 +283,9 @@ namespace Tempest.Tests
 		}
 
 		#if NET_4
-		public override Task<TResponse> Send<TResponse> (Message message)
+		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
 		{
-			Task<TResponse> task = base.Send<TResponse> (message);
+			Task<TResponse> task = base.SendFor<TResponse> (message, timeout);
 			connection.Receive (new MessageEventArgs (connection, message));
 			return task;
 		}
@@ -399,8 +399,13 @@ namespace Tempest.Tests
 
 		#if NET_4
 		private readonly Dictionary<int, TaskCompletionSource<Message>> responses = new Dictionary<int, TaskCompletionSource<Message>>();
-		public virtual Task<TResponse> Send<TResponse> (Message message) where TResponse : Message
+		public virtual Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
 		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+			if (timeout > 0)
+				throw new NotSupportedException();
+
 			var tcs = new TaskCompletionSource<TResponse>();
 			var otcs = new TaskCompletionSource<Message>();
 			otcs.Task.ContinueWith (t => tcs.SetResult ((TResponse)t.Result));

@@ -177,11 +177,11 @@ namespace Tempest.Providers.Network
 		}
 
 		#if NET_4
-		public Task<TResponse> Send<TResponse> (Message message)
+		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
 			where TResponse : Message
 		{
 			var tcs = new TaskCompletionSource<Message>();
-			SendMessage (message, false, tcs);
+			SendMessage (message, false, tcs, timeout);
 
 			return tcs.Task.ContinueWith (t => (TResponse)t.Result);
 		}
@@ -190,6 +190,8 @@ namespace Tempest.Providers.Network
 		{
 			if (originalMessage == null)
 				throw new ArgumentNullException ("originalMessage");
+			if (originalMessage.IsResponse)
+				throw new ArgumentException ("originalMessage can't be a response", "originalMessage");
 			if (response == null)
 				throw new ArgumentNullException ("response");
 
@@ -541,7 +543,7 @@ namespace Tempest.Providers.Network
 
 		#if NET_4
 		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();		
-		private void SendMessage (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null)
+		private void SendMessage (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null, int timeout = 0)
 		#else
 		private void SendMessage (Message message, bool isResponse = false)
 		#endif
@@ -550,6 +552,8 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("message");
 			if (!this.IsConnected)
 				return;
+			if (timeout > 0)
+				throw new NotSupportedException ("Response timeout not support");
 
 			SocketAsyncEventArgs eargs = null;
 			#if NET_4

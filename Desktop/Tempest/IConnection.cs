@@ -116,9 +116,29 @@ namespace Tempest
 		void Send (Message message);
 
 		#if NET_4
-		Task<TResponse> Send<TResponse> (Message message) where TResponse : Message;
-		//Task<TResponse> Send<TResponse> (Message message, int timeout) where TResponse : Message;
+		/// <summary>
+		/// Sends a <paramref name="message"/> on this connection and returns a <see cref="Task{TResponse}" /> for the direct response to this <paramref name="message"/>.
+		/// </summary>
+		/// <typeparam name="TResponse">The type of message being expected in response.</typeparam>
+		/// <param name="message">The message to send.</param>
+		/// <param name="timeout">The timeout to apply in </param>
+		/// <returns>A <see cref="Task{TResponse}" /> for the direct response to <paramref name="message"/>.</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
+		/// <seealso cref="SendResponse"/>
+		Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message;
 
+		/// <summary>
+		/// Sends a <paramref name="response"/> to <paramref name="originalMessage"/>.
+		/// </summary>
+		/// <param name="originalMessage"></param>
+		/// <param name="response"></param>
+		/// <exception cref="ArgumentNullException">
+		/// <para><paramref name="originalMessage"/> is <c>null</c>.</para>
+		/// <para>-- or --</para>
+		/// <para><paramref name="response"/> is <c>null</c>.</para>
+		/// </exception>
+		/// <exception cref="ArgumentException"><paramref name="originalMessage" />'s <see cref="Message.IsResponse"/> is <c>true</c>.</exception>
+		/// <seealso cref="SendFor{TResponse}"/>
 		void SendResponse (Message originalMessage, Message response);
 		#endif
 

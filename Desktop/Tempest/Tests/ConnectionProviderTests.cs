@@ -1359,7 +1359,7 @@ namespace Tempest.Tests
 			this.provider.Start (MessageTypes);
 
 			c.Disconnected += test.FailHandler;
-			c.Connected += (sender, e) => c.Send<MockMessage> (cmessage).ContinueWith (t => test.PassHandler (sc, new MessageEventArgs<MockMessage> (sc, t.Result)));
+			c.Connected += (sender, e) => c.SendFor<MockMessage> (cmessage).ContinueWith (t => test.PassHandler (sc, new MessageEventArgs<MockMessage> (sc, t.Result)));
 			c.ConnectAsync (EndPoint, MessageTypes);
 
 			if (!wait.WaitOne (10000))

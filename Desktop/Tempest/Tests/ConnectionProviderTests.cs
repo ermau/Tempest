@@ -1298,14 +1298,15 @@ namespace Tempest.Tests
 		{
 			var cmessage = new AuthenticatedTypeHeaderedMessage
 			{
-				Object = new ArrayList()
+				Object = "foo"
 			};
 
 			AssertMessageReceived (cmessage, msg =>
 			{
 				Assert.IsFalse (msg.Encrypted);
 				Assert.IsTrue (msg.Authenticated);
-				Assert.IsInstanceOf<ArrayList> (msg.Object);
+				Assert.IsInstanceOf<string> (msg.Object);
+				Assert.AreEqual (cmessage.Object, msg.Object);
 			});
 		}
 

@@ -92,6 +92,9 @@ namespace Tempest.Providers.Network
 			}
 
 			this.protocols[1] = TempestMessage.InternalProtocol;
+
+			this.sendArgs.SetBuffer (new byte[1024], 0, 1024);
+			this.sendArgs.Completed += ReliableSendCompleted;
 			
 			#if TRACE
 			this.connectionId = Interlocked.Increment (ref nextConnectionId);
@@ -539,7 +542,9 @@ namespace Tempest.Providers.Network
 			return rawMessage;
 		}
 
-		private readonly object sendSync = new object();
+		//private readonly object sendSync = new object();
+
+		private SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
 
 		#if NET_4
 		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();		
@@ -548,114 +553,153 @@ namespace Tempest.Providers.Network
 		private void SendMessage (Message message, bool isResponse = false)
 		#endif
 		{
+			int c = GetNextCallId();
+			string callCategory = String.Format ("{1}:{2} {4}:Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId, c);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
+
 			if (message == null)
 				throw new ArgumentNullException ("message");
 			if (!this.IsConnected)
+			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (not connected)", callCategory);
 				return;
+			}
+
+			//SocketAsyncEventArgs eargs = null;
+			//#if NET_4
+			//if (timeout > 0)
+			//    throw new NotSupportedException ("Response timeout not support");
+
+			//if (!writerAsyncArgs.TryPop (out eargs))
+			//{
+			//    while (eargs == null)
+			//    {
+			//        int count = bufferCount;
+			//        if (count == BufferLimit)
+			//        {
+			//            SpinWait wait = new SpinWait();
+			//            while (!writerAsyncArgs.TryPop (out eargs))
+			//                wait.SpinOnce();
+
+			//            eargs.AcceptSocket = null;
+			//        }
+			//        else if (count == Interlocked.CompareExchange (ref bufferCount, count + 1, count))
+			//        {
+			//            eargs = new SocketAsyncEventArgs();
+			//            eargs.SetBuffer (new byte[1024], 0, 1024);
+			//        }
+			//    }
+			//}
+			//else
+			//    eargs.AcceptSocket = null;
+			//#else
+			//while (eargs == null)
+			//{
+			//    lock (writerAsyncArgs)
+			//    {
+			//        if (writerAsyncArgs.Count != 0)
+			//        {
+			//            eargs = writerAsyncArgs.Pop();
+			//            #if !SILVERLIGHT
+			//            eargs.AcceptSocket = null;
+			//            #endif
+			//        }
+			//        else
+			//        {
+			//            if (bufferCount != BufferLimit)
+			//            {
+			//                bufferCount++;
+			//                eargs = new SocketAsyncEventArgs();
+			//                eargs.SetBuffer (new byte[1024], 0, 1024);
+			//            }
+			//        }
+			//    }
+			//}
+			//#endif
+
+			#if NET_4
+			SpinWait wait = new SpinWait();
+			#endif
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Waiting for buffer", callCategory);
 
 			SocketAsyncEventArgs eargs = null;
-			#if NET_4
-			if (timeout > 0)
-				throw new NotSupportedException ("Response timeout not support");
-
-			if (!writerAsyncArgs.TryPop (out eargs))
+			//while (!this.disconnecting && (eargs = Interlocked.CompareExchange (ref this.sendArgs, null, sendArgs)) == null)
+			while (!this.disconnecting && (eargs = Interlocked.Exchange (ref this.sendArgs, null)) == null)
 			{
-				while (eargs == null)
-				{
-					int count = bufferCount;
-					if (count == BufferLimit)
-					{
-						SpinWait wait = new SpinWait();
-						while (!writerAsyncArgs.TryPop (out eargs))
-							wait.SpinOnce();
+				#if !NET_4
+				Thread.Sleep (1);
+				#else
+				wait.SpinOnce();
+				#endif
+			}
 
-						eargs.AcceptSocket = null;
-					}
-					else if (count == Interlocked.CompareExchange (ref bufferCount, count + 1, count))
-					{
-						eargs = new SocketAsyncEventArgs();
-						eargs.SetBuffer (new byte[1024], 0, 1024);
-					}
+			if (eargs == null)
+			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (null buffer)", callCategory);
+				return;
+			}
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Have buffer", callCategory);
+
+			bool sent;
+			//lock (this.sendSync)
+			//{
+			if (!isResponse)
+			{
+				lock (this.messageIdSync)
+				{
+					if (this.nextMessageId == MaxMessageId)
+						this.nextMessageId = 0;
+					else
+						message.MessageId = this.nextMessageId++;
 				}
 			}
-			else
-				eargs.AcceptSocket = null;
-			#else
-			while (eargs == null)
+			
+			#if NET_4
+			if (future != null)
 			{
-				lock (writerAsyncArgs)
-				{
-					if (writerAsyncArgs.Count != 0)
-					{
-						eargs = writerAsyncArgs.Pop();
-						#if !SILVERLIGHT
-						eargs.AcceptSocket = null;
-						#endif
-					}
-					else
-					{
-						if (bufferCount != BufferLimit)
-						{
-							bufferCount++;
-							eargs = new SocketAsyncEventArgs();
-							eargs.SetBuffer (new byte[1024], 0, 1024);
-						}
-					}
-				}
+				lock (this.messageResponses)
+					this.messageResponses.Add (message.MessageId, future);
 			}
 			#endif
 
-			bool sent;
-			lock (this.sendSync)
+			int length;
+			byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
+
+			eargs.AcceptSocket = null;
+			eargs.SetBuffer (buffer, 0, length);
+			eargs.UserToken = message;
+
+			lock (this.stateSync)
 			{
-				if (!isResponse)
+				if (!this.IsConnected)
 				{
-					lock (this.messageIdSync)
-					{
-						if (this.nextMessageId == MaxMessageId)
-							this.nextMessageId = 0;
-						else
-							message.MessageId = this.nextMessageId++;
-					}
+					if (eargs != null)
+						Interlocked.Exchange (ref this.sendArgs, eargs);
+					//#if !NET_4
+					//lock (writerAsyncArgs)
+					//#endif
+					//writerAsyncArgs.Push (eargs);
+
+					return;
 				}
-			
-				#if NET_4
-				if (future != null)
-				{
-					lock (this.messageResponses)
-						this.messageResponses.Add (message.MessageId, future);
-				}
-				#endif
 
-				int length;
-				byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
+				//eargs.Completed += ReliableSendCompleted;
+				int p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
 
-				eargs.SetBuffer (buffer, 0, length);
-				eargs.UserToken = message;
-
-				lock (this.stateSync)
-				{
-					if (!this.IsConnected)
-					{
-						#if !NET_4
-						lock (writerAsyncArgs)
-						#endif
-						writerAsyncArgs.Push (eargs);
-
-						return;
-					}
-
-					eargs.Completed += ReliableSendCompleted;
-					int p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p),
-									   String.Format ("{1}:{2} Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId));
-
-					sent = !this.reliableSocket.SendAsync (eargs);
-				}
+				sent = !this.reliableSocket.SendAsync (eargs);
 			}
+			//}
 
 			if (sent)
+			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Send completed synchronously", callCategory);
 				ReliableSendCompleted (this.reliableSocket, eargs);
+			}
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}
 
 		/// <returns><c>true</c> if there was sufficient data to retrieve the message's header.</returns>
@@ -1121,14 +1165,16 @@ namespace Tempest.Providers.Network
 			int c = GetNextCallId();
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
 
-			e.Completed -= ReliableSendCompleted;
+			//e.Completed -= ReliableSendCompleted;
 
 			var message = (Message)e.UserToken;
 
-			#if !NET_4
-			lock (writerAsyncArgs)
-			#endif
-			writerAsyncArgs.Push (e);
+			//#if !NET_4
+			//lock (writerAsyncArgs)
+			//#endif
+			//writerAsyncArgs.Push (e);
+			if (Interlocked.Exchange (ref this.sendArgs, e) != null)
+				Debugger.Break();
 
 			int p;
 			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
@@ -1184,16 +1230,16 @@ namespace Tempest.Providers.Network
 		protected static int nextConnectionId;
 		#endif
 
-		// TODO: Better buffer limit
-		private static readonly int BufferLimit = Environment.ProcessorCount * 10;
-		private static volatile int bufferCount = 0;
+		//// TODO: Better buffer limit
+		//private static readonly int BufferLimit = Environment.ProcessorCount * 10;
+		//private static volatile int bufferCount = 0;
 
 		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "NetworkConnectionProvider");
 
-		#if NET_4
-		private static readonly ConcurrentStack<SocketAsyncEventArgs> writerAsyncArgs = new ConcurrentStack<SocketAsyncEventArgs>();
-		#else
-		private static readonly Stack<SocketAsyncEventArgs> writerAsyncArgs = new Stack<SocketAsyncEventArgs>();
-		#endif
+		//#if NET_4
+		//private static readonly ConcurrentStack<SocketAsyncEventArgs> writerAsyncArgs = new ConcurrentStack<SocketAsyncEventArgs>();
+		//#else
+		//private static readonly Stack<SocketAsyncEventArgs> writerAsyncArgs = new Stack<SocketAsyncEventArgs>();
+		//#endif
 	}
 }

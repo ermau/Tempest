@@ -547,6 +547,58 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
+		public void StressConcurrentSends()
+		{
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+
+			const int messages = 10000;
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull(me);
+				Assert.AreSame (c, me.Connection);
+
+				int n;
+				Assert.IsTrue (Int32.TryParse (((MockMessage)me.Message).Content, out n));
+			}, messages);
+
+			const int threads = 4;
+			ParameterizedThreadStart thread = s =>
+			{
+				IConnection cn = (IConnection)s;
+				try
+				{
+					for (int i = 0; i < (messages / threads); ++i)
+					{
+						if (i > Int32.MaxValue)
+							System.Diagnostics.Debugger.Break();
+
+						cn.Send (new MockMessage { Content = i.ToString() });
+					}
+				}
+				catch (Exception ex)
+				{
+					test.FailWith (ex);
+				}
+			};
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) =>
+			{
+				for (int i = 0; i < threads; ++i)
+					new Thread (thread).Start (e.Connection);
+			};
+
+			c.Disconnected += test.FailHandler;
+			c.MessageReceived += test.PassHandler;
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			test.Assert (600000);
+		}
+
+		[Test, Repeat (3)]
 		public void StressAuthenticatedAndEncrypted()
 		{
 			var c = GetNewClientConnection();

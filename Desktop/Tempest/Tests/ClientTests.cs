@@ -27,6 +27,7 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -34,11 +35,7 @@ namespace Tempest.Tests
 	[TestFixture]
 	public class ClientTests
 	{
-		private static Protocol protocol;
-		static ClientTests()
-		{
-			protocol = ProtocolTests.GetTestProtocol();
-		}
+		private static readonly Protocol protocol = MockProtocol.Instance;
 
 		private MockClient client;
 		private MockConnectionProvider provider;
@@ -94,6 +91,37 @@ namespace Tempest.Tests
 			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 
 			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void DisconnectWhileReceiving()
+		{
+			var test = new AsyncTest<ClientDisconnectedEventArgs> (e =>
+			{
+				Assert.AreEqual (ConnectionResult.Custom, e.Reason);
+				Assert.IsTrue (e.Requested);
+			});
+
+			bool send = true;
+			client.Connected += (sender, e) =>
+			{
+				new Thread (() =>
+				{
+					MockMessage m = new MockMessage { Content = "asdf" };
+					for (int i = 0; i < 10000 && send; ++i)
+						connection.Receive (new MessageEventArgs (connection, m));
+				}).Start();
+				
+				Thread.Sleep (50);
+				client.Disconnect (true);
+			};
+
+			client.Disconnected += test.PassHandler;
+
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
+
+			test.Assert (10000);
+			send = false;
 		}
 
 		[Test, Repeat (3)]

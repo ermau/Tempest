@@ -76,8 +76,8 @@ namespace Tempest
 					t = this.timerThread;
 			}
 
-			if (t != null)
-				t.Join();
+			//if (t != null)
+			//    t.Join();
 		}
 
 		private int interval;

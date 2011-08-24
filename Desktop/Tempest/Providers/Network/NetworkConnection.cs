@@ -679,8 +679,14 @@ namespace Tempest.Providers.Network
 
 			//lock (this.stateSync)
 			//{
+				int p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
+
 				if (!this.IsConnected)
 				{
+					Interlocked.Decrement (ref this.pendingAsync);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
+
 					//if (eargs != null)
 					//    Interlocked.Exchange (ref this.sendArgs, eargs);
 					#if !NET_4
@@ -692,8 +698,6 @@ namespace Tempest.Providers.Network
 				}
 
 				eargs.Completed += ReliableSendCompleted;
-				int p = Interlocked.Increment (ref this.pendingAsync);
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
 
 				sent = !this.reliableSocket.SendAsync (eargs);
 			//}

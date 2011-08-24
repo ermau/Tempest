@@ -363,16 +363,17 @@ namespace Tempest.Providers.Network
 
 		protected void EncryptMessage (BufferValueWriter writer, ref int headerLength)
 		{
-			if (this.aes == null)
-				throw new InvalidOperationException ("Attempting to encrypt a message without an encryptor");
+			AesManaged am = this.aes;
+			if (am == null)
+				return;
 
 			ICryptoTransform encryptor = null;
 			byte[] iv = null;
-			lock (this.aes)
+			lock (am)
 			{
-				this.aes.GenerateIV();
-				iv = this.aes.IV;
-				encryptor = this.aes.CreateEncryptor();
+				am.GenerateIV();
+				iv = am.IV;
+				encryptor = am.CreateEncryptor();
 			}
 
 			const int workingHeaderLength = BaseHeaderLength;// - sizeof (int); // Need to encrypt message id
@@ -397,11 +398,15 @@ namespace Tempest.Providers.Network
 
 			byte[] payload = r.ReadBytes();
 
+			AesManaged am = this.aes;
+			if (am == null)
+				return;
+
 			ICryptoTransform decryptor;
-			lock (this.aes)
+			lock (am)
 			{
-				this.aes.IV = header.IV;
-				decryptor = this.aes.CreateDecryptor();
+				am.IV = header.IV;
+				decryptor = am.CreateDecryptor();
 			}
 
 			message = decryptor.TransformFinalBlock (payload, 0, payload.Length);

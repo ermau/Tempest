@@ -169,7 +169,9 @@ namespace Tempest.Tests
 			if (this.complete)
 				return;
 
-			Trace.WriteLine ("Fail handler called from " + new Exception().StackTrace);
+			#if !SILVERLIGHT
+			Trace.WriteLine ("Fail handler called from " + Environment.StackTrace);
+			#endif
 
 			failed = true;
 		}
@@ -228,7 +230,7 @@ namespace Tempest.Tests
 				while (DateTime.Now.Subtract (start).TotalMilliseconds < timeout)
 				{
 					if (failed)
-						NAssert.Fail();
+						NAssert.Fail ("Test was set as failed");
 					else if (passed || (exception as SuccessException) != null)
 						return;
 					else if (this.timesToPass != 0 && this.passCount >= this.timesToPass)

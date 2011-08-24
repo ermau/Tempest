@@ -775,7 +775,7 @@ namespace Tempest.Providers.Network
 
 					if (remaining < headerLength + (sizeof(ushort) * 2))
 					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (types))", callCategory);
 						return false;
 					}
 
@@ -784,7 +784,7 @@ namespace Tempest.Providers.Network
 
 					if (remaining < headerLength)
 					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (types))", callCategory);
 						return false;
 					}
 
@@ -803,10 +803,16 @@ namespace Tempest.Providers.Network
 				byte[] iv = null;
 				if (msg.Encrypted && this.aes != null)
 				{
-					int length = this.aes.IV.Length;
-					iv = reader.ReadBytes (length);
+					int ivLength = this.aes.IV.Length;
+					if (remaining < headerLength + ivLength)
+					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (IV))");
+						return false;
+					}
 
-					headerLength += length;
+					iv = reader.ReadBytes (ivLength);
+
+					headerLength += ivLength;
 					if (remaining < headerLength)
 					{
 						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);

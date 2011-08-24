@@ -687,7 +687,7 @@ namespace Tempest.Tests
 				Assert.IsNotNull (me);
 				Assert.AreSame (c, me.Connection);
 
-				Assert.AreEqual (number, ((AuthenticatedMessage)me.Message).Number);
+				Assert.AreEqual (number++, ((AuthenticatedMessage)me.Message).Number);
 				Assert.IsTrue ((((AuthenticatedMessage)me.Message).Message.Length >= 7500));
 			}, messages);
 

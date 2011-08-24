@@ -85,12 +85,12 @@ namespace Tempest.Providers.Network
 			string callCategory = String.Format ("NetworkServerConnection:{1} PingCallback({0})", this.pingsOut, connectionId);
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
-			if (this.pingsOut >= 2)
-			{
-				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (" + this.pingsOut + " pings out)", callCategory);
-				Disconnect(); // Connection timed out
-				return;
-			}
+			//if (this.pingsOut >= 2)
+			//{
+			//    Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (" + this.pingsOut + " pings out)", callCategory);
+			//    Disconnect(); // Connection timed out
+			//    return;
+			//}
 
 			Send (new PingMessage { Interval = provider.PingFrequency });
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);

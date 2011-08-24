@@ -304,8 +304,8 @@ namespace Tempest.Providers.Network
 
 		private void ActivityCallback (object sender, EventArgs e)
 		{
-			if (!this.disconnecting && DateTime.Now.Subtract (this.lastReceived).TotalMilliseconds > this.pingFrequency * 2)
-				Disconnect();
+			//if (!this.disconnecting && DateTime.Now.Subtract (this.lastReceived).TotalMilliseconds > this.pingFrequency * 2)
+			//    Disconnect();
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

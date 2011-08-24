@@ -228,10 +228,7 @@ namespace Tempest
 					this.mqueue.Clear();
 			}
 
-			Thread runner = Interlocked.Exchange (ref this.messageRunner, null);
-			if (runner != null && Thread.CurrentThread != runner)
-				runner.Join();
-
+			this.messageRunner = null;
 			this.disconnecting = false;
 		}
 

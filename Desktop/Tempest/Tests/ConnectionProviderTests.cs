@@ -515,9 +515,6 @@ namespace Tempest.Tests
 				Assert.AreSame (c, me.Connection);
 
 				Assert.AreEqual ((message++).ToString(), ((MockMessage)me.Message).Content);
-
-				if (message == messages)
-					Assert.Pass();
 			}, messages);
 
 			this.provider.Start (MessageTypes);
@@ -529,6 +526,9 @@ namespace Tempest.Tests
 					{
 						if (i > Int32.MaxValue)
 							System.Diagnostics.Debugger.Break();
+
+						if (!e.Connection.IsConnected)
+							return;
 
 						e.Connection.Send (new MockMessage { Content = i.ToString() });
 					}
@@ -575,6 +575,9 @@ namespace Tempest.Tests
 						if (i > Int32.MaxValue)
 							System.Diagnostics.Debugger.Break();
 
+						if (!cn.IsConnected)
+							return;
+
 						cn.Send (new MockMessage { Content = i.ToString() });
 					}
 				}
@@ -615,10 +618,7 @@ namespace Tempest.Tests
 				Assert.AreSame (c, me.Connection);
 
 				Assert.AreEqual (number, ((AuthenticatedAndEncryptedMessage)me.Message).Number);
-				Assert.AreEqual (number.ToString(), ((AuthenticatedAndEncryptedMessage)me.Message).Message);
-
-				if (++number == messages)
-					Assert.Pass();
+				Assert.AreEqual (number++.ToString(), ((AuthenticatedAndEncryptedMessage)me.Message).Message);
 			}, messages);
 
 			this.provider.Start (MessageTypes);
@@ -630,6 +630,9 @@ namespace Tempest.Tests
 					{
 						if (i > Int32.MaxValue)
 							System.Diagnostics.Debugger.Break();
+						
+						if (!e.Connection.IsConnected)
+							return;
 
 						e.Connection.Send (new AuthenticatedAndEncryptedMessage { Number = i, Message = i.ToString() });
 					}
@@ -686,9 +689,6 @@ namespace Tempest.Tests
 
 				Assert.AreEqual (number, ((AuthenticatedMessage)me.Message).Number);
 				Assert.IsTrue ((((AuthenticatedMessage)me.Message).Message.Length >= 7500));
-
-				if (++number == messages)
-					Assert.Pass();
 			}, messages);
 
 			this.provider.Start (MessageTypes);
@@ -701,6 +701,9 @@ namespace Tempest.Tests
 					{
 						if (i > Int32.MaxValue)
 							System.Diagnostics.Debugger.Break();
+
+						if (!e.Connection.IsConnected)
+							return;
 
 						e.Connection.Send (new AuthenticatedMessage { Number = i, Message = GetLongString (r.Next(7500, 100000)) });
 					}
@@ -744,6 +747,9 @@ namespace Tempest.Tests
 					{
 						if (i > Int32.MaxValue)
 							System.Diagnostics.Debugger.Break();
+
+						if (!e.Connection.IsConnected)
+							return;
 
 						e.Connection.Send (new AuthenticatedTypeHeaderedMessage { Object = GetLongString (r.Next (7500, 100000)) });
 					}

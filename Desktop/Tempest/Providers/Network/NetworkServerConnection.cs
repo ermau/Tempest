@@ -67,14 +67,6 @@ namespace Tempest.Providers.Network
 
 			if (!this.reliableSocket.ReceiveAsync (asyncArgs))
 				ReliableReceiveCompleted (this, asyncArgs);
-
-			provider.PingFrequencyChanged += ProviderOnPingFrequencyChanged;
-
-			lock (this.pingSync)
-			{
-				this.pingTimer = new Timer (provider.PingFrequency, PingCallback);
-				this.pingTimer.Start();
-			}
 		}
 
 		public override IAsymmetricKey RemoteKey
@@ -87,21 +79,21 @@ namespace Tempest.Providers.Network
 		private bool receivedProtocols;
 		private readonly IEnumerable<string> signatureHashAlgs;
 		private readonly NetworkConnectionProvider provider;
-
-		private readonly object pingSync = new object();
-		private Timer pingTimer;
-
-		private void PingCallback()
+		
+		internal void Ping (object sender, EventArgs e)
 		{
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("NetworkServerConnection:{1} PingCallback({0})", this.pingsOut, connectionId));
+			string callCategory = String.Format ("NetworkServerConnection:{1} PingCallback({0})", this.pingsOut, connectionId);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			if (this.pingsOut >= 2)
 			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (" + this.pingsOut + " pings out)", callCategory);
 				Disconnect(); // Connection timed out
 				return;
 			}
 
 			Send (new PingMessage { Interval = provider.PingFrequency });
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}
 
 		protected override void OnMessageReceived (MessageEventArgs e)
@@ -258,34 +250,14 @@ namespace Tempest.Providers.Network
 
 		protected override void OnMessageSent (MessageEventArgs e)
 		{
-			var pingMsg = (e.Message as PingMessage);
-			if (pingMsg != null)
+			if (e.Message is PingMessage)
 				Interlocked.Increment (ref this.pingsOut);
 
 			base.OnMessageSent(e);
 		}
 
-		private void ProviderOnPingFrequencyChanged (object sender, EventArgs e)
-		{
-			lock (this.pingSync)
-			{
-				if (this.pingTimer != null)
-					this.pingTimer.Interval = this.provider.PingFrequency;
-			}
-		}
-
 		protected override void Recycle()
 		{
-			lock (this.pingSync)
-			{
-				if (this.pingTimer != null)
-				{
-					this.pingTimer.Dispose();
-					this.pingTimer = null;
-				}
-			}
-
-			this.provider.PingFrequencyChanged -= ProviderOnPingFrequencyChanged;
 			this.provider.Disconnect (this);
 
 			if (this.reliableSocket == null)

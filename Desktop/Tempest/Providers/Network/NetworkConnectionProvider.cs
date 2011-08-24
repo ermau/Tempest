@@ -36,8 +36,6 @@ using System.Threading;
 using System.Threading.Tasks;
 #endif
 
-using System.Threading;
-
 namespace Tempest.Providers.Network
 {
 	/// <summary>
@@ -238,6 +236,9 @@ namespace Tempest.Providers.Network
 			this.running = true;
 			this.mtypes = types;
 
+			this.pingTimer = new Timer (PingFrequency);
+			this.pingTimer.Start();
+
 			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Waiting for keys..", "NetworkConnectionProvider Start");
 			this.keyWait.WaitOne();
 			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Keys ready", "NetworkConnectionProvider Start");
@@ -280,17 +281,26 @@ namespace Tempest.Providers.Network
 
 			this.running = false;
 
-			if (this.reliableSocket != null)
+			Timer t = this.pingTimer;
+			if (t != null)
+			{
+				t.Dispose();
+				this.pingTimer = null;
+			}
+
+			Socket rs = this.reliableSocket;
+			if (rs != null)
 			{
 				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Closing reliable socket", "NetworkConnectionProvider Stop");
-				this.reliableSocket.Close();
+				rs.Close();
 				this.reliableSocket = null;
 			}
 
-			if (this.unreliableSocket != null)
+			Socket us = this.unreliableSocket;
+			if (us != null)
 			{
 				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Closing unreliable socket", "NetworkConnectionProvider Stop");
-				this.unreliableSocket.Close();
+				us.Close();
 				this.unreliableSocket = null;
 			}
 
@@ -321,6 +331,7 @@ namespace Tempest.Providers.Network
 			Stop();
 		}
 
+		private Timer pingTimer;
 		private int pingFrequency = 15000;
 
 		private volatile bool running;
@@ -344,13 +355,16 @@ namespace Tempest.Providers.Network
 
 		private readonly List<NetworkServerConnection> serverConnections;
 		private readonly List<NetworkServerConnection> pendingConnections = new List<NetworkServerConnection>();
-
+		
 		internal void Connect (NetworkServerConnection connection)
 		{
 			lock (this.serverConnections)
 			{
 				if (this.pendingConnections.Remove (connection))
+				{
 					this.serverConnections.Add (connection);
+					this.pingTimer.TimesUp += connection.Ping;
+				}
 			}
 
 			if (!connection.IsConnected)
@@ -370,8 +384,15 @@ namespace Tempest.Providers.Network
 			lock (this.serverConnections)
 			{
 			    bool atMax = (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections);
-			    if ((this.pendingConnections.Remove (connection) || this.serverConnections.Remove (connection)) && atMax)
-			        BeginAccepting (null);
+
+				bool connected = this.serverConnections.Remove (connection);
+			    if ((connected || this.pendingConnections.Remove (connection)) && atMax)
+			    {
+					if (connected)
+						this.pingTimer.TimesUp -= connection.Ping;
+
+			    	BeginAccepting (null);
+			    }
 			}
 		}
 

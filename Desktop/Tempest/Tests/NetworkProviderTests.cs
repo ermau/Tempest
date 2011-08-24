@@ -53,12 +53,12 @@ namespace Tempest.Tests
 
 		protected override IConnectionProvider SetUp()
 		{
-			return new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), MaxConnections);
+			return new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), MaxConnections) { PingFrequency = 2000 };
 		}
 
 		protected override IConnectionProvider SetUp (IEnumerable<Protocol> protocols)
 		{
-			return new NetworkConnectionProvider (protocols, new IPEndPoint (IPAddress.Any, 42000), MaxConnections);
+			return new NetworkConnectionProvider (protocols, new IPEndPoint (IPAddress.Any, 42000), MaxConnections) { PingFrequency = 2000 };
 		}
 
 		protected override IClientConnection SetupClientConnection ()

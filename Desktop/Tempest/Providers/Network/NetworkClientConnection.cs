@@ -217,7 +217,8 @@ namespace Tempest.Providers.Network
 
 						if (ping.Interval != 0)
 						{
-							this.activityTimer = new Tempest.Timer (ping.Interval, ActivityCallback);
+							this.activityTimer = new Tempest.Timer (ping.Interval);
+							this.activityTimer.TimesUp += ActivityCallback;
 							this.activityTimer.Start();
 						}
 					}
@@ -301,7 +302,7 @@ namespace Tempest.Providers.Network
 			base.OnDisconnected(e);
 		}
 
-		private void ActivityCallback()
+		private void ActivityCallback (object sender, EventArgs e)
 		{
 			if (!this.disconnecting && DateTime.Now.Subtract (this.lastReceived).TotalMilliseconds > this.pingFrequency * 2)
 				Disconnect();

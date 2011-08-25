@@ -625,68 +625,36 @@ namespace Tempest.Providers.Network
 			}
 			#endif
 
-			//#if NET_4
-			//SpinWait wait = new SpinWait();
-			//#endif
-
-			//Trace.WriteLineIf (NTrace.TraceVerbose, "Waiting for buffer", callCategory);
-
-			//SocketAsyncEventArgs eargs = null;
-			////while (!this.disconnecting && (eargs = Interlocked.CompareExchange (ref this.sendArgs, null, sendArgs)) == null)
-			//while (!this.disconnecting && (eargs = Interlocked.Exchange (ref this.sendArgs, null)) == null)
-			//{
-			//    #if !NET_4
-			//    Thread.Sleep (1);
-			//    #else
-			//    if (wait.NextSpinWillYield)
-			//        Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Spun {0:N0} times, yielding", wait.Count), callCategory);
-
-			//    wait.SpinOnce();
-			//    #endif
-			//}
-
-			//if (eargs == null)
-			//{
-			//    Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (null buffer)", callCategory);
-			//    return;
-			//}
-
-			//Trace.WriteLineIf (NTrace.TraceVerbose, "Have buffer", callCategory);
-
 			bool sent;
-			//lock (this.sendSync)
-			//{
 			try
 			{
-			if (!isResponse)
-			{
-				Monitor.Enter (this.sendSync);
-				lock (this.messageIdSync)
+				if (!isResponse)
 				{
-					if (this.nextMessageId == MaxMessageId)
-						this.nextMessageId = 0;
-					else
-						message.MessageId = this.nextMessageId++;
+					Monitor.Enter (this.sendSync);
+					lock (this.messageIdSync)
+					{
+						if (this.nextMessageId == MaxMessageId)
+							this.nextMessageId = 0;
+						else
+							message.MessageId = this.nextMessageId++;
+					}
 				}
-			}
-			
-			#if NET_4
-			if (future != null)
-			{
-				lock (this.messageResponses)
-					this.messageResponses.Add (message.MessageId, future);
-			}
-			#endif
 
-			int length;
-			byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
+				#if NET_4
+				if (future != null)
+				{
+					lock (this.messageResponses)
+						this.messageResponses.Add (message.MessageId, future);
+				}
+				#endif
 
-			//eargs.AcceptSocket = null;
-			eargs.SetBuffer (buffer, 0, length);
-			eargs.UserToken = message;
+				int length;
+				byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
 
-			//lock (this.stateSync)
-			//{
+
+				eargs.SetBuffer (buffer, 0, length);
+				eargs.UserToken = message;
+
 				int p = Interlocked.Increment (ref this.pendingAsync);
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
 
@@ -695,8 +663,6 @@ namespace Tempest.Providers.Network
 					Interlocked.Decrement (ref this.pendingAsync);
 					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 
-					//if (eargs != null)
-					//    Interlocked.Exchange (ref this.sendArgs, eargs);
 					#if !NET_4
 					lock (writerAsyncArgs)
 					#endif
@@ -708,7 +674,6 @@ namespace Tempest.Providers.Network
 				eargs.Completed += ReliableSendCompleted;
 
 				sent = !this.reliableSocket.SendAsync (eargs);
-			//}
 			}
 			finally
 			{
@@ -1035,27 +1000,25 @@ namespace Tempest.Providers.Network
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 
 				this.rmessageLoaded += e.BytesTransferred;
-				//lock (this.stateSync)
-				//{
-					int bufferOffset = e.Offset;
-					BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exited BufferMessages with new values: {0},{1},{2},{3},{4}", this.rmessageBuffer.Length, bufferOffset, this.rmessageOffset, this.rmessageLoaded, this.rreader.Position), callCategory);
-					e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
 
-					p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
+				int bufferOffset = e.Offset;
+				BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exited BufferMessages with new values: {0},{1},{2},{3},{4}", this.rmessageBuffer.Length, bufferOffset, this.rmessageOffset, this.rmessageLoaded, this.rreader.Position), callCategory);
+				e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
 
-					if (!IsConnected)
-					{
-						p = Interlocked.Decrement (ref this.pendingAsync);
-						Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
+				p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
 
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (not connected)", callCategory);
-						return;
-					}
+				if (!IsConnected)
+				{
+					p = Interlocked.Decrement (ref this.pendingAsync);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 
-					async = this.reliableSocket.ReceiveAsync (e);
-				//}
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (not connected)", callCategory);
+					return;
+				}
+
+				async = this.reliableSocket.ReceiveAsync (e);
 			} while (!async);
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
@@ -1109,84 +1072,73 @@ namespace Tempest.Providers.Network
 				return;
 			}
 
-			//lock (this.stateSync)
-			//{
-				Trace.WriteLineIf (NTrace.TraceVerbose, "Got state lock.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
+			this.disconnecting = true;
 
-				if (this.disconnecting || this.reliableSocket == null)
+			if (!this.reliableSocket.Connected)
+			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Socket not connected, finishing cleanup.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
+
+				while (this.pendingAsync > 1) // If called from *Completed, there'll be a pending.
+					Thread.Sleep (0);
+
+				// Shouldn't cleanup while we're still running messages.
+				Recycle();
+
+				this.disconnecting = false;
+			}
+			else if (now)
+			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Shutting down socket.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
+
+				//#if !SILVERLIGHT
+				//this.reliableSocket.Shutdown (SocketShutdown.Both);
+				//this.reliableSocket.Disconnect (true);
+				//#else
+				this.reliableSocket.Close();
+				//#endif
+				Recycle();
+
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async.", pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
+
+				while (this.pendingAsync > 1)
+					Thread.Sleep (0);
+
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Finished waiting, raising Disconnected.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
+
+				this.disconnecting = false;
+			}
+			else
+			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Disconnecting asynchronously.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
+
+				this.disconnectingReason = reason;
+				this.disconnectingCustomReason = customReason;
+
+				int p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
+
+				ThreadPool.QueueUserWorkItem (s =>
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Already disconnected, exiting", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
-					return;
-				}
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Async DC waiting for pending ({0}) async.", pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
 
-				this.disconnecting = true;
-
-				if (!this.reliableSocket.Connected)
-				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Socket not connected, finishing cleanup.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
-
-					while (this.pendingAsync > 1) // If called from *Completed, there'll be a pending.
+					while (this.pendingAsync > 2) // Disconnect is pending.
 						Thread.Sleep (0);
 
-					// Shouldn't cleanup while we're still running messages.
-					Recycle();
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Finished waiting, disconnecting async.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
 
-					this.disconnecting = false;
-				}
-				else if (now)
-				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Shutting down socket.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
-
-					//#if !SILVERLIGHT
-					//this.reliableSocket.Shutdown (SocketShutdown.Both);
-					//this.reliableSocket.Disconnect (true);
-					//#else
-					this.reliableSocket.Close();
-					//#endif
-					Recycle();
-
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async.", pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
-
-					while (this.pendingAsync > 1)
-						Thread.Sleep (0);
-
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Finished waiting, raising Disconnected.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
-
-					this.disconnecting = false;
-				}
-				else
-				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Disconnecting asynchronously.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
-
-					this.disconnectingReason = reason;
-					this.disconnectingCustomReason = customReason;
-
-					int p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
-
-					ThreadPool.QueueUserWorkItem (s =>
-					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Async DC waiting for pending ({0}) async.", pendingAsync), String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
-
-						while (this.pendingAsync > 2) // Disconnect is pending.
-							Thread.Sleep (0);
-
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Finished waiting, disconnecting async.", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
-
-						#if !SILVERLIGHT
-						var args = new SocketAsyncEventArgs();// { DisconnectReuseSocket = true };
-						args.Completed += OnDisconnectCompleted;
+					#if !SILVERLIGHT
+					var args = new SocketAsyncEventArgs();// { DisconnectReuseSocket = true };
+					args.Completed += OnDisconnectCompleted;
 						
-						if (!this.reliableSocket.DisconnectAsync (args))				
-							OnDisconnectCompleted (this.reliableSocket, args);
-						#else
-						this.reliableSocket.Close();
-						#endif
-					});
+					if (!this.reliableSocket.DisconnectAsync (args))				
+						OnDisconnectCompleted (this.reliableSocket, args);
+					#else
+					this.reliableSocket.Close();
+					#endif
+				});
 
-					return;
-				}
-			//}
+				return;
+			}
 
 			OnDisconnected (new DisconnectedEventArgs (this, reason, customReason));
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Raised Disconnected, exiting", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
@@ -1206,9 +1158,6 @@ namespace Tempest.Providers.Network
 			lock (writerAsyncArgs)
 			#endif
 			writerAsyncArgs.Push (e);
-
-			//Interlocked.Exchange (ref this.sendArgs, e);
-			//Trace.WriteLineIf (NTrace.TraceVerbose, "Buffer returned", callCategory);
 
 			int p;
 			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
@@ -1235,12 +1184,9 @@ namespace Tempest.Providers.Network
 			int c = GetNextCallId();
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{2}:{4} {3}:OnDisconnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
 
-			//lock (this.stateSync)
-			//{
-				Trace.WriteLineIf (NTrace.TraceVerbose, "Got state lock", String.Format ("{2}:{4} {3}:OnDisconnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
-				this.disconnecting = false;
-				Recycle();
-			//}
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Got state lock", String.Format ("{2}:{4} {3}:OnDisconnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
+			this.disconnecting = false;
+			Recycle();
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Raising Disconnected", String.Format ("{2}:{4} {3}:OnDisconnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId));
 

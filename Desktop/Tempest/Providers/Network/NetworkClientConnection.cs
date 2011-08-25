@@ -175,24 +175,21 @@ namespace Tempest.Providers.Network
 			e.SetBuffer (this.rmessageBuffer, 0, this.rmessageBuffer.Length);
 			this.rreader = new BufferValueReader (this.rmessageBuffer);
 
-			bool recevied;
-			//lock (this.stateSync)
-			//{
-				if (!IsConnected)
-				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Already disconnected", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
-					p = Interlocked.Decrement (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
-					return;
-				}
+			if (!IsConnected)
+			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Already disconnected", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+				p = Interlocked.Decrement (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+				return;
+			}
 
-				p = Interlocked.Increment (ref this.pendingAsync);
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
-				recevied = !this.reliableSocket.ReceiveAsync (e);
-			//}
+			//p = Interlocked.Increment (ref this.pendingAsync);
+			//Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 
-			p = Interlocked.Decrement (ref this.pendingAsync);
-			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+			bool recevied = !this.reliableSocket.ReceiveAsync (e);
+
+			//p = Interlocked.Decrement (ref this.pendingAsync);
+			//Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 
 			if (recevied)
 				ReliableReceiveCompleted (this.reliableSocket, e);
@@ -201,7 +198,7 @@ namespace Tempest.Providers.Network
 			if (this.requiresHandshake)
 			{
 				while (!this.authReady)
-					Thread.Sleep(0);
+					Thread.Sleep (0);
 
 				connectMsg.SignatureHashAlgorithms = this.pkAuthentication.SupportedHashAlgs;
 			}

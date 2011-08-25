@@ -39,6 +39,13 @@ namespace Tempest.Tests
 	public class NetworkProviderTests
 		: ConnectionProviderTests
 	{
+		private static IAsymmetricKey key;
+		static NetworkProviderTests()
+		{
+			var rsa = new RSACrypto();
+			key = rsa.ExportKey (true);
+		}
+
 		private Protocol p = MockProtocol.Instance;
 		private const int MaxConnections = 5;
 		protected override EndPoint EndPoint
@@ -53,23 +60,23 @@ namespace Tempest.Tests
 
 		protected override IConnectionProvider SetUp()
 		{
-			return new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), MaxConnections) { PingFrequency = 2000 };
+			return new NetworkConnectionProvider (new[] { p }, new IPEndPoint (IPAddress.Any, 42000), MaxConnections, () => new RSACrypto(), key) { PingFrequency = 2000 };
 		}
 
 		protected override IConnectionProvider SetUp (IEnumerable<Protocol> protocols)
 		{
-			return new NetworkConnectionProvider (protocols, new IPEndPoint (IPAddress.Any, 42000), MaxConnections) { PingFrequency = 2000 };
+			return new NetworkConnectionProvider (protocols, new IPEndPoint (IPAddress.Any, 42000), MaxConnections, () => new RSACrypto(), key) { PingFrequency = 2000 };
 		}
 
 		protected override IClientConnection SetupClientConnection ()
 		{
-			return new NetworkClientConnection (p);
+			return new NetworkClientConnection (p, () => new RSACrypto(), key);
 		}
 
-		protected override IClientConnection SetupClientConnection(out IAsymmetricKey key)
+		protected override IClientConnection SetupClientConnection (out IAsymmetricKey k)
 		{
 			var c = new NetworkClientConnection (p);
-			key = c.PublicAuthenticationKey;
+			k = c.PublicAuthenticationKey;
 
 			return c;
 		}
@@ -201,91 +208,91 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 		
-		[Test, Repeat (3)]
-		public void SuppliedServerKey()
-		{
-			TearDown();
+		//[Test, Repeat (3)]
+		//public void SuppliedServerKey()
+		//{
+		//    TearDown();
 
-			var crypto = new RSACryptoServiceProvider();
-			byte[] csp = crypto.ExportCspBlob (true);
-			var key = new RSAAsymmetricKey (csp);
+		//    var crypto = new RSACryptoServiceProvider();
+		//    byte[] csp = crypto.ExportCspBlob (true);
+		//    var key = new RSAAsymmetricKey (csp);
 
-			provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, (IPEndPoint) EndPoint, MaxConnections, () => new RSACrypto(), key);
-			provider.Start (MessageTypes);
+		//    provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, (IPEndPoint) EndPoint, MaxConnections, () => new RSACrypto(), key);
+		//    provider.Start (MessageTypes);
 
-			var c = new NetworkClientConnection (MockProtocol.Instance);
+		//    var c = new NetworkClientConnection (MockProtocol.Instance);
 
-			var test = new AsyncTest (2);
+		//    var test = new AsyncTest (2);
 
-			provider.ConnectionMade += test.PassHandler;
-			c.Connected += test.PassHandler;
+		//    provider.ConnectionMade += test.PassHandler;
+		//    c.Connected += test.PassHandler;
 
-			c.ConnectAsync (EndPoint, MessageTypes);
+		//    c.ConnectAsync (EndPoint, MessageTypes);
 
-			test.Assert (10000);
-		}
+		//    test.Assert (10000);
+		//}
 
-		[Test, Repeat (3)]
-		public void SuppliedClientKey()
-		{
-			provider.Start (MessageTypes);
+		//[Test, Repeat (3)]
+		//public void SuppliedClientKey()
+		//{
+		//    provider.Start (MessageTypes);
 
-			var crypto = new RSACryptoServiceProvider();
-			byte[] csp = crypto.ExportCspBlob (true);
-			var key = new RSAAsymmetricKey (csp);
+		//    var crypto = new RSACryptoServiceProvider();
+		//    byte[] csp = crypto.ExportCspBlob (true);
+		//    var key = new RSAAsymmetricKey (csp);
 
-			var c = new NetworkClientConnection (MockProtocol.Instance, () => new RSACrypto(), key);
+		//    var c = new NetworkClientConnection (MockProtocol.Instance, () => new RSACrypto(), key);
 
-			var test = new AsyncTest<ConnectionMadeEventArgs> (e => Assert.IsTrue (e.ClientPublicKey.PublicSignature.SequenceEqual (key.PublicSignature)));
-			provider.ConnectionMade += test.PassHandler;
+		//    var test = new AsyncTest<ConnectionMadeEventArgs> (e => Assert.IsTrue (e.ClientPublicKey.PublicSignature.SequenceEqual (key.PublicSignature)));
+		//    provider.ConnectionMade += test.PassHandler;
 
-			c.ConnectAsync (EndPoint, MessageTypes);
+		//    c.ConnectAsync (EndPoint, MessageTypes);
 
-			test.Assert (10000);
-		}
+		//    test.Assert (10000);
+		//}
 
-		[Test, Repeat (3)]
-		public void SuppliedServer4096Key()
-		{
-			TearDown();
+		//[Test, Repeat (3)]
+		//public void SuppliedServer4096Key()
+		//{
+		//    TearDown();
 
-			var crypto = new RSACryptoServiceProvider (4096);
-			byte[] csp = crypto.ExportCspBlob (true);
-			var key = new RSAAsymmetricKey (csp);
+		//    var crypto = new RSACryptoServiceProvider (4096);
+		//    byte[] csp = crypto.ExportCspBlob (true);
+		//    var key = new RSAAsymmetricKey (csp);
 
-			provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, (IPEndPoint) EndPoint, MaxConnections, () => new RSACrypto(), key);
-			provider.Start (MessageTypes);
+		//    provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, (IPEndPoint) EndPoint, MaxConnections, () => new RSACrypto(), key);
+		//    provider.Start (MessageTypes);
 
-			var c = new NetworkClientConnection (MockProtocol.Instance);
+		//    var c = new NetworkClientConnection (MockProtocol.Instance);
 
-			var test = new AsyncTest (2);
+		//    var test = new AsyncTest (2);
 
-			provider.ConnectionMade += test.PassHandler;
-			c.Connected += test.PassHandler;
+		//    provider.ConnectionMade += test.PassHandler;
+		//    c.Connected += test.PassHandler;
 
-			c.ConnectAsync (EndPoint, MessageTypes);
+		//    c.ConnectAsync (EndPoint, MessageTypes);
 
-			test.Assert (10000);
-		}
+		//    test.Assert (10000);
+		//}
 
-		[Test, Repeat (3)]
-		public void SuppliedClient4096Key()
-		{
-			provider.Start (MessageTypes);
+		//[Test, Repeat (3)]
+		//public void SuppliedClient4096Key()
+		//{
+		//    provider.Start (MessageTypes);
 
-			var crypto = new RSACryptoServiceProvider (4096);
-			byte[] csp = crypto.ExportCspBlob (true);
-			var key = new RSAAsymmetricKey (csp);
+		//    var crypto = new RSACryptoServiceProvider (4096);
+		//    byte[] csp = crypto.ExportCspBlob (true);
+		//    var key = new RSAAsymmetricKey (csp);
 
-			var c = new NetworkClientConnection (MockProtocol.Instance, () => new RSACrypto(), key);
+		//    var c = new NetworkClientConnection (MockProtocol.Instance, () => new RSACrypto(), key);
 
-			var test = new AsyncTest<ConnectionMadeEventArgs> (e => Assert.IsTrue (e.ClientPublicKey.PublicSignature.SequenceEqual (key.PublicSignature)));
-			provider.ConnectionMade += test.PassHandler;
+		//    var test = new AsyncTest<ConnectionMadeEventArgs> (e => Assert.IsTrue (e.ClientPublicKey.PublicSignature.SequenceEqual (key.PublicSignature)));
+		//    provider.ConnectionMade += test.PassHandler;
 
-			c.ConnectAsync (EndPoint, MessageTypes);
+		//    c.ConnectAsync (EndPoint, MessageTypes);
 
-			test.Assert (10000);
-		}
+		//    test.Assert (10000);
+		//}
 
 		private class MockSha1OnlyCrypto
 			: RSACrypto, IPublicKeyCrypto

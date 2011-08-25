@@ -45,6 +45,62 @@ namespace Tempest.Providers.Network
 	public abstract class NetworkConnection
 		: IConnection
 	{
+		/// <summary>
+		/// Gets or sets the global limit for number of send buffers (for both <see cref="NetworkServerConnection"/> and <see cref="NetworkClientConnection" />).
+		/// (Default: <see cref="Environment.ProcessorCount"/>.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// Can not be adjusted dynamically. If reduced below previous levels, it will prevent new buffers from being created.
+		/// However, it won't remove buffers past the limit that already existed.
+		/// </para>
+		/// <para>
+		/// You should consider <see cref="SendBufferLimit"/> * <see cref="MaxMessageSize"/> for memory usage potential.
+		/// </para>
+		/// </remarks>
+		/// <seealso cref="MaxMessageSize"/>
+		public static int SendBufferLimit
+		{
+			get { return sendBufferLimit; }
+			set { sendBufferLimit = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets whether the global limit for number of send buffers should grow with additional connections. (Default: <c>true</c>).
+		/// </summary>
+		/// <remarks>
+		/// This will 
+		/// </remarks>
+		public static bool AutoSizeSendBufferLimit
+		{
+			get { return autoSizeSendBufferLimit; }
+			set { autoSizeSendBufferLimit = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the number of send buffers added per connection when <see cref="AutoSizeSendBufferLimit"/> is <c>true</c>.
+		/// </summary>
+		public static int AutoSizeFactor
+		{
+			get;
+			set;
+		}
+
+		/// <summary>
+		/// Gets or sets the maximum message size.
+		/// </summary>
+		/// <seealso cref="SendBufferLimit" />
+		/// <remarks>
+		/// <para>
+		/// You should consider <see cref="MaxMessageSize"/> * <c>maxConnections</c> (<see cref="NetworkConnectionProvider(Tempest.Protocol,System.Net.IPEndPoint,int)"/>) for receive memory usage.
+		/// </para>
+		/// </remarks>
+		public static int MaxMessageSize
+		{
+			get { return maxMessageSize; }
+			set { maxMessageSize = value; }
+		}
+
 		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey, bool generateKey)
 		{
 			if (protocols == null)
@@ -583,7 +639,7 @@ namespace Tempest.Providers.Network
 				while (eargs == null)
 				{
 					int count = bufferCount;
-					if (count == NetworkConnectionProvider.sendBufferLimit)
+					if (count == sendBufferLimit)
 					{
 						SpinWait wait = new SpinWait();
 						while (!writerAsyncArgs.TryPop (out eargs))
@@ -614,7 +670,7 @@ namespace Tempest.Providers.Network
 					}
 					else
 					{
-						if (bufferCount != BufferLimit)
+						if (bufferCount != sendBufferLimit)
 						{
 							bufferCount++;
 							eargs = new SocketAsyncEventArgs();
@@ -1213,6 +1269,9 @@ namespace Tempest.Providers.Network
 		private static volatile int bufferCount = 0;
 
 		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "NetworkConnectionProvider");
+		internal static int maxMessageSize;
+		internal static int sendBufferLimit = Environment.ProcessorCount;
+		private static bool autoSizeSendBufferLimit = true;
 
 		#if NET_4
 		private static readonly ConcurrentStack<SocketAsyncEventArgs> writerAsyncArgs = new ConcurrentStack<SocketAsyncEventArgs>();

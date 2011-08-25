@@ -46,13 +46,13 @@ namespace Tempest.Providers.Network
 	/// Potential memory usage is dependent on a number of parameters:
 	/// <list type="bullet">
 	///		<item>
-	///			<description>Each connection maintains a receive buffer with a size potential of <see cref="MaxMessageSize"/>.</description>
+	///			<description>Each connection maintains a receive buffer with a size potential of <see cref="NetworkConnection.MaxMessageSize"/>.</description>
 	///		</item>
 	///		<item>
 	///			<description><see cref="MaxConnections"/> (set from constructor) determines the max number of connections on the individual <see cref="NetworkConnectionProvider"/>.</description>
 	///		</item>
 	///		<item>
-	///			<description><see cref="SendBufferLimit"/> determines how many send buffers (globally) can be created (both clients and servers both), with each having a size potential of <see cref="MaxMessageSize"/>.</description>
+	///			<description><see cref="NetworkConnection.SendBufferLimit"/> determines how many send buffers (globally) can be created (both clients and servers both), with each having a size potential of <see cref="NetworkConnection.MaxMessageSize"/>.</description>
 	///		</item>
 	/// </list>
 	/// </para>
@@ -60,62 +60,6 @@ namespace Tempest.Providers.Network
 	public sealed class NetworkConnectionProvider
 		: IConnectionProvider
 	{
-		/// <summary>
-		/// Gets or sets the global limit for number of send buffers (for both <see cref="NetworkServerConnection"/> and <see cref="NetworkClientConnection" />).
-		/// (Default: <see cref="Environment.ProcessorCount"/>.
-		/// </summary>
-		/// <remarks>
-		/// <para>
-		/// Can not be adjusted dynamically. If reduced below previous levels, it will prevent new buffers from being created.
-		/// However, it won't remove buffers past the limit that already existed.
-		/// </para>
-		/// <para>
-		/// You should consider <see cref="SendBufferLimit"/> * <see cref="MaxMessageSize"/> for memory usage potential.
-		/// </para>
-		/// </remarks>
-		/// <seealso cref="MaxMessageSize"/>
-		public static int SendBufferLimit
-		{
-			get { return sendBufferLimit; }
-			set { sendBufferLimit = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets whether the global limit for number of send buffers should grow with additional connections. (Default: <c>true</c>).
-		/// </summary>
-		/// <remarks>
-		/// This will 
-		/// </remarks>
-		public static bool AutoSizeSendBufferLimit
-		{
-			get { return autoSizeSendBufferLimit; }
-			set { autoSizeSendBufferLimit = value; }
-		}
-
-		/// <summary>
-		/// Gets or sets the number of send buffers added per connection when <see cref="AutoSizeSendBufferLimit"/> is <c>true</c>.
-		/// </summary>
-		public static int AutoSizeFactor
-		{
-			get;
-			set;
-		}
-
-		/// <summary>
-		/// Gets or sets the maximum message size.
-		/// </summary>
-		/// <seealso cref="SendBufferLimit" />
-		/// <remarks>
-		/// <para>
-		/// You should consider <see cref="MaxMessageSize"/> * <c>maxConnections</c> (<see cref="NetworkConnectionProvider(Tempest.Protocol,System.Net.IPEndPoint,int)"/>) for receive memory usage.
-		/// </para>
-		/// </remarks>
-		public static int MaxMessageSize
-		{
-			get { return maxMessageSize; }
-			set { maxMessageSize = value; }
-		}
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
 		/// </summary>
@@ -463,8 +407,8 @@ namespace Tempest.Providers.Network
 					if (connected)
 						this.pingTimer.TimesUp -= connection.Ping;
 
-					if (AutoSizeSendBufferLimit)
-						Interlocked.Add (ref sendBufferLimit, AutoSizeFactor * -1);
+					if (NetworkConnection.AutoSizeSendBufferLimit)
+						Interlocked.Add (ref NetworkConnection.sendBufferLimit, NetworkConnection.AutoSizeFactor * -1);
 
 			    	BeginAccepting (null);
 			    }
@@ -514,8 +458,8 @@ namespace Tempest.Providers.Network
 
 				BeginAccepting (e);
 
-				if (AutoSizeSendBufferLimit)
-					Interlocked.Add (ref sendBufferLimit, AutoSizeFactor);
+				if (NetworkConnection.AutoSizeSendBufferLimit)
+					Interlocked.Add (ref NetworkConnection.sendBufferLimit, NetworkConnection.AutoSizeFactor);
 
 				this.pendingConnections.Add (connection);
 			}
@@ -564,10 +508,6 @@ namespace Tempest.Providers.Network
 			if (cmade != null)
 				cmade (this, e);
 		}
-
-		internal static int maxMessageSize;
-		internal static int sendBufferLimit = Environment.ProcessorCount;
-		private static bool autoSizeSendBufferLimit = true;
 
 		//#if NET_4
 		//internal static readonly ConcurrentStack<Socket> ReliableSockets = new ConcurrentStack<Socket>();

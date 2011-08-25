@@ -654,10 +654,13 @@ namespace Tempest.Providers.Network
 			//Trace.WriteLineIf (NTrace.TraceVerbose, "Have buffer", callCategory);
 
 			bool sent;
-			lock (this.sendSync)
+			//lock (this.sendSync)
+			//{
+			try
 			{
 			if (!isResponse)
 			{
+				Monitor.Enter (this.sendSync);
 				lock (this.messageIdSync)
 				{
 					if (this.nextMessageId == MaxMessageId)
@@ -706,6 +709,11 @@ namespace Tempest.Providers.Network
 
 				sent = !this.reliableSocket.SendAsync (eargs);
 			//}
+			}
+			finally
+			{
+				if (!isResponse)
+					Monitor.Exit (this.sendSync);
 			}
 
 			if (sent)

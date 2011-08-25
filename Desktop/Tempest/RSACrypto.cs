@@ -75,7 +75,7 @@ namespace Tempest
 
 		public int KeySize
 		{
-			get { return 4096; }
+			get { return this.rsaCrypto.KeySize; }
 		}
 
 		public byte[] Encrypt (byte[] data)
@@ -184,9 +184,9 @@ namespace Tempest
 		}
 		
 		#if !SILVERLIGHT
-		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider (4096);
+		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider (2048);
 		#else
-		private readonly RSA.RSACrypto rsaCrypto = new RSA.RSACrypto (4096);
+		private readonly RSA.RSACrypto rsaCrypto = new RSA.RSACrypto (2048);
 		#endif
 
 		private readonly IEnumerable<string> algs;

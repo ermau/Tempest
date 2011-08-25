@@ -38,15 +38,23 @@ namespace Tempest
 	public class RSACrypto
 		: IPublicKeyCrypto
 	{
-		public RSACrypto()
+		private readonly int keySize;
+
+		public RSACrypto ()
+			: this (2048)
 		{
-			List<string> algs = new List<string>();
+		}
+
+		public RSACrypto (int keySize)
+		{
+			this.keySize = keySize;
+			List<string> nalgs = new List<string>();
 
 			#if !SILVERLIGHT
 			try
 			{
 				if (CryptoConfig.CreateFromName ("System.Security.Cryptography.SHA256CryptoServiceProvider") != null)
-					algs.Add ("SHA256");
+					nalgs.Add ("SHA256");
 			}
 			catch
 			{
@@ -55,17 +63,21 @@ namespace Tempest
 			try
 			{
 				if (CryptoConfig.CreateFromName ("System.Security.Cryptography.SHA1CryptoServiceProvider") != null)
-					algs.Add ("SHA1");
+					nalgs.Add ("SHA1");
 			}
 			catch
 			{
 			}
+
+			this.rsaCrypto = new RSACryptoServiceProvider (keySize);
 			#else
-			algs.Add ("SHA256");
-			algs.Add ("SHA1");
+			nalgs.Add ("SHA256");
+			nalgs.Add ("SHA1");
+
+			this.rsaCrypto = new RSA.RSACrypto (keySize);
 			#endif
 
-			this.algs = algs;
+			this.algs = nalgs;
 		}
 
 		public IEnumerable<String> SupportedHashAlgs
@@ -75,7 +87,7 @@ namespace Tempest
 
 		public int KeySize
 		{
-			get { return this.rsaCrypto.KeySize; }
+			get { return this.keySize; }
 		}
 
 		public byte[] Encrypt (byte[] data)
@@ -184,9 +196,9 @@ namespace Tempest
 		}
 		
 		#if !SILVERLIGHT
-		private readonly RSACryptoServiceProvider rsaCrypto = new RSACryptoServiceProvider (2048);
+		private readonly RSACryptoServiceProvider rsaCrypto;
 		#else
-		private readonly RSA.RSACrypto rsaCrypto = new RSA.RSACrypto (2048);
+		private readonly RSA.RSACrypto rsaCrypto;
 		#endif
 
 		private readonly IEnumerable<string> algs;

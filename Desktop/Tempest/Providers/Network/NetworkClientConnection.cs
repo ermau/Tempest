@@ -57,11 +57,14 @@ namespace Tempest.Providers.Network
 		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
 			: base (protocols, publicKeyCryptoFactory, null, true)
 		{
+			Interlocked.Add (ref NetworkConnectionProvider.sendBufferLimit, NetworkConnectionProvider.AutoSizeFactor);
 		}
 
 		public NetworkClientConnection (Protocol protocol, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
 			: base (new [] { protocol }, publicKeyCryptoFactory, authKey, false)
 		{
+			Interlocked.Add (ref NetworkConnectionProvider.sendBufferLimit, NetworkConnectionProvider.AutoSizeFactor);
+
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
 		}
@@ -69,6 +72,8 @@ namespace Tempest.Providers.Network
 		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
 			: base (protocols, publicKeyCryptoFactory, authKey, false)
 		{
+			Interlocked.Add (ref NetworkConnectionProvider.sendBufferLimit, NetworkConnectionProvider.AutoSizeFactor);
+
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
 		}
@@ -140,6 +145,8 @@ namespace Tempest.Providers.Network
 		
 		protected override void Recycle()
 		{
+			Interlocked.Add (ref NetworkConnectionProvider.sendBufferLimit, NetworkConnectionProvider.AutoSizeFactor * -1);
+
 			this.serverEncryption = null;
 			this.serverEncryptionKey = null;
 			this.serverAuthenticationKey = null;

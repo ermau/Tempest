@@ -583,7 +583,7 @@ namespace Tempest.Providers.Network
 				while (eargs == null)
 				{
 					int count = bufferCount;
-					if (count == BufferLimit)
+					if (count == NetworkConnectionProvider.sendBufferLimit)
 					{
 						SpinWait wait = new SpinWait();
 						while (!writerAsyncArgs.TryPop (out eargs))
@@ -1264,8 +1264,6 @@ namespace Tempest.Providers.Network
 		protected static int nextConnectionId;
 		#endif
 
-		// TODO: Better buffer limit
-		private static readonly int BufferLimit = Environment.ProcessorCount * 10;
 		private static volatile int bufferCount = 0;
 
 		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "NetworkConnectionProvider");

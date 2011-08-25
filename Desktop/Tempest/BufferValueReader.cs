@@ -52,7 +52,7 @@ namespace Tempest
 				throw new ArgumentNullException ("buffer");
 
 			this.buffer = buffer;
-			this.Position = offset;
+			this.position = offset;
 			this.length = length;
 		}
 
@@ -69,23 +69,18 @@ namespace Tempest
 		/// </summary>
 		public int Position
 		{
-			get;
-			set;
+			get { return this.position; }
+			set { this.position = value; }
 		}
 
 		public bool ReadBool()
 		{
-			if (this.Position == this.length)
-				throw new InternalBufferOverflowException();
-
-			return (this.buffer[this.Position++] == 1);
+			return (this.buffer[this.position++] == 1);
 		}
 
 		public byte[] ReadBytes()
 		{
 			int len = ReadInt32();
-			if (this.Position + len > this.length)
-				throw new InternalBufferOverflowException();
 
 			byte[] b = new byte[len];
 			Buff.BlockCopy (this.buffer, this.Position, b, 0, len);
@@ -98,73 +93,68 @@ namespace Tempest
 		{
 			if (count < 0)
 				throw new ArgumentOutOfRangeException ("count", "count must be >= 0");
-			if (count + this.Position >= this.length)
-				throw new ArgumentOutOfRangeException ("count", "Count from position is longer than buffer.");
 
 			byte[] b = new byte[count];
-			Buff.BlockCopy (this.buffer, this.Position, b, 0, count);
-			this.Position += count;
+			Buff.BlockCopy (this.buffer, this.position, b, 0, count);
+			this.position += count;
 
 			return b;
 		}
 
 		public sbyte ReadSByte()
 		{
-			if (this.Position >= this.length)
-				throw new InternalBufferOverflowException();
-
-			return (sbyte)this.buffer[this.Position++];
+			return (sbyte)this.buffer[this.position++];
 		}
 
 		public short ReadInt16()
 		{
-			short v = BitConverter.ToInt16 (this.buffer, this.Position);
-			this.Position += sizeof (short);
+			short v = BitConverter.ToInt16 (this.buffer, this.position);
+			this.position += sizeof (short);
 			
 			return v;
 		}
 
 		public int ReadInt32()
 		{
-			int v = BitConverter.ToInt32 (this.buffer, this.Position);
-			this.Position += sizeof (int);
+			int v = BitConverter.ToInt32 (this.buffer, this.position);
+			this.position += sizeof (int);
 			
 			return v;
 		}
 
 		public long ReadInt64()
 		{
-			long v = BitConverter.ToInt64 (this.buffer, this.Position);
-			this.Position += sizeof (long);
+			long v = BitConverter.ToInt64 (this.buffer, this.position);
+			this.position += sizeof (long);
 			
 			return v;
 		}
 
 		public byte ReadByte()
 		{
-			return this.buffer[this.Position++];
+			return this.buffer[this.position++];
 		}
 
 		public ushort ReadUInt16()
 		{
-			ushort v = BitConverter.ToUInt16 (this.buffer, this.Position);
-			this.Position += sizeof (ushort);
+			ushort v = BitConverter.ToUInt16 (this.buffer, this.position);
+			this.position += sizeof (ushort);
 			
 			return v;
 		}
 
 		public uint ReadUInt32()
 		{
-			uint v = BitConverter.ToUInt32 (this.buffer, this.Position);
-			this.Position += sizeof (uint);
+			uint v = BitConverter.ToUInt32 (this.buffer, this.position);
+			this.position += sizeof (uint);
 			
 			return v;
 		}
 
 		public ulong ReadUInt64()
 		{
-			ulong v = BitConverter.ToUInt64 (this.buffer, this.Position);
-			this.Position += sizeof (ulong);
+			ulong v = BitConverter.ToUInt64 (this.buffer, this.position);
+			this.position += sizeof (ulong);
 			
 			return v;
 		}
@@ -180,16 +170,16 @@ namespace Tempest
 
 		public float ReadSingle()
 		{
-			float v = BitConverter.ToSingle (this.buffer, this.Position);
-			this.Position += sizeof (float);
+			float v = BitConverter.ToSingle (this.buffer, this.position);
+			this.position += sizeof (float);
 
 			return v;
 		}
 
 		public double ReadDouble ()
 		{
-			double v = BitConverter.ToDouble (this.buffer, this.Position);
-			this.Position += sizeof (double);
+			double v = BitConverter.ToDouble (this.buffer, this.position);
+			this.position += sizeof (double);
 
 			return v;
 		}
@@ -203,7 +193,7 @@ namespace Tempest
 			if (len == 0)
 				return null;
 
-			string v = encoding.GetString (this.buffer, this.Position, len);
+			string v = encoding.GetString (this.buffer, this.position, len);
 			this.Position += len;
 			
 			return v;
@@ -212,5 +202,7 @@ namespace Tempest
 		public void Flush()
 		{
 		}
+
+		private int position;
 	}
 }

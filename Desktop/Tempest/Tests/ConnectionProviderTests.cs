@@ -42,12 +42,22 @@ namespace Tempest.Tests
 		protected IConnectionProvider provider;
 		protected readonly List<IClientConnection> connections = new List<IClientConnection>();
 
+		private readonly List<Exception> exceptions = new List<Exception>();
+
 		[SetUp]
 		protected void Setup()
 		{
+			AppDomain.CurrentDomain.UnhandledException += HandleUnhandledException;
+
 			Trace.WriteLine ("Entering", "Setup");
 			this.provider = SetUp();
 			Trace.WriteLine ("Exiting", "Setup");
+		}
+
+		private void HandleUnhandledException (object sender, UnhandledExceptionEventArgs e)
+		{
+			lock (this.exceptions)
+				this.exceptions.Add ((Exception)e.ExceptionObject);
 		}
 
 		[TearDown]
@@ -64,6 +74,14 @@ namespace Tempest.Tests
 			        c.Dispose();
 
 			    this.connections.Clear();
+			}
+
+			AppDomain.CurrentDomain.UnhandledException -= HandleUnhandledException;
+
+			if (this.exceptions.Count > 0)
+			{
+				new AggregateException (this.exceptions.ToArray());
+				this.exceptions.Clear();
 			}
 
 			Trace.WriteLine ("Exiting", "TearDown");

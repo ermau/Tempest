@@ -485,7 +485,7 @@ namespace Tempest.Providers.Network
 			lock (this.hmac)
 				 hash = this.hmac.ComputeHash (writer.Buffer, 0, writer.Length);
 
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Got hash:  " + GetHex (hash), callCategory);
+			//Trace.WriteLineIf (NTrace.TraceVerbose, "Got hash:  " + GetHex (hash), callCategory);
 
 			writer.WriteBytes (hash);
 
@@ -502,8 +502,8 @@ namespace Tempest.Providers.Network
 			lock (this.hmac)
 				ourhash = this.hmac.ComputeHash (data, moffset, length);
 			
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Their hash: " + GetHex (signature), callCateogry);
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Our hash:   " + GetHex (ourhash), callCateogry);
+			//Trace.WriteLineIf (NTrace.TraceVerbose, "Their hash: " + GetHex (signature), callCateogry);
+			//Trace.WriteLineIf (NTrace.TraceVerbose, "Our hash:   " + GetHex (ourhash), callCateogry);
 
 			if (signature.Length != ourhash.Length)
 				return false;

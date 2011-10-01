@@ -555,8 +555,9 @@ namespace Tempest.Providers.Network
 
 			int headerLength = BaseHeaderLength;
 
-			var types = context.TypeMap.GetNewTypes().OrderBy (kvp => kvp.Value).ToList();
-			if (types.Count > 0)
+			IList<KeyValuePair<Type, ushort>> types;
+			bool hasTypes = context.TypeMap.TryGetNewTypes (out types);
+			if (hasTypes)
 			{
 				if (types.Count > Int16.MaxValue)
 					throw new ArgumentException ("Too many different types for serialization");
@@ -598,7 +599,7 @@ namespace Tempest.Providers.Network
 			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
 			int len = length << 1;
-			if (types.Count > 0)
+			if (hasTypes)
 				len |= 1; // serialization header
 
 			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, lengthOffset, sizeof(int));

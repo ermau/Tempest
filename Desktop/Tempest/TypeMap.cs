@@ -53,16 +53,20 @@ namespace Tempest
 		/// <summary>
 		/// Gets the <see cref="Type"/>s and their IDs that have been added since <see cref="GetNewTypes"/> was last called.
 		/// </summary>
-		public IEnumerable<KeyValuePair<Type, ushort>> GetNewTypes()
+		public bool TryGetNewTypes (out IList<KeyValuePair<Type, ushort>> types)
 		{
-			List<KeyValuePair<Type, ushort>> newTypes;
+			types = null;
+
+			if (this.newMappings.Count == 0)
+				return false;
+
 			lock (this.map)
 			{
-				newTypes = this.newMappings.ToList();
+				types = this.newMappings.OrderBy (kvp => kvp.Value).ToArray();
 				this.newMappings.Clear();
 			}
 
-			return newTypes;
+			return true;
 		}
 
 		/// <summary>

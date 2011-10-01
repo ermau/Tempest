@@ -82,7 +82,10 @@ namespace Tempest.Providers.Network
 		
 		internal void Ping (object sender, EventArgs e)
 		{
-			string callCategory = String.Format ("NetworkServerConnection:{1} PingCallback({0})", this.pingsOut, connectionId);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("NetworkServerConnection:{1} PingCallback({0})", this.pingsOut, connectionId);
+			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			//if (this.pingsOut >= 2)

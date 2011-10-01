@@ -478,7 +478,10 @@ namespace Tempest.Providers.Network
 				throw new InvalidOperationException();
 			
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{0}:{2} {1}:SignMessage ({3},{4})", this.typeName, c, connectionId, hashAlg, writer.Length);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{0}:{2} {1}:SignMessage ({3},{4})", this.typeName, c, connectionId, hashAlg, writer.Length);
+			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			byte[] hash;
@@ -495,15 +498,18 @@ namespace Tempest.Providers.Network
 		protected virtual bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
 			int c = GetNextCallId();
-			string callCateogry = String.Format ("{0}:{2} {1}:VerifyMessage({3},{4},{5},{6},{7},{8})", this.typeName, c, connectionId, hashAlg, message, signature.Length, data.Length, moffset, length);
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCateogry);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{0}:{2} {1}:VerifyMessage({3},{4},{5},{6},{7},{8})", this.typeName, c, connectionId, hashAlg, message, signature.Length, data.Length, moffset, length);
+			#endif
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			byte[] ourhash;
 			lock (this.hmac)
 				ourhash = this.hmac.ComputeHash (data, moffset, length);
 			
-			//Trace.WriteLineIf (NTrace.TraceVerbose, "Their hash: " + GetHex (signature), callCateogry);
-			//Trace.WriteLineIf (NTrace.TraceVerbose, "Our hash:   " + GetHex (ourhash), callCateogry);
+			//Trace.WriteLineIf (NTrace.TraceVerbose, "Their hash: " + GetHex (signature), callCategory);
+			//Trace.WriteLineIf (NTrace.TraceVerbose, "Our hash:   " + GetHex (ourhash), callCategory);
 
 			if (signature.Length != ourhash.Length)
 				return false;
@@ -512,12 +518,12 @@ namespace Tempest.Providers.Network
 			{
 				if (signature[i] != ourhash[i])
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (false)", callCateogry);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (false)", callCategory);
 					return false;
 				}
 			}
 
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (true)", callCateogry);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (true)", callCategory);
 			return true;
 		}
 
@@ -619,7 +625,10 @@ namespace Tempest.Providers.Network
 		#endif
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{1}:{2} {4}:Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId, c);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{1}:{2} {4}:Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId, c);
+			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			if (message == null)
@@ -708,7 +717,6 @@ namespace Tempest.Providers.Network
 				int length;
 				byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
 
-
 				eargs.SetBuffer (buffer, 0, length);
 				eargs.UserToken = message;
 
@@ -758,7 +766,10 @@ namespace Tempest.Providers.Network
 		protected bool TryGetHeader (BufferValueReader reader, int remaining, out MessageHeader header)
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{0}:{4} {1}:TryGetHeader({2},{3})", this.typeName, c, reader.Position, remaining, this.connectionId);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{0}:{4} {1}:TryGetHeader({2},{3})", this.typeName, c, reader.Position, remaining, this.connectionId);
+			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);			
 
 			header = null;
@@ -878,7 +889,10 @@ namespace Tempest.Providers.Network
 		private void BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader)
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId);
+			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			this.lastReceived = DateTime.Now;
@@ -1038,7 +1052,11 @@ namespace Tempest.Providers.Network
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, this.connectionId);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, this.connectionId);
+			#endif
+
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			bool async;
@@ -1220,8 +1238,12 @@ namespace Tempest.Providers.Network
 		private void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId);
+			string callCategory = null;
+
+			#if TRACE
+			callCategory = String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId);
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
+			#endif
 
 			e.Completed -= ReliableSendCompleted;
 

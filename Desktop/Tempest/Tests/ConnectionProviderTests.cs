@@ -80,8 +80,11 @@ namespace Tempest.Tests
 
 			if (this.exceptions.Count > 0)
 			{
-				new AggregateException (this.exceptions.ToArray());
-				this.exceptions.Clear();
+				#if NET_4
+				throw new AggregateException (this.exceptions.ToArray());
+				#else
+				throw new Exception ("Error during test", this.exceptions[0]);
+				#endif
 			}
 
 			Trace.WriteLine ("Exiting", "TearDown");

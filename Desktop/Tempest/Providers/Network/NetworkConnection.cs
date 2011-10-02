@@ -178,11 +178,8 @@ namespace Tempest.Providers.Network
 		{
 			get
 			{
-				//Socket rs = this.reliableSocket;
-				//return (!this.disconnecting && rs != null && rs.Connected);
-
-				lock (this.stateSync)
-					return (!this.disconnecting && this.reliableSocket != null && this.reliableSocket.Connected);
+				Socket rs = this.reliableSocket;
+				return (!this.disconnecting && rs != null && rs.Connected);
 			}
 		}
 

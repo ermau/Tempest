@@ -894,8 +894,6 @@ namespace Tempest.Providers.Network
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
-			this.lastReceived = DateTime.Now;
-
 			MessageHeader header = null;
 
 			int length = 0;
@@ -1104,7 +1102,6 @@ namespace Tempest.Providers.Network
 		}
 
 		protected long lastSent;
-		protected DateTime lastReceived;
 		protected int pingsOut = 0;
 
 		protected virtual void OnTempestMessageReceived (MessageEventArgs e)

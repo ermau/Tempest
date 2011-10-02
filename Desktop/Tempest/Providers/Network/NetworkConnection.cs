@@ -661,6 +661,7 @@ namespace Tempest.Providers.Network
 					{
 						eargs = new SocketAsyncEventArgs();
 						eargs.SetBuffer (new byte[1024], 0, 1024);
+						eargs.Completed += ReliableSendCompleted;
 					}
 				}
 			}
@@ -718,7 +719,7 @@ namespace Tempest.Providers.Network
 				byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
 
 				eargs.SetBuffer (buffer, 0, length);
-				eargs.UserToken = message;
+				eargs.UserToken = new KeyValuePair<NetworkConnection, Message> (this, message);
 
 				int p = Interlocked.Increment (ref this.pendingAsync);
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
@@ -737,8 +738,6 @@ namespace Tempest.Providers.Network
 
 						return;
 					}
-
-					eargs.Completed += ReliableSendCompleted;	
 				}
 
 				sent = !this.reliableSocket.SendAsync (eargs);
@@ -1235,45 +1234,6 @@ namespace Tempest.Providers.Network
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Raised Disconnected, exiting", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
 		}
 
-		private void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
-		{
-			int c = GetNextCallId();
-			string callCategory = null;
-
-			#if TRACE
-			callCategory = String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId);
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
-			#endif
-
-			e.Completed -= ReliableSendCompleted;
-
-			var message = (Message)e.UserToken;
-
-			#if !NET_4
-			lock (writerAsyncArgs)
-			#endif
-			writerAsyncArgs.Push (e);
-
-			int p;
-			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
-			{
-				Disconnect (true);
-				p = Interlocked.Decrement (ref this.pendingAsync);
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
-				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error)", callCategory);
-				return;
-			}
-
-			Interlocked.Add (ref this.bytesSent, e.BytesTransferred);
-
-			if (!(message is TempestMessage))
-				OnMessageSent (new MessageEventArgs (this, message));
-
-			p = Interlocked.Decrement (ref this.pendingAsync);
-			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
-		}
-
 		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
 			int c = GetNextCallId();
@@ -1320,5 +1280,44 @@ namespace Tempest.Providers.Network
 		#else
 		private static readonly Stack<SocketAsyncEventArgs> writerAsyncArgs = new Stack<SocketAsyncEventArgs>();
 		#endif
+
+		private static void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
+		{
+			var t = (KeyValuePair<NetworkConnection, Message>) e.UserToken;
+
+			NetworkConnection con = t.Key;
+
+			int c = con.GetNextCallId();
+			string callCategory = null;
+
+			#if TRACE
+			callCategory = String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, con.typeName, c, con.connectionId);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
+			#endif
+
+			#if !NET_4
+			lock (writerAsyncArgs)
+			#endif
+			writerAsyncArgs.Push (e);
+
+			int p;
+			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
+			{
+				con.Disconnect (true);
+				p = Interlocked.Decrement (ref con.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error)", callCategory);
+				return;
+			}
+
+			Interlocked.Add (ref con.bytesSent, e.BytesTransferred);
+
+			if (!(t.Value is TempestMessage))
+				con.OnMessageSent (new MessageEventArgs (con, t.Value));
+
+			p = Interlocked.Decrement (ref con.pendingAsync);
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
+		}
 	}
 }

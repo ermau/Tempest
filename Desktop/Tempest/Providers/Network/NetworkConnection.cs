@@ -724,20 +724,17 @@ namespace Tempest.Providers.Network
 				int p = Interlocked.Increment (ref this.pendingAsync);
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
 
-				lock (this.stateSync)
+				if (!IsConnected)
 				{
-					if (!IsConnected)
-					{
-						Interlocked.Decrement (ref this.pendingAsync);
-						Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
+					Interlocked.Decrement (ref this.pendingAsync);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 
-						#if !NET_4
-						lock (writerAsyncArgs)
-						#endif
-						writerAsyncArgs.Push (eargs);
+					#if !NET_4
+					lock (writerAsyncArgs)
+					#endif
+					writerAsyncArgs.Push (eargs);
 
-						return;
-					}
+					return;
 				}
 
 				sent = !this.reliableSocket.SendAsync (eargs);
@@ -1075,16 +1072,17 @@ namespace Tempest.Providers.Network
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 
 				this.rmessageLoaded += e.BytesTransferred;
+				
+				int bufferOffset = e.Offset;
+				BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exited BufferMessages with new values: {0},{1},{2},{3},{4}", this.rmessageBuffer.Length, bufferOffset, this.rmessageOffset, this.rmessageLoaded, this.rreader.Position), callCategory);
+				e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
+
+				p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
+
 				lock (this.stateSync)
 				{
-					int bufferOffset = e.Offset;
-					BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exited BufferMessages with new values: {0},{1},{2},{3},{4}", this.rmessageBuffer.Length, bufferOffset, this.rmessageOffset, this.rmessageLoaded, this.rreader.Position), callCategory);
-					e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
-
-					p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
-
 					if (!IsConnected)
 					{
 						p = Interlocked.Decrement (ref this.pendingAsync);

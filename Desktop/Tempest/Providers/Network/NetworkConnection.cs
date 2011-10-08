@@ -326,6 +326,7 @@ namespace Tempest.Providers.Network
 		private int rmessageOffset = 0;
 		private int rmessageLoaded = 0;
 
+		protected long lastActivity;
 		private long bytesReceived;
 		private long bytesSent;
 
@@ -697,10 +698,10 @@ namespace Tempest.Providers.Network
 					Monitor.Enter (this.sendSync);
 					lock (this.messageIdSync)
 					{
-						if (this.nextMessageId == MaxMessageId)
+						message.MessageId = this.nextMessageId++;
+
+						if (this.nextMessageId > MaxMessageId)
 							this.nextMessageId = 0;
-						else
-							message.MessageId = this.nextMessageId++;
 					}
 				}
 
@@ -916,7 +917,9 @@ namespace Tempest.Providers.Network
 
 				if (!header.IsResponse)
 				{
-					if (header.MessageId < this.lastMessageId)
+					if (header.MessageId == MaxMessageId)
+						this.lastMessageId = -1;
+					else if (header.MessageId < this.lastMessageId)
 					{
 						Disconnect (true);
 						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (replay attack / reliable out of order)", callCategory);
@@ -1062,6 +1065,12 @@ namespace Tempest.Providers.Network
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error)", callCategory);
 					return;
 				}
+
+				#if !SILVERLIGHT
+				this.lastActivity = Stopwatch.GetTimestamp();
+				#else
+				this.lastActivity = DateTime.Now.Ticks;
+				#endif
 
 				Interlocked.Add (ref this.bytesReceived, e.BytesTransferred);
 

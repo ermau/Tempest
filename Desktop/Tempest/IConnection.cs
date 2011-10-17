@@ -225,6 +225,11 @@ namespace Tempest
 		/// An application specified result.
 		/// </summary>
 		Custom = 7,
+
+		/// <summary>
+		/// The connection timed out.
+		/// </summary>
+		TimedOut = 8,
 	}
 
 	/// <summary>

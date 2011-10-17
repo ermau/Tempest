@@ -312,8 +312,14 @@ namespace Tempest.Providers.Network
 
 		private void ActivityCallback (object sender, EventArgs e)
 		{
-			//if (!this.disconnecting && DateTime.Now.Subtract (this.lastReceived).TotalMilliseconds > this.pingFrequency * 2)
-			//    Disconnect();
+			#if !SILVERLIGHT
+			long now = Stopwatch.GetTimestamp();
+			#else
+			long now = DateTime.Now.Ticks;
+			#endif
+
+			if ((now - this.lastActivity) > (this.pingFrequency * 10000) * 2)
+				Disconnect (ConnectionResult.TimedOut);
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

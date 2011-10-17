@@ -110,7 +110,7 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void GetNew()
+		public void TryGetNewTypes()
 		{
 			var map = new TypeMap();
 
@@ -118,14 +118,16 @@ namespace Tempest.Tests
 			map.GetTypeId (typeof (string), out id);
 
 			var exp = new KeyValuePair<Type, int> (typeof (string), 0);
-			var kvp = map.GetNewTypes().ToList().Single();
+
+			IList<KeyValuePair<Type, ushort>> types;
+			Assert.IsTrue (map.TryGetNewTypes (out types));
 			
-			Assert.AreEqual (exp.Key, kvp.Key);
-			Assert.AreEqual (exp.Value, kvp.Value);
+			Assert.AreEqual (exp.Key, types[0].Key);
+			Assert.AreEqual (exp.Value, types[0].Value);
 		}
 
 		[Test]
-		public void GetNewMultiple()
+		public void TryGetNewTypes_Multiple()
 		{
 			var map = new TypeMap();
 
@@ -133,7 +135,8 @@ namespace Tempest.Tests
 			map.GetTypeId (typeof (string), out id);
 			map.GetTypeId (typeof (int), out id);
 
-			var newItems = map.GetNewTypes().ToList();
+			IList<KeyValuePair<Type, ushort>> newItems;
+			Assert.IsTrue (map.TryGetNewTypes (out newItems));
 
 			var exp = new KeyValuePair<Type, int> (typeof (string), 0);
 			Assert.AreEqual (exp.Key, newItems[0].Key);
@@ -145,7 +148,7 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void GetNewRepeated()
+		public void TryGetNewTypes_Repeated()
 		{
 			var map = new TypeMap();
 
@@ -153,12 +156,15 @@ namespace Tempest.Tests
 			map.GetTypeId (typeof (string), out id);
 
 			var exp = new KeyValuePair<Type, int> (typeof (string), 0);
-			var kvp = map.GetNewTypes().ToList().Single();
-			
-			Assert.AreEqual (exp.Key, kvp.Key);
-			Assert.AreEqual (exp.Value, kvp.Value);
 
-			Assert.IsFalse (map.GetNewTypes().Any());
+			IList<KeyValuePair<Type, ushort>> types;
+			Assert.IsTrue (map.TryGetNewTypes (out types));
+			
+			Assert.AreEqual (exp.Key, types[0].Key);
+			Assert.AreEqual (exp.Value, types[0].Value);
+
+			Assert.IsFalse (map.TryGetNewTypes (out types));
+			Assert.IsNull (types);
 		}
 
 		[Test]

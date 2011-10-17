@@ -178,11 +178,8 @@ namespace Tempest.Providers.Network
 		{
 			get
 			{
-				//Socket rs = this.reliableSocket;
-				//return (!this.disconnecting && rs != null && rs.Connected);
-
-				lock (this.stateSync)
-					return (!this.disconnecting && this.reliableSocket != null && this.reliableSocket.Connected);
+				Socket rs = this.reliableSocket;
+				return (!this.disconnecting && rs != null && rs.Connected);
 			}
 		}
 
@@ -329,6 +326,7 @@ namespace Tempest.Providers.Network
 		private int rmessageOffset = 0;
 		private int rmessageLoaded = 0;
 
+		protected long lastActivity;
 		private long bytesReceived;
 		private long bytesSent;
 
@@ -478,7 +476,10 @@ namespace Tempest.Providers.Network
 				throw new InvalidOperationException();
 			
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{0}:{2} {1}:SignMessage ({3},{4})", this.typeName, c, connectionId, hashAlg, writer.Length);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{0}:{2} {1}:SignMessage ({3},{4})", this.typeName, c, connectionId, hashAlg, writer.Length);
+			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			byte[] hash;
@@ -495,15 +496,18 @@ namespace Tempest.Providers.Network
 		protected virtual bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
 			int c = GetNextCallId();
-			string callCateogry = String.Format ("{0}:{2} {1}:VerifyMessage({3},{4},{5},{6},{7},{8})", this.typeName, c, connectionId, hashAlg, message, signature.Length, data.Length, moffset, length);
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCateogry);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{0}:{2} {1}:VerifyMessage({3},{4},{5},{6},{7},{8})", this.typeName, c, connectionId, hashAlg, message, signature.Length, data.Length, moffset, length);
+			#endif
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			byte[] ourhash;
 			lock (this.hmac)
 				ourhash = this.hmac.ComputeHash (data, moffset, length);
 			
-			//Trace.WriteLineIf (NTrace.TraceVerbose, "Their hash: " + GetHex (signature), callCateogry);
-			//Trace.WriteLineIf (NTrace.TraceVerbose, "Our hash:   " + GetHex (ourhash), callCateogry);
+			//Trace.WriteLineIf (NTrace.TraceVerbose, "Their hash: " + GetHex (signature), callCategory);
+			//Trace.WriteLineIf (NTrace.TraceVerbose, "Our hash:   " + GetHex (ourhash), callCategory);
 
 			if (signature.Length != ourhash.Length)
 				return false;
@@ -512,12 +516,12 @@ namespace Tempest.Providers.Network
 			{
 				if (signature[i] != ourhash[i])
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (false)", callCateogry);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (false)", callCategory);
 					return false;
 				}
 			}
 
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (true)", callCateogry);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (true)", callCategory);
 			return true;
 		}
 
@@ -555,8 +559,9 @@ namespace Tempest.Providers.Network
 
 			int headerLength = BaseHeaderLength;
 
-			var types = context.TypeMap.GetNewTypes().OrderBy (kvp => kvp.Value).ToList();
-			if (types.Count > 0)
+			IList<KeyValuePair<Type, ushort>> types;
+			bool hasTypes = context.TypeMap.TryGetNewTypes (out types);
+			if (hasTypes)
 			{
 				if (types.Count > Int16.MaxValue)
 					throw new ArgumentException ("Too many different types for serialization");
@@ -598,7 +603,7 @@ namespace Tempest.Providers.Network
 			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
 			int len = length << 1;
-			if (types.Count > 0)
+			if (hasTypes)
 				len |= 1; // serialization header
 
 			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, lengthOffset, sizeof(int));
@@ -618,7 +623,10 @@ namespace Tempest.Providers.Network
 		#endif
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{1}:{2} {4}:Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId, c);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{1}:{2} {4}:Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId, c);
+			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			if (message == null)
@@ -651,6 +659,7 @@ namespace Tempest.Providers.Network
 					{
 						eargs = new SocketAsyncEventArgs();
 						eargs.SetBuffer (new byte[1024], 0, 1024);
+						eargs.Completed += ReliableSendCompleted;
 					}
 				}
 			}
@@ -689,10 +698,10 @@ namespace Tempest.Providers.Network
 					Monitor.Enter (this.sendSync);
 					lock (this.messageIdSync)
 					{
-						if (this.nextMessageId == MaxMessageId)
+						message.MessageId = this.nextMessageId++;
+
+						if (this.nextMessageId > MaxMessageId)
 							this.nextMessageId = 0;
-						else
-							message.MessageId = this.nextMessageId++;
 					}
 				}
 
@@ -707,29 +716,23 @@ namespace Tempest.Providers.Network
 				int length;
 				byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);
 
-
 				eargs.SetBuffer (buffer, 0, length);
-				eargs.UserToken = message;
+				eargs.UserToken = new KeyValuePair<NetworkConnection, Message> (this, message);
 
 				int p = Interlocked.Increment (ref this.pendingAsync);
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
 
-				lock (this.stateSync)
+				if (!IsConnected)
 				{
-					if (!IsConnected)
-					{
-						Interlocked.Decrement (ref this.pendingAsync);
-						Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
+					Interlocked.Decrement (ref this.pendingAsync);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 
-						#if !NET_4
-						lock (writerAsyncArgs)
-						#endif
-						writerAsyncArgs.Push (eargs);
+					#if !NET_4
+					lock (writerAsyncArgs)
+					#endif
+					writerAsyncArgs.Push (eargs);
 
-						return;
-					}
-
-					eargs.Completed += ReliableSendCompleted;	
+					return;
 				}
 
 				sent = !this.reliableSocket.SendAsync (eargs);
@@ -757,7 +760,10 @@ namespace Tempest.Providers.Network
 		protected bool TryGetHeader (BufferValueReader reader, int remaining, out MessageHeader header)
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{0}:{4} {1}:TryGetHeader({2},{3})", this.typeName, c, reader.Position, remaining, this.connectionId);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{0}:{4} {1}:TryGetHeader({2},{3})", this.typeName, c, reader.Position, remaining, this.connectionId);
+			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);			
 
 			header = null;
@@ -877,10 +883,11 @@ namespace Tempest.Providers.Network
 		private void BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader)
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId);
+			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
-
-			this.lastReceived = DateTime.Now;
 
 			MessageHeader header = null;
 
@@ -910,7 +917,9 @@ namespace Tempest.Providers.Network
 
 				if (!header.IsResponse)
 				{
-					if (header.MessageId < this.lastMessageId)
+					if (header.MessageId == MaxMessageId)
+						this.lastMessageId = -1;
+					else if (header.MessageId < this.lastMessageId)
 					{
 						Disconnect (true);
 						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (replay attack / reliable out of order)", callCategory);
@@ -1037,7 +1046,11 @@ namespace Tempest.Providers.Network
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
 		{
 			int c = GetNextCallId();
-			string callCategory = String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, this.connectionId);
+			string callCategory = null;
+			#if TRACE
+			callCategory = String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, this.connectionId);
+			#endif
+
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			bool async;
@@ -1053,22 +1066,29 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
+				#if !SILVERLIGHT
+				this.lastActivity = Stopwatch.GetTimestamp();
+				#else
+				this.lastActivity = DateTime.Now.Ticks;
+				#endif
+
 				Interlocked.Add (ref this.bytesReceived, e.BytesTransferred);
 
 				p = Interlocked.Decrement (ref this.pendingAsync);
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 
 				this.rmessageLoaded += e.BytesTransferred;
+				
+				int bufferOffset = e.Offset;
+				BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exited BufferMessages with new values: {0},{1},{2},{3},{4}", this.rmessageBuffer.Length, bufferOffset, this.rmessageOffset, this.rmessageLoaded, this.rreader.Position), callCategory);
+				e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
+
+				p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
+
 				lock (this.stateSync)
 				{
-					int bufferOffset = e.Offset;
-					BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exited BufferMessages with new values: {0},{1},{2},{3},{4}", this.rmessageBuffer.Length, bufferOffset, this.rmessageOffset, this.rmessageLoaded, this.rreader.Position), callCategory);
-					e.SetBuffer (this.rmessageBuffer, bufferOffset, this.rmessageBuffer.Length - bufferOffset);
-
-					p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), callCategory);
-
 					if (!IsConnected)
 					{
 						p = Interlocked.Decrement (ref this.pendingAsync);
@@ -1086,7 +1106,6 @@ namespace Tempest.Providers.Network
 		}
 
 		protected long lastSent;
-		protected DateTime lastReceived;
 		protected int pingsOut = 0;
 
 		protected virtual void OnTempestMessageReceived (MessageEventArgs e)
@@ -1216,41 +1235,6 @@ namespace Tempest.Providers.Network
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Raised Disconnected, exiting", String.Format ("{2}:{4} {3}:Disconnect({0},{1})", now, reason, this.typeName, c, connectionId));
 		}
 
-		private void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
-		{
-			int c = GetNextCallId();
-			string callCategory = String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, connectionId);
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
-
-			e.Completed -= ReliableSendCompleted;
-
-			var message = (Message)e.UserToken;
-
-			#if !NET_4
-			lock (writerAsyncArgs)
-			#endif
-			writerAsyncArgs.Push (e);
-
-			int p;
-			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
-			{
-				Disconnect (true);
-				p = Interlocked.Decrement (ref this.pendingAsync);
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
-				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error)", callCategory);
-				return;
-			}
-
-			Interlocked.Add (ref this.bytesSent, e.BytesTransferred);
-
-			if (!(message is TempestMessage))
-				OnMessageSent (new MessageEventArgs (this, message));
-
-			p = Interlocked.Decrement (ref this.pendingAsync);
-			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
-		}
-
 		private void OnDisconnectCompleted (object sender, SocketAsyncEventArgs e)
 		{
 			int c = GetNextCallId();
@@ -1297,5 +1281,44 @@ namespace Tempest.Providers.Network
 		#else
 		private static readonly Stack<SocketAsyncEventArgs> writerAsyncArgs = new Stack<SocketAsyncEventArgs>();
 		#endif
+
+		private static void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
+		{
+			var t = (KeyValuePair<NetworkConnection, Message>) e.UserToken;
+
+			NetworkConnection con = t.Key;
+
+			int c = con.GetNextCallId();
+			string callCategory = null;
+
+			#if TRACE
+			callCategory = String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, con.typeName, c, con.connectionId);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
+			#endif
+
+			#if !NET_4
+			lock (writerAsyncArgs)
+			#endif
+			writerAsyncArgs.Push (e);
+
+			int p;
+			if (e.BytesTransferred == 0 || e.SocketError != SocketError.Success)
+			{
+				con.Disconnect (true);
+				p = Interlocked.Decrement (ref con.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error)", callCategory);
+				return;
+			}
+
+			Interlocked.Add (ref con.bytesSent, e.BytesTransferred);
+
+			if (!(t.Value is TempestMessage))
+				con.OnMessageSent (new MessageEventArgs (con, t.Value));
+
+			p = Interlocked.Decrement (ref con.pendingAsync);
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
+		}
 	}
 }

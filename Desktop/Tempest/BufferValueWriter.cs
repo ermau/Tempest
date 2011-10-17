@@ -31,7 +31,11 @@ using Buff = System.Buffer;
 
 namespace Tempest
 {
+	#if SAFE
 	public class BufferValueWriter
+	#else
+	public unsafe class BufferValueWriter
+	#endif
 		: IValueWriter
 	{
 		public BufferValueWriter (byte[] buffer)
@@ -140,7 +144,13 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (short));
 
+			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof(short));
+			#else
+			fixed (byte* ub = this.buffer)
+				*((short*) (ub + this.position)) = value;
+			#endif
+
 			this.position += sizeof (short);
 		}
 
@@ -148,7 +158,13 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (int));
 
+			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (int));
+			#else
+			fixed (byte* ub = this.buffer)
+				*((int*) (ub + this.position)) = value;
+			#endif
+
 			this.position += sizeof (int);
 		}
 
@@ -156,7 +172,13 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (long));
 
+			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (long));
+			#else
+			fixed (byte* ub = this.buffer)
+				*((long*) (ub + this.position)) = value;
+			#endif
+
 			this.position += sizeof (long);
 		}
 
@@ -164,7 +186,13 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (ushort));
 
+			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ushort));
+			#else
+			fixed (byte* ub = this.buffer)
+				*((ushort*) (ub + this.position)) = value;
+			#endif
+
 			this.position += sizeof (ushort);
 		}
 
@@ -172,7 +200,13 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (uint));
 
+			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (uint));
+			#else
+			fixed (byte* ub = this.buffer)
+				*((uint*) (ub + this.position)) = value;
+			#endif
+
 			this.position += sizeof (uint);
 		}
 
@@ -180,7 +214,13 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof(ulong));
 
+			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ulong));
+			#else
+			fixed (byte* ub = this.buffer)
+				*((ulong*) (ub + this.position)) = value;
+			#endif
+
 			this.position += sizeof (ulong);
 		}
 
@@ -195,7 +235,13 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof(float));
 
+			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (float));
+			#else
+			fixed (byte* ub = this.buffer)
+				*((float*) (ub + this.position)) = value;
+			#endif
+
 			this.position += sizeof (float);
 		}
 
@@ -203,7 +249,13 @@ namespace Tempest
 		{
 			EnsureAdditionalCapacity (sizeof (double));
 
+			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (double));
+			#else
+			fixed (byte* ub = this.buffer)
+				*((double*) (ub + this.position)) = value;
+			#endif
+
 			this.position += sizeof (double);
 		}
 

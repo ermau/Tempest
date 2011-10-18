@@ -789,6 +789,52 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
+		public void StressRandomLongTypeHeaderedEncryptedMessage()
+		{
+			var c = GetNewClientConnection();
+			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
+				Assert.Ignore();
+
+			const int messages = 1000;
+
+			var test = new AsyncTest (e =>
+			{
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.AreSame (c, me.Connection);
+			}, messages);
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
+			{
+				try
+				{
+					var r = new Random (42);
+					for (int i = 0; i < messages; ++i)
+					{
+						if (i > Int32.MaxValue)
+							System.Diagnostics.Debugger.Break();
+
+						if (!e.Connection.IsConnected)
+							return;
+
+						e.Connection.Send (new EncryptedTypeHeaderedMessage { Object = GetLongString (r.Next (7500, 100000)) });
+					}
+				}
+				catch (Exception ex)
+				{
+					test.FailWith (ex);
+				}
+			})).Start();
+
+			c.Disconnected += test.FailHandler;
+			c.MessageReceived += test.PassHandler;
+			c.ConnectAsync (EndPoint, MessageTypes);
+
+			test.Assert (900000);
+		}
+
+		[Test, Repeat (3)]
 		public void DisconnectFromClientOnClient()
 		{
 			this.provider.Start (MessageTypes);
@@ -1401,6 +1447,41 @@ namespace Tempest.Tests
 			{
 				Assert.IsFalse (msg.Encrypted);
 				Assert.IsTrue (msg.Authenticated);
+				Assert.IsInstanceOf<string> (msg.Object);
+				Assert.AreEqual (cmessage.Object, msg.Object);
+			});
+
+		}
+
+		[Test, Repeat (3)]
+		public void EncryptedTypeHeaderedMessage()
+		{
+			var cmessage = new EncryptedTypeHeaderedMessage
+			{
+				Object = "foo"
+			};
+
+			AssertMessageReceived (cmessage, msg =>
+			{
+				Assert.IsTrue (msg.Encrypted);
+				Assert.IsFalse (msg.Authenticated);
+				Assert.IsInstanceOf<string> (msg.Object);
+				Assert.AreEqual (cmessage.Object, msg.Object);
+			});
+		}
+
+		[Test, Repeat (3)]
+		public void EncryptedTypeHeaderedMessageLong()
+		{
+			var cmessage = new EncryptedTypeHeaderedMessage
+			{
+				Object = GetLongString()
+			};
+
+			AssertMessageReceived (cmessage, msg =>
+			{
+				Assert.IsTrue (msg.Encrypted);
+				Assert.IsFalse (msg.Authenticated);
 				Assert.IsInstanceOf<string> (msg.Object);
 				Assert.AreEqual (cmessage.Object, msg.Object);
 			});

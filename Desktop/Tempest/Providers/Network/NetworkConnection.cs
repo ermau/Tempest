@@ -963,6 +963,13 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
+				if ((header.State & HeaderState.IV) == HeaderState.IV)
+				{
+					DecryptMessage (header, ref reader, ref buffer);
+					header.IsStillEncrypted = false;
+					continue;
+				}
+
 				if (!header.IsResponse)
 				{
 					if (header.MessageId == MaxMessageId)
@@ -998,8 +1005,8 @@ namespace Tempest.Providers.Network
 					byte[] message = buffer;
 					BufferValueReader r = reader;
 
-					if (header.Message.Encrypted)
-						DecryptMessage (header, ref r, ref message);
+					//if (header.Message.Encrypted)
+					//    DecryptMessage (header, ref r, ref message);
 
 					header.Message.ReadPayload (header.SerializationContext, r);
 

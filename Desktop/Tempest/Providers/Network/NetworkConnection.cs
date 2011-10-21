@@ -587,9 +587,6 @@ namespace Tempest.Providers.Network
 
 			if (message.Encrypted)
 			{
-				for (int i = lengthOffset; i < lengthOffset + sizeof(int); ++i)
-					writer.Buffer[i] = 0;
-
 				EncryptMessage (writer, ref headerLength);
 			}
 			else if (message.Authenticated)

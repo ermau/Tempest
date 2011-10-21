@@ -318,8 +318,8 @@ namespace Tempest.Providers.Network
 			long now = DateTime.Now.Ticks;
 			#endif
 
-			if ((now - this.lastActivity) > (this.pingFrequency * 10000) * 2)
-				Disconnect (ConnectionResult.TimedOut);
+			//if ((now - this.lastActivity) > (this.pingFrequency * 10000) * 2)
+			//    Disconnect (ConnectionResult.TimedOut);
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

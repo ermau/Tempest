@@ -430,7 +430,7 @@ namespace Tempest.Providers.Network
 				encryptor = am.CreateEncryptor();
 			}
 
-			const int workingHeaderLength = BaseHeaderLength;// - sizeof (int); // Need to encrypt message id
+			const int workingHeaderLength = 7; // right after length
 
 			int r = ((writer.Length - workingHeaderLength) % encryptor.OutputBlockSize);
 			if (r != 0)

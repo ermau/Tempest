@@ -841,33 +841,29 @@ namespace Tempest.Providers.Network
 					if (header.IsStillEncrypted)
 						return (remaining < mlen);
 				}
-				else
+				else if (msg.Encrypted && this.aes != null)
 				{
-					byte[] iv = null;
-					if (msg.Encrypted && this.aes != null)
+					int ivLength = this.aes.IV.Length;
+					if (remaining < headerLength + ivLength)
 					{
-						int ivLength = this.aes.IV.Length;
-						if (remaining < headerLength + ivLength)
-						{
-							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (IV))");
-							return false;
-						}
-
-						iv = reader.ReadBytes (ivLength);
-
-						headerLength += ivLength;
-						if (remaining < headerLength)
-						{
-							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
-							return false;
-						}
-
-						header.State |= HeaderState.IV;
-						header.IV = iv;
-						header.HeaderLength += headerLength;
-
-						return (remaining < mlen); // we need to decrypt the rest if we have it.
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (IV))");
+						return false;
 					}
+
+					byte[] iv = reader.ReadBytes (ivLength);
+
+					headerLength += ivLength;
+					if (remaining < headerLength)
+					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
+						return false;
+					}
+
+					header.State |= HeaderState.IV;
+					header.IV = iv;
+					header.HeaderLength += headerLength;
+
+					return (remaining > mlen); // we need to decrypt the rest if we have it.
 				}
 
 				int identV = reader.ReadInt32();

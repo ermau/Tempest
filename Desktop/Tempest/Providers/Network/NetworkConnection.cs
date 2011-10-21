@@ -321,6 +321,7 @@ namespace Tempest.Providers.Network
 
 		protected Socket reliableSocket;
 
+		protected MessageHeader currentHeader;
 		protected byte[] rmessageBuffer = new byte[20480];
 		protected BufferValueReader rreader;
 		private int rmessageOffset = 0;
@@ -754,119 +755,169 @@ namespace Tempest.Providers.Network
 		/// If <see cref="TryGetHeader"/> returns <c>true</c> and <paramref name="header"/> is <c>null</c>,
 		/// disconnect.
 		/// </remarks>
-		protected bool TryGetHeader (BufferValueReader reader, int remaining, out MessageHeader header)
+		protected bool TryGetHeader (BufferValueReader reader, int remaining, ref MessageHeader header)
 		{
 			int c = GetNextCallId();
 			string callCategory = null;
 			#if TRACE
 			callCategory = String.Format ("{0}:{4} {1}:TryGetHeader({2},{3})", this.typeName, c, reader.Position, remaining, this.connectionId);
 			#endif
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);			
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
-			header = null;
+			int mlen; bool hasTypeHeader; Message msg = null; Protocol p;
+
+			int headerLength = BaseHeaderLength;
+
+			if (header == null)
+				header = new MessageHeader();
+			else if (header.HeaderLength > 0)
+				headerLength = header.HeaderLength;
 
 			try
 			{
-				byte pid = reader.ReadByte();
-				Protocol p;
-				if (!this.protocols.TryGetValue (pid, out p))
+				if ((header.State & HeaderState.Protocol) == HeaderState.Protocol)
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Protocol " + pid + " not found)", callCategory);
-					return true;
+					p = header.Protocol;
+					reader.Position += sizeof(byte);
+				}
+				else
+				{
+					byte pid = reader.ReadByte();
+
+					if (!this.protocols.TryGetValue (pid, out p))
+					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Protocol " + pid + " not found)", callCategory);
+						return true;
+					}
+
+					header.Protocol = p;
+					header.State |= HeaderState.Protocol;
 				}
 
-				ushort type = reader.ReadUInt16();
-				int mlen = reader.ReadInt32();
-				bool hasTypeHeader = (mlen & 1) == 1;
-				mlen >>= 1;
-
-				if (mlen <= 0)
+				if ((header.State & HeaderState.Type) == HeaderState.Type)
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (length invalid)", callCategory);
-					return true;
+					msg = header.Message;
+					reader.Position += sizeof(ushort);
+				}
+				else
+				{
+					ushort type = reader.ReadUInt16();
+
+					msg = header.Message = p.Create (type);
+					header.State |= HeaderState.Type;
+
+					if (msg == null)
+					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Message " + type + " not found)", callCategory);
+						return true;
+					}
+				}
+
+				if ((header.State & HeaderState.Length) == HeaderState.Length)
+				{
+					mlen = header.MessageLength;
+					hasTypeHeader = header.HasTypeHeader;
+					reader.Position += sizeof(int);
+				}
+				else
+				{
+					mlen = reader.ReadInt32();
+					hasTypeHeader = (mlen & 1) == 1;
+					mlen >>= 1;
+
+					if (mlen <= 0)
+					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (length invalid)", callCategory);
+						return true;
+					}
+
+					header.MessageLength = mlen;
+					header.HasTypeHeader = hasTypeHeader;
+					header.State |= HeaderState.Length;
+				}
+
+				if ((header.State & HeaderState.IV) == HeaderState.IV)
+				{
+					if (header.IsStillEncrypted)
+						return (remaining < mlen);
+				}
+				else
+				{
+					byte[] iv = null;
+					if (msg.Encrypted && this.aes != null)
+					{
+						int ivLength = this.aes.IV.Length;
+						if (remaining < headerLength + ivLength)
+						{
+							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (IV))");
+							return false;
+						}
+
+						iv = reader.ReadBytes (ivLength);
+
+						headerLength += ivLength;
+						if (remaining < headerLength)
+						{
+							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
+							return false;
+						}
+
+						header.State |= HeaderState.IV;
+						header.IV = iv;
+						header.HeaderLength += headerLength;
+
+						return (remaining < mlen); // we need to decrypt the rest if we have it.
+					}
 				}
 
 				int identV = reader.ReadInt32();
 
-				Message msg = p.Create (type);
-				if (msg == null)
-				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Message " + type + " not found)", callCategory);
-					return true;
-				}
-
-				header = new MessageHeader (p, msg)
-				{
-					MessageLength = mlen,
-					MessageId = identV & ~ResponseFlag,
-					IsResponse = (identV & ResponseFlag) == ResponseFlag
-				};
+				header.MessageId = identV & ~ResponseFlag;
+				header.IsResponse = (identV & ResponseFlag) == ResponseFlag;
 
 				msg.MessageId = header.MessageId;
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have {0}:{2} ({1:N0})", msg.GetType().Name, mlen, msg.MessageId), callCategory);
 
-				int headerLength = BaseHeaderLength;
-
-				TypeMap map;
-				if (hasTypeHeader)
+				if ((header.State & HeaderState.TypeMap) != HeaderState.TypeMap)
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Has type header, reading types", callCategory);
-
-					if (remaining < headerLength + (sizeof(ushort) * 2))
+					TypeMap map;
+					if (hasTypeHeader)
 					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (types))", callCategory);
-						return false;
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Has type header, reading types", callCategory);
+
+						if (remaining < headerLength + (sizeof(ushort) * 2))
+						{
+							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (types))", callCategory);
+							return false;
+						}
+
+						ushort typeheaderLength = reader.ReadUInt16();
+						headerLength += typeheaderLength;
+
+						if (remaining < headerLength)
+						{
+							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (types))", callCategory);
+							return false;
+						}
+
+						ushort numTypes = reader.ReadUInt16();
+						var types = new Dictionary<Type, ushort> (numTypes);
+						for (ushort i = 0; i < numTypes; ++i)
+							types[Type.GetType (reader.ReadString())] = i;
+
+						map = new TypeMap (types);
 					}
+					else
+						map = new TypeMap();
 
-					ushort typeheaderLength = reader.ReadUInt16();
-					headerLength += typeheaderLength;
+					var context = new SerializationContext (this, p, map);
 
-					if (remaining < headerLength)
-					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (types))", callCategory);
-						return false;
-					}
-
-					ushort numTypes = reader.ReadUInt16();
-					var types = new Dictionary<Type, ushort> (numTypes);
-					for (ushort i = 0; i < numTypes; ++i)
-						types[Type.GetType (reader.ReadString())] = i;
-				    
-					map = new TypeMap (types);
-				}
-				else
-					map = new TypeMap();
-
-				var context = new SerializationContext (this, p, map);
-
-				byte[] iv = null;
-				if (msg.Encrypted && this.aes != null)
-				{
-					int ivLength = this.aes.IV.Length;
-					if (remaining < headerLength + ivLength)
-					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (IV))");
-						return false;
-					}
-
-					iv = reader.ReadBytes (ivLength);
-
-					headerLength += ivLength;
-					if (remaining < headerLength)
-					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
-						return false;
-					}
-
-					header.IV = iv;
+					header.SerializationContext = context;
+					header.HeaderLength = headerLength;
 				}
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
-
-				header.SerializationContext = context;
-				header.HeaderLength = headerLength;
-
 				return true;
 			}
 			catch (Exception ex)
@@ -886,12 +937,12 @@ namespace Tempest.Providers.Network
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
-			MessageHeader header = null;
+			MessageHeader header = this.currentHeader;
 
 			int length = 0;
 			while (remainingData >= BaseHeaderLength)
 			{
-				if (!TryGetHeader (reader, remainingData, out header))
+				if (!TryGetHeader (reader, remainingData, ref header))
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Failed to get header", callCategory);
 					break;

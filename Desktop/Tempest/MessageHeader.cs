@@ -28,16 +28,14 @@ using System;
 
 namespace Tempest
 {
-	[Flags]
 	public enum HeaderState
-		: byte
 	{
 		Protocol = 1,
 		Type = 2,
-		Length = 4,
-		IV = 8,
-		MessageId = 16,
-		TypeMap = 32
+		Length = 3,
+		IV = 4,
+		MessageId = 5,
+		TypeMap = 6
 	}
 
 	public class MessageHeader
@@ -70,6 +68,12 @@ namespace Tempest
 		}
 
 		public bool HasTypeHeader
+		{
+			get;
+			internal set;
+		}
+
+		public ushort TypeHeaderLength
 		{
 			get;
 			internal set;

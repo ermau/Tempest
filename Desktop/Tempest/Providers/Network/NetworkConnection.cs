@@ -441,17 +441,18 @@ namespace Tempest.Providers.Network
 
 			writer.Length = workingHeaderLength;
 			writer.InsertBytes (workingHeaderLength, iv, 0, iv.Length);
-			writer.WriteBytes (payload);
+			writer.WriteInt32 (payload.Length);
+			writer.InsertBytes (writer.Length, payload, 0, payload.Length);
 
 			headerLength += iv.Length;
 		}
 
-		protected void DecryptMessage (MessageHeader header, ref BufferValueReader r, ref byte[] message)
+		protected void DecryptMessage (MessageHeader header, ref BufferValueReader r)
 		{
 			int c = GetNextCallId();
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length));
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4})", this.typeName, c, connectionId, header.IV.Length, r.Position));
 
-			byte[] payload = r.ReadBytes();
+			int payloadLength = r.ReadInt32();
 
 			AesManaged am = this.aes;
 			if (am == null)
@@ -464,8 +465,7 @@ namespace Tempest.Providers.Network
 				decryptor = am.CreateDecryptor();
 			}
 
-			message = decryptor.TransformFinalBlock (payload, 0, payload.Length);
-
+			byte[] message = decryptor.TransformFinalBlock (r.Buffer, r.Position, payloadLength);
 			r = new BufferValueReader (message);
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length));
@@ -775,10 +775,10 @@ namespace Tempest.Providers.Network
 
 			try
 			{
-				if ((header.State & HeaderState.Protocol) == HeaderState.Protocol)
+				if (header.State >= HeaderState.Protocol)
 				{
 					p = header.Protocol;
-					reader.Position += sizeof(byte);
+					//reader.Position += sizeof(byte);
 				}
 				else
 				{
@@ -791,20 +791,20 @@ namespace Tempest.Providers.Network
 					}
 
 					header.Protocol = p;
-					header.State |= HeaderState.Protocol;
+					header.State = HeaderState.Protocol;
 				}
 
-				if ((header.State & HeaderState.Type) == HeaderState.Type)
+				if (header.State >= HeaderState.Type)
 				{
 					msg = header.Message;
-					reader.Position += sizeof(ushort);
+					//reader.Position += sizeof(ushort);
 				}
 				else
 				{
 					ushort type = reader.ReadUInt16();
 
 					msg = header.Message = p.Create (type);
-					header.State |= HeaderState.Type;
+					header.State = HeaderState.Type;
 
 					if (msg == null)
 					{
@@ -813,11 +813,11 @@ namespace Tempest.Providers.Network
 					}
 				}
 
-				if ((header.State & HeaderState.Length) == HeaderState.Length)
+				if (header.State >= HeaderState.Length)
 				{
 					mlen = header.MessageLength;
 					hasTypeHeader = header.HasTypeHeader;
-					reader.Position += sizeof(int);
+					//reader.Position += sizeof(int);
 				}
 				else
 				{
@@ -833,49 +833,57 @@ namespace Tempest.Providers.Network
 
 					header.MessageLength = mlen;
 					header.HasTypeHeader = hasTypeHeader;
-					header.State |= HeaderState.Length;
+					header.State = HeaderState.Length;
 				}
 
-				if ((header.State & HeaderState.IV) == HeaderState.IV)
+				if (header.State >= HeaderState.IV)
 				{
 					if (header.IsStillEncrypted)
 						return (remaining < mlen);
+					else if (header.Message.Encrypted)
+						reader.Position = 0;
 				}
 				else if (msg.Encrypted && this.aes != null)
 				{
 					int ivLength = this.aes.IV.Length;
-					if (remaining < headerLength + ivLength)
+					headerLength += ivLength;
+
+					if (remaining < headerLength)
 					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (IV))");
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (IV))", callCategory);
 						return false;
 					}
 
 					byte[] iv = reader.ReadBytes (ivLength);
 
-					headerLength += ivLength;
-					if (remaining < headerLength)
+					header.HeaderLength = headerLength;
+					header.State = HeaderState.IV;
+					header.IV = iv;
+
+					if (remaining < mlen)
 					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered)", callCategory);
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message not buffered)", callCategory);
 						return false;
 					}
 
-					header.State |= HeaderState.IV;
-					header.IV = iv;
-					header.HeaderLength += headerLength;
-
-					return (remaining > mlen); // we need to decrypt the rest if we have it.
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (need to decrypt)", callCategory);
+					return true;
 				}
 
-				int identV = reader.ReadInt32();
+				if (header.State < HeaderState.MessageId)
+				{
+					int identV = reader.ReadInt32();
+					header.MessageId = identV & ~ResponseFlag;
+					header.IsResponse = (identV & ResponseFlag) == ResponseFlag;
 
-				header.MessageId = identV & ~ResponseFlag;
-				header.IsResponse = (identV & ResponseFlag) == ResponseFlag;
+					msg.MessageId = header.MessageId;
 
-				msg.MessageId = header.MessageId;
+					header.State = HeaderState.MessageId;
+				}
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have {0}:{2} ({1:N0})", msg.GetType().Name, mlen, msg.MessageId), callCategory);
 
-				if ((header.State & HeaderState.TypeMap) != HeaderState.TypeMap)
+				if (header.State < HeaderState.TypeMap)
 				{
 					TypeMap map;
 					if (hasTypeHeader)
@@ -888,8 +896,12 @@ namespace Tempest.Providers.Network
 							return false;
 						}
 
-						ushort typeheaderLength = reader.ReadUInt16();
-						headerLength += typeheaderLength;
+						if (header.TypeHeaderLength == 0)
+						{
+							ushort typeheaderLength = reader.ReadUInt16();
+							headerLength += typeheaderLength;
+							header.TypeHeaderLength = typeheaderLength;
+						}
 
 						if (remaining < headerLength)
 						{
@@ -911,6 +923,7 @@ namespace Tempest.Providers.Network
 
 					header.SerializationContext = context;
 					header.HeaderLength = headerLength;
+					header.State = HeaderState.TypeMap;
 				}
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
@@ -934,17 +947,18 @@ namespace Tempest.Providers.Network
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
 			MessageHeader header = this.currentHeader;
+			BufferValueReader currentReader = reader;
 
 			int length = 0;
 			while (remainingData >= BaseHeaderLength)
 			{
-				if (!TryGetHeader (reader, remainingData, ref header))
+				if (!TryGetHeader (currentReader, remainingData, ref header))
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Failed to get header", callCategory);
 					break;
 				}
 
-				if (header == null)
+				if (header == null || header.Message == null)
 				{
 					Disconnect (true);
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not found)", callCategory);
@@ -959,9 +973,9 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
-				if ((header.State & HeaderState.IV) == HeaderState.IV)
+				if (header.State == HeaderState.IV)
 				{
-					DecryptMessage (header, ref reader, ref buffer);
+					DecryptMessage (header, ref currentReader);
 					header.IsStillEncrypted = false;
 					continue;
 				}
@@ -998,13 +1012,7 @@ namespace Tempest.Providers.Network
 
 				try
 				{
-					byte[] message = buffer;
-					BufferValueReader r = reader;
-
-					//if (header.Message.Encrypted)
-					//    DecryptMessage (header, ref r, ref message);
-
-					header.Message.ReadPayload (header.SerializationContext, r);
+					header.Message.ReadPayload (header.SerializationContext, currentReader);
 
 					if (!header.Message.Encrypted && header.Message.Authenticated)
 					{
@@ -1013,7 +1021,7 @@ namespace Tempest.Providers.Network
 							buffer[i] = 0;
 
 						int payloadLength = reader.Position;
-						byte[] signature = reader.ReadBytes(); // Need the original reader here, sig is after payload
+						byte[] signature = reader.ReadBytes();
 						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset, payloadLength - messageOffset))
 						{
 							Disconnect (true, ConnectionResult.MessageAuthenticationFailed);
@@ -1053,6 +1061,9 @@ namespace Tempest.Providers.Network
 				else
 					OnTempestMessageReceived (new MessageEventArgs (this, header.Message));
 
+				currentReader = reader;
+				header = null;
+				this.currentHeader = null;
 				messageOffset += length;
 				bufferOffset = messageOffset;
 				remainingData -= length;
@@ -1077,6 +1088,8 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
+				int pos = reader.Position - messageOffset;
+
 				byte[] destinationBuffer = buffer;
 				if (knownRoomNeeded > buffer.Length)
 				{
@@ -1085,8 +1098,8 @@ namespace Tempest.Providers.Network
 				}
 
 				Buffer.BlockCopy (buffer, messageOffset, destinationBuffer, 0, remainingData);
+				reader.Position = pos;
 				messageOffset = 0;
-				reader.Position = 0;
 				bufferOffset = remainingData;
 				buffer = destinationBuffer;
 			}

@@ -762,7 +762,7 @@ namespace Tempest.Providers.Network
 			#if TRACE
 			callCategory = String.Format ("{0}:{4} {1}:TryGetHeader({2},{3})", this.typeName, c, reader.Position, remaining, this.connectionId);
 			#endif
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Entering {0}", (header == null) ? "without existing header" : "with existing header"), callCategory);
 
 			int mlen; bool hasTypeHeader; Message msg = null; Protocol p;
 
@@ -954,9 +954,12 @@ namespace Tempest.Providers.Network
 			{
 				if (!TryGetHeader (currentReader, remainingData, ref header))
 				{
+					this.currentHeader = header;
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Failed to get header", callCategory);
 					break;
 				}
+
+				this.currentHeader = header;
 
 				if (header == null || header.Message == null)
 				{
@@ -1077,18 +1080,18 @@ namespace Tempest.Providers.Network
 				if (header != null && remainingData >= BaseHeaderLength)
 					knownRoomNeeded = header.MessageLength;
 
+				int pos = reader.Position - messageOffset;
+
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format("Room needed: {0:N0} bytes", knownRoomNeeded), callCategory);
 				if (messageOffset + knownRoomNeeded <= buffer.Length)
 				{
 					// bufferOffset is only moved on complete headers, so it's still == messageOffset.
 					bufferOffset = messageOffset + remainingData;
-					reader.Position = messageOffset;
+					reader.Position = pos;
 
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (sufficient room)", callCategory);
 					return;
 				}
-
-				int pos = reader.Position - messageOffset;
 
 				byte[] destinationBuffer = buffer;
 				if (knownRoomNeeded > buffer.Length)
@@ -1102,6 +1105,8 @@ namespace Tempest.Providers.Network
 				messageOffset = 0;
 				bufferOffset = remainingData;
 				buffer = destinationBuffer;
+
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting (moved message to front, {0})", reader.Position), callCategory);
 			}
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);

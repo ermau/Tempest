@@ -435,7 +435,7 @@ namespace Tempest.Providers.Network
 
 			int r = ((writer.Length - workingHeaderLength) % encryptor.OutputBlockSize);
 			if (r != 0)
-				writer.Pad (encryptor.OutputBlockSize - r);
+			    writer.Pad (encryptor.OutputBlockSize - r);
 
 			byte[] payload = encryptor.TransformFinalBlock (writer.Buffer, workingHeaderLength, writer.Length - workingHeaderLength);
 
@@ -623,7 +623,7 @@ namespace Tempest.Providers.Network
 			int c = GetNextCallId();
 			string callCategory = null;
 			#if TRACE
-			callCategory = String.Format ("{1}:{2} {4}:Send({0}:{3})", message, this.typeName, this.connectionId, message.MessageId, c);
+			callCategory = String.Format ("{1}:{2} {3}:Send({0})", message, this.typeName, this.connectionId, c);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
@@ -811,6 +811,11 @@ namespace Tempest.Providers.Network
 						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Message " + type + " not found)", callCategory);
 						return true;
 					}
+					
+					if (msg.Encrypted)
+						header.IsStillEncrypted = true;
+
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have " + msg.GetType().Name), callCategory);
 				}
 
 				if (header.State >= HeaderState.Length)
@@ -834,12 +839,17 @@ namespace Tempest.Providers.Network
 					header.MessageLength = mlen;
 					header.HasTypeHeader = hasTypeHeader;
 					header.State = HeaderState.Length;
+
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have message of length: {0}, {1} type header", mlen, (hasTypeHeader) ? "with" : "without"), callCategory);
 				}
 
-				if (header.State >= HeaderState.IV)
+				if (header.State == HeaderState.IV)
 				{
 					if (header.IsStillEncrypted)
-						return (remaining < mlen);
+					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message not buffered)", callCategory);
+						return !(remaining < mlen);
+					}
 					else if (header.Message.Encrypted)
 						reader.Position = 0;
 				}
@@ -879,9 +889,9 @@ namespace Tempest.Providers.Network
 					msg.MessageId = header.MessageId;
 
 					header.State = HeaderState.MessageId;
-				}
 
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have {0}:{2} ({1:N0})", msg.GetType().Name, mlen, msg.MessageId), callCategory);
+					Trace.WriteLineIf (NTrace.TraceWarning, "Have message ID: " + header.MessageId, callCategory);
+				}
 
 				if (header.State < HeaderState.TypeMap)
 				{
@@ -1108,8 +1118,8 @@ namespace Tempest.Providers.Network
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting (moved message to front, {0})", reader.Position), callCategory);
 			}
-
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
+			else
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}
 
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)

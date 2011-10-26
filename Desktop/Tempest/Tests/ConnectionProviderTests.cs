@@ -80,8 +80,11 @@ namespace Tempest.Tests
 
 			if (this.exceptions.Count > 0)
 			{
+				Exception[] exs = this.exceptions.ToArray();
+				this.exceptions.Clear();
+
 				#if NET_4
-				throw new AggregateException (this.exceptions.ToArray());
+				throw new AggregateException (exs);
 				#else
 				throw new Exception ("Error during test", this.exceptions[0]);
 				#endif
@@ -1320,7 +1323,7 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
-		public void EncryptedAndAuthenticatedMessage()
+		public void EncryptedAndAuthenticatedLongMessage()
 		{
 
 			Random r = new Random();
@@ -1373,7 +1376,7 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
-		public void EncryptedAndAuthenticatedLongMessage()
+		public void EncryptedAndAuthenticatedMessage()
 		{
 			var cmessage = new AuthenticatedAndEncryptedMessage()
 			{

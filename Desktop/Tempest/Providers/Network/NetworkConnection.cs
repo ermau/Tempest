@@ -1097,7 +1097,7 @@ namespace Tempest.Providers.Network
 				{
 					// bufferOffset is only moved on complete headers, so it's still == messageOffset.
 					bufferOffset = messageOffset + remainingData;
-					reader.Position = pos;
+					//reader.Position = pos;
 
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (sufficient room)", callCategory);
 					return;

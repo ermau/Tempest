@@ -47,7 +47,7 @@ namespace Tempest.Providers.Network
 	{
 		/// <summary>
 		/// Gets or sets the global limit for number of send buffers (for both <see cref="NetworkServerConnection"/> and <see cref="NetworkClientConnection" />).
-		/// (Default: <see cref="Environment.ProcessorCount"/>.
+		/// (Default: <see cref="Environment.ProcessorCount"/>.)
 		/// </summary>
 		/// <remarks>
 		/// <para>
@@ -68,9 +68,6 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Gets or sets whether the global limit for number of send buffers should grow with additional connections. (Default: <c>true</c>).
 		/// </summary>
-		/// <remarks>
-		/// This will 
-		/// </remarks>
 		public static bool AutoSizeSendBufferLimit
 		{
 			get { return autoSizeSendBufferLimit; }
@@ -194,11 +191,17 @@ namespace Tempest.Providers.Network
 			private set;
 		}
 
+		/// <summary>
+		/// Gets the total number of bytes sent in the lifetime of this connection.
+		/// </summary>
 		public long BytesSent
 		{
 			get { return this.bytesSent; }
 		}
 
+		/// <summary>
+		/// Gets the total number of bytes received in the lifetime of this connection.
+		/// </summary>
 		public long BytesReceived
 		{
 			get { return this.bytesReceived; }

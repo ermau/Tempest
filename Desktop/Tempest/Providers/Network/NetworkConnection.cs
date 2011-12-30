@@ -952,7 +952,7 @@ namespace Tempest.Providers.Network
 			int c = GetNextCallId();
 			string callCategory = null;
 			#if TRACE
-			callCategory = String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId);
+			callCategory = String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5},{7})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId, reader.Position);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
@@ -1015,8 +1015,8 @@ namespace Tempest.Providers.Network
 
 				if (remainingData < length)
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Message not fully received", callCategory);
 					bufferOffset += remainingData;
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Message not fully received (boffset={0})", bufferOffset), callCategory);
 					break;
 				}
 
@@ -1025,6 +1025,7 @@ namespace Tempest.Providers.Network
 
 				try
 				{
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Reading payload for message {0}", header.Message), callCategory);
 					header.Message.ReadPayload (header.SerializationContext, currentReader);
 
 					if (!header.Message.Encrypted && header.Message.Authenticated)
@@ -1080,6 +1081,8 @@ namespace Tempest.Providers.Network
 				messageOffset += length;
 				bufferOffset = messageOffset;
 				remainingData -= length;
+
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("EOL: moffset={0},boffest={1},rdata={2},rpos={3}", messageOffset, bufferOffset, remainingData, reader.Position), callCategory);
 			}
 
 			if (remainingData > 0 || messageOffset + BaseHeaderLength >= buffer.Length)
@@ -1099,7 +1102,7 @@ namespace Tempest.Providers.Network
 					bufferOffset = messageOffset + remainingData;
 					//reader.Position = pos;
 
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (sufficient room)", callCategory);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting (sufficient room; boffest={0},rpos={1})", bufferOffset, pos), callCategory);
 					return;
 				}
 
@@ -1116,7 +1119,7 @@ namespace Tempest.Providers.Network
 				bufferOffset = remainingData;
 				buffer = destinationBuffer;
 
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting (moved message to front, {0})", reader.Position), callCategory);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting (moved message to front, moffset={1},boffset={2},rpos={0})", reader.Position, messageOffset, bufferOffset), callCategory);
 			}
 			else
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);

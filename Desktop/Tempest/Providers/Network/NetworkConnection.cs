@@ -1053,7 +1053,7 @@ namespace Tempest.Providers.Network
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
-			bool async;
+			bool sentAsync;
 			do
 			{
 				int p;
@@ -1098,9 +1098,9 @@ namespace Tempest.Providers.Network
 						return;
 					}
 
-					async = this.reliableSocket.ReceiveAsync (e);
+					sentAsync = this.reliableSocket.ReceiveAsync (e);
 				}
-			} while (!async);
+			} while (!sentAsync);
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}

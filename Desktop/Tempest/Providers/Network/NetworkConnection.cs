@@ -466,6 +466,7 @@ namespace Tempest.Providers.Network
 			}
 
 			byte[] message = decryptor.TransformFinalBlock (r.Buffer, r.Position, payloadLength);
+			r.Position += payloadLength; // Advance original reader position
 			r = new BufferValueReader (message);
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length));

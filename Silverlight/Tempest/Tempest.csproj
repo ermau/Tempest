@@ -46,6 +46,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AsyncCtpLibrary_Silverlight, Version=1.0.4107.18177, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\AsyncCtpLibrary_Silverlight.dll</HintPath>
+    </Reference>
     <Reference Include="DH.Scrypt">
       <HintPath>.\DH.Scrypt.dll</HintPath>
     </Reference>

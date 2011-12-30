@@ -26,12 +26,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-
-#if NET_4
 using System.Threading.Tasks;
-#endif
 
 namespace Tempest
 {
@@ -115,7 +111,6 @@ namespace Tempest
 		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
 		void Send (Message message);
 
-		#if NET_4
 		/// <summary>
 		/// Sends a <paramref name="message"/> on this connection and returns a <see cref="Task{TResponse}" /> for the direct response to this <paramref name="message"/>.
 		/// </summary>
@@ -140,7 +135,6 @@ namespace Tempest
 		/// <exception cref="ArgumentException"><paramref name="originalMessage" />'s <see cref="Message.IsResponse"/> is <c>true</c>.</exception>
 		/// <seealso cref="SendFor{TResponse}"/>
 		void SendResponse (Message originalMessage, Message response);
-		#endif
 
 		/// <summary>
 		/// Sends and receives all pending messages.

@@ -25,8 +25,8 @@
 // THE SOFTWARE.
 
 using System;
-using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Tempest
 {
@@ -44,7 +44,7 @@ namespace Tempest
 		/// <param name="endpoint">The endpoint to connect to.</param>
 		/// <param name="messageTypes">The type of messages to connect for.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="endpoint"/> is <c>null</c>.</exception>
-		void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes);
+		Task<ConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes);
 	}
 
 	/// <summary>

@@ -29,11 +29,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
-using Tempest.InternalProtocol;
-
-#if NET_4
 using System.Threading.Tasks;
-#endif
+using Tempest.InternalProtocol;
 
 namespace Tempest.Tests
 {
@@ -199,7 +196,6 @@ namespace Tempest.Tests
 			connection.Receive (new MessageEventArgs (connection, message));
 		}
 
-		#if NET_4
 		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
 		{
 			Task<TResponse> task = base.SendFor<TResponse> (message, timeout);
@@ -214,7 +210,6 @@ namespace Tempest.Tests
 			OnMessageSent (new MessageEventArgs (this, response));
 			connection.ReceiveResponse (new MessageEventArgs (connection, response));
 		}
-		#endif
 
 		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
@@ -252,10 +247,12 @@ namespace Tempest.Tests
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 
-		public void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
+		public Task<ConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
 			if (endpoint == null)
 				throw new ArgumentNullException ("endpoint");
+
+			var tcs = new TaskCompletionSource<ConnectionResult>();
 
 			this.connected = true;
 			if (provider.IsRunning)
@@ -263,12 +260,18 @@ namespace Tempest.Tests
 				provider.Connect (this);
 
 				if (this.connected)
+				{
 					OnConnected (new ClientConnectionEventArgs (this));
+					tcs.SetResult (ConnectionResult.Success);
+				}
 			}
 			else
 			{
 				OnDisconnected (new DisconnectedEventArgs (this, ConnectionResult.ConnectionFailed));
+				tcs.SetResult (ConnectionResult.ConnectionFailed);
 			}
+
+			return tcs.Task;
 		}
 
 		public override void Send (Message message)
@@ -282,7 +285,6 @@ namespace Tempest.Tests
 			connection.Receive (new MessageEventArgs (connection, message));
 		}
 
-		#if NET_4
 		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
 		{
 			Task<TResponse> task = base.SendFor<TResponse> (message, timeout);
@@ -297,7 +299,6 @@ namespace Tempest.Tests
 			OnMessageSent (new MessageEventArgs (this, response));
 			connection.ReceiveResponse (new MessageEventArgs (connection, response));
 		}
-		#endif
 
 		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
@@ -397,7 +398,6 @@ namespace Tempest.Tests
 			OnMessageSent (new MessageEventArgs (this, message));
 		}
 
-		#if NET_4
 		private readonly Dictionary<int, TaskCompletionSource<Message>> responses = new Dictionary<int, TaskCompletionSource<Message>>();
 		public virtual Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
 		{
@@ -421,7 +421,6 @@ namespace Tempest.Tests
 		}
 
 		public abstract void SendResponse (Message originalMessage, Message response);
-		#endif
 
 		public IEnumerable<MessageEventArgs> Tick()
 		{
@@ -459,7 +458,6 @@ namespace Tempest.Tests
 				ThreadPool.QueueUserWorkItem (s => OnDisconnected ((DisconnectedEventArgs)s), e);
 		}
 
-		#if NET_4
 		internal void ReceiveResponse (MessageEventArgs e)
 		{
 			bool response = false;
@@ -472,7 +470,6 @@ namespace Tempest.Tests
 
 			Receive (e);
 		}
-		#endif
 
 		internal void Receive (MessageEventArgs e)
 		{

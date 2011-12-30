@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
-
-#if NET_4
 using System.Threading.Tasks;
-#endif
 
 namespace Tempest.Providers.Network
 {
@@ -143,7 +140,6 @@ namespace Tempest.Providers.Network
 			this.connection.Send (message);
 		}
 
-		#if NET_4
 		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
 		{
 			throw new NotImplementedException();
@@ -153,7 +149,6 @@ namespace Tempest.Providers.Network
 		{
 			throw new NotImplementedException();
 		}
-		#endif
 
 		public IEnumerable<MessageEventArgs> Tick()
 		{
@@ -180,9 +175,9 @@ namespace Tempest.Providers.Network
 			this.connection.DisconnectAsync (reason, customReason);
 		}
 
-		public void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
+		public Task<ConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
-			this.connection.ConnectAsync (endpoint, messageTypes);
+			return this.connection.ConnectAsync (endpoint, messageTypes);
 		}
 
 		private double sendPacketLoss;

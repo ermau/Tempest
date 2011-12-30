@@ -32,6 +32,7 @@ using System.Net.Sockets;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
@@ -86,7 +87,7 @@ namespace Tempest.Providers.Network
 			get { return this.serverAuthenticationKey; }
 		}
 
-		public void ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
+		public Task<ConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
 			int c = GetNextCallId();
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
@@ -96,6 +97,8 @@ namespace Tempest.Providers.Network
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
+			var ntcs = new TaskCompletionSource<ConnectionResult>();
+			
 			ThreadPool.QueueUserWorkItem (s =>
 			{
 				SocketAsyncEventArgs args;
@@ -103,7 +106,7 @@ namespace Tempest.Providers.Network
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
 
-				while (this.pendingAsync > 0)
+				while (this.pendingAsync > 0 || Interlocked.CompareExchange (ref this.connectCompletion, ntcs, null) != null)
 					Thread.Sleep (0);
 
 				lock (this.stateSync)
@@ -132,6 +135,8 @@ namespace Tempest.Providers.Network
 				else
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
 			});
+
+			return ntcs.Task;
 		}
 		
 		private int pingFrequency;
@@ -142,6 +147,8 @@ namespace Tempest.Providers.Network
 
 		private IPublicKeyCrypto serverEncryption;
 		private IAsymmetricKey serverEncryptionKey;
+
+		private TaskCompletionSource<ConnectionResult> connectCompletion;
 		
 		protected override void Recycle()
 		{
@@ -152,6 +159,19 @@ namespace Tempest.Providers.Network
 			this.serverAuthenticationKey = null;
 
 			base.Recycle();
+		}
+
+		private ConnectionResult GetConnectFromError (SocketError error)
+		{
+			switch (error)
+			{
+				case SocketError.Success:
+					return ConnectionResult.Success;
+				case SocketError.TimedOut:
+					return ConnectionResult.TimedOut;
+				default:
+					return ConnectionResult.ConnectionFailed;
+			}
 		}
 
 		private void ConnectCompleted (object sender, SocketAsyncEventArgs e)
@@ -167,6 +187,11 @@ namespace Tempest.Providers.Network
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 				Disconnect (ConnectionResult.ConnectionFailed);
 				OnConnectionFailed (new ClientConnectionEventArgs (this));
+
+				var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
+				if (tcs != null)
+					tcs.SetResult (GetConnectFromError (e.SocketError));
+
 				return;
 			}
 
@@ -265,6 +290,11 @@ namespace Tempest.Providers.Network
 
 				case (ushort)TempestMessageType.Connected:
 					OnConnected (new ClientConnectionEventArgs (this));
+
+					var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
+					if (tcs != null)
+						tcs.SetResult (ConnectionResult.Success);
+
 					break;
 			}
 
@@ -301,6 +331,10 @@ namespace Tempest.Providers.Network
 
 		protected override void OnDisconnected (DisconnectedEventArgs e)
 		{
+			var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
+			if (tcs != null)
+				tcs.TrySetResult (e.Result);
+
 			if (this.activityTimer != null)
 			{
 				this.activityTimer.Dispose();

@@ -34,9 +34,9 @@ using System.Security.Cryptography;
 using System.Text;
 using Tempest.InternalProtocol;
 using System.Threading;
+using System.Threading.Tasks;
 
 #if NET_4
-using System.Threading.Tasks;
 using System.Collections.Concurrent;
 #endif
 
@@ -238,7 +238,6 @@ namespace Tempest.Providers.Network
 			SendMessage (message);
 		}
 
-		#if NET_4
 		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
 			where TResponse : Message
 		{
@@ -260,7 +259,6 @@ namespace Tempest.Providers.Network
 			response.MessageId = originalMessage.MessageId;
 			SendMessage (response, true);
 		}
-		#endif
 
 		public void DisconnectAsync()
 		{
@@ -614,15 +612,10 @@ namespace Tempest.Providers.Network
 		}
 
 		private readonly object sendSync = new object();
-
 		private SocketAsyncEventArgs sendArgs = new SocketAsyncEventArgs();
-
-		#if NET_4
-		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();		
+		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();	
+	
 		private void SendMessage (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null, int timeout = 0)
-		#else
-		private void SendMessage (Message message, bool isResponse = false)
-		#endif
 		{
 			int c = GetNextCallId();
 			string callCategory = null;
@@ -707,13 +700,11 @@ namespace Tempest.Providers.Network
 					}
 				}
 
-				#if NET_4
 				if (future != null)
 				{
 					lock (this.messageResponses)
 						this.messageResponses.Add (message.MessageId, future);
 				}
-				#endif
 
 				int length;
 				byte[] buffer = GetBytes (message, out length, eargs.Buffer, isResponse);

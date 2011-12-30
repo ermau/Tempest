@@ -30,6 +30,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using Tempest.InternalProtocol;
 
 #if NET_4
@@ -101,7 +102,7 @@ namespace Tempest
 		/// </summary>
 		/// <param name="endPoint">The endpoint to connect to.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
-		public virtual void ConnectAsync (EndPoint endPoint)
+		public virtual Task<ConnectionResult> ConnectAsync (EndPoint endPoint)
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
@@ -114,32 +115,7 @@ namespace Tempest
 					oldWait.Set();
 			}
 
-			this.connection.ConnectAsync (endPoint, this.messageTypes);
-		}
-
-		/// <summary>
-		/// Attempts to connect to <paramref name="endPoint"/>.
-		/// </summary>
-		/// <param name="endPoint">The endpoint to connect to.</param>
-		/// <param name="timeout">Maximum number of milliseconds to wait for a connection.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
-		/// <returns>
-		/// The result of the connection attempt.
-		/// </returns>
-		public virtual ConnectionResult Connect (EndPoint endPoint, int timeout = -1)
-		{
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
-
-			if (this.mode == MessagingModes.Async)
-			{
-				var newWait = new AutoResetEvent (false);
-				AutoResetEvent oldWait = Interlocked.Exchange (ref this.mwait, newWait);
-				if (oldWait != null)
-					oldWait.Set();
-			}
-
-			return this.connection.Connect (endPoint, this.messageTypes, timeout);
+			return this.connection.ConnectAsync (endPoint, this.messageTypes);
 		}
 
 		/// <summary>

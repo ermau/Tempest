@@ -894,7 +894,7 @@ namespace Tempest.Providers.Network
 
 					header.State = HeaderState.MessageId;
 
-					Trace.WriteLineIf (NTrace.TraceWarning, "Have message ID: " + header.MessageId, callCategory);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Have message ID: " + header.MessageId, callCategory);
 				}
 
 				if (header.State < HeaderState.TypeMap)

@@ -28,35 +28,52 @@ using System;
 
 namespace Tempest
 {
+	public enum HeaderState
+	{
+		Protocol = 1,
+		Type = 2,
+		Length = 3,
+		IV = 4,
+		MessageId = 5,
+		TypeMap = 6
+	}
+
 	public class MessageHeader
 	{
-		internal MessageHeader (Protocol protocol, Message message)
+		public HeaderState State
 		{
-			if (protocol == null)
-				throw new ArgumentNullException ("protocol");
-			if (message == null)
-				throw new ArgumentNullException ("message");
-
-			Protocol = protocol;
-			Message = message;
+			get;
+			set;
 		}
 
 		public Protocol Protocol
 		{
 			get;
-			private set;
+			internal set;
 		}
 
 		public Message Message
 		{
 			get;
-			private set;
+			internal set;
 		}
 
 		/// <summary>
 		/// Gets the total length of the message (including <see cref="HeaderLength"/>).
 		/// </summary>
 		public int MessageLength
+		{
+			get;
+			internal set;
+		}
+
+		public bool HasTypeHeader
+		{
+			get;
+			internal set;
+		}
+
+		public ushort TypeHeaderLength
 		{
 			get;
 			internal set;
@@ -75,6 +92,12 @@ namespace Tempest
 		}
 
 		public byte[] IV
+		{
+			get;
+			internal set;
+		}
+
+		public bool IsStillEncrypted
 		{
 			get;
 			internal set;

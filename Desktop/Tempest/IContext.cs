@@ -40,6 +40,19 @@ namespace Tempest
 		/// </para>
 		/// </remarks>
 		void LockHandlers();
+
+		/// <summary>
+		/// Registers a connectionless message handler.
+		/// </summary>
+		/// <param name="protocol">The protocol of the <paramref name="messageType" />.</param>
+		/// <param name="messageType">The message type to register a handler for.</param>
+		/// <param name="handler">The handler to register for the message type.</param>
+		/// <exception cref="ArgumentNullException">
+		/// <para><paramref name="protocol"/> is <c>null</c>.</para>
+		/// <para>-- or --</para>
+		/// <para><paramref name="handler"/> is <c>null</c>.</para>
+		/// </exception>
+		/// <exception cref="InvalidOperationException">Handler registration is locked by <see cref="LockHandlers"/>.</exception>
 		void RegisterConnectionlessMessageHandler (Protocol protocol, ushort messageType, Action<ConnectionlessMessageEventArgs> handler);
 
 		/// <summary>
@@ -48,7 +61,12 @@ namespace Tempest
 		/// <param name="protocol">The protocol of the <paramref name="messageType" />.</param>
 		/// <param name="messageType">The message type to register a handler for.</param>
 		/// <param name="handler">The handler to register for the message type.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="handler"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException">
+		/// <para><paramref name="protocol"/> is <c>null</c>.</para>
+		/// <para>-- or --</para>
+		/// <para><paramref name="handler"/> is <c>null</c>.</para>
+		/// </exception>
+		/// <exception cref="InvalidOperationException">Handler registration is locked by <see cref="LockHandlers"/>.</exception>
 		void RegisterMessageHandler (Protocol protocol, ushort messageType, Action<MessageEventArgs> handler);
 	}
 

@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,12 +34,18 @@ namespace Tempest.Tests
 {
 	[TestFixture]
 	public class ClientTests
+		: ContextTests
 	{
 		private static readonly Protocol protocol = MockProtocol.Instance;
 
 		private MockClient client;
 		private MockConnectionProvider provider;
 		private MockClientConnection connection;
+
+		protected override IContext Client
+		{
+			get { return this.client; }
+		}
 
 		[SetUp]
 		public void Setup()
@@ -191,6 +197,28 @@ namespace Tempest.Tests
 			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
 
 			((IContext)client).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
+			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
+			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void LockedMessageHandling()
+		{
+			var test = new AsyncTest (e =>
+			{
+				var me = (MessageEventArgs)e;
+				Assert.AreSame (connection, me.Connection);
+				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
+				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
+			});
+
+			Action<MessageEventArgs> handler = e => test.PassHandler (test, e);
+
+			((IContext)client).RegisterMessageHandler (MockProtocol.Instance, 1, handler);
+			((IContext)client).LockHandlers();
+
 			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0));
 			connection.Receive (new MessageEventArgs (connection, new MockMessage { Content = "hi" }));
 

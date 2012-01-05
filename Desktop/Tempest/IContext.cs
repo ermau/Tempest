@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,12 +25,21 @@
 // THE SOFTWARE.
 
 using System;
-using System.Linq;
 
 namespace Tempest
 {
 	public interface IContext
 	{
+		/// <summary>
+		/// Permanently locks handler registration to improve read performance.
+		/// </summary>
+		/// <remarks>
+		/// <para>
+		/// This locks handler registration so that no new handlers can registered, improving scalability by
+		/// removing locks around message handler storage. This can not be undone.
+		/// </para>
+		/// </remarks>
+		void LockHandlers();
 		void RegisterConnectionlessMessageHandler (Protocol protocol, ushort messageType, Action<ConnectionlessMessageEventArgs> handler);
 
 		/// <summary>

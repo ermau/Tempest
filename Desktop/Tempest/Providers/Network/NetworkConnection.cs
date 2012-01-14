@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -542,7 +542,11 @@ namespace Tempest.Providers.Network
 			return new string (hex);
 		}
 
+		#if SAFE
 		protected byte[] GetBytes (Message message, out int length, byte[] buffer, bool isResponse)
+		#else
+		protected unsafe byte[] GetBytes (Message message, out int length, byte[] buffer, bool isResponse)
+		#endif
 		{
 			int messageId = message.MessageId;
 			if (isResponse)
@@ -582,7 +586,12 @@ namespace Tempest.Providers.Network
 				for (int i = 0; i < types.Count; ++i)
 					writer.WriteString (types[i].Key.GetSimpleName());
 
+				#if SAFE
 				Buffer.BlockCopy (BitConverter.GetBytes ((ushort)(writer.Length - BaseHeaderLength)), 0, writer.Buffer, BaseHeaderLength, sizeof (ushort));
+				#else
+				fixed (byte* mptr = writer.Buffer)
+					*((ushort*) (mptr + BaseHeaderLength)) = (ushort)(writer.Length - BaseHeaderLength);
+				#endif
 
 				headerLength = writer.Length;
 				writer.InsertBytes (headerLength, payload, BaseHeaderLength, payloadLen - BaseHeaderLength);
@@ -606,7 +615,12 @@ namespace Tempest.Providers.Network
 			if (hasTypes)
 				len |= 1; // serialization header
 
+			#if SAFE
 			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, lengthOffset, sizeof(int));
+			#else
+			fixed (byte* mptr = rawMessage)
+				*((int*) (mptr + lengthOffset)) = len;
+			#endif
 
 			return rawMessage;
 		}

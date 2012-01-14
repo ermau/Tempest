@@ -291,7 +291,6 @@ namespace Tempest.Providers.Network
 		private const int ResponseFlag = 16777216;
 		private const int MaxMessageId = 8388608;
 		private const int BaseHeaderLength = 11;
-		private int maxMessageLength = 1048576;
 
 		protected int connectionId;
 		protected readonly string typeName;
@@ -992,7 +991,7 @@ namespace Tempest.Providers.Network
 				}
 
 				length = header.MessageLength;
-				if (length > maxMessageLength)
+				if (length > maxMessageSize)
 				{
 					Disconnect (true);
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (bad message size)", callCategory);
@@ -1367,7 +1366,7 @@ namespace Tempest.Providers.Network
 		private static volatile int bufferCount = 0;
 
 		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "NetworkConnectionProvider");
-		internal static int maxMessageSize;
+		internal static int maxMessageSize = 1048576;
 		internal static int sendBufferLimit = Environment.ProcessorCount;
 		private static bool autoSizeSendBufferLimit = true;
 

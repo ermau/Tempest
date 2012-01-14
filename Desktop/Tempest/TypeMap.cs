@@ -134,10 +134,12 @@ namespace Tempest
 
 		public void Deserialize (ISerializationContext context, IValueReader reader)
 		{
+			ushort count = reader.ReadUInt16();
+			if (count == 0)
+				return;
+
 			lock (this.sync)
 			{
-				ushort count = reader.ReadUInt16();
-
 				if (this.map == null)
 				{
 					this.map = new Dictionary<Type, ushort>();

@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -58,7 +58,23 @@ namespace Tempest
 			set
 			{
 				if (value > this.position)
-					EnsureAdditionalCapacity (value - this.position);
+				{
+					int additionalCapacity = value - this.position;
+					if (this.position + additionalCapacity >= this.buffer.Length)
+					{
+						if (!this.resizing)
+							throw new InternalBufferOverflowException();
+
+						int curLength = this.buffer.Length;
+						int newLength = curLength * 2;
+						while (newLength <= curLength + additionalCapacity)
+							newLength *= 2;
+
+						byte[] newbuffer = new byte[newLength];
+						Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+						this.buffer = newbuffer;
+					}
+				}
 
 				this.position = value;
 			}
@@ -71,21 +87,60 @@ namespace Tempest
 
 		public void WriteByte (byte value)
 		{
-			EnsureAdditionalCapacity (1);
+			if (this.position + 1 >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + 1)
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			this.buffer[this.position++] = value;
 		}
 
 		public void WriteSByte (sbyte value)
 		{
-			EnsureAdditionalCapacity (1);
+			if (this.position + 1 >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + 1)
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			this.buffer[this.position++] = (byte)value;
 		}
 
 		public bool WriteBool (bool value)
 		{
-			EnsureAdditionalCapacity (1);
+			if (this.position + 1 >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + 1)
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			this.buffer[this.position++] = (byte)((value) ? 1 : 0);
 
@@ -96,8 +151,22 @@ namespace Tempest
 		{
 			if (value == null)
 				throw new ArgumentNullException ("value");
-			
-			EnsureAdditionalCapacity (sizeof(int) + value.Length);
+
+			int additionalCapacity = sizeof(int) + value.Length;
+			if (this.position + additionalCapacity >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + additionalCapacity)
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			Buff.BlockCopy (BitConverter.GetBytes (value.Length), 0, this.buffer, this.position, sizeof(int));
 			this.position += sizeof (int);
@@ -113,8 +182,22 @@ namespace Tempest
 				throw new ArgumentOutOfRangeException ("offset", "offset can not negative or >=data.Length");
 			if (length < 0 || offset + length > value.Length)
 				throw new ArgumentOutOfRangeException ("length", "length can not be negative or combined with offset longer than the array");
-			
-			EnsureAdditionalCapacity (sizeof(int) + length);
+
+			int additionalCapacity = sizeof(int) + length;
+			if (this.position + additionalCapacity >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + additionalCapacity)
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			Buff.BlockCopy (BitConverter.GetBytes (length), 0, this.buffer, this.position, sizeof (int));
 			this.position += sizeof (int);
@@ -131,7 +214,20 @@ namespace Tempest
 			if (length < 0 || valueOffset + length > value.Length)
 				throw new ArgumentOutOfRangeException ("length", "length can not be negative or combined with offset longer than the array");
 
-			EnsureAdditionalCapacity (length);
+			if (this.position + length >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + length)
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			if (offset != this.position)
 				Buff.BlockCopy (this.buffer, offset, this.buffer, offset + length, this.position - offset);
@@ -142,7 +238,20 @@ namespace Tempest
 
 		public void WriteInt16 (short value)
 		{
-			EnsureAdditionalCapacity (sizeof (short));
+			if (this.position + sizeof (short) >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + sizeof (short))
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof(short));
@@ -156,7 +265,20 @@ namespace Tempest
 
 		public void WriteInt32 (int value)
 		{
-			EnsureAdditionalCapacity (sizeof (int));
+			if (this.position + sizeof (int) >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + sizeof (int))
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (int));
@@ -170,7 +292,20 @@ namespace Tempest
 
 		public void WriteInt64 (long value)
 		{
-			EnsureAdditionalCapacity (sizeof (long));
+			if (this.position + sizeof (long) >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + sizeof (long))
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (long));
@@ -184,7 +319,20 @@ namespace Tempest
 
 		public void WriteUInt16 (ushort value)
 		{
-			EnsureAdditionalCapacity (sizeof (ushort));
+			if (this.position + sizeof (ushort) >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + sizeof (ushort))
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ushort));
@@ -198,7 +346,20 @@ namespace Tempest
 
 		public void WriteUInt32 (uint value)
 		{
-			EnsureAdditionalCapacity (sizeof (uint));
+			if (this.position + sizeof (uint) >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + sizeof (uint))
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (uint));
@@ -212,7 +373,20 @@ namespace Tempest
 
 		public void WriteUInt64 (ulong value)
 		{
-			EnsureAdditionalCapacity (sizeof(ulong));
+			if (this.position + sizeof(ulong) >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + sizeof(ulong))
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (ulong));
@@ -233,7 +407,20 @@ namespace Tempest
 
 		public void WriteSingle (float value)
 		{
-			EnsureAdditionalCapacity (sizeof(float));
+			if (this.position + sizeof(float) >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + sizeof(float))
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (float));
@@ -247,7 +434,20 @@ namespace Tempest
 
 		public void WriteDouble (double value)
 		{
-			EnsureAdditionalCapacity (sizeof (double));
+			if (this.position + sizeof (double) >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + sizeof (double))
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			#if SAFE
 			Buff.BlockCopy (BitConverter.GetBytes (value), 0, this.buffer, this.position, sizeof (double));
@@ -265,7 +465,21 @@ namespace Tempest
 				throw new ArgumentNullException ("encoding");
 
 			byte[] data = encoding.GetBytes (value);
-			EnsureAdditionalCapacity (sizeof(int) + data.Length);
+			int additionalCapacity = sizeof(int) + data.Length;
+			if (this.position + additionalCapacity >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + additionalCapacity)
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
 
 			Buff.BlockCopy (BitConverter.GetBytes (data.Length), 0, this.buffer, this.position, sizeof(int));
 			this.position += sizeof (int);
@@ -280,7 +494,21 @@ namespace Tempest
 
 		public void Pad (int count)
 		{
-			EnsureAdditionalCapacity (count);
+			if (this.position + count >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
+
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + count)
+					newLength *= 2;
+
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.Length);
+				this.buffer = newbuffer;
+			}
+
 			this.position += count;
 		}
 
@@ -298,19 +526,20 @@ namespace Tempest
 
 		private void EnsureAdditionalCapacity (int additionalCapacity)
 		{
-			if (this.position + additionalCapacity < this.buffer.Length)
-				return;
-			if (!this.resizing)
-				throw new InternalBufferOverflowException();
+			if (this.position + additionalCapacity >= this.buffer.Length)
+			{
+				if (!this.resizing)
+					throw new InternalBufferOverflowException();
 
-			int curLength = this.buffer.Length;
-			int newLength = curLength * 2;
-			while (newLength <= curLength + additionalCapacity)
-				newLength *= 2;
+				int curLength = this.buffer.Length;
+				int newLength = curLength * 2;
+				while (newLength <= curLength + additionalCapacity)
+					newLength *= 2;
 
-			byte[] newbuffer = new byte[newLength];
-			Buff.BlockCopy (this.buffer, 0, newbuffer, 0, Length);
-			this.buffer = newbuffer;
+				byte[] newbuffer = new byte[newLength];
+				Buff.BlockCopy (this.buffer, 0, newbuffer, 0, Length);
+				this.buffer = newbuffer;
+			}
 		}
 	}
 }

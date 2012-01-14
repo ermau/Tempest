@@ -450,7 +450,11 @@ namespace Tempest.Providers.Network
 
 		protected void DecryptMessage (MessageHeader header, ref BufferValueReader r)
 		{
-			int c = GetNextCallId();
+			int c = 0;
+			#if TRACE
+			c = GetNextCallId();
+			#endif
+
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4})", this.typeName, c, connectionId, header.IV.Length, r.Position));
 
 			int payloadLength = r.ReadInt32();
@@ -478,9 +482,9 @@ namespace Tempest.Providers.Network
 			if (this.hmac == null)
 				throw new InvalidOperationException();
 			
-			int c = GetNextCallId();
 			string callCategory = null;
 			#if TRACE
+			int c = GetNextCallId();
 			callCategory = String.Format ("{0}:{2} {1}:SignMessage ({3},{4})", this.typeName, c, connectionId, hashAlg, writer.Length);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
@@ -498,9 +502,9 @@ namespace Tempest.Providers.Network
 
 		protected virtual bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
 		{
-			int c = GetNextCallId();
 			string callCategory = null;
 			#if TRACE
+			int c = GetNextCallId();
 			callCategory = String.Format ("{0}:{2} {1}:VerifyMessage({3},{4},{5},{6},{7},{8})", this.typeName, c, connectionId, hashAlg, message, signature.Length, data.Length, moffset, length);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
@@ -631,9 +635,9 @@ namespace Tempest.Providers.Network
 	
 		private void SendMessage (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null, int timeout = 0)
 		{
-			int c = GetNextCallId();
 			string callCategory = null;
 			#if TRACE
+			int c = GetNextCallId();
 			callCategory = String.Format ("{1}:{2} {3}:Send({0})", message, this.typeName, this.connectionId, c);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
@@ -766,9 +770,9 @@ namespace Tempest.Providers.Network
 		/// </remarks>
 		protected bool TryGetHeader (BufferValueReader reader, int remaining, ref MessageHeader header)
 		{
-			int c = GetNextCallId();
 			string callCategory = null;
 			#if TRACE
+			int c = GetNextCallId();
 			callCategory = String.Format ("{0}:{4} {1}:TryGetHeader({2},{3})", this.typeName, c, reader.Position, remaining, this.connectionId);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Entering {0}", (header == null) ? "without existing header" : "with existing header"), callCategory);
@@ -958,9 +962,9 @@ namespace Tempest.Providers.Network
 
 		private void BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader)
 		{
-			int c = GetNextCallId();
 			string callCategory = null;
 			#if TRACE
+			int c = GetNextCallId();
 			callCategory = String.Format ("{0}:{6} {1}:BufferMessages({2},{3},{4},{5},{7})", this.typeName, c, buffer.Length, bufferOffset, messageOffset, remainingData, this.connectionId, reader.Position);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
@@ -1136,9 +1140,9 @@ namespace Tempest.Providers.Network
 
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
 		{
-			int c = GetNextCallId();
 			string callCategory = null;
 			#if TRACE
+			int c = GetNextCallId();
 			callCategory = String.Format ("{2}:{4} {3}:ReliableReceiveCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, c, this.connectionId);
 			#endif
 
@@ -1379,10 +1383,9 @@ namespace Tempest.Providers.Network
 
 			NetworkConnection con = t.Key;
 
-			int c = con.GetNextCallId();
 			string callCategory = null;
-
 			#if TRACE
+			int c = con.GetNextCallId();
 			callCategory = String.Format ("{2}:{4} {3}:ReliableSendCompleted({0},{1})", e.BytesTransferred, e.SocketError, con.typeName, c, con.connectionId);
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 			#endif

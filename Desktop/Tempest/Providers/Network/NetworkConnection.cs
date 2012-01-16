@@ -180,6 +180,12 @@ namespace Tempest.Providers.Network
 			}
 		}
 
+		public long ConnectionId
+		{
+			get;
+			protected set;
+		}
+
 		public IEnumerable<Protocol> Protocols
 		{
 			get { return this.protocols.Values; }
@@ -331,12 +337,6 @@ namespace Tempest.Providers.Network
 		private long bytesReceived;
 		private long bytesSent;
 
-		internal int NetworkId
-		{
-			get;
-			set;
-		}
-
 		protected void Dispose (bool disposing)
 		{
 			if (this.disposed)
@@ -357,7 +357,7 @@ namespace Tempest.Providers.Network
 		{
 			lock (this.stateSync)
 			{
-				NetworkId = 0;
+				ConnectionId = 0;
 
 				if (this.hmac != null)
 				{

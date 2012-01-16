@@ -146,7 +146,7 @@ namespace Tempest.Providers.Network
 						}
 					}
 
-		    		NetworkId = Interlocked.Increment (ref nextNetworkId);
+					ConnectionId = Interlocked.Increment (ref nextNetworkId);
 
 					foreach (Protocol ip in msg.Protocols)
 					{
@@ -176,7 +176,7 @@ namespace Tempest.Providers.Network
 						{
 							SignatureHashAlgorithm = this.signingHashAlgorithm,
 							EnabledProtocols = this.protocols.Values,
-							NetworkId = NetworkId,
+							ConnectionId = ConnectionId,
 							PublicAuthenticationKey = this.provider.PublicAuthenticationKey,
 							PublicEncryptionKey = this.provider.PublicEncryptionKey
 						});

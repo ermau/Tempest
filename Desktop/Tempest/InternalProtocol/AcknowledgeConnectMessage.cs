@@ -54,7 +54,7 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
-		public int NetworkId
+		public long ConnectionId
 		{
 			get;
 			set;
@@ -81,10 +81,10 @@ namespace Tempest.InternalProtocol
 			for (int i = 0; i < protocols.Length; ++i)
 				protocols[i].Serialize (context, writer);
 
-			writer.WriteInt32 (NetworkId);
+			writer.WriteInt64 (ConnectionId);
 
-			writer.Write (context, this.PublicEncryptionKey);
-			writer.Write (context, this.PublicAuthenticationKey);
+			writer.Write (context, PublicEncryptionKey);
+			writer.Write (context, PublicAuthenticationKey);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
@@ -97,7 +97,7 @@ namespace Tempest.InternalProtocol
 
 			EnabledProtocols = protocols;
 
-			NetworkId = reader.ReadInt32();
+			ConnectionId = reader.ReadInt64();
 
 			PublicEncryptionKey = reader.Read<IAsymmetricKey> (context);
 			PublicAuthenticationKey = reader.Read<IAsymmetricKey> (context);

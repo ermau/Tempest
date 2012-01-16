@@ -74,6 +74,12 @@ namespace Tempest.Providers.Network
 			get { return this.connection.IsConnected; }
 		}
 
+		public long ConnectionId
+		{
+			get;
+			private set;
+		}
+
 		public IEnumerable<Protocol> Protocols
 		{
 			get { return this.connection.Protocols; }

@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -265,7 +265,7 @@ namespace Tempest.Providers.Network
 				    var msg = (AcknowledgeConnectMessage)e.Message;
 
 				    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (pr => pr.id);
-					NetworkId = msg.NetworkId;
+					ConnectionId = msg.ConnectionId;
 
 					this.serverEncryption = this.publicKeyCryptoFactory();
 					this.serverEncryption.ImportKey (msg.PublicEncryptionKey);

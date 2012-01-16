@@ -88,7 +88,6 @@
     <Compile Include="MutableLookup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\Network\NetworkClientConnection.cs" />
-    <Compile Include="Providers\Network\NetworkClientSimulator.cs" />
     <Compile Include="Providers\Network\NetworkConnection.cs" />
     <Compile Include="Providers\Network\NetworkConnectionProvider.cs" />
     <Compile Include="Providers\Network\NetworkServerConnection.cs" />

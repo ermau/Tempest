@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -64,7 +64,7 @@ namespace Tempest.InternalProtocol
 		{
 			writer.WriteInt32 ((int)Reason);
 			if (Reason == ConnectionResult.Custom)
-				writer.WriteString (CustomReason ?? String.Empty);
+				writer.WriteString (CustomReason);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)

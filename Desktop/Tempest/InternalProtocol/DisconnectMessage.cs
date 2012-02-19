@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
+
 namespace Tempest.InternalProtocol
 {
 	/// <summary>
@@ -62,7 +64,7 @@ namespace Tempest.InternalProtocol
 		{
 			writer.WriteInt32 ((int)Reason);
 			if (Reason == ConnectionResult.Custom)
-				writer.WriteString (CustomReason);
+				writer.WriteString (CustomReason ?? String.Empty);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)

@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +48,21 @@ namespace Tempest
 				throw new ArgumentNullException ("self");
 
 			self.Send (new DisconnectMessage { Reason = reason });
+			self.DisconnectAsync (reason);
+		}
+
+		/// <summary>
+		/// Notifies the connection of the reason of disconnection and disconnects.
+		/// </summary>
+		/// <param name="self">The connection to notify and disconnect.</param>
+		/// <param name="reason">The reason to disconnect.</param>
+		/// <param name="customReason">The custom reason</param>
+		public static void NotifyAndDisconnect (this IConnection self, ConnectionResult reason, string customReason)
+		{
+			if (self == null)
+				throw new ArgumentNullException ("self");
+
+			self.Send (new DisconnectMessage { Reason = reason, CustomReason = customReason });
 			self.DisconnectAsync (reason);
 		}
 

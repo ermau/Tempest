@@ -52,6 +52,7 @@
     <Compile Include="ConnectionProviderTests.cs" />
     <Compile Include="ContextTests.cs" />
     <Compile Include="ExtensionsTests.cs" />
+    <Compile Include="InternalProtocolMessageTests.cs" />
     <Compile Include="MessageExtensions.cs" />
     <Compile Include="MessageFactoryTests.cs" />
     <Compile Include="MockClient.cs" />

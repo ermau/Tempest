@@ -87,7 +87,7 @@ namespace Tempest.Providers.Network
 			get { return this.serverAuthenticationKey; }
 		}
 
-		public Task<ConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
+		public Task<ClientConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
 			int c = GetNextCallId();
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
@@ -97,7 +97,7 @@ namespace Tempest.Providers.Network
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
-			var ntcs = new TaskCompletionSource<ConnectionResult>();
+			var ntcs = new TaskCompletionSource<ClientConnectionResult>();
 			
 			ThreadPool.QueueUserWorkItem (s =>
 			{
@@ -148,7 +148,7 @@ namespace Tempest.Providers.Network
 		private IPublicKeyCrypto serverEncryption;
 		private IAsymmetricKey serverEncryptionKey;
 
-		private TaskCompletionSource<ConnectionResult> connectCompletion;
+		private TaskCompletionSource<ClientConnectionResult> connectCompletion;
 		
 		protected override void Recycle()
 		{
@@ -190,7 +190,10 @@ namespace Tempest.Providers.Network
 
 				var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
 				if (tcs != null)
-					tcs.SetResult (GetConnectFromError (e.SocketError));
+				{
+					ConnectionResult result = GetConnectFromError (e.SocketError);
+					tcs.SetResult (new ClientConnectionResult (result, null));
+				}
 
 				return;
 			}
@@ -293,7 +296,7 @@ namespace Tempest.Providers.Network
 
 					var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
 					if (tcs != null)
-						tcs.SetResult (ConnectionResult.Success);
+						tcs.SetResult (new ClientConnectionResult (ConnectionResult.Success, this.serverAuthenticationKey));
 
 					break;
 			}
@@ -333,7 +336,7 @@ namespace Tempest.Providers.Network
 		{
 			var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
 			if (tcs != null)
-				tcs.TrySetResult (e.Result);
+				tcs.TrySetResult (new ClientConnectionResult (e.Result, null));
 
 			if (this.activityTimer != null)
 			{

@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -44,7 +44,72 @@ namespace Tempest
 		/// <param name="endpoint">The endpoint to connect to.</param>
 		/// <param name="messageTypes">The type of messages to connect for.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="endpoint"/> is <c>null</c>.</exception>
-		Task<ConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes);
+		Task<ClientConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes);
+	}
+
+	/// <summary>
+	/// Holds data for <see cref="IClientConnection.ConnectAsync"/> results.
+	/// </summary>
+	public class ClientConnectionResult
+	{
+		/// <summary>
+		/// Constructs and initializes a new instance of the <see cref="ClientConnectionResult"/> class.
+		/// </summary>
+		/// <param name="result">The result of the connection attempt.</param>
+		/// <param name="publicKey">The server's public authentication key, if it has one.</param>
+		public ClientConnectionResult (ConnectionResult result, IAsymmetricKey publicKey)
+		{
+			if (!Enum.IsDefined (typeof(ConnectionResult), result))
+				throw new ArgumentException ("result is not a valid member of ConnectionResult", "result");
+
+			Result = result;
+			ServerPublicKey = publicKey;
+		}
+
+		/// <summary>
+		/// Gets the connection result.
+		/// </summary>
+		public ConnectionResult Result
+		{
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Gets the server's public authentication key, if encryption or authentication enabled.
+		/// </summary>
+		public IAsymmetricKey ServerPublicKey
+		{
+			get;
+			private set;
+		}
+	}
+
+	/// <summary>
+	/// Holds data for the <see cref="IClientConnection.Connected"/> event.
+	/// </summary>
+	public class ClientConnectedEventArgs
+		: ClientConnectionEventArgs
+	{
+		/// <summary>
+		/// Creates a new instance of the <see cref="ClientConnectedEventArgs"/> class.
+		/// </summary>
+		/// <param name="connection">The connection for the event.</param>
+		/// <param name="publicKey">The server's public authentication key, if it has one.</param>
+		public ClientConnectedEventArgs (IClientConnection connection, IAsymmetricKey publicKey)
+			: base (connection)
+		{
+			ServerPublicKey = publicKey;
+		}
+
+		/// <summary>
+		/// Gets the server's public authentication key, if encryption or authentication enabled.
+		/// </summary>
+		public IAsymmetricKey ServerPublicKey
+		{
+			get;
+			private set;
+		}
 	}
 
 	/// <summary>

@@ -77,7 +77,7 @@ namespace Tempest
 		/// <summary>
 		/// Raised when the client connects.
 		/// </summary>
-		public event EventHandler Connected;
+		public event EventHandler<ClientConnectionEventArgs> Connected;
 
 		/// <summary>
 		/// Raised with the client is disconnected.
@@ -102,7 +102,7 @@ namespace Tempest
 		/// </summary>
 		/// <param name="endPoint">The endpoint to connect to.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
-		public virtual Task<ConnectionResult> ConnectAsync (EndPoint endPoint)
+		public virtual Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint)
 		{
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
@@ -366,7 +366,7 @@ namespace Tempest
 				this.messageRunner = runner;
 			}
 
-			OnConnected (EventArgs.Empty);
+			OnConnected (e);
 		}
 
 		protected virtual void OnPropertyChanged (PropertyChangedEventArgs e)
@@ -376,9 +376,9 @@ namespace Tempest
 				changed (this, e);
 		}
 
-		protected virtual void OnConnected (EventArgs e)
+		protected virtual void OnConnected (ClientConnectionEventArgs e)
 		{
-			EventHandler handler = Connected;
+			EventHandler<ClientConnectionEventArgs> handler = Connected;
 			if (handler != null)
 				handler (this, e);
 		}

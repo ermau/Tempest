@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -206,21 +206,23 @@ namespace Tempest
 					if (t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
 						return oserializer.SerializableDeserializer (r);
 					#endif
-					
-					oserializer.LoadMembers (t);
 
-					value = oserializer.ctor.Invoke (null);
-					
-					foreach (var kvp in oserializer.members)
-					{
-						object mvalue = kvp.Value.Deserializer (c, r, false);
-						if (kvp.Key.MemberType == MemberTypes.Field)
-							((FieldInfo)kvp.Key).SetValue (value, mvalue);
-						else if (kvp.Key.MemberType == MemberTypes.Property)
-							((PropertyInfo)kvp.Key).SetValue (value, mvalue, null);
-					}
+					throw new ArgumentException ("No serializer found for type " + t);
 
-					return value;
+					//oserializer.LoadMembers (t);
+
+					//value = oserializer.ctor.Invoke (null);
+
+					//foreach (var kvp in oserializer.members)
+					//{
+					//    object mvalue = kvp.Value.Deserializer (c, r, false);
+					//    if (kvp.Key.MemberType == MemberTypes.Field)
+					//        ((FieldInfo)kvp.Key).SetValue (value, mvalue);
+					//    else if (kvp.Key.MemberType == MemberTypes.Property)
+					//        ((PropertyInfo)kvp.Key).SetValue (value, mvalue, null);
+					//}
+
+					//return value;
 				};
 			}
 		}
@@ -360,17 +362,19 @@ namespace Tempest
 					}
 					#endif
 
-					LoadMembers (t);
+					throw new ArgumentException ("No serializer found or specified for type " + t, "value");
 
-					var props = this.members;
+					//LoadMembers (t);
 
-					foreach (var kvp in props)
-					{
-						if (kvp.Key.MemberType == MemberTypes.Field)
-							kvp.Value.Serializer (c, w, ((FieldInfo)kvp.Key).GetValue (v), false);
-						else if (kvp.Key.MemberType == MemberTypes.Property)
-							kvp.Value.Serializer (c, w, ((PropertyInfo)kvp.Key).GetValue (v, null), false);
-					}
+					//var props = this.members;
+
+					//foreach (var kvp in props)
+					//{
+					//    if (kvp.Key.MemberType == MemberTypes.Field)
+					//        kvp.Value.Serializer (c, w, ((FieldInfo)kvp.Key).GetValue (v), false);
+					//    else if (kvp.Key.MemberType == MemberTypes.Property)
+					//        kvp.Value.Serializer (c, w, ((PropertyInfo)kvp.Key).GetValue (v, null), false);
+					//}
 				};
 			}
 		}

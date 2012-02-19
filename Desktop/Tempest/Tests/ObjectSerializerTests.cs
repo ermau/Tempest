@@ -42,66 +42,66 @@ namespace Tempest.Tests
 			context = SerializationContextTests.GetContext (MockProtocol.Instance);
 		}
 
-		[Test]
-		public void Serializing()
-		{
-			byte[] buffer = new byte[20480];
-			var writer = new BufferValueWriter (buffer);
+		//[Test]
+		//public void Serializing()
+		//{
+		//    byte[] buffer = new byte[20480];
+		//    var writer = new BufferValueWriter (buffer);
 
-			var value = new SerializingTester
-			{
-				Child = new SerializingTester
-				{
-					Child = new SerializingTester (true)
-					{
-						Text = "Three",
-						Number = 3,
-					},
-					Number = 2,
-					Text = "two",
-					Numbers = new int[] {3, 2, 1}
-				},
-				Number = 1,
-				Text = "one"
-			};
+		//    var value = new SerializingTester
+		//    {
+		//        Child = new SerializingTester
+		//        {
+		//            Child = new SerializingTester (true)
+		//            {
+		//                Text = "Three",
+		//                Number = 3,
+		//            },
+		//            Number = 2,
+		//            Text = "two",
+		//            Numbers = new int[] {3, 2, 1}
+		//        },
+		//        Number = 1,
+		//        Text = "one"
+		//    };
 			
-			writer.Write (context, value);
-			writer.Flush();
+		//    writer.Write (context, value);
+		//    writer.Flush();
 
-			var reader = new BufferValueReader (buffer);
+		//    var reader = new BufferValueReader (buffer);
 
-			var readvalue = SerializerExtensions.Read<SerializingTester> (reader, context);
-			Assert.AreEqual (1, readvalue.Number);
-			Assert.AreEqual ("one", readvalue.Text);
-			Assert.IsFalse (readvalue.PrivateSetProperty);
-			Assert.IsNull (readvalue.Numbers);
-			Assert.IsNotNull (readvalue.Child);
+		//    var readvalue = SerializerExtensions.Read<SerializingTester> (reader, context);
+		//    Assert.AreEqual (1, readvalue.Number);
+		//    Assert.AreEqual ("one", readvalue.Text);
+		//    Assert.IsFalse (readvalue.PrivateSetProperty);
+		//    Assert.IsNull (readvalue.Numbers);
+		//    Assert.IsNotNull (readvalue.Child);
 
-			readvalue = readvalue.Child;
-			Assert.AreEqual (2, readvalue.Number);
-			Assert.AreEqual ("two", readvalue.Text);
-			Assert.IsNotNull (readvalue.Numbers);
-			Assert.AreEqual (3, readvalue.Numbers.Length);
-			Assert.AreEqual (3, readvalue.Numbers[0]);
-			Assert.AreEqual (2, readvalue.Numbers[1]);
-			Assert.AreEqual (1, readvalue.Numbers[2]);
-			Assert.IsFalse (readvalue.PrivateSetProperty);
-			Assert.IsNotNull (readvalue.Child);
+		//    readvalue = readvalue.Child;
+		//    Assert.AreEqual (2, readvalue.Number);
+		//    Assert.AreEqual ("two", readvalue.Text);
+		//    Assert.IsNotNull (readvalue.Numbers);
+		//    Assert.AreEqual (3, readvalue.Numbers.Length);
+		//    Assert.AreEqual (3, readvalue.Numbers[0]);
+		//    Assert.AreEqual (2, readvalue.Numbers[1]);
+		//    Assert.AreEqual (1, readvalue.Numbers[2]);
+		//    Assert.IsFalse (readvalue.PrivateSetProperty);
+		//    Assert.IsNotNull (readvalue.Child);
 
-			readvalue = readvalue.Child;
-			Assert.AreEqual (3, readvalue.Number);
-			Assert.AreEqual ("Three", readvalue.Text);
-			Assert.IsNull (readvalue.Numbers);
-			Assert.IsTrue (readvalue.PrivateSetProperty);
-			Assert.IsNull (readvalue.Child);
-		}
+		//    readvalue = readvalue.Child;
+		//    Assert.AreEqual (3, readvalue.Number);
+		//    Assert.AreEqual ("Three", readvalue.Text);
+		//    Assert.IsNull (readvalue.Numbers);
+		//    Assert.IsTrue (readvalue.PrivateSetProperty);
+		//    Assert.IsNull (readvalue.Child);
+		//}
 
-		[Test]
-		public void RepeatedSerialization()
-		{
-			Serializing();
-			Serializing();
-		}
+		//[Test]
+		//public void RepeatedSerialization()
+		//{
+		//    Serializing();
+		//    Serializing();
+		//}
 
 		enum TestEnum
 			: byte
@@ -125,77 +125,77 @@ namespace Tempest.Tests
 			Assert.AreEqual (len, reader.Position);
 		}
 
-		[Test]
-		public void MixedObjectArray()
-		{
-			byte[] buffer = new byte[1024];
-			var writer = new BufferValueWriter (buffer);
+		//[Test]
+		//public void MixedObjectArray()
+		//{
+		//    byte[] buffer = new byte[1024];
+		//    var writer = new BufferValueWriter (buffer);
 
-			object[] values = new object[] { 15, "hi", new SerializingTester { Text = "asdf", Number = 5 }};
-			writer.Write (context, values);
-			writer.Flush();
+		//    object[] values = new object[] { 15, "hi", new SerializingTester { Text = "asdf", Number = 5 }};
+		//    writer.Write (context, values);
+		//    writer.Flush();
 
-			var reader = new BufferValueReader (buffer);
-			object[] readValues = SerializerExtensions.Read<object[]> (reader, context);
+		//    var reader = new BufferValueReader (buffer);
+		//    object[] readValues = SerializerExtensions.Read<object[]> (reader, context);
 
-			Assert.IsNotNull (readValues);
-			Assert.AreEqual (values.Length, readValues.Length);
-			Assert.AreEqual (values[0], readValues[0]);
-			Assert.AreEqual (values[1], readValues[1]);
+		//    Assert.IsNotNull (readValues);
+		//    Assert.AreEqual (values.Length, readValues.Length);
+		//    Assert.AreEqual (values[0], readValues[0]);
+		//    Assert.AreEqual (values[1], readValues[1]);
 
-			var test = values[2] as SerializingTester;
-			Assert.IsNotNull (test);
-			Assert.AreEqual ("asdf", test.Text);
-			Assert.AreEqual (5, test.Number);
-		}
+		//    var test = values[2] as SerializingTester;
+		//    Assert.IsNotNull (test);
+		//    Assert.AreEqual ("asdf", test.Text);
+		//    Assert.AreEqual (5, test.Number);
+		//}
 
 		[Test]
 		public void PrimitiveAsObject()
 		{
-			byte[] buffer = new byte[1024];
-			var writer = new BufferValueWriter (buffer);
+		    byte[] buffer = new byte[1024];
+		    var writer = new BufferValueWriter (buffer);
 
-			writer.Write (context, (object)20f);
-			writer.Flush();
+		    writer.Write (context, (object)20f);
+		    writer.Flush();
 
-			var reader = new BufferValueReader (buffer);
-			object value = SerializerExtensions.Read<object> (reader, context);
+		    var reader = new BufferValueReader (buffer);
+		    object value = SerializerExtensions.Read<object> (reader, context);
 
-			Assert.IsNotNull (value);
-			Assert.AreEqual (20f, value);
+		    Assert.IsNotNull (value);
+		    Assert.AreEqual (20f, value);
 		}
 
-		[Test]
-		public void MostDerived()
-		{
-			object[] values = new object[2];
-			values[0] = new SerializingTester {Text = "text", Number = 5};
-			values[1] = new MoreDerivedSerializingTester {Text = "text2", Extra = "extra", Number = 42};
+		//[Test]
+		//public void MostDerived()
+		//{
+		//    object[] values = new object[2];
+		//    values[0] = new SerializingTester {Text = "text", Number = 5};
+		//    values[1] = new MoreDerivedSerializingTester {Text = "text2", Extra = "extra", Number = 42};
 
-			byte[] buffer = new byte[20480];
-			var writer = new BufferValueWriter(buffer);
+		//    byte[] buffer = new byte[20480];
+		//    var writer = new BufferValueWriter(buffer);
 			
-			writer.Write (context, values);
-			writer.Flush();
+		//    writer.Write (context, values);
+		//    writer.Flush();
 
-			var reader = new BufferValueReader (buffer);
-			object[] values2 = SerializerExtensions.Read<object[]> (reader, context);
+		//    var reader = new BufferValueReader (buffer);
+		//    object[] values2 = SerializerExtensions.Read<object[]> (reader, context);
 
-			Assert.IsNotNull (values2);
-			Assert.AreEqual (values.Length, values2.Length);
+		//    Assert.IsNotNull (values2);
+		//    Assert.AreEqual (values.Length, values2.Length);
 
-			Assert.IsInstanceOf (typeof(SerializingTester), values2[0]);
-			Assert.IsInstanceOf (typeof(MoreDerivedSerializingTester), values2[1]);
+		//    Assert.IsInstanceOf (typeof(SerializingTester), values2[0]);
+		//    Assert.IsInstanceOf (typeof(MoreDerivedSerializingTester), values2[1]);
 
-			SerializingTester tester = (SerializingTester)values2[0];
-			Assert.AreEqual ("text", tester.Text);
-			Assert.AreEqual (5, tester.Number);
+		//    SerializingTester tester = (SerializingTester)values2[0];
+		//    Assert.AreEqual ("text", tester.Text);
+		//    Assert.AreEqual (5, tester.Number);
 
-			MoreDerivedSerializingTester tester2 = (MoreDerivedSerializingTester)values2[1];
-			Assert.AreEqual ("text2", tester2.Text);
-			Assert.AreEqual ("extra", tester2.Extra);
-			Assert.AreEqual (42, tester2.Number);
-		}
+		//    MoreDerivedSerializingTester tester2 = (MoreDerivedSerializingTester)values2[1];
+		//    Assert.AreEqual ("text2", tester2.Text);
+		//    Assert.AreEqual ("extra", tester2.Extra);
+		//    Assert.AreEqual (42, tester2.Number);
+		//}
 
 		#if !SILVERLIGHT
 		[Test]
@@ -281,24 +281,24 @@ namespace Tempest.Tests
 			public string Text;
 		}
 
-		[Test]
-		public void WithEvent()
-		{
-			byte[] buffer = new byte[20480];
-			var writer = new BufferValueWriter (buffer);
+		//[Test]
+		//public void WithEvent()
+		//{
+		//    byte[] buffer = new byte[20480];
+		//    var writer = new BufferValueWriter (buffer);
 
-			EventSerializingTester test = new EventSerializingTester { Text = "thetext" };
-			test.TestEvent += (s,e) => { };
+		//    EventSerializingTester test = new EventSerializingTester { Text = "thetext" };
+		//    test.TestEvent += (s,e) => { };
 
-			writer.Write (context, test);
-			writer.Flush();
+		//    writer.Write (context, test);
+		//    writer.Flush();
 
-			var reader = new BufferValueReader (buffer);
-			var serialized = SerializerExtensions.Read<EventSerializingTester> (reader, context);
+		//    var reader = new BufferValueReader (buffer);
+		//    var serialized = SerializerExtensions.Read<EventSerializingTester> (reader, context);
 
-			Assert.IsNotNull (serialized);
-			Assert.AreEqual (test.Text, serialized.Text);
-		}
+		//    Assert.IsNotNull (serialized);
+		//    Assert.AreEqual (test.Text, serialized.Text);
+		//}
 
 		public class DelegateSerializingTester
 		{
@@ -306,42 +306,42 @@ namespace Tempest.Tests
 			public string Text;
 		}
 
-		[Test]
-		public void WithDelegate()
-		{
-			byte[] buffer = new byte[20480];
-			var writer = new BufferValueWriter (buffer);
+		//[Test]
+		//public void WithDelegate()
+		//{
+		//    byte[] buffer = new byte[20480];
+		//    var writer = new BufferValueWriter (buffer);
 
-			DelegateSerializingTester test = new DelegateSerializingTester { Text = "thetext" };
-			test.TestAction = () => { };
+		//    DelegateSerializingTester test = new DelegateSerializingTester { Text = "thetext" };
+		//    test.TestAction = () => { };
 
-			writer.Write (context, test);
-			writer.Flush();
+		//    writer.Write (context, test);
+		//    writer.Flush();
 
-			var reader = new BufferValueReader (buffer);
-			var serialized = SerializerExtensions.Read<DelegateSerializingTester> (reader, context);
+		//    var reader = new BufferValueReader (buffer);
+		//    var serialized = SerializerExtensions.Read<DelegateSerializingTester> (reader, context);
 
-			Assert.IsNotNull (serialized);
-			Assert.AreEqual (test.Text, serialized.Text);
-		}
+		//    Assert.IsNotNull (serialized);
+		//    Assert.AreEqual (test.Text, serialized.Text);
+		//}
 
-		[Test]
-		public void PrivateCtor()
-		{
-			var test = PrivateCtorTester.GetTester();
-			test.Name = "confidential";
+		//[Test]
+		//public void PrivateCtor()
+		//{
+		//    var test = PrivateCtorTester.GetTester();
+		//    test.Name = "confidential";
 
-			byte[] buffer = new byte[20480];
-			var writer = new BufferValueWriter (buffer);
-			writer.Write (context, test);
-			writer.Flush();
+		//    byte[] buffer = new byte[20480];
+		//    var writer = new BufferValueWriter (buffer);
+		//    writer.Write (context, test);
+		//    writer.Flush();
 
-			var reader = new BufferValueReader (buffer);
-			var serialized = SerializerExtensions.Read<PrivateCtorTester> (reader, context);
+		//    var reader = new BufferValueReader (buffer);
+		//    var serialized = SerializerExtensions.Read<PrivateCtorTester> (reader, context);
 
-			Assert.IsNotNull (serialized);
-			Assert.AreEqual (test.Name, serialized.Name);
-		}
+		//    Assert.IsNotNull (serialized);
+		//    Assert.AreEqual (test.Name, serialized.Name);
+		//}
 
 		[Test]
 		public void ValueReaderCtor()
@@ -381,21 +381,21 @@ namespace Tempest.Tests
 			Assert.AreEqual ("hi", serialized.Content);
 		}
 
-		[Test]
-		public void Decimal()
-		{
-			byte[] buffer = new byte[20480];
-			var writer = new BufferValueWriter (buffer);
+		//[Test]
+		//public void Decimal()
+		//{
+		//    byte[] buffer = new byte[20480];
+		//    var writer = new BufferValueWriter (buffer);
 
-			DecimalTester test = new DecimalTester { Value = 5.6m };
-			writer.Write (context, test);
-			writer.Flush();
+		//    DecimalTester test = new DecimalTester { Value = 5.6m };
+		//    writer.Write (context, test);
+		//    writer.Flush();
 
-			var reader = new BufferValueReader (buffer);
-			var serialized = SerializerExtensions.Read<DecimalTester> (reader, context);
+		//    var reader = new BufferValueReader (buffer);
+		//    var serialized = SerializerExtensions.Read<DecimalTester> (reader, context);
 
-			Assert.AreEqual (test.Value, serialized.Value);
-		}
+		//    Assert.AreEqual (test.Value, serialized.Value);
+		//}
 
 		public class DecimalTester
 		{

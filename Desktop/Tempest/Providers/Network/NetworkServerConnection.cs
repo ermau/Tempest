@@ -74,7 +74,7 @@ namespace Tempest.Providers.Network
 			get { return this.publicAuthenticationKey; }
 		}
 
-		private static int nextNetworkId;
+		private static long nextNetworkId;
 
 		private bool receivedProtocols;
 		private readonly IEnumerable<string> signatureHashAlgs;

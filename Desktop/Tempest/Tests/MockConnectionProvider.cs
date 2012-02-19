@@ -89,7 +89,10 @@ namespace Tempest.Tests
 
 		public IClientConnection GetClientConnection()
 		{
-			return new MockClientConnection (this);
+			return new MockClientConnection (this)
+			{
+				ConnectionId = Interlocked.Increment (ref this.cid)
+			};
 		}
 
 		public IClientConnection GetClientConnection (Protocol protocol)
@@ -118,6 +121,7 @@ namespace Tempest.Tests
 				throw new ArgumentNullException ("protocols");
 			
 			MockClientConnection c = new MockClientConnection (this, protocols);
+			c.ConnectionId = Interlocked.Increment (ref this.cid);
 			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
 
 			return new Tuple<MockClientConnection, MockServerConnection> (c, c.connection);
@@ -135,12 +139,14 @@ namespace Tempest.Tests
 		{
 		}
 
+		private long cid;
 		private bool running;
 		private readonly Dictionary<byte, Protocol> protocols;
 
 		internal void Connect (MockClientConnection connection)
 		{
 			var c = new MockServerConnection (connection);
+			c.ConnectionId = connection.ConnectionId;
 			connection.connection = c;
 
 			if (connection.protocols != null)
@@ -359,6 +365,12 @@ namespace Tempest.Tests
 		public bool IsConnected
 		{
 			get { return this.connected; }
+		}
+
+		public long ConnectionId
+		{
+			get;
+			internal set;
 		}
 
 		public IEnumerable<Protocol> Protocols

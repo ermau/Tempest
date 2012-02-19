@@ -169,9 +169,6 @@
     <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkClientConnection.cs">
       <Link>Providers\Network\NetworkClientConnection.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkClientSimulator.cs">
-      <Link>Providers\Network\NetworkClientSimulator.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkConnection.cs">
       <Link>Providers\Network\NetworkConnection.cs</Link>
     </Compile>
@@ -216,7 +213,7 @@
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties ProjectLinkReference="d6a2003c-cbb2-47b0-b306-521141d3068d" ProjectLinkerExcludeFilter="\\?desktop(\\.*)?$;\\?silverlight(\\.*)?$;\.desktop;\.silverlight;\.xaml;^service references(\\.*)?$;\.clientconfig;^web references(\\.*)?$" />
+      <UserProperties ProjectLinkerExcludeFilter="\\?desktop(\\.*)?$;\\?silverlight(\\.*)?$;\.desktop;\.silverlight;\.xaml;^service references(\\.*)?$;\.clientconfig;^web references(\\.*)?$" ProjectLinkReference="d6a2003c-cbb2-47b0-b306-521141d3068d" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -172,9 +172,6 @@
     <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkClientConnection.cs">
       <Link>Providers\Network\NetworkClientConnection.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkClientSimulator.cs">
-      <Link>Providers\Network\NetworkClientSimulator.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkConnection.cs">
       <Link>Providers\Network\NetworkConnection.cs</Link>
     </Compile>

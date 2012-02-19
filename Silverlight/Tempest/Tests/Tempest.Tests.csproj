@@ -56,7 +56,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>Bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;TRACE;SILVERLIGHT</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;SILVERLIGHT;SAFE</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
@@ -124,6 +124,9 @@
     </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\ConnectionProviderTests.cs">
       <Link>ConnectionProviderTests.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ContextTests.cs">
+      <Link>ContextTests.cs</Link>
     </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\ExtensionsTests.cs">
       <Link>ExtensionsTests.cs</Link>

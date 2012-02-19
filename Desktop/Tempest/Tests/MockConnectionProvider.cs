@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -247,12 +247,12 @@ namespace Tempest.Tests
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 
-		public Task<ConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
+		public Task<ClientConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
 			if (endpoint == null)
 				throw new ArgumentNullException ("endpoint");
 
-			var tcs = new TaskCompletionSource<ConnectionResult>();
+			var tcs = new TaskCompletionSource<ClientConnectionResult>();
 
 			this.connected = true;
 			if (provider.IsRunning)
@@ -262,13 +262,13 @@ namespace Tempest.Tests
 				if (this.connected)
 				{
 					OnConnected (new ClientConnectionEventArgs (this));
-					tcs.SetResult (ConnectionResult.Success);
+					tcs.SetResult (new ClientConnectionResult (ConnectionResult.Success, null));
 				}
 			}
 			else
 			{
 				OnDisconnected (new DisconnectedEventArgs (this, ConnectionResult.ConnectionFailed));
-				tcs.SetResult (ConnectionResult.ConnectionFailed);
+				tcs.SetResult (new ClientConnectionResult (ConnectionResult.ConnectionFailed, null));
 			}
 
 			return tcs.Task;

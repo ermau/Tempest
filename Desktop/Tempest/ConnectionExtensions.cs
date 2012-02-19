@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -102,47 +102,12 @@ namespace Tempest
 		public static void Send (this IEnumerable<IConnection> connections, Message msg)
 		{
 			if (connections == null)
-					throw new ArgumentNullException ("connections");
+				throw new ArgumentNullException ("connections");
 			if (msg == null)
-					throw new ArgumentNullException ("msg");
+				throw new ArgumentNullException ("msg");
 
 			foreach (IConnection c in connections)
-					c.Send (msg);
-		}
-	}
-
-	public static class ClientConnectionExtensions
-	{
-		public static ConnectionResult Connect (this IClientConnection self, EndPoint endPoint, MessageTypes messageTypes, int timeout = -1)
-		{
-			ConnectionResult result = ConnectionResult.FailedUnknown;
-			AutoResetEvent wait = new AutoResetEvent (false);
-
-			EventHandler<ClientConnectionEventArgs> connected = null;
-			EventHandler<DisconnectedEventArgs> disconnected = null;
-
-			connected = (s, e) =>
-			{
-				self.Connected -= connected;
-				self.Disconnected -= disconnected;
-				result = ConnectionResult.Success;
-				wait.Set();
-			};
-
-			disconnected = (s, e) =>
-			{
-				self.Connected -= connected;
-				self.Disconnected -= disconnected;
-				result = e.Result;
-				wait.Set();
-			};
-
-			self.Connected += connected;
-			self.Disconnected += disconnected;
-			self.ConnectAsync (endPoint, messageTypes);
-			wait.WaitOne (timeout);
-
-			return result;
+				c.Send (msg);
 		}
 	}
 }

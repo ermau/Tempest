@@ -239,6 +239,22 @@ namespace Tempest.Providers.Network
 			throw new NotSupportedException();
 		}
 
+		/// <summary>
+		/// Adds an accepted protocol to the connection
+		/// </summary>
+		/// <param name="protocol">The protocol to add.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="protocol"/> is <c>null</c>.</exception>
+		/// <exception cref="InvalidOperationException"><see cref="IsConnected"/> is <c>true</c>.</exception>
+		public void AddProtocol (Protocol protocol)
+		{
+			if (protocol == null)
+				throw new ArgumentNullException ("protocol");
+			if (IsConnected)
+				throw new InvalidOperationException ("Can not add a protocol while connected");
+
+			this.protocols.Add (protocol.id, protocol);
+		}
+
 		public virtual void Send (Message message)
 		{
 			SendMessage (message);

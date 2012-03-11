@@ -34,12 +34,20 @@ namespace Tempest.InternalProtocol
 		{
 		}
 
+		public long ConnectionId
+		{
+			get;
+			set;
+		}
+
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
+			writer.WriteInt64 (ConnectionId);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
+			ConnectionId = reader.ReadInt64();
 		}
 	}
 }

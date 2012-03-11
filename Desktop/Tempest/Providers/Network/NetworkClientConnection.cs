@@ -292,6 +292,9 @@ namespace Tempest.Providers.Network
 				    break;
 
 				case (ushort)TempestMessageType.Connected:
+					var connected = (ConnectedMessage) e.Message;
+					ConnectionId = connected.ConnectionId;
+
 					OnConnected (new ClientConnectionEventArgs (this));
 
 					var tcs = Interlocked.Exchange (ref this.connectCompletion, null);

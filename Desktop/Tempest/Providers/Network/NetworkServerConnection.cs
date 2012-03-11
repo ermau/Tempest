@@ -214,7 +214,7 @@ namespace Tempest.Providers.Network
 					this.formallyConnected = true;
 					this.provider.Connect (this);
 
-					Send (new ConnectedMessage());
+					Send (new ConnectedMessage { ConnectionId = ConnectionId });
 
 					break;
 		    }

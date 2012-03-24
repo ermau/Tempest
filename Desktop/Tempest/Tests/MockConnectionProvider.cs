@@ -399,6 +399,12 @@ namespace Tempest.Tests
 			get { return new MockAsymmetricKey(); }
 		}
 
+		private MockAsymmetricKey key = new MockAsymmetricKey();
+		public IAsymmetricKey LocalKey
+		{
+			get { return this.key; }
+		}
+
 		public event EventHandler<MessageEventArgs> MessageReceived;
 		public event EventHandler<MessageEventArgs> MessageSent;
 		public event EventHandler<DisconnectedEventArgs> Disconnected;

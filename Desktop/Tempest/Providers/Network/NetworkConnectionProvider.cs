@@ -386,7 +386,7 @@ namespace Tempest.Providers.Network
 			if (!connection.IsConnected)
 				return;
 
-			var made = new ConnectionMadeEventArgs (connection, connection.PublicAuthenticationKey);
+			var made = new ConnectionMadeEventArgs (connection, connection.LocalKey);
 			OnConnectionMade (made);
 			if (made.Rejected)
 			{

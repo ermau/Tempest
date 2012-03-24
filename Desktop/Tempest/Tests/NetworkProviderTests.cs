@@ -76,7 +76,7 @@ namespace Tempest.Tests
 		protected override IClientConnection SetupClientConnection (out IAsymmetricKey k)
 		{
 			var c = new NetworkClientConnection (p);
-			k = c.PublicAuthenticationKey;
+			k = c.LocalKey;
 
 			return c;
 		}

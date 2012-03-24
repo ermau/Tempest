@@ -229,9 +229,15 @@ namespace Tempest.Providers.Network
 			get;
 		}
 
-		public IAsymmetricKey PublicAuthenticationKey
+		public IAsymmetricKey LocalKey
 		{
-			get { return this.publicAuthenticationKey; }
+			get
+			{
+				while (this.requiresHandshake && !this.authReady)
+					Thread.Sleep (0);
+
+				return this.publicAuthenticationKey;
+			}
 		}
 
 		public IEnumerable<MessageEventArgs> Tick()

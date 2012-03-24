@@ -88,6 +88,12 @@ namespace Tempest
 		IAsymmetricKey RemoteKey { get; }
 
 		/// <summary>
+		/// Gets the local authentication key for this connection.
+		/// </summary>
+		/// <remarks><c>null</c> if the transport did not handshake.</remarks>
+		IAsymmetricKey LocalKey { get; }
+
+		/// <summary>
 		/// Gets the response time in milliseconds for the connection. -1 if unsupported.
 		/// </summary>
 		int ResponseTime { get; }

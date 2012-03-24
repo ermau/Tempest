@@ -603,7 +603,7 @@ namespace Tempest.Providers.Network
 				writer.Length += sizeof (ushort); // type header length placeholder
 				writer.WriteUInt16 ((ushort)types.Count);
 				for (int i = 0; i < types.Count; ++i)
-					writer.WriteString (types[i].Key.GetSimpleName());
+					writer.WriteString (types[i].Key.GetSimplestName());
 
 				#if SAFE
 				Buffer.BlockCopy (BitConverter.GetBytes ((ushort)(writer.Length - BaseHeaderLength)), 0, writer.Buffer, BaseHeaderLength, sizeof (ushort));

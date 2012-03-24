@@ -128,7 +128,7 @@ namespace Tempest
 			{
 				writer.WriteUInt16 ((ushort)this.map.Count);
 				foreach (var kvp in this.map.OrderBy (kvp => kvp.Value))
-					writer.WriteString (kvp.Key.GetSimpleName());
+					writer.WriteString (kvp.Key.GetSimplestName());
 			}
 		}
 

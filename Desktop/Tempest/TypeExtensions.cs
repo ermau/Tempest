@@ -25,17 +25,25 @@
 // THE SOFTWARE.
 
 using System;
+using System.Reflection;
 
 namespace Tempest
 {
 	public static class TypeExtensions
 	{
-		public static string GetSimpleName (this Type self)
+		public static string GetSimplestName (this Type self)
 		{
 			if (self == null)
 				throw new ArgumentNullException ("self");
-
-			return String.Format ("{0}, {1}", self.FullName, self.Assembly.GetName().Name);
+			if (self.Assembly == mscorlib || self.Assembly == Tempest)
+				return self.FullName;
+			if (!self.Assembly.GlobalAssemblyCache)
+				return String.Format ("{0}, {1}", self.FullName, self.Assembly.GetName().Name);
+			
+			return self.AssemblyQualifiedName;
 		}
+
+		private static readonly Assembly Tempest = typeof (TypeExtensions).Assembly;
+		private static readonly Assembly mscorlib = typeof (string).Assembly;
 	}
 }

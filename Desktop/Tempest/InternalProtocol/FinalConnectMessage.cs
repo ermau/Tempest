@@ -70,7 +70,7 @@ namespace Tempest.InternalProtocol
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 			writer.WriteBytes (AESKey);
-			writer.WriteString (PublicAuthenticationKeyType.GetSimpleName());
+			writer.WriteString (PublicAuthenticationKeyType.GetSimplestName());
 			writer.WriteBytes (PublicAuthenticationKey);
 		}
 

@@ -39,17 +39,11 @@ namespace Tempest
 		: IValueWriter
 	{
 		public BufferValueWriter (byte[] buffer)
-			: this (buffer, true)
-		{
-		}
-
-		public BufferValueWriter (byte[] buffer, bool resizing)
 		{
 			if (buffer == null)
 				throw new ArgumentNullException ("buffer");
 
 			this.buffer = buffer;
-			this.resizing = resizing;
 		}
 
 		public int Length
@@ -62,9 +56,6 @@ namespace Tempest
 					int additionalCapacity = value - this.position;
 					if (this.position + additionalCapacity >= this.buffer.Length)
 					{
-						if (!this.resizing)
-							throw new InternalBufferOverflowException();
-
 						int curLength = this.buffer.Length;
 						int newLength = curLength * 2;
 						while (newLength <= curLength + additionalCapacity)
@@ -89,9 +80,6 @@ namespace Tempest
 		{
 			if (this.position + 1 >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + 1)
@@ -109,9 +97,6 @@ namespace Tempest
 		{
 			if (this.position + 1 >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + 1)
@@ -129,9 +114,6 @@ namespace Tempest
 		{
 			if (this.position + 1 >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + 1)
@@ -155,9 +137,6 @@ namespace Tempest
 			int additionalCapacity = sizeof(int) + value.Length;
 			if (this.position + additionalCapacity >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + additionalCapacity)
@@ -186,9 +165,6 @@ namespace Tempest
 			int additionalCapacity = sizeof(int) + length;
 			if (this.position + additionalCapacity >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + additionalCapacity)
@@ -216,9 +192,6 @@ namespace Tempest
 
 			if (this.position + length >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + length)
@@ -240,9 +213,6 @@ namespace Tempest
 		{
 			if (this.position + sizeof (short) >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + sizeof (short))
@@ -267,9 +237,6 @@ namespace Tempest
 		{
 			if (this.position + sizeof (int) >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + sizeof (int))
@@ -294,9 +261,6 @@ namespace Tempest
 		{
 			if (this.position + sizeof (long) >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + sizeof (long))
@@ -321,9 +285,6 @@ namespace Tempest
 		{
 			if (this.position + sizeof (ushort) >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + sizeof (ushort))
@@ -348,9 +309,6 @@ namespace Tempest
 		{
 			if (this.position + sizeof (uint) >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + sizeof (uint))
@@ -375,9 +333,6 @@ namespace Tempest
 		{
 			if (this.position + sizeof(ulong) >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + sizeof(ulong))
@@ -409,9 +364,6 @@ namespace Tempest
 		{
 			if (this.position + sizeof(float) >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + sizeof(float))
@@ -436,9 +388,6 @@ namespace Tempest
 		{
 			if (this.position + sizeof (double) >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + sizeof (double))
@@ -468,9 +417,6 @@ namespace Tempest
 			int additionalCapacity = sizeof(int) + data.Length;
 			if (this.position + additionalCapacity >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + additionalCapacity)
@@ -495,9 +441,6 @@ namespace Tempest
 		{
 			if (this.position + count >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + count)
@@ -521,7 +464,6 @@ namespace Tempest
 
 		private byte[] buffer;
 		private int position;
-		private readonly bool resizing;
 
 		private void Write7BitEncodedInt (int value)
 		{
@@ -539,9 +481,6 @@ namespace Tempest
 		{
 			if (this.position + additionalCapacity >= this.buffer.Length)
 			{
-				if (!this.resizing)
-					throw new InternalBufferOverflowException();
-
 				int curLength = this.buffer.Length;
 				int newLength = curLength * 2;
 				while (newLength <= curLength + additionalCapacity)

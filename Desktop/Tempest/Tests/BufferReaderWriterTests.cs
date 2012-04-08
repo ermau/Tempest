@@ -57,14 +57,6 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void BufferWriterOverflow()
-		{
-			byte[] buffer = new byte[4];
-			var writer = new BufferValueWriter (buffer, false);
-			Assert.Throws<InternalBufferOverflowException> (() => writer.WriteInt64 (1));
-		}
-
-		[Test]
 		public void BufferOverflowResize()
 		{
 			byte[] buffer = new byte[4];

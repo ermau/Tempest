@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -481,8 +481,7 @@ namespace Tempest
 				this.buffer = newbuffer;
 			}
 
-			Buff.BlockCopy (BitConverter.GetBytes (data.Length), 0, this.buffer, this.position, sizeof(int));
-			this.position += sizeof (int);
+			Write7BitEncodedInt (data.Length);
 			Buff.BlockCopy (data, 0, this.buffer, this.position, data.Length);
 			this.position += data.Length;
 		}
@@ -523,6 +522,18 @@ namespace Tempest
 		private byte[] buffer;
 		private int position;
 		private readonly bool resizing;
+
+		private void Write7BitEncodedInt (int value)
+		{
+			uint v = (uint) value;
+			while (v >= 128)
+			{
+				WriteByte ((byte) (v | 128));
+				v >>= 7;
+			}
+
+			WriteByte ((byte) v);
+		}
 
 		private void EnsureAdditionalCapacity (int additionalCapacity)
 		{

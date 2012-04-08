@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -189,7 +189,7 @@ namespace Tempest
 			if (encoding == null)
 				throw new ArgumentNullException ("encoding");
 
-			int len = ReadInt32();
+			int len = Read7BitEncodedInt();
 			if (len == 0)
 				return null;
 
@@ -204,5 +204,22 @@ namespace Tempest
 		}
 
 		private int position;
+
+		private int Read7BitEncodedInt()
+		{
+			int count = 0;
+			int shift = 0;
+			byte b;
+
+			do
+			{
+				b = ReadByte();
+
+				count |= (b & 127) << shift;
+				shift += 7;
+			} while ((b & 128) != 0);
+
+			return count;
+		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Tempest;
 
 namespace SimpleChat.Client
@@ -16,11 +17,21 @@ namespace SimpleChat.Client
 		public event EventHandler<ChatEventArgs> Chat;
 		public event EventHandler<UserEventArgs> UserStateChanged;
 
+		public IEnumerable<User> Users
+		{
+			get { return this.users; }
+		}
+
+		public void SendMessage (string message)
+		{
+			Connection.Send (new SayMessage { Message = message });
+		}
+
+		private readonly ObservableCollection<User> users = new ObservableCollection<User>();
+
 		private void OnUserStateChangedMessage (MessageEventArgs<UserStateChangedMessage> e)
 		{
-			var changed = UserStateChanged;
-			if (changed != null)
-				changed (this, new UserEventArgs (new User (e.Message.Nickname, e.Message.NewState)));
+			
 		}
 	}
 
@@ -43,8 +54,18 @@ namespace SimpleChat.Client
 	}
 	
 	public class ChatEventArgs
-		: EventArgs
+		: UserEventArgs
 	{
-		
+		public ChatEventArgs (User user, string message)
+			: base (user)
+		{
+			Message = message;
+		}
+
+		public string Message
+		{
+			get;
+			private set;
+		}
 	}
 }

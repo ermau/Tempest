@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 
 namespace SimpleChat.Client
 {
@@ -11,26 +12,38 @@ namespace SimpleChat.Client
 	}
 
 	public class User
+		: INotifyPropertyChanged
 	{
-		public User (string nickname, UserState state)
+		public User (int id, string nickname, UserState state)
 		{
 			if (nickname == null)
 				throw new ArgumentNullException ("nickname");
 
+			Id = id;
 			Nickname = nickname;
 			State = state;
+		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		public int Id
+		{
+			get;
+			private set;
 		}
 
 		public string Nickname
 		{
 			get;
-			private set;
+			set;
 		}
 
 		public UserState State
 		{
 			get;
-			private set;
+			set;
 		}
+
+		
 	}
 }

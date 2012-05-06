@@ -70,11 +70,15 @@
     <Compile Include="ChatWindow.xaml.cs">
       <DependentUpon>ChatWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Communication\ChatClient.cs" />
-    <Compile Include="Communication\SayMessage.cs" />
-    <Compile Include="Communication\SetNicknameMessage.cs" />
-    <Compile Include="Communication\SimpleChatProtocol.cs" />
-    <Compile Include="Communication\UserStateChangedMessage.cs" />
+    <Compile Include="ChatWindowViewModel.cs" />
+    <Compile Include="Client\ChatClient.cs" />
+    <Compile Include="Client\ChatMessage.cs" />
+    <Compile Include="Client\SayMessage.cs" />
+    <Compile Include="Client\SetNicknameMessage.cs" />
+    <Compile Include="Client\SimpleChatProtocol.cs" />
+    <Compile Include="Client\User.cs" />
+    <Compile Include="Client\UserStateChangedMessage.cs" />
+    <Compile Include="DelegatedCommand.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

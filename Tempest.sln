@@ -7,6 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempest.Tests", "Desktop\Te
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Desktop", "Desktop", "{A38C42AE-B7A0-4541-AF9B-1552FCBCF019}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleChat", "Desktop\Samples\SimpleChat\SimpleChat.csproj", "{25BDBCEB-D72E-4ECF-8885-51CA65E6A081}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AD678445-56DE-4AD6-B51E-37D4D0C56E51}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.txt = LICENSE.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +28,9 @@ Global
 		{97D53DFA-634E-4595-9AE3-DC1BC8A5F553}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97D53DFA-634E-4595-9AE3-DC1BC8A5F553}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97D53DFA-634E-4595-9AE3-DC1BC8A5F553}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25BDBCEB-D72E-4ECF-8885-51CA65E6A081}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{25BDBCEB-D72E-4ECF-8885-51CA65E6A081}.Debug|Any CPU.Build.0 = Debug|x86
+		{25BDBCEB-D72E-4ECF-8885-51CA65E6A081}.Release|Any CPU.ActiveCfg = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -28,5 +38,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{97D53DFA-634E-4595-9AE3-DC1BC8A5F553} = {A38C42AE-B7A0-4541-AF9B-1552FCBCF019}
 		{D6A2003C-CBB2-47B0-B306-521141D3068D} = {A38C42AE-B7A0-4541-AF9B-1552FCBCF019}
+		{25BDBCEB-D72E-4ECF-8885-51CA65E6A081} = {A38C42AE-B7A0-4541-AF9B-1552FCBCF019}
 	EndGlobalSection
 EndGlobal

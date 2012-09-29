@@ -1530,8 +1530,8 @@ namespace Tempest.Tests
 
 		private static string GetLongString (int length = 1000000)
 		{
-			Random r = new Random();
-			StringBuilder builder = new StringBuilder();
+			Random r = new Random (43);
+			StringBuilder builder = new StringBuilder (length);
 			for (int i = 0; i < length; ++i)
 				builder.Append ((char)r.Next (1, 20));
 

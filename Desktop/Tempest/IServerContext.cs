@@ -40,7 +40,7 @@ namespace Tempest
 		event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
 
 		/// <summary>
-		/// Disconnects a connection after sending a disconnection message with <see cref="reason"/>.
+		/// Disconnects a connection after sending a disconnection message with <paramref name="reason"/>.
 		/// </summary>
 		/// <param name="connection">This connection to disconnect.</param>
 		/// <param name="reason">The reason given for disconnection.</param>

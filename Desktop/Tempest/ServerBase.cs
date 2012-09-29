@@ -121,7 +121,6 @@ namespace Tempest
 			if (provider == null)
 				throw new ArgumentNullException ("provider");
 
-			bool others = false;
 			ExecutionMode mode;
 			lock (this.providers)
 			{

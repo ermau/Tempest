@@ -55,7 +55,7 @@ namespace Tempest
 		/// </summary>
 		/// <param name="assembly">The assembly to discover message types from.</param>
 		/// <seealso cref="Discover()"/>
-		/// <exception cref="ArgumentNullException"><paramref name="assembly"/> or <paramref name="protocol"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="assembly"/> is <c>null</c>.</exception>
 		public void Discover (Assembly assembly)
 		{
 			if (assembly == null)
@@ -68,7 +68,7 @@ namespace Tempest
 		/// <summary>
 		/// Discovers and registers messages from the calling assembly.
 		/// </summary>
-		/// <seealso cref="Discover(Tempest.Protocol,System.Reflection.Assembly)"/>
+		/// <seealso cref="Discover(System.Reflection.Assembly)"/>
 		public void Discover()
 		{
 			Discover (Assembly.GetCallingAssembly());
@@ -88,7 +88,7 @@ namespace Tempest
 		/// Registers types with a method of construction.
 		/// </summary>
 		/// <param name="messageTypes">The types to register.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="messageTypes"/> or <paramref name="protocol"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="messageTypes"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="messageTypes"/> contains non-implementations of <see cref="Message"/>
 		/// or <paramref name="messageTypes"/> contains duplicate <see cref="Message.MessageType"/>s.</exception>

@@ -74,8 +74,6 @@ namespace Tempest.Tests
 			var provider = new MockConnectionProvider (MockProtocol.Instance);
 			provider.Start (MessageTypes.Reliable);
 
-			IServerConnection connection;
-
 			var test = new AsyncTest<ConnectionMadeEventArgs> (e => Assert.AreEqual (true, e.Connection.IsConnected));
 			provider.ConnectionMade += test.PassHandler;
 

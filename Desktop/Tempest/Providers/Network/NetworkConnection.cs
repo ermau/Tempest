@@ -674,7 +674,7 @@ namespace Tempest.Providers.Network
 			SocketAsyncEventArgs eargs = null;
 			#if NET_4
 			if (timeout > 0)
-			    throw new NotSupportedException ("Response timeout not support");
+			    throw new NotSupportedException ("Response timeout not supported");
 
 			if (!writerAsyncArgs.TryPop (out eargs))
 			{

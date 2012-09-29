@@ -128,7 +128,7 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Disconnects after sending a disconnection message with <see cref="reason"/>.
+		/// Disconnects after sending a disconnection message with <paramref name="reason"/>.
 		/// </summary>
 		/// <param name="reason">The reason given for disconnection.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="reason"/> is <c>null</c>.</exception>

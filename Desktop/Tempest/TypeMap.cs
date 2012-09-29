@@ -48,7 +48,7 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Gets the <see cref="Type"/>s and their IDs that have been added since <see cref="GetNewTypes"/> was last called.
+		/// Gets the <see cref="Type"/>s and their IDs that have been added since <see cref="TryGetNewTypes"/> was last called.
 		/// </summary>
 		public bool TryGetNewTypes (out IList<KeyValuePair<Type, ushort>> types)
 		{

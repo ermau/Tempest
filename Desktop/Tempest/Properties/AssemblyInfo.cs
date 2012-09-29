@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible (false)]
 [assembly: Guid ("a4bdac1c-a9d5-4be2-8fb5-14d7210d602f")]
 
-[assembly: AssemblyVersion ("0.0.0.0")]
-[assembly: AssemblyFileVersion ("0.0.0.0")]
+[assembly: AssemblyVersion ("0.8.0.0")]
+[assembly: AssemblyFileVersion ("0.8.0.0")]
 
 [assembly: InternalsVisibleTo ("Tempest.Tests")]

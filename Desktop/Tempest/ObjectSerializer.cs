@@ -407,9 +407,6 @@ namespace Tempest
 							})
 							.ToDictionary (mi => mi, mi =>
 							{
-								Func<IValueReader, bool, object> des;
-								Action<IValueWriter, object> ser;
-
 								ObjectSerializer os = null;
 								if (mi.MemberType == MemberTypes.Field)
 									os = GetSerializerInternal (((FieldInfo)mi).FieldType);

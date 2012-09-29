@@ -61,14 +61,11 @@ namespace Tempest.Tests
 
 		public bool SupportsConnectionless
 		{
-			get { return false; }
+			get { return true; }
 		}
 
 		public void Start (MessageTypes types)
 		{
-			if ((types & MessageTypes.Unreliable) == MessageTypes.Unreliable)
-				throw new NotSupportedException();
-
 			this.running = true;
 		}
 
@@ -78,8 +75,6 @@ namespace Tempest.Tests
 				throw new ArgumentNullException ("message");
 			if (endPoint == null)
 				throw new ArgumentNullException ("endPoint");
-
-			throw new NotSupportedException();
 		}
 
 		public void Stop()

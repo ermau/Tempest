@@ -190,7 +190,7 @@ namespace Tempest
 				throw new ArgumentNullException ("encoding");
 
 			int len = Read7BitEncodedInt();
-			if (len == 0)
+			if (len == -1)
 				return null;
 
 			string v = encoding.GetString (this.buffer, this.position, len);

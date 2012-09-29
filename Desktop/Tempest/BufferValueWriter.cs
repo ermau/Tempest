@@ -413,6 +413,12 @@ namespace Tempest
 			if (encoding == null)
 				throw new ArgumentNullException ("encoding");
 
+			if (value == null)
+			{
+				Write7BitEncodedInt (-1);
+				return;
+			}
+
 			byte[] data = encoding.GetBytes (value);
 			int additionalCapacity = sizeof(int) + data.Length;
 			if (this.position + additionalCapacity >= this.buffer.Length)

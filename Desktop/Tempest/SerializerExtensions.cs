@@ -107,8 +107,8 @@ namespace Tempest
 
 		public static void WriteString (this IValueWriter writer, string value)
 		{
-			if (value == null)
-				throw new ArgumentNullException ("value");
+			if (writer == null)
+				throw new ArgumentNullException ("writer");
 
 			writer.WriteString (Encoding.UTF8, value);
 		}

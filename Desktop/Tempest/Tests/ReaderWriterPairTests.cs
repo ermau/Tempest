@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2010-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -250,13 +250,18 @@ namespace Tempest.Tests
 		{
 			const string value = "The lazy fox..\n oh forget it.\0";
 
+			this.writer.WriteString (Encoding.UTF8, null);
+			this.writer.WriteString (Encoding.UTF8, String.Empty);
 			this.writer.WriteString (Encoding.UTF8, value);
 			#if !SILVERLIGHT
 			this.writer.WriteString (Encoding.UTF32, value);
 			this.writer.WriteString (Encoding.ASCII, value);
 			#endif
+
 			this.writer.Flush ();
 
+			Assert.AreEqual (null, this.reader.ReadString (Encoding.UTF8));
+			Assert.AreEqual (String.Empty, this.reader.ReadString (Encoding.UTF8));
 			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF8));
 			#if !SILVERLIGHT
 			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF32));

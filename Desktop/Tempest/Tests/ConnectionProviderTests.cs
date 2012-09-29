@@ -1146,12 +1146,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void EncryptedLongMessage()
 		{
-			Random r = new Random();
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < 1000000; ++i)
-				builder.Append ((char)r.Next (1, 20));
-
-			string message = builder.ToString();
+			string message = GetLongString();
 			var cmessage = new EncryptedMessage
 			{
 				Message = message,

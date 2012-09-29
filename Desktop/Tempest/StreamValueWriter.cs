@@ -140,7 +140,15 @@ namespace Tempest
 			if (encoding == null)
 				throw new ArgumentNullException ("encoding");
 
-			WriteBytes (!String.IsNullOrEmpty (value) ? encoding.GetBytes (value) : new byte[0]);
+			if (value == null)
+			{
+				WriteInt32 (-1);
+				return;
+			}
+
+			byte[] data = encoding.GetBytes (value);
+			WriteInt32 (data.Length);
+			Write (data);
 		}
 
 		public void Flush()

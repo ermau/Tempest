@@ -120,8 +120,12 @@ namespace Tempest
 			if (encoding == null)
 				throw new ArgumentNullException ("encoding");
 
-			byte[] data = ReadBytes();
-			return (data.Length == 0) ? null : encoding.GetString (data, 0, data.Length);
+			int len = ReadInt32();
+			if (len == -1)
+				return null;
+
+			byte[] data = ReadBytes (len);
+			return encoding.GetString (data, 0, len);
 		}
 
 		public decimal ReadDecimal()

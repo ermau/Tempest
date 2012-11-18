@@ -97,7 +97,7 @@ namespace Tempest.Providers.Network
 			//    return;
 			//}
 
-			Send (new PingMessage { Interval = provider.PingFrequency });
+			Send (new ReliablePingMessage { Interval = provider.PingFrequency });
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}
 
@@ -226,7 +226,7 @@ namespace Tempest.Providers.Network
 
 		protected override void OnMessageSent (MessageEventArgs e)
 		{
-			if (e.Message is PingMessage)
+			if (e.Message is ReliablePingMessage)
 				Interlocked.Increment (ref this.pingsOut);
 
 			base.OnMessageSent(e);

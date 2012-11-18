@@ -1,10 +1,10 @@
 ﻿//
-// PingMessage.cs
+// UnreliablePingMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,53 +26,29 @@
 
 namespace Tempest.InternalProtocol
 {
-	/// <summary>
-	/// Internal Tempest protocol ping message.
-	/// </summary>
-	public class PingMessage
+	public sealed class UnreliablePingMessage
 		: TempestMessage
 	{
-		public PingMessage()
-			: base (TempestMessageType.Ping)
+		internal UnreliablePingMessage()
+			: base (TempestMessageType.UnreliablePing)
 		{
 		}
 
-		/// <summary>
-		/// Gets or sets the ping interval.
-		/// </summary>
-		public int Interval
+		public override bool MustBeReliable
 		{
-			get;
-			set;
+			get { return false; }
+		}
+
+		public override bool PreferReliable
+		{
+			get { return false; }
 		}
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
-			writer.WriteInt32 (Interval);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
-		{
-			Interval = reader.ReadInt32();
-		}
-	}
-
-	/// <summary>
-	/// Internal Tempest protocol pong message.
-	/// </summary>
-	public class PongMessage
-		: TempestMessage
-	{
-		public PongMessage()
-			: base (TempestMessageType.Pong)
-		{
-		}
-
-		public override void ReadPayload (ISerializationContext context, IValueReader reader)
-		{
-		}
-
-		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 		}
 	}

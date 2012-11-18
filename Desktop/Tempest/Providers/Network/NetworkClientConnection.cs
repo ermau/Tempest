@@ -246,8 +246,8 @@ namespace Tempest.Providers.Network
 		{
 			switch (e.Message.MessageType)
 			{
-				case (ushort)TempestMessageType.Ping:
-					var ping = (PingMessage)e.Message;
+				case (ushort)TempestMessageType.ReliablePing:
+					var ping = (ReliablePingMessage)e.Message;
 					if (this.pingFrequency == 0 || this.activityTimer == null)
 					{
 						if (this.activityTimer != null)
@@ -263,7 +263,7 @@ namespace Tempest.Providers.Network
 					else if (ping.Interval != this.pingFrequency)
 						this.activityTimer.Interval = ping.Interval;
 					
-					this.pingFrequency = ((PingMessage)e.Message).Interval;
+					this.pingFrequency = ((ReliablePingMessage)e.Message).Interval;
 					break;
 
 				case (ushort)TempestMessageType.AcknowledgeConnect:

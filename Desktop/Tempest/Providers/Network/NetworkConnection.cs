@@ -700,8 +700,8 @@ namespace Tempest.Providers.Network
 		{
 			switch (e.Message.MessageType)
 			{
-				case (ushort)TempestMessageType.Ping:
-					Send (new PongMessage());
+				case (ushort)TempestMessageType.ReliablePing:
+					SendResponse (e.Message, new ReliablePongMessage());
 					
 					#if !SILVERLIGHT
 					this.lastSent = Stopwatch.GetTimestamp();
@@ -710,7 +710,7 @@ namespace Tempest.Providers.Network
 					#endif
 					break;
 
-				case (ushort)TempestMessageType.Pong:
+				case (ushort)TempestMessageType.ReliablePong:
 					#if !SILVERLIGHT
 					long timestamp = Stopwatch.GetTimestamp();
 					#else

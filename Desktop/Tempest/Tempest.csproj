@@ -58,6 +58,9 @@
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />
     <Compile Include="InternalProtocol\FinalConnectMessage.cs" />
     <Compile Include="IAsymmetricKey.cs" />
+    <Compile Include="InternalProtocol\ReliablePongMessage.cs" />
+    <Compile Include="InternalProtocol\UnreliablePingMessage.cs" />
+    <Compile Include="InternalProtocol\UnreliablePongMessage.cs" />
     <Compile Include="IPublicKeyCrypto.cs" />
     <Compile Include="ISerializable.cs" />
     <Compile Include="ISerializationContext.cs" />
@@ -65,7 +68,7 @@
     <Compile Include="IServerContext.cs" />
     <Compile Include="MessageHeader.cs" />
     <Compile Include="ObjectSerializer.cs" />
-    <Compile Include="InternalProtocol\PingMessage.cs" />
+    <Compile Include="InternalProtocol\ReliablePingMessage.cs" />
     <Compile Include="Providers\Network\ClientMessageSerializer.cs" />
     <Compile Include="Providers\Network\MessageSerializer.cs" />
     <Compile Include="Providers\Network\ServerMessageSerializer.cs" />

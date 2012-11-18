@@ -502,11 +502,11 @@ namespace Tempest.Tests
 		{
 			switch (e.Message.MessageType)
 			{
-				case (ushort)TempestMessageType.Ping:
-					Send (new PongMessage());
+				case (ushort)TempestMessageType.ReliablePing:
+					Send (new ReliablePongMessage());
 					break;
 
-				case (ushort)TempestMessageType.Pong:
+				case (ushort)TempestMessageType.ReliablePong:
 					break;
 
 				case (ushort)TempestMessageType.Disconnect:

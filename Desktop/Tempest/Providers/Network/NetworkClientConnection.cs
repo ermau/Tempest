@@ -90,7 +90,8 @@ namespace Tempest.Providers.Network
 		public Task<ClientConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
 		{
 			int c = GetNextCallId();
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+			string category = String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", category);
 
 			if (endpoint == null)
 				throw new ArgumentNullException ("endpoint");
@@ -101,10 +102,12 @@ namespace Tempest.Providers.Network
 			
 			ThreadPool.QueueUserWorkItem (s =>
 			{
+				EndPoint ep = (EndPoint)s;
+
 				SocketAsyncEventArgs args;
 				bool connected;
 
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), category);
 
 				while (this.pendingAsync > 0 || Interlocked.CompareExchange (ref this.connectCompletion, ntcs, null) != null)
 					Thread.Sleep (0);
@@ -114,27 +117,27 @@ namespace Tempest.Providers.Network
 					if (IsConnected)
 						throw new InvalidOperationException ("Already connected");
 
-					RemoteEndPoint = endpoint;
+					RemoteEndPoint = ep;
 
 					args = new SocketAsyncEventArgs();
-					args.RemoteEndPoint = endpoint;
+					args.RemoteEndPoint = ep;
 					args.Completed += ConnectCompleted;
 
 					this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 					int p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), category);
 					connected = !this.reliableSocket.ConnectAsync (args);
 				}
 
 				if (connected)
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Connected synchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Connected synchronously", category);
 					ConnectCompleted (this.reliableSocket, args);
 				}
 				else
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
-			});
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", category);
+			}, endpoint);
 
 			return ntcs.Task;
 		}

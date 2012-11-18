@@ -65,6 +65,8 @@ namespace Tempest.Providers.Network
 
 			this.rreader = new BufferValueReader (this.rmessageBuffer);
 
+			this.serializer = new ServerMessageSerializer (this, protocols);
+
 			if (!this.reliableSocket.ReceiveAsync (asyncArgs))
 				ReliableReceiveCompleted (this, asyncArgs);
 		}
@@ -78,7 +80,7 @@ namespace Tempest.Providers.Network
 
 		private bool receivedProtocols;
 		private readonly IEnumerable<string> signatureHashAlgs;
-		private readonly NetworkConnectionProvider provider;
+		internal readonly NetworkConnectionProvider provider;
 		
 		internal void Ping (object sender, EventArgs e)
 		{
@@ -133,7 +135,7 @@ namespace Tempest.Providers.Network
 						{
 							if (msg.SignatureHashAlgorithms.Contains (hashAlg))
 							{
-								this.signingHashAlgorithm = hashAlg;
+								this.serializer.SigningHashAlgorithm = hashAlg;
 								foundHashAlg = true;
 								break;
 							}
@@ -174,7 +176,7 @@ namespace Tempest.Providers.Network
 
 						e.Connection.Send (new AcknowledgeConnectMessage
 						{
-							SignatureHashAlgorithm = this.signingHashAlgorithm,
+							SignatureHashAlgorithm = this.serializer.SigningHashAlgorithm,
 							EnabledProtocols = this.protocols.Values,
 							ConnectionId = ConnectionId,
 							PublicAuthenticationKey = this.provider.PublicAuthenticationKey,
@@ -202,8 +204,8 @@ namespace Tempest.Providers.Network
 					{
 						byte[] aeskey = this.provider.pkEncryption.Decrypt (finalConnect.AESKey);
 
-						this.hmac = new HMACSHA256 (aeskey);
-						this.aes = new AesManaged { KeySize = 256, Key = aeskey };
+						this.serializer.HMAC = new HMACSHA256 (aeskey);
+						this.serializer.AES = new AesManaged { KeySize = 256, Key = aeskey };
 					}
 					catch
 					{
@@ -220,35 +222,6 @@ namespace Tempest.Providers.Network
 		    }
 
 		    base.OnTempestMessageReceived(e);
-		}
-
-		protected override void SignMessage (string hashAlg, BufferValueWriter writer)
-		{
-			if (this.hmac == null)
-				writer.WriteBytes (this.provider.authentication.HashAndSign (hashAlg, writer.Buffer, 0, writer.Length));
-			else
-				base.SignMessage (hashAlg, writer);
-		}
-
-		protected override bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
-		{
-			if (this.hmac == null)
-			{
-				var msg = (FinalConnectMessage)message;
-
-				byte[] resized = new byte[length];
-				Buffer.BlockCopy (data, moffset, resized, 0, length);
-
-				IAsymmetricKey key = (IAsymmetricKey)Activator.CreateInstance (msg.PublicAuthenticationKeyType);
-				key.Deserialize (new BufferValueReader (msg.PublicAuthenticationKey), this.provider.pkEncryption);
-
-				this.publicAuthenticationKey = key;
-				this.pkAuthentication.ImportKey (key);
-
-				return this.pkAuthentication.VerifySignedHash (hashAlg, resized, signature);
-			}
-			else
-				return base.VerifyMessage (hashAlg, message, signature, data, moffset, length);
 		}
 
 		protected override void OnMessageSent (MessageEventArgs e)

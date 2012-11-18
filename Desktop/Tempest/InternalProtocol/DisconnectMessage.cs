@@ -31,7 +31,7 @@ namespace Tempest.InternalProtocol
 	/// <summary>
 	/// Internal Tempest protocol disconnect with reason message.
 	/// </summary>
-	public class DisconnectMessage
+	public sealed class DisconnectMessage
 		: TempestMessage
 	{
 		/// <summary>

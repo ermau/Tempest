@@ -28,7 +28,7 @@ using System;
 
 namespace Tempest.InternalProtocol
 {
-	public class FinalConnectMessage
+	public sealed class FinalConnectMessage
 		: TempestMessage
 	{
 		public FinalConnectMessage()

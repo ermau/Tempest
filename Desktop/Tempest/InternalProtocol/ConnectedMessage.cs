@@ -26,7 +26,7 @@
 
 namespace Tempest.InternalProtocol
 {
-	public class ConnectedMessage
+	public sealed class ConnectedMessage
 		: TempestMessage
 	{
 		public ConnectedMessage()

@@ -29,7 +29,7 @@ using System.Linq;
 
 namespace Tempest.InternalProtocol
 {
-	public class ConnectMessage
+	public sealed class ConnectMessage
 		: TempestMessage
 	{
 		public ConnectMessage()

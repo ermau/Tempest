@@ -29,7 +29,7 @@ using System.Linq;
 
 namespace Tempest.InternalProtocol
 {
-	public class AcknowledgeConnectMessage
+	public sealed class AcknowledgeConnectMessage
 		: TempestMessage
 	{
 		public AcknowledgeConnectMessage()

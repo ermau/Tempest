@@ -30,7 +30,7 @@ namespace Tempest.InternalProtocol
 		: TempestMessage
 	{
 		internal UnreliablePongMessage()
-			: base (TempestMessageType.UnreliablePing)
+			: base (TempestMessageType.UnreliablePong)
 		{
 		}
 

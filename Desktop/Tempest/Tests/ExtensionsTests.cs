@@ -47,5 +47,22 @@ namespace Tempest.Tests
 
 			Assert.AreEqual (d.ToUniversalTime(), reader.ReadUniversalDate());
 		}
+
+		[Test]
+		public void ReadWrite7BitInt()
+		{
+			var writer = new BufferValueWriter (new byte[20480]);
+
+			writer.Write7BitEncodedInt (Int32.MinValue);
+			writer.Write7BitEncodedInt (0);
+			writer.Write7BitEncodedInt (Int32.MaxValue);
+			writer.Flush();
+
+			var reader = new BufferValueReader (writer.Buffer);
+
+			Assert.AreEqual (Int32.MinValue, reader.Read7BitEncodedInt());
+			Assert.AreEqual (0, reader.Read7BitEncodedInt());
+			Assert.AreEqual (Int32.MaxValue, reader.Read7BitEncodedInt());
+		}
 	}
 }

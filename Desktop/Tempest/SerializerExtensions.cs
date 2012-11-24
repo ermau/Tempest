@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,35 @@ namespace Tempest
 {
 	public static class SerializerExtensions
 	{
+		public static void Write7BitEncodedInt (this IValueWriter writer, int value)
+		{
+			uint v = (uint) value;
+			while (v >= 128)
+			{
+				writer.WriteByte ((byte) (v | 128));
+				v >>= 7;
+			}
+
+			writer.WriteByte ((byte) v);
+		}
+
+		public static int Read7BitEncodedInt (this IValueReader reader)
+		{
+			int count = 0;
+			int shift = 0;
+			byte b;
+
+			do
+			{
+				b = reader.ReadByte();
+
+				count |= (b & 127) << shift;
+				shift += 7;
+			} while ((b & 128) != 0);
+
+			return count;
+		}
+
 		public static void WriteUniversalDate (this IValueWriter writer, DateTime date)
 		{
 			if (writer == null)

@@ -189,7 +189,7 @@ namespace Tempest
 			if (encoding == null)
 				throw new ArgumentNullException ("encoding");
 
-			int len = Read7BitEncodedInt();
+			int len = this.Read7BitEncodedInt();
 			if (len == -1)
 				return null;
 
@@ -204,22 +204,5 @@ namespace Tempest
 		}
 
 		private int position;
-
-		private int Read7BitEncodedInt()
-		{
-			int count = 0;
-			int shift = 0;
-			byte b;
-
-			do
-			{
-				b = ReadByte();
-
-				count |= (b & 127) << shift;
-				shift += 7;
-			} while ((b & 128) != 0);
-
-			return count;
-		}
 	}
 }

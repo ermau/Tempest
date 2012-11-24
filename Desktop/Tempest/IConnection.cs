@@ -64,7 +64,7 @@ namespace Tempest
 		/// <summary>
 		/// Gets the server-assigned connection id.
 		/// </summary>
-		long ConnectionId { get; }
+		int ConnectionId { get; }
 
 		/// <summary>
 		/// Gets the protocols the connection has enabled/negotiated.

@@ -130,7 +130,7 @@ namespace Tempest.Tests
 		{
 		}
 
-		private long cid;
+		private int cid;
 		private bool running;
 		private readonly Dictionary<byte, Protocol> protocols;
 
@@ -358,7 +358,7 @@ namespace Tempest.Tests
 			get { return this.connected; }
 		}
 
-		public long ConnectionId
+		public int ConnectionId
 		{
 			get;
 			internal set;

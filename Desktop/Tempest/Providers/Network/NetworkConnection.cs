@@ -180,7 +180,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		public long ConnectionId
+		public int ConnectionId
 		{
 			get;
 			protected set;

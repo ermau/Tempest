@@ -369,6 +369,7 @@ namespace Tempest.Providers.Network
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;
 
+		private int nextConnectionId;
 		private readonly List<NetworkServerConnection> serverConnections;
 		private readonly List<NetworkServerConnection> pendingConnections = new List<NetworkServerConnection>();
 		
@@ -412,6 +413,34 @@ namespace Tempest.Providers.Network
 
 			    	BeginAccepting (null);
 			    }
+			}
+		}
+
+		internal int GetConnectionId()
+		{
+			while (true)
+			{
+				int id;
+				do
+				{
+					id = Interlocked.Increment (ref this.nextConnectionId);
+				} while (id == 0);
+
+				bool found = false;
+				lock (this.serverConnections)
+				{
+					for (int i = 0; i < this.serverConnections.Count; i++)
+					{
+						if (this.serverConnections[i].ConnectionId == id)
+						{
+							found = true;
+							break;
+						}
+					}
+				}
+
+				if (!found)
+					return id;
 			}
 		}
 

@@ -148,7 +148,7 @@ namespace Tempest.Providers.Network
 						}
 					}
 
-					ConnectionId = Interlocked.Increment (ref nextNetworkId);
+					ConnectionId = this.provider.GetConnectionId();
 
 					foreach (Protocol ip in msg.Protocols)
 					{

@@ -729,7 +729,11 @@ namespace Tempest.Tests
 						if (!e.Connection.IsConnected)
 							return;
 
-						e.Connection.Send (new AuthenticatedMessage { Number = i, Message = GetLongString (r.Next(7500, 100000)) });
+						e.Connection.Send (new AuthenticatedMessage
+						{
+							Number = i,
+							Message = TestHelpers.GetLongString (r.Next (7500, 100000))
+						});
 					}
 				}
 				catch (Exception ex)
@@ -775,7 +779,10 @@ namespace Tempest.Tests
 						if (!e.Connection.IsConnected)
 							return;
 
-						e.Connection.Send (new AuthenticatedTypeHeaderedMessage { Object = GetLongString (r.Next (7500, 100000)) });
+						e.Connection.Send (new AuthenticatedTypeHeaderedMessage
+						{
+							Object = TestHelpers.GetLongString (r.Next (7500, 100000))
+						});
 					}
 				}
 				catch (Exception ex)
@@ -821,7 +828,10 @@ namespace Tempest.Tests
 						if (!e.Connection.IsConnected)
 							return;
 
-						e.Connection.Send (new EncryptedTypeHeaderedMessage { Object = GetLongString (r.Next (7500, 100000)) });
+						e.Connection.Send (new EncryptedTypeHeaderedMessage
+						{
+							Object = TestHelpers.GetLongString (r.Next (7500, 100000))
+						});
 					}
 				}
 				catch (Exception ex)
@@ -1146,7 +1156,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void EncryptedLongMessage()
 		{
-			string message = GetLongString();
+			string message = TestHelpers.GetLongString();
 			var cmessage = new EncryptedMessage
 			{
 				Message = message,
@@ -1192,7 +1202,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void AuthenticatedLongMessage()
 		{
-			var message = GetLongString();
+			var message = TestHelpers.GetLongString();
 			var cmessage = new AuthenticatedMessage
 			{
 				Message = message,
@@ -1438,7 +1448,7 @@ namespace Tempest.Tests
 		{
 			var cmessage = new AuthenticatedTypeHeaderedMessage
 			{
-				Object = GetLongString()
+				Object = TestHelpers.GetLongString()
 			};
 
 			AssertMessageReceived (cmessage, msg =>
@@ -1473,7 +1483,7 @@ namespace Tempest.Tests
 		{
 			var cmessage = new EncryptedTypeHeaderedMessage
 			{
-				Object = GetLongString()
+				Object = TestHelpers.GetLongString()
 			};
 
 			AssertMessageReceived (cmessage, msg =>
@@ -1527,16 +1537,6 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 		#endif
-
-		private static string GetLongString (int length = 1000000)
-		{
-			Random r = new Random (43);
-			StringBuilder builder = new StringBuilder (length);
-			for (int i = 0; i < length; ++i)
-				builder.Append ((char)r.Next (1, 20));
-
-			return builder.ToString();
-		}
 
 		private void AssertMessageReceived<T> (T message, Action<T> testResults)
 			where T : Message

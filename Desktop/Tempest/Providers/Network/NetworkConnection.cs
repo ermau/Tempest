@@ -452,6 +452,8 @@ namespace Tempest.Providers.Network
 					int count = bufferCount;
 					if (count == sendBufferLimit)
 					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Waiting for writer args", callCategory);
+
 						SpinWait wait = new SpinWait();
 						while (!writerAsyncArgs.TryPop (out eargs))
 							wait.SpinOnce();
@@ -460,6 +462,8 @@ namespace Tempest.Providers.Network
 					}
 					else if (count == Interlocked.CompareExchange (ref bufferCount, count + 1, count))
 					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Creating new writer args", callCategory);
+
 						eargs = new SocketAsyncEventArgs();
 						eargs.SetBuffer (new byte[1024], 0, 1024);
 						eargs.Completed += ReliableSendCompleted;
@@ -492,6 +496,8 @@ namespace Tempest.Providers.Network
 				}
 			}
 			#endif
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Have writer args", callCategory);
 
 			bool sent;
 			try
@@ -552,6 +558,7 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Sending", callCategory);
 				sent = !this.reliableSocket.SendAsync (eargs);
 			}
 			finally

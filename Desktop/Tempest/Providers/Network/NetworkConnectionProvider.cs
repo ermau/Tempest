@@ -242,10 +242,11 @@ namespace Tempest.Providers.Network
 
 		public void Start (MessageTypes types)
 		{
-			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Entering", "NetworkConnectionProvider Start");
+			string category = "NetworkConnectionProvider Start";
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Entering", category);
 			if (this.running)
 			{
-				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting (already running)", "NetworkConnectionProvider Start");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting (already running)", category);
 				return;
 			}
 
@@ -255,25 +256,25 @@ namespace Tempest.Providers.Network
 			this.pingTimer = new Timer (PingFrequency);
 			this.pingTimer.Start();
 
-			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Waiting for keys..", "NetworkConnectionProvider Start");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Waiting for keys..", category);
 			this.keyWait.WaitOne();
-			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Keys ready", "NetworkConnectionProvider Start");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Keys ready", category);
 			
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{
-				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Setting up reliable socket", "NetworkConnectionProvider Start");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Setting up reliable socket", category);
 				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				this.reliableSocket.Bind (this.endPoint);
 				this.reliableSocket.Listen ((int)SocketOptionName.MaxConnections);
 				
-				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Reliable socket ready, accepting", "NetworkConnectionProvider Start");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Reliable socket ready, accepting", category);
 				BeginAccepting (null);
 			}
 
 			if ((types & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
-			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting", "NetworkConnectionProvider Start");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting", category);
 		}
 
 		public void SendConnectionlessMessage (Message message, EndPoint endPoint)

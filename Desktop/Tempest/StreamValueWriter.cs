@@ -34,7 +34,7 @@ namespace Tempest
 	public class StreamValueWriter
 		: IValueWriter
 	{
-		private readonly Stream stream;
+		internal readonly Stream stream;
 
 		public StreamValueWriter (Stream stream)
 		{

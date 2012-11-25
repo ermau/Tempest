@@ -54,7 +54,7 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
-		public long ConnectionId
+		public int ConnectionId
 		{
 			get;
 			set;
@@ -81,7 +81,7 @@ namespace Tempest.InternalProtocol
 			for (int i = 0; i < protocols.Length; ++i)
 				protocols[i].Serialize (context, writer);
 
-			writer.WriteInt64 (ConnectionId);
+			writer.WriteInt32 (ConnectionId);
 
 			writer.Write (context, PublicEncryptionKey);
 			writer.Write (context, PublicAuthenticationKey);
@@ -97,7 +97,7 @@ namespace Tempest.InternalProtocol
 
 			EnabledProtocols = protocols;
 
-			ConnectionId = reader.ReadInt64();
+			ConnectionId = reader.ReadInt32();
 
 			PublicEncryptionKey = reader.Read<IAsymmetricKey> (context);
 			PublicAuthenticationKey = reader.Read<IAsymmetricKey> (context);

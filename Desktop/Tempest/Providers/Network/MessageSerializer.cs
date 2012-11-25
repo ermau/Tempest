@@ -111,9 +111,12 @@ namespace Tempest.Providers.Network
 
 			BufferValueWriter writer = new BufferValueWriter (buffer);
 			writer.WriteByte (message.Protocol.id);
+
+			int cid = (connection != null) ? connection.ConnectionId : 0;
+			writer.WriteInt32 (cid); // TODO: Change to variable length later
+
 			writer.WriteUInt16 (message.MessageType);
 			writer.Length += sizeof (int); // length placeholder
-			const int lengthOffset = 1 + sizeof (ushort);
 
 			writer.WriteInt32 (messageId);
 
@@ -134,6 +137,7 @@ namespace Tempest.Providers.Network
 				byte[] payload = writer.Buffer;
 				writer = new BufferValueWriter (new byte[1024 + writer.Length]);
 				writer.WriteByte (message.Protocol.id);
+				writer.WriteInt32 (cid);
 				writer.WriteUInt16 (message.MessageType);
 				writer.Length += sizeof (int); // length placeholder
 				writer.WriteInt32 (messageId);
@@ -160,7 +164,7 @@ namespace Tempest.Providers.Network
 			}
 			else if (message.Authenticated)
 			{
-				for (int i = lengthOffset; i < lengthOffset + sizeof(int); ++i)
+				for (int i = LengthOffset; i < LengthOffset + sizeof(int); ++i)
 					writer.Buffer[i] = 0;
 
 				SignMessage (this.signingHashAlgorithm, writer);
@@ -173,10 +177,10 @@ namespace Tempest.Providers.Network
 				len |= 1; // serialization header
 
 			#if SAFE
-			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, lengthOffset, sizeof(int));
+			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, LengthOffset, sizeof(int));
 			#else
 			fixed (byte* mptr = rawMessage)
-				*((int*) (mptr + lengthOffset)) = len;
+				*((int*) (mptr + LengthOffset)) = len;
 			#endif
 
 			return rawMessage;
@@ -255,7 +259,7 @@ namespace Tempest.Providers.Network
 					if (!header.Message.Encrypted && header.Message.Authenticated)
 					{
 						// Zero out length for message signing comparison
-						for (int i = 3 + messageOffset; i < 7 + messageOffset; ++i)
+						for (int i = LengthOffset + messageOffset; i < LengthOffset + sizeof(int) + messageOffset; ++i)
 							buffer[i] = 0;
 
 						int payloadLength = reader.Position;
@@ -342,7 +346,8 @@ namespace Tempest.Providers.Network
 
 		private const int ResponseFlag = 16777216;
 		private const int MaxMessageId = 8388608;
-		private const int BaseHeaderLength = 11;
+		private const int BaseHeaderLength = 15;
+		private const int LengthOffset = 1 + sizeof(int) + sizeof (ushort);
 
 		protected readonly IConnection connection;
 		private readonly Dictionary<byte, Protocol> protocols;
@@ -405,7 +410,6 @@ namespace Tempest.Providers.Network
 				if (header.State >= HeaderState.Protocol)
 				{
 					p = header.Protocol;
-					//reader.Position += sizeof(byte);
 				}
 				else
 				{
@@ -421,10 +425,15 @@ namespace Tempest.Providers.Network
 					header.State = HeaderState.Protocol;
 				}
 
+				if (header.State < HeaderState.CID)
+				{
+					header.ConnectionId = reader.ReadInt32();
+					header.State = HeaderState.CID;
+				}
+
 				if (header.State >= HeaderState.Type)
 				{
 					msg = header.Message;
-					//reader.Position += sizeof(ushort);
 				}
 				else
 				{
@@ -449,7 +458,6 @@ namespace Tempest.Providers.Network
 				{
 					mlen = header.MessageLength;
 					hasTypeHeader = header.HasTypeHeader;
-					//reader.Position += sizeof(int);
 				}
 				else
 				{

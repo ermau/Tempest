@@ -38,7 +38,7 @@ namespace Tempest.Tests
 	{
 		private static readonly Protocol protocol = MockProtocol.Instance;
 
-		private MockClient client;
+		private LocalClient client;
 		private MockConnectionProvider provider;
 		private MockClientConnection connection;
 
@@ -54,13 +54,14 @@ namespace Tempest.Tests
 			provider.Start (MessageTypes.Reliable);
 
 			connection = new MockClientConnection (provider);
-			client = new MockClient (connection, false);
+			client = new LocalClient (connection, MessageTypes.All, false);
 		}
 
 		[Test]
-		public void CtorNull()
+		public void CtorInvalid()
 		{
-			Assert.Throws<ArgumentNullException> (() => new MockClient (null, true));
+			Assert.Throws<ArgumentNullException> (() => new LocalClient (null, MessageTypes.All, true));
+			Assert.Throws<ArgumentException> (() => new LocalClient (connection, (MessageTypes)9999));
 		}
 
 		[Test]

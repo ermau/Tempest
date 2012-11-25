@@ -55,11 +55,9 @@
     <Compile Include="InternalProtocolMessageTests.cs" />
     <Compile Include="MessageExtensions.cs" />
     <Compile Include="MessageFactoryTests.cs" />
-    <Compile Include="MockClient.cs" />
     <Compile Include="MockConnectionProvider.cs" />
     <Compile Include="MockConnectionProviderTests.cs" />
     <Compile Include="MockMessage.cs" />
-    <Compile Include="MockServer.cs" />
     <Compile Include="MutableLookupTest.cs" />
     <Compile Include="NetworkProviderTests.cs" />
     <Compile Include="ObjectSerializerTests.cs" />

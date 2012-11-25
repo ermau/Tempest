@@ -6,7 +6,7 @@ using Tempest;
 namespace SimpleChat.Client
 {
 	public class ChatClient
-		: ClientBase
+		: LocalClient
 	{
 		public ChatClient (IClientConnection connection)
 			: base (connection, MessageTypes.Reliable)

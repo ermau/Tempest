@@ -1,10 +1,10 @@
 ﻿//
-// ServerBase.cs
+// Server.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2010-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -53,17 +53,17 @@ namespace Tempest
 	}
 
 	/// <summary>
-	/// Base class for Tempest servers.
+	/// Tempest servers.
 	/// </summary>
-	public abstract class ServerBase
+	public class Server
 		: MessageHandler, IServerContext
 	{
-		protected ServerBase (MessageTypes messageTypes)
+		public Server (MessageTypes messageTypes)
 		{
 			this.messageTypes = messageTypes;
 		}
 
-		protected ServerBase (IConnectionProvider provider, MessageTypes messageTypes)
+		public Server (IConnectionProvider provider, MessageTypes messageTypes)
 			: this (messageTypes)
 		{
 			AddConnectionProvider (provider);
@@ -195,8 +195,8 @@ namespace Tempest
 			connection.DisconnectAsync (ConnectionResult.Custom, reason);
 		}
 
-		protected volatile bool running = false;
-		protected readonly Dictionary<IConnection, ExecutionMode> connections = new Dictionary<IConnection, ExecutionMode>();
+		private volatile bool running = false;
+		private readonly Dictionary<IConnection, ExecutionMode> connections = new Dictionary<IConnection, ExecutionMode>();
 		private readonly Dictionary<IConnectionProvider, ExecutionMode> providers = new Dictionary<IConnectionProvider, ExecutionMode>();
 		private readonly MessageTypes messageTypes;
 

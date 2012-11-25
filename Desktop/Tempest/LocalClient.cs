@@ -1,5 +1,5 @@
 ﻿//
-// ClientBase.cs
+// LocalClient.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -40,15 +40,17 @@ using System.Collections.Concurrent;
 namespace Tempest
 {
 	/// <summary>
-	/// Base class for Tempest clients.
+	/// Tempest clients.
 	/// </summary>
-	public abstract class ClientBase
+	public class LocalClient
 		: MessageHandler, IClientContext, INotifyPropertyChanged
 	{
-		protected ClientBase (IClientConnection connection, MessageTypes mtypes, bool poll = false)
+		public LocalClient (IClientConnection connection, MessageTypes mtypes, bool poll = false)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
+			if (!Enum.IsDefined (typeof (MessageTypes), mtypes))
+				throw new ArgumentException ("Not a valid MessageTypes value", "mtypes");
 
 			this.messageTypes = mtypes;
 
@@ -184,8 +186,8 @@ namespace Tempest
 				Disconnect (true);
 		}
 
-		protected bool disconnecting;
-		protected readonly IClientConnection connection;
+		private bool disconnecting;
+		private readonly IClientConnection connection;
 		private readonly MessagingModes mode;
 		private readonly bool polling;
 
@@ -197,7 +199,7 @@ namespace Tempest
 
 		private AutoResetEvent mwait;
 		private Thread messageRunner;
-		protected volatile bool running;
+		private volatile bool running;
 		private readonly MessageTypes messageTypes;
 
 		private void Disconnect (bool now, ConnectionResult reason, string customReason)
@@ -402,7 +404,7 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Gets whether the disconnection was requested by ClientBase.
+		/// Gets whether the disconnection was requested by LocalClient.
 		/// </summary>
 		public bool Requested
 		{

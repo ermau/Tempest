@@ -279,12 +279,13 @@ namespace Tempest.Providers.Network
 		{
 			if (originalMessage == null)
 				throw new ArgumentNullException ("originalMessage");
-			if (originalMessage.IsResponse)
+			if (originalMessage.Header.IsResponse)
 				throw new ArgumentException ("originalMessage can't be a response", "originalMessage");
 			if (response == null)
 				throw new ArgumentNullException ("response");
 
-			response.MessageId = originalMessage.MessageId;
+			response.Header = new MessageHeader();
+			response.Header.MessageId = originalMessage.Header.MessageId;
 			SendMessage (response, true);
 		}
 
@@ -497,10 +498,11 @@ namespace Tempest.Providers.Network
 			{
 				if (!isResponse)
 				{
+					message.Header = new MessageHeader();
 					Monitor.Enter (this.sendSync);
 					lock (this.messageIdSync)
 					{
-						message.MessageId = this.nextMessageId++;
+						message.Header.MessageId = this.nextMessageId++;
 
 						if (this.nextMessageId > MaxMessageId)
 							this.nextMessageId = 0;
@@ -510,7 +512,7 @@ namespace Tempest.Providers.Network
 				if (future != null)
 				{
 					lock (this.messageResponses)
-						this.messageResponses.Add (message.MessageId, future);
+						this.messageResponses.Add (message.Header.MessageId, future);
 				}
 
 				MessageSerializer slzr = this.serializer;
@@ -628,15 +630,15 @@ namespace Tempest.Providers.Network
 						{
 							OnMessageReceived (args);
 
-							if (message.IsResponse)
+							if (message.Header.IsResponse)
 							{
 								bool found;
 								TaskCompletionSource<Message> tcs;
 								lock (this.messageResponses)
 								{
-									found = this.messageResponses.TryGetValue (message.MessageId, out tcs);
+									found = this.messageResponses.TryGetValue (message.Header.MessageId, out tcs);
 									if (found)
-										this.messageResponses.Remove (message.MessageId);
+										this.messageResponses.Remove (message.Header.MessageId);
 								}
 
 								if (found)

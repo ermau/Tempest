@@ -29,8 +29,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
 using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
@@ -105,7 +103,7 @@ namespace Tempest.Providers.Network
 		public unsafe byte[] GetBytes (Message message, out int length, byte[] buffer, bool isResponse)
 		#endif
 		{
-			int messageId = message.MessageId;
+			int messageId = message.Header.MessageId;
 			if (isResponse)
 				messageId |= ResponseFlag;
 
@@ -186,7 +184,7 @@ namespace Tempest.Providers.Network
 			return rawMessage;
 		}
 
-		public List<Message> BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader, Func<MessageHeader, bool> messageIdCallback)
+		public List<Message> BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader, Func<MessageHeader, bool> messageIdCallback = null)
 		{
 			List<Message> messages = new List<Message>();
 
@@ -234,7 +232,7 @@ namespace Tempest.Providers.Network
 					continue;
 				}
 
-				if (!messageIdCallback (header))
+				if (messageIdCallback != null && !messageIdCallback (header))
 				{
 					Disconnect (true);
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message id callback was false)", callCategory);
@@ -344,13 +342,13 @@ namespace Tempest.Providers.Network
 			return messages;
 		}
 
-		private const int ResponseFlag = 16777216;
-		private const int MaxMessageId = 8388608;
-		private const int BaseHeaderLength = 15;
-		private const int LengthOffset = 1 + sizeof(int) + sizeof (ushort);
-
+		protected const int ResponseFlag = 16777216;
+		protected const int MaxMessageId = 8388608;
+		protected const int BaseHeaderLength = 15;
+		protected const int LengthOffset = 1 + sizeof(int) + sizeof (ushort);
+		protected readonly Func<int, IConnection> getConnection;
 		protected readonly IConnection connection;
-		private readonly Dictionary<byte, Protocol> protocols;
+		protected readonly Dictionary<byte, Protocol> protocols;
 		private string signingHashAlgorithm = "SHA256";
 
 		private MessageHeader currentHeader;
@@ -447,6 +445,8 @@ namespace Tempest.Providers.Network
 						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Message " + type + " not found)", callCategory);
 						return true;
 					}
+
+					msg.Header = header;
 					
 					if (msg.Encrypted)
 						header.IsStillEncrypted = true;
@@ -520,9 +520,6 @@ namespace Tempest.Providers.Network
 					int identV = reader.ReadInt32();
 					header.MessageId = identV & ~ResponseFlag;
 					header.IsResponse = (identV & ResponseFlag) == ResponseFlag;
-
-					msg.MessageId = header.MessageId;
-					msg.IsResponse = header.IsResponse;
 
 					header.State = HeaderState.MessageId;
 

@@ -598,7 +598,7 @@ namespace Tempest.Providers.Network
 				encryptor = am.CreateEncryptor();
 			}
 
-			const int workingHeaderLength = 7; // right after length
+			const int workingHeaderLength = LengthOffset + sizeof(int); // right after length
 
 			int r = ((writer.Length - workingHeaderLength) % encryptor.OutputBlockSize);
 			if (r != 0)

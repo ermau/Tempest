@@ -1,10 +1,10 @@
 ﻿//
-// IAsymmetricKey.cs
+// AcknowledgeMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tempest
+namespace Tempest.InternalProtocol
 {
-	public interface IAsymmetricKey
-		: ISerializable
+	internal class AcknowledgeMessage
+		: TempestMessage
 	{
-		byte[] PublicSignature { get; }
+		public AcknowledgeMessage()
+			: base (TempestMessageType.Acknowledge)
+		{
+		}
 
-		void Serialize (IValueWriter writer, IPublicKeyCrypto crypto, bool includePrivate);
-		void Deserialize (IValueReader reader, IPublicKeyCrypto crypto);
+		public int MessageId
+		{
+			get;
+			set;
+		}
+
+		public override bool MustBeReliable
+		{
+			get { return false; }
+		}
+
+		public override bool PreferReliable
+		{
+			get { return false; }
+		}
+
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
+		{
+			writer.WriteInt32 (MessageId);
+		}
+
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
+		{
+			MessageId = reader.ReadInt32();
+		}
 	}
 }

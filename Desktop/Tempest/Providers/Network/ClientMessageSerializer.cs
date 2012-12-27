@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
@@ -33,7 +34,7 @@ namespace Tempest.Providers.Network
 	internal class ClientMessageSerializer
 		: MessageSerializer
 	{
-		public ClientMessageSerializer (NetworkClientConnection connection, IEnumerable<Protocol> protocols)
+		public ClientMessageSerializer (IAuthenticatedConnection connection, IEnumerable<Protocol> protocols)
 			: base (connection, protocols)
 		{
 		}
@@ -43,15 +44,10 @@ namespace Tempest.Providers.Network
 		{
 		}
 
-		protected NetworkClientConnection ClientConnection
-		{
-			get { return (NetworkClientConnection)this.connection; }
-		}
-
 		protected override void SignMessage (string hashAlg, BufferValueWriter writer)
 		{
 			if (HMAC == null)
-				writer.WriteBytes (this.ClientConnection.pkAuthentication.HashAndSign (hashAlg, writer.Buffer, 0, writer.Length));
+				writer.WriteBytes (this.connection.LocalCrypto.HashAndSign (hashAlg, writer.Buffer, 0, writer.Length));
 			else
 				base.SignMessage (hashAlg, writer);
 		}
@@ -65,12 +61,11 @@ namespace Tempest.Providers.Network
 
 				var msg = (AcknowledgeConnectMessage)message;
 
-				this.ClientConnection.serverAuthentication = this.ClientConnection.publicKeyCryptoFactory();
-				this.ClientConnection.serverAuthenticationKey = msg.PublicAuthenticationKey;
-				this.ClientConnection.serverAuthentication.ImportKey (this.ClientConnection.serverAuthenticationKey);
+				this.connection.RemoteKey = msg.PublicAuthenticationKey;
+				this.connection.RemoteCrypto.ImportKey (this.connection.RemoteKey);
 
 				SigningHashAlgorithm = msg.SignatureHashAlgorithm;
-				return this.ClientConnection.serverAuthentication.VerifySignedHash (SigningHashAlgorithm, resized, signature);
+				return this.connection.RemoteCrypto.VerifySignedHash (SigningHashAlgorithm, resized, signature);
 			}
 			else
 				return base.VerifyMessage (hashAlg, message, signature, data, moffset, length);

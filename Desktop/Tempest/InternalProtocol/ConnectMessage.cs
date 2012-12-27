@@ -55,6 +55,11 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
+		public override bool AcceptedConnectionlessly
+		{
+			get { return true; }
+		}
+
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 			if (writer.WriteBool (SignatureHashAlgorithms != null))

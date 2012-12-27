@@ -78,7 +78,12 @@ namespace Tempest.InternalProtocol
 		/// <summary>
 		/// Pong over unreliable connections.
 		/// </summary>
-		UnreliablePong = 9
+		UnreliablePong = 9,
+
+		/// <summary>
+		/// Acknowledge message received.
+		/// </summary>
+		Acknowledge = 10,
 	}
 
 	/// <summary>
@@ -106,6 +111,7 @@ namespace Tempest.InternalProtocol
 				new KeyValuePair<Type, Func<Message>> (typeof(AcknowledgeConnectMessage), () => new AcknowledgeConnectMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(FinalConnectMessage), () => new FinalConnectMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(ConnectedMessage), () => new ConnectedMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(AcknowledgeMessage), () => new AcknowledgeMessage()), 
 			});
 		}
 	}

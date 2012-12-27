@@ -38,7 +38,7 @@ using Tempest.InternalProtocol;
 namespace Tempest.Providers.Network
 {
 	public sealed class NetworkClientConnection
-		: NetworkConnection, IClientConnection
+		: NetworkConnection, IClientConnection, IAuthenticatedConnection
 	{
 		public NetworkClientConnection (Protocol protocol)
 			: this (new [] { protocol })
@@ -87,14 +87,14 @@ namespace Tempest.Providers.Network
 			get { return this.serverAuthenticationKey; }
 		}
 
-		public Task<ClientConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
+		public Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes)
 		{
 			int c = GetNextCallId();
-			string category = String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c);
+			string category = String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endPoint, messageTypes, this.typeName, connectionId, c);
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", category);
 
-			if (endpoint == null)
-				throw new ArgumentNullException ("endpoint");
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
@@ -137,7 +137,7 @@ namespace Tempest.Providers.Network
 				}
 				else
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", category);
-			}, endpoint);
+			}, endPoint);
 
 			return ntcs.Task;
 		}
@@ -283,7 +283,7 @@ namespace Tempest.Providers.Network
 					encryption.GenerateKey();
 					
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
-					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption);
+					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption, includePrivate: false);
 
 					Send (new FinalConnectMessage
 					{
@@ -351,6 +351,39 @@ namespace Tempest.Providers.Network
 			var handler = this.ConnectionFailed;
 			if (handler != null)
 				handler (this, e);
+		}
+
+		IPublicKeyCrypto IAuthenticatedConnection.LocalCrypto
+		{
+			get { return this.pkAuthentication; }
+		}
+
+		IAsymmetricKey IAuthenticatedConnection.LocalKey
+		{
+			get { return LocalKey; }
+			set { this.authenticationKey = value; }
+		}
+
+		IPublicKeyCrypto IAuthenticatedConnection.RemoteCrypto
+		{
+			get
+			{
+				if (this.serverAuthentication == null)
+					this.serverAuthentication = this.publicKeyCryptoFactory();
+
+				return this.serverAuthentication;
+			}
+		}
+
+		IAsymmetricKey IAuthenticatedConnection.RemoteKey
+		{
+			get { return this.RemoteKey; }
+			set { this.serverAuthenticationKey = value; }
+		}
+
+		IPublicKeyCrypto IAuthenticatedConnection.Encryption
+		{
+			get { return null; }
 		}
 	}
 }

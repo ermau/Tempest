@@ -33,6 +33,19 @@ using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
 {
+	// HACK
+	internal interface IAuthenticatedConnection
+		: IConnection
+	{
+		IPublicKeyCrypto LocalCrypto { get; }
+		new IAsymmetricKey LocalKey { get; set; }
+
+		IPublicKeyCrypto RemoteCrypto { get; }
+		new IAsymmetricKey RemoteKey { get; set; }
+
+		IPublicKeyCrypto Encryption { get; }
+	}
+
 	internal class MessageSerializer
 	{
 		public MessageSerializer (IEnumerable<Protocol> protocols)
@@ -44,7 +57,7 @@ namespace Tempest.Providers.Network
 			this.protocols[1] = TempestMessage.InternalProtocol;
 		}
 
-		public MessageSerializer (IConnection connection, IEnumerable<Protocol> protocols)
+		public MessageSerializer (IAuthenticatedConnection connection, IEnumerable<Protocol> protocols)
 			: this (protocols)
 		{
 			if (connection == null)
@@ -77,6 +90,13 @@ namespace Tempest.Providers.Network
 		public IEnumerable<Protocol> Protocols
 		{
 			get { return this.protocols.Values; }
+			set
+			{
+				if (value == null)
+					throw new ArgumentNullException();
+
+				this.protocols = value.ToDictionary (p => p.id);
+			}
 		}
 
 		public AesManaged AES
@@ -98,13 +118,13 @@ namespace Tempest.Providers.Network
 		}
 
 		#if SAFE
-		public byte[] GetBytes (Message message, out int length, byte[] buffer, bool isResponse)
+		public byte[] GetBytes (Message message, out int length, byte[] buffer)
 		#else
-		public unsafe byte[] GetBytes (Message message, out int length, byte[] buffer, bool isResponse)
+		public unsafe byte[] GetBytes (Message message, out int length, byte[] buffer)
 		#endif
 		{
 			int messageId = message.Header.MessageId;
-			if (isResponse)
+			if (message.Header.IsResponse)
 				messageId |= ResponseFlag;
 
 			BufferValueWriter writer = new BufferValueWriter (buffer);
@@ -162,8 +182,13 @@ namespace Tempest.Providers.Network
 			}
 			else if (message.Authenticated)
 			{
+				#if SAFE
 				for (int i = LengthOffset; i < LengthOffset + sizeof(int); ++i)
 					writer.Buffer[i] = 0;
+				#else
+				fixed (byte* mptr = writer.Buffer)
+					*((int*)(mptr + LengthOffset)) = 0;
+				#endif
 
 				SignMessage (this.signingHashAlgorithm, writer);
 			}
@@ -184,208 +209,7 @@ namespace Tempest.Providers.Network
 			return rawMessage;
 		}
 
-		public List<Message> BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref BufferValueReader reader, Func<MessageHeader, bool> messageIdCallback = null)
-		{
-			List<Message> messages = new List<Message>();
-
-			string callCategory = null;
-			#if TRACE
-			int c = GetNextCallId();
-			callCategory = String.Format ("{0}:BufferMessages({1},{2},{3},{4},{5})", c, buffer.Length, bufferOffset, messageOffset, remainingData, reader.Position);
-			#endif
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
-
-			MessageHeader header = this.currentHeader;
-			BufferValueReader currentReader = reader;
-
-			int length = 0;
-			while (remainingData >= BaseHeaderLength)
-			{
-				if (!TryGetHeader (currentReader, remainingData, ref header))
-				{
-					this.currentHeader = header;
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Message not ready", callCategory);
-					break;
-				}
-
-				this.currentHeader = header;
-
-				if (header == null || header.Message == null)
-				{
-					Disconnect (true);
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not found)", callCategory);
-					return null;
-				}
-
-				length = header.MessageLength;
-				if (length > NetworkConnection.MaxMessageSize)
-				{
-					Disconnect (true);
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (bad message size)", callCategory);
-					return null;
-				}
-
-				if (header.State == HeaderState.IV)
-				{
-					DecryptMessage (header, ref currentReader);
-					header.IsStillEncrypted = false;
-					continue;
-				}
-
-				if (messageIdCallback != null && !messageIdCallback (header))
-				{
-					Disconnect (true);
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message id callback was false)", callCategory);
-					return null;
-				}
-
-				if (remainingData < length)
-				{
-					bufferOffset += remainingData;
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Message not fully received (boffset={0})", bufferOffset), callCategory);
-					break;
-				}
-
-				if (!this.connection.IsConnected)
-					return null;
-
-				try
-				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Reading payload for message {0}", header.Message), callCategory);
-					header.Message.ReadPayload (header.SerializationContext, currentReader);
-
-					if (!header.Message.Encrypted && header.Message.Authenticated)
-					{
-						// Zero out length for message signing comparison
-						for (int i = LengthOffset + messageOffset; i < LengthOffset + sizeof(int) + messageOffset; ++i)
-							buffer[i] = 0;
-
-						int payloadLength = reader.Position;
-						byte[] signature = reader.ReadBytes();
-						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset, payloadLength - messageOffset))
-						{
-							Disconnect (true, ConnectionResult.MessageAuthenticationFailed);
-							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message auth failed)", callCategory);
-							return null;
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					Disconnect (true);
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting for error: " + ex, callCategory);
-					return null;
-				}
-
-				messages.Add (header.Message);
-
-				currentReader = reader;
-				header = null;
-				this.currentHeader = null;
-
-				if (length < buffer.Length)
-				{
-					messageOffset += length;
-					bufferOffset = messageOffset;
-					remainingData -= length;
-				}
-				else
-				{
-					messageOffset = 0;
-					bufferOffset = 0;
-					remainingData = 0;
-					currentReader.Position = 0;
-				}
-
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("EOL: moffset={0},boffest={1},rdata={2},rpos={3}", messageOffset, bufferOffset, remainingData, reader.Position), callCategory);
-			}
-
-			if (remainingData > 0 || messageOffset + BaseHeaderLength >= buffer.Length)
-			{
-				Trace.WriteLineIf (NTrace.TraceVerbose, (remainingData > 0) ? String.Format ("Data remaining: {0:N0}", remainingData) : "Insufficient room for a header", callCategory);
-
-				int knownRoomNeeded = (remainingData > BaseHeaderLength) ? remainingData : BaseHeaderLength;
-				if (header != null && remainingData >= BaseHeaderLength)
-					knownRoomNeeded = header.MessageLength;
-
-				int pos = reader.Position - messageOffset;
-
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format("Room needed: {0:N0} bytes", knownRoomNeeded), callCategory);
-				if (messageOffset + knownRoomNeeded <= buffer.Length)
-				{
-					// bufferOffset is only moved on complete headers, so it's still == messageOffset.
-					bufferOffset = messageOffset + remainingData;
-					//reader.Position = pos;
-
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting (sufficient room; boffest={0},rpos={1})", bufferOffset, pos), callCategory);
-					return messages;
-				}
-
-				byte[] destinationBuffer = buffer;
-				if (knownRoomNeeded > buffer.Length)
-				{
-					destinationBuffer = new byte[header.MessageLength];
-					reader = new BufferValueReader (destinationBuffer);
-				}
-
-				Buffer.BlockCopy (buffer, messageOffset, destinationBuffer, 0, remainingData);
-				reader.Position = pos;
-				messageOffset = 0;
-				bufferOffset = remainingData;
-				buffer = destinationBuffer;
-
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting (moved message to front, moffset={1},boffset={2},rpos={0})", reader.Position, messageOffset, bufferOffset), callCategory);
-			}
-			else
-				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
-
-			return messages;
-		}
-
-		protected const int ResponseFlag = 16777216;
-		protected const int MaxMessageId = 8388608;
-		protected const int BaseHeaderLength = 15;
-		protected const int LengthOffset = 1 + sizeof(int) + sizeof (ushort);
-		protected readonly Func<int, IConnection> getConnection;
-		protected readonly IConnection connection;
-		protected readonly Dictionary<byte, Protocol> protocols;
-		private string signingHashAlgorithm = "SHA256";
-
-		private MessageHeader currentHeader;
-
-		private void Disconnect (bool now)
-		{
-			if (this.connection == null)
-				return;
-
-			if (now)
-				this.connection.Disconnect();
-			else
-				this.connection.DisconnectAsync();
-		}
-
-		private void Disconnect (bool now, ConnectionResult result)
-		{
-			if (this.connection == null)
-				return;
-
-			if (now)
-				this.connection.Disconnect (result);
-			else
-				this.connection.DisconnectAsync (result);
-		}
-
-		protected TraceSwitch NTrace
-		{
-			get { return NetworkConnection.NTrace; }
-		}
-
-		protected int GetNextCallId()
-		{
-			return NetworkConnection.GetNextCallId();
-		}
-
-		protected bool TryGetHeader (BufferValueReader reader, int remaining, ref MessageHeader header)
+		public bool TryGetHeader (BufferValueReader reader, int remaining, ref MessageHeader header)
 		{
 			string callCategory = null;
 			#if TRACE
@@ -400,6 +224,8 @@ namespace Tempest.Providers.Network
 
 			if (header == null)
 				header = new MessageHeader();
+			else if (header.State == HeaderState.Complete)
+				return true;
 			else if (header.HeaderLength > 0)
 				headerLength = header.HeaderLength;
 
@@ -562,11 +388,15 @@ namespace Tempest.Providers.Network
 					else
 						map = new TypeMap();
 
-					var context = new SerializationContext (this.connection, p, map);
+					SerializationContext context;
+					if (this.connection != null)
+						context = new SerializationContext (this.connection, p, map);
+					else
+						context = new SerializationContext (p, map);
 
 					header.SerializationContext = context;
 					header.HeaderLength = headerLength;
-					header.State = HeaderState.TypeMap;
+					header.State = HeaderState.Complete;
 				}
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
@@ -578,6 +408,202 @@ namespace Tempest.Providers.Network
 				header = null;
 				return true;
 			}
+		}
+
+		public unsafe List<Message> BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref MessageHeader header, ref BufferValueReader reader, Func<MessageHeader, bool> messageIdCallback = null)
+		{
+			List<Message> messages = new List<Message>();
+
+			string callCategory = null;
+			#if TRACE
+			int c = GetNextCallId();
+			callCategory = String.Format ("{0}:BufferMessages({1},{2},{3},{4},{5})", c, buffer.Length, bufferOffset, messageOffset, remainingData, reader.Position);
+			#endif
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
+
+			BufferValueReader currentReader = reader;
+
+			int length = 0;
+			while (remainingData >= BaseHeaderLength)
+			{
+				if (!TryGetHeader (currentReader, remainingData, ref header))
+				{
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Message not ready", callCategory);
+					break;
+				}
+
+				if (header == null || header.Message == null)
+				{
+					Disconnect (true);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not found)", callCategory);
+					return null;
+				}
+
+				length = header.MessageLength;
+				if (length > NetworkConnection.MaxMessageSize)
+				{
+					Disconnect (true);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (bad message size)", callCategory);
+					return null;
+				}
+
+				if (header.State == HeaderState.IV)
+				{
+					DecryptMessage (header, ref currentReader);
+					header.IsStillEncrypted = false;
+					continue;
+				}
+
+				if (messageIdCallback != null && !messageIdCallback (header))
+				{
+					Disconnect (true);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message id callback was false)", callCategory);
+					return null;
+				}
+
+				if (remainingData < length)
+				{
+					bufferOffset += remainingData;
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Message not fully received (boffset={0})", bufferOffset), callCategory);
+					break;
+				}
+
+				try
+				{
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Reading payload for message {0}", header.Message), callCategory);
+					header.Message.ReadPayload (header.SerializationContext, currentReader);
+
+					if (!header.Message.Encrypted && header.Message.Authenticated)
+					{
+						// Zero out length for message signing comparison
+						#if SAFE
+						for (int i = LengthOffset + messageOffset; i < LengthOffset + sizeof(int) + messageOffset; ++i)
+							buffer[i] = 0;
+						#else
+						fixed (byte* bptr = buffer)
+							*((int*)(bptr + (LengthOffset + messageOffset))) = 0;
+						#endif
+
+						int payloadLength = reader.Position;
+						byte[] signature = reader.ReadBytes();
+						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset, payloadLength - messageOffset))
+						{
+							Disconnect (true, ConnectionResult.MessageAuthenticationFailed);
+							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message auth failed)", callCategory);
+							return null;
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					Disconnect (true);
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting for error: " + ex, callCategory);
+					return null;
+				}
+
+				messages.Add (header.Message);
+
+				currentReader = reader;
+				header = null;
+
+				if (length < buffer.Length)
+				{
+					messageOffset += length;
+					bufferOffset = messageOffset;
+					remainingData -= length;
+				}
+				else
+				{
+					messageOffset = 0;
+					bufferOffset = 0;
+					remainingData = 0;
+					currentReader.Position = 0;
+				}
+
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("EOL: moffset={0},boffest={1},rdata={2},rpos={3}", messageOffset, bufferOffset, remainingData, reader.Position), callCategory);
+			}
+
+			if (remainingData > 0 || messageOffset + BaseHeaderLength >= buffer.Length)
+			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, (remainingData > 0) ? String.Format ("Data remaining: {0:N0}", remainingData) : "Insufficient room for a header", callCategory);
+
+				int knownRoomNeeded = (remainingData > BaseHeaderLength) ? remainingData : BaseHeaderLength;
+				if (header != null && remainingData >= BaseHeaderLength)
+					knownRoomNeeded = header.MessageLength;
+
+				int pos = reader.Position - messageOffset;
+
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format("Room needed: {0:N0} bytes", knownRoomNeeded), callCategory);
+				if (messageOffset + knownRoomNeeded <= buffer.Length)
+				{
+					// bufferOffset is only moved on complete headers, so it's still == messageOffset.
+					bufferOffset = messageOffset + remainingData;
+					//reader.Position = pos;
+
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting (sufficient room; boffest={0},rpos={1})", bufferOffset, pos), callCategory);
+					return messages;
+				}
+
+				byte[] destinationBuffer = buffer;
+				if (knownRoomNeeded > buffer.Length)
+				{
+					destinationBuffer = new byte[header.MessageLength];
+					reader = new BufferValueReader (destinationBuffer);
+				}
+
+				Buffer.BlockCopy (buffer, messageOffset, destinationBuffer, 0, remainingData);
+				reader.Position = pos;
+				messageOffset = 0;
+				bufferOffset = remainingData;
+				buffer = destinationBuffer;
+
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting (moved message to front, moffset={1},boffset={2},rpos={0})", reader.Position, messageOffset, bufferOffset), callCategory);
+			}
+			else
+				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
+
+			return messages;
+		}
+
+		protected const int ResponseFlag = 16777216;
+		protected const int MaxMessageId = 8388608;
+		protected const int BaseHeaderLength = 15;
+		protected const int LengthOffset = 1 + sizeof(int) + sizeof (ushort);
+		protected readonly Func<int, IConnection> getConnection;
+		protected readonly IAuthenticatedConnection connection;
+		protected Dictionary<byte, Protocol> protocols;
+		private string signingHashAlgorithm = "SHA256";
+
+		private void Disconnect (bool now)
+		{
+			if (this.connection == null)
+				return;
+
+			if (now)
+				this.connection.Disconnect();
+			else
+				this.connection.DisconnectAsync();
+		}
+
+		private void Disconnect (bool now, ConnectionResult result)
+		{
+			if (this.connection == null)
+				return;
+
+			if (now)
+				this.connection.Disconnect (result);
+			else
+				this.connection.DisconnectAsync (result);
+		}
+
+		protected TraceSwitch NTrace
+		{
+			get { return NetworkConnection.NTrace; }
+		}
+
+		protected int GetNextCallId()
+		{
+			return NetworkConnection.GetNextCallId();
 		}
 
 		protected void EncryptMessage (BufferValueWriter writer, ref int headerLength)
@@ -693,6 +719,11 @@ namespace Tempest.Providers.Network
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (true)", callCategory);
 			return true;
+		}
+
+		protected string GetHex (byte[] ourhash)
+		{
+			return ourhash.Aggregate (String.Empty, (s, b) => s + b.ToString ("x2"));
 		}
 	}
 }

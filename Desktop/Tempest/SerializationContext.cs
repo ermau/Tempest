@@ -74,6 +74,14 @@ namespace Tempest
 			get { return this.map; }
 		}
 
+		public SerializationContext WithConnection (IConnection connection)
+		{
+			if (connection == null)
+				throw new ArgumentNullException ("connection");
+
+			return new SerializationContext (connection, Protocol, TypeMap);
+		}
+
 		private readonly TypeMap map;
 	}
 }

@@ -36,7 +36,7 @@ using Tempest.InternalProtocol;
 namespace Tempest.Providers.Network
 {
 	public sealed class NetworkServerConnection
-		: NetworkConnection, IServerConnection
+		: NetworkConnection, IServerConnection, IAuthenticatedConnection
 	{
 		internal NetworkServerConnection (IEnumerable<string> signatureHashAlgs, IEnumerable<Protocol> protocols, Socket reliableSocket, NetworkConnectionProvider provider)
 			: base (protocols, provider.pkCryptoFactory, null, false)
@@ -243,6 +243,33 @@ namespace Tempest.Providers.Network
 			//    NetworkConnectionProvider.ReliableSockets.Push (this.reliableSocket);
 
 			base.Recycle();
+		}
+
+		IPublicKeyCrypto IAuthenticatedConnection.LocalCrypto
+		{
+			get { return this.provider.authentication; }
+		}
+
+		IAsymmetricKey IAuthenticatedConnection.LocalKey
+		{
+			get { return LocalKey; }
+			set { this.authenticationKey = value; }
+		}
+
+		IPublicKeyCrypto IAuthenticatedConnection.RemoteCrypto
+		{
+			get { return this.pkAuthentication; }
+		}
+
+		IAsymmetricKey IAuthenticatedConnection.RemoteKey
+		{
+			get { return this.RemoteKey; }
+			set { this.publicAuthenticationKey = value; }
+		}
+
+		IPublicKeyCrypto IAuthenticatedConnection.Encryption
+		{
+			get { return this.provider.pkEncryption; }
 		}
 	}
 }

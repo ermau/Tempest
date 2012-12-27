@@ -53,6 +53,7 @@
     <Compile Include="ConnectionExtensions.cs" />
     <Compile Include="InternalProtocol\AcknowledgeConnectMessage.cs" />
     <Compile Include="IClientContext.cs" />
+    <Compile Include="InternalProtocol\AcknowledgeMessage.cs" />
     <Compile Include="InternalProtocol\ConnectedMessage.cs" />
     <Compile Include="InternalProtocol\ConnectMessage.cs" />
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />
@@ -70,6 +71,18 @@
     <Compile Include="ObjectSerializer.cs" />
     <Compile Include="InternalProtocol\ReliablePingMessage.cs" />
     <Compile Include="Providers\Network\ClientMessageSerializer.cs" />
+    <Compile Include="Providers\Network\UdpClientConnection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Providers\Network\UdpConnection.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Providers\Network\UdpConnectionProvider.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Providers\Network\UdpServerConnection.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Providers\Network\MessageSerializer.cs" />
     <Compile Include="Providers\Network\ReliableQueue.cs" />
     <Compile Include="Providers\Network\ServerMessageSerializer.cs" />

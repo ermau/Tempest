@@ -167,9 +167,9 @@ namespace Tempest
 			}
 		}
 
-		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto)
+		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto, bool includePrivate)
 		{
-			if (writer.WriteBool (D != null))
+			if (writer.WriteBool (includePrivate && D != null))
 			{
 				writer.WriteBytes (crypto.Encrypt (D));
 				writer.WriteBytes (crypto.Encrypt (DP));

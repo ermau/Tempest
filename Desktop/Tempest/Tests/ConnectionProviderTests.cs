@@ -93,6 +93,11 @@ namespace Tempest.Tests
 			Trace.WriteLine ("Exiting", "TearDown");
 		}
 
+		protected virtual int MaxPayloadSize
+		{
+			get { return 0; }
+		}
+
 		protected abstract EndPoint EndPoint { get; }
 		protected abstract MessageTypes MessageTypes { get; }
 
@@ -490,12 +495,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void SendLongMessageAsync()
 		{
-			StringBuilder contentBuilder = new StringBuilder();
-			Random r = new Random (42);
-			for (int i = 0; i < 1000000; ++i)
-				contentBuilder.Append ((char)r.Next (0, 128));
-
-			string content = contentBuilder.ToString();
+			string content = TestHelpers.GetLongString (MaxPayloadSize - sizeof (int));
 
 			var c = GetNewClientConnection();
 			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
@@ -720,7 +720,6 @@ namespace Tempest.Tests
 			{
 				try
 				{
-					var r = new Random (42);
 					for (int i = 0; i < messages; ++i)
 					{
 						if (i > Int32.MaxValue)
@@ -732,7 +731,7 @@ namespace Tempest.Tests
 						e.Connection.Send (new AuthenticatedMessage
 						{
 							Number = i,
-							Message = TestHelpers.GetLongString (r.Next (7500, 100000))
+							Message = TestHelpers.GetLongString (MaxPayloadSize - sizeof(int) * 2)
 						});
 					}
 				}
@@ -765,12 +764,13 @@ namespace Tempest.Tests
 				Assert.AreSame (c, me.Connection);
 			}, messages);
 
+			int overhead = (sizeof (int) * 2) + typeof (string).GetSimplestName().Length;
+
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
 			{
 				try
 				{
-					var r = new Random (42);
 					for (int i = 0; i < messages; ++i)
 					{
 						if (i > Int32.MaxValue)
@@ -781,7 +781,7 @@ namespace Tempest.Tests
 
 						e.Connection.Send (new AuthenticatedTypeHeaderedMessage
 						{
-							Object = TestHelpers.GetLongString (r.Next (7500, 100000))
+							Object = TestHelpers.GetLongString (MaxPayloadSize - overhead)
 						});
 					}
 				}
@@ -805,6 +805,7 @@ namespace Tempest.Tests
 			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
 				Assert.Ignore();
 
+			int overhead = (sizeof (int) * 2) + typeof (string).GetSimplestName().Length;
 			const int messages = 1000;
 
 			var test = new AsyncTest (e =>
@@ -819,7 +820,6 @@ namespace Tempest.Tests
 			{
 				try
 				{
-					var r = new Random (42);
 					for (int i = 0; i < messages; ++i)
 					{
 						if (i > Int32.MaxValue)
@@ -830,7 +830,7 @@ namespace Tempest.Tests
 
 						e.Connection.Send (new EncryptedTypeHeaderedMessage
 						{
-							Object = TestHelpers.GetLongString (r.Next (7500, 100000))
+							Object = TestHelpers.GetLongString (MaxPayloadSize - overhead)
 						});
 					}
 				}
@@ -1156,7 +1156,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void EncryptedLongMessage()
 		{
-			string message = TestHelpers.GetLongString();
+			string message = TestHelpers.GetLongString (MaxPayloadSize - sizeof (int));
 			var cmessage = new EncryptedMessage
 			{
 				Message = message,
@@ -1202,7 +1202,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void AuthenticatedLongMessage()
 		{
-			var message = TestHelpers.GetLongString();
+			var message = TestHelpers.GetLongString (MaxPayloadSize - sizeof(int) * 2);
 			var cmessage = new AuthenticatedMessage
 			{
 				Message = message,
@@ -1330,13 +1330,8 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void EncryptedAndAuthenticatedLongMessage()
 		{
+			string message = TestHelpers.GetLongString (MaxPayloadSize - sizeof (int) * 2);
 
-			Random r = new Random();
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < 1000000; ++i)
-				builder.Append ((char)r.Next (1, 20));
-
-			string message = builder.ToString();
 			var cmessage = new AuthenticatedAndEncryptedMessage
 			{
 				Message = message,
@@ -1446,9 +1441,10 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void AuthenticatedTypeHeaderedMessageLong()
 		{
+			int overhead = (sizeof (int) * 2) + typeof (string).GetSimplestName().Length;
 			var cmessage = new AuthenticatedTypeHeaderedMessage
 			{
-				Object = TestHelpers.GetLongString()
+				Object = TestHelpers.GetLongString (MaxPayloadSize - overhead)
 			};
 
 			AssertMessageReceived (cmessage, msg =>
@@ -1481,9 +1477,10 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void EncryptedTypeHeaderedMessageLong()
 		{
+			int overhead = (sizeof (int) * 2) + typeof (string).GetSimplestName().Length;
 			var cmessage = new EncryptedTypeHeaderedMessage
 			{
-				Object = TestHelpers.GetLongString()
+				Object = TestHelpers.GetLongString (MaxPayloadSize - overhead)
 			};
 
 			AssertMessageReceived (cmessage, msg =>

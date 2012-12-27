@@ -537,7 +537,7 @@ namespace Tempest.Providers.Network
 				}
 
 				int length;
-				byte[] buffer = slzr.GetBytes (message, out length, eargs.Buffer, isResponse);
+				byte[] buffer = slzr.GetBytes (message, out length, eargs.Buffer);
 
 				eargs.SetBuffer (buffer, 0, length);
 				eargs.UserToken = new KeyValuePair<NetworkConnection, Message> (this, message);
@@ -624,7 +624,7 @@ namespace Tempest.Providers.Network
 					return;
 				}
 
-				List<Message> messages = slzr.BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.rreader, CheckMessageId);
+				List<Message> messages = slzr.BufferMessages (ref this.rmessageBuffer, ref bufferOffset, ref this.rmessageOffset, ref this.rmessageLoaded, ref this.currentHeader, ref this.rreader, CheckMessageId);
 				if (messages != null)
 				{
 					foreach (Message message in messages)

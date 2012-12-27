@@ -68,7 +68,12 @@ namespace Tempest
 		/// <summary>
 		/// The message type map
 		/// </summary>
-		TypeMap = 7
+		TypeMap = 7,
+
+		/// <summary>
+		/// The header has been completely read.
+		/// </summary>
+		Complete = 8
 	}
 
 	public class MessageHeader

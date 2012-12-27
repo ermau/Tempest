@@ -245,10 +245,10 @@ namespace Tempest.Tests
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 
-		public Task<ClientConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
+		public Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes)
 		{
-			if (endpoint == null)
-				throw new ArgumentNullException ("endpoint");
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
 
 			var tcs = new TaskCompletionSource<ClientConnectionResult>();
 
@@ -336,7 +336,7 @@ namespace Tempest.Tests
 			get { return new byte[0]; }
 		}
 
-		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto)
+		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto, bool includePrivate)
 		{
 		}
 

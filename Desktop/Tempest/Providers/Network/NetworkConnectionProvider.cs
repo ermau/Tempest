@@ -265,7 +265,7 @@ namespace Tempest.Providers.Network
 				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Setting up reliable socket", category);
 				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				this.reliableSocket.Bind (this.endPoint);
-				this.reliableSocket.Listen ((int)SocketOptionName.MaxConnections);
+				this.reliableSocket.Listen (MaxConnections);
 				
 				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Reliable socket ready, accepting", category);
 				BeginAccepting (null);

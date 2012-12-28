@@ -49,8 +49,12 @@ namespace Tempest.Providers.Network
 		}
 
 		internal UdpServerConnection (int connectionId, EndPoint remoteEndpoint, UdpConnectionProvider provider, IPublicKeyCrypto remoteCrypto, IPublicKeyCrypto localCrypto, IAsymmetricKey key)
-			: base (provider.protocols.Values, remoteCrypto, localCrypto, key)
+			: base (provider.protocols.Values)
 		{
+			this.remoteCrypto = remoteCrypto;
+			this.localCrypto = localCrypto;
+			LocalKey = key;
+
 			ConnectionId = connectionId;
 			RemoteEndPoint = remoteEndpoint;
 			this.provider = provider;

@@ -50,6 +50,7 @@ namespace Tempest.Providers.Network
 		{
 			this.remoteCrypto = remoteCrypto;
 			this.localCrypto = localCrypto;
+			this.localCrypto.ImportKey (localKey);
 			LocalKey = localKey;
 		}
 
@@ -186,9 +187,9 @@ namespace Tempest.Providers.Network
 
 		protected bool formallyConnected;
 		internal MessageSerializer serializer;
-		protected readonly IPublicKeyCrypto localCrypto;
+		protected IPublicKeyCrypto localCrypto;
 
-		protected readonly IPublicKeyCrypto remoteCrypto;
+		protected IPublicKeyCrypto remoteCrypto;
 
 		protected Socket socket;
 

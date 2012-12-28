@@ -253,6 +253,20 @@ namespace Tempest.Providers.Network
 				throw new ArgumentException();
 		}
 
+		private void StartReceive (Socket socket, SocketAsyncEventArgs args, BufferValueReader reader)
+		{
+			try
+			{
+				reader.Position = 0;
+				args.SetBuffer (0, args.Buffer.Length);
+				while (!socket.ReceiveFromAsync (args))
+					Receive (this, args);
+			}
+			catch (ObjectDisposedException) // Socket is disposed, we're done.
+			{
+			}
+		}
+
 		private void Receive (object sender, SocketAsyncEventArgs args)
 		{
 			var cnd = (Tuple<Socket, BufferValueReader>)args.UserToken;
@@ -273,11 +287,7 @@ namespace Tempest.Providers.Network
 			// We don't currently support partial messages, so an incomplete message is a bad one.
 			if (!this.connectionlessSerializer.TryGetHeader (reader, args.BytesTransferred, ref header) || header.Message == null)
 			{
-				reader.Position = 0;
-				args.SetBuffer (0, args.Buffer.Length);
-				while (!socket.ReceiveFromAsync (args))
-					Receive (this, args);
-
+				StartReceive (socket, args, reader);
 				return;
 			}
 
@@ -288,8 +298,22 @@ namespace Tempest.Providers.Network
 				UdpServerConnection connection;
 				if (this.connections.TryGetValue (header.ConnectionId, out connection))
 				{
-					header.SerializationContext = ((SerializationContext)header.SerializationContext).WithConnection (connection);
 					MessageSerializer serializer = connection.serializer;
+
+					if (header.State == HeaderState.IV)
+					{
+						serializer.DecryptMessage (header, ref reader);
+						header.IsStillEncrypted = false;
+						
+						if (!serializer.TryGetHeader (reader, args.BytesTransferred, ref header))
+						{
+							StartReceive (socket, args, reader);
+							return;
+						}
+					}
+
+					header.SerializationContext = ((SerializationContext)header.SerializationContext).WithConnection (connection);
+					
 					if (serializer != null)
 					{
 						List<Message> messages = connection.serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
@@ -299,19 +323,12 @@ namespace Tempest.Providers.Network
 								connection.Receive (message);
 						}
 					}
+
+					reader = new BufferValueReader (buffer);
 				}
 			}
 
-			try
-			{
-				reader.Position = 0;
-				args.SetBuffer (0, args.Buffer.Length);
-				while (!socket.ReceiveFromAsync (args))
-					Receive (this, args);
-			}
-			catch (ObjectDisposedException)
-			{
-			}
+			StartReceive (socket, args, reader);
 		}
 
 		private void HandleConnectionlessMessage (SocketAsyncEventArgs args, MessageHeader header, BufferValueReader reader)

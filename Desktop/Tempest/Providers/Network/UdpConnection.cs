@@ -104,36 +104,7 @@ namespace Tempest.Providers.Network
 
 		public void Send (Message message)
 		{
-			if (message == null)
-				throw new ArgumentNullException ("message");
-
-			Socket sock = this.socket;
-			if (sock == null)
-				return;
-
-			int mid = Interlocked.Increment (ref this.nextMessageId);
-			if (message.Header == null)
-				message.Header = new MessageHeader();
-
-			message.Header.MessageId = mid;
-
-			int length;
-			byte[] buffer = this.serializer.GetBytes (message, out length, new byte[2048]);
-
-			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-			args.SetBuffer (buffer, 0, length);
-			args.RemoteEndPoint = RemoteEndPoint;
-			args.Completed += OnSendCompleted;
-			args.UserToken = message;
-
-			try
-			{
-				if (!sock.SendToAsync (args))
-					OnSendCompleted (this, args);
-			}
-			catch (ObjectDisposedException)
-			{
-			}
+			SendCore (message);
 		}
 
 		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
@@ -152,7 +123,13 @@ namespace Tempest.Providers.Network
 			if (response == null)
 				throw new ArgumentNullException ("response");
 
-			throw new NotImplementedException();
+			if (response.Header == null)
+				response.Header = new MessageHeader();
+
+			response.Header.IsResponse = true;
+			response.Header.MessageId = originalMessage.Header.MessageId;
+
+			SendCore (response, isResponse: true);
 		}
 
 		public IEnumerable<MessageEventArgs> Tick()
@@ -203,6 +180,43 @@ namespace Tempest.Providers.Network
 		protected abstract bool IsConnecting
 		{
 			get;
+		}
+
+		protected void SendCore (Message message, bool isResponse = false)
+		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+
+			Socket sock = this.socket;
+			if (sock == null)
+				return;
+
+			if (!isResponse)
+			{
+				int mid = Interlocked.Increment (ref this.nextMessageId);
+				if (message.Header == null)
+					message.Header = new MessageHeader();
+
+				message.Header.MessageId = mid;
+			}
+
+			int length;
+			byte[] buffer = this.serializer.GetBytes (message, out length, new byte[2048]);
+
+			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+			args.SetBuffer (buffer, 0, length);
+			args.RemoteEndPoint = RemoteEndPoint;
+			args.Completed += OnSendCompleted;
+			args.UserToken = message;
+
+			try
+			{
+				if (!sock.SendToAsync (args))
+					OnSendCompleted (this, args);
+			}
+			catch (ObjectDisposedException)
+			{
+			}
 		}
 
 		protected virtual void Cleanup()

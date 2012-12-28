@@ -113,7 +113,10 @@ namespace Tempest.Providers.Network
 			if (message == null)
 				throw new ArgumentNullException ("message");
 
-			throw new NotImplementedException();
+			var tcs = new TaskCompletionSource<Message>();
+			SendCore (message, future: tcs);
+
+			return tcs.Task.ContinueWith (t => (TResponse)t.Result);
 		}
 
 		public void SendResponse (Message originalMessage, Message response)
@@ -177,12 +180,14 @@ namespace Tempest.Providers.Network
 		protected readonly Protocol[] originalProtocols;
 		protected bool requiresHandshake;
 
+		private Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();
+
 		protected abstract bool IsConnecting
 		{
 			get;
 		}
 
-		protected void SendCore (Message message, bool isResponse = false)
+		protected void SendCore (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -198,6 +203,12 @@ namespace Tempest.Providers.Network
 					message.Header = new MessageHeader();
 
 				message.Header.MessageId = mid;
+			}
+
+			if (future != null)
+			{
+				lock (this.messageResponses)
+					this.messageResponses.Add (message.Header.MessageId, future);
 			}
 
 			int length;

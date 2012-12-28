@@ -314,9 +314,9 @@ namespace Tempest.Providers.Network
 					else if (header.Message.Encrypted)
 						reader.Position = 0;
 				}
-				else if (msg.Encrypted && AES != null)
+				else if (msg.Encrypted)// && AES != null)
 				{
-					int ivLength = AES.IV.Length;
+					int ivLength = reader.ReadInt32(); //AES.IV.Length;
 					headerLength += ivLength;
 
 					if (remaining < headerLength)
@@ -630,14 +630,15 @@ namespace Tempest.Providers.Network
 			byte[] payload = encryptor.TransformFinalBlock (writer.Buffer, workingHeaderLength, writer.Length - workingHeaderLength);
 
 			writer.Length = workingHeaderLength;
-			writer.InsertBytes (workingHeaderLength, iv, 0, iv.Length);
+			writer.InsertBytes (workingHeaderLength, BitConverter.GetBytes (iv.Length), 0, sizeof (int));
+			writer.InsertBytes (workingHeaderLength + sizeof(int), iv, 0, iv.Length);
 			writer.WriteInt32 (payload.Length);
 			writer.InsertBytes (writer.Length, payload, 0, payload.Length);
 
 			headerLength += iv.Length;
 		}
 
-		protected void DecryptMessage (MessageHeader header, ref BufferValueReader r)
+		internal void DecryptMessage (MessageHeader header, ref BufferValueReader r)
 		{
 			int c = 0;
 			#if TRACE

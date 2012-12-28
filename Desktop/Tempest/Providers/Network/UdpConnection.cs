@@ -41,8 +41,12 @@ namespace Tempest.Providers.Network
 	{
 		internal UdpConnection (IEnumerable<Protocol> protocols)
 		{
-			this.originalProtocols = protocols.ToArray();
-			this.requiresHandshake = this.originalProtocols.Any (p => p.RequiresHandshake);
+			var ps = protocols.ToList();
+			this.requiresHandshake = ps.Any (p => p.id != 1 && p.RequiresHandshake);
+			if (!ps.Contains (TempestMessage.InternalProtocol))
+				ps.Add (TempestMessage.InternalProtocol);
+
+			this.originalProtocols = ps;
 		}
 
 		internal UdpConnection (IEnumerable<Protocol> protocols, IPublicKeyCrypto remoteCrypto, IPublicKeyCrypto localCrypto, IAsymmetricKey localKey)
@@ -180,7 +184,7 @@ namespace Tempest.Providers.Network
 
 		protected readonly Dictionary<int, Tuple<DateTime, Message>> pendingAck = new Dictionary<int, Tuple<DateTime, Message>>();
 		internal readonly ReliableQueue rqueue = new ReliableQueue();
-		protected readonly Protocol[] originalProtocols;
+		protected readonly List<Protocol> originalProtocols;
 		protected bool requiresHandshake;
 
 		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();

@@ -190,7 +190,7 @@ namespace Tempest.Providers.Network
 					*((int*)(mptr + LengthOffset)) = 0;
 				#endif
 
-				SignMessage (this.signingHashAlgorithm, writer);
+				SignMessage (message, this.signingHashAlgorithm, writer);
 			}
 
 			byte[] rawMessage = writer.Buffer;
@@ -666,7 +666,7 @@ namespace Tempest.Providers.Network
 			//Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{0}:{2} {1}:DecryptMessage({3},{4},{5})", this.typeName, c, connectionId, header.IV.Length, r.Position, message.Length));
 		}
 
-		protected virtual void SignMessage (string hashAlg, BufferValueWriter writer)
+		protected virtual void SignMessage (Message message, string hashAlg, BufferValueWriter writer)
 		{
 			if (HMAC == null)
 				throw new InvalidOperationException();

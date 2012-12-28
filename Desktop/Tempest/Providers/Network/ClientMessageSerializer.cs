@@ -44,12 +44,12 @@ namespace Tempest.Providers.Network
 		{
 		}
 
-		protected override void SignMessage (string hashAlg, BufferValueWriter writer)
+		protected override void SignMessage (Message message, string hashAlg, BufferValueWriter writer)
 		{
-			if (HMAC == null)
+			if (message is FinalConnectMessage)
 				writer.WriteBytes (this.connection.LocalCrypto.HashAndSign (hashAlg, writer.Buffer, 0, writer.Length));
 			else
-				base.SignMessage (hashAlg, writer);
+				base.SignMessage (message, hashAlg, writer);
 		}
 
 		protected override bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)

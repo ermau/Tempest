@@ -285,6 +285,9 @@ namespace Tempest.Providers.Network
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
 					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption, includePrivate: false);
 
+					this.serializer.AES = encryption;
+					this.serializer.HMAC = new HMACSHA256 (encryption.Key);
+
 					Send (new FinalConnectMessage
 					{
 						AESKey = this.serverEncryption.Encrypt (encryption.Key),
@@ -292,8 +295,6 @@ namespace Tempest.Providers.Network
 						PublicAuthenticationKey = authKeyWriter.ToArray()
 					});
 
-					this.serializer.AES = encryption;
-					this.serializer.HMAC = new HMACSHA256 (encryption.Key);
 				    break;
 
 				case (ushort)TempestMessageType.Connected:

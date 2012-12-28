@@ -41,7 +41,8 @@ namespace Tempest.Providers.Network
 			var msg = messageArgs.Message;
 			int mid = msg.Header.MessageId;
 
-			if (mid <= this.lastMessageInOrder)
+			// HACK: We should really disconnect these guys if they're sending +2000 messages
+			if (mid <= this.lastMessageInOrder || mid > (this.lastMessageInOrder + 2000))
 				return null;
 
 			List<MessageEventArgs> received = null;

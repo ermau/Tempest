@@ -325,7 +325,16 @@ namespace Tempest.Providers.Network
 			{
 				OnMessageReceived (args);
 
-				// TODO responses
+				if (args.Message.Header.IsResponse)
+				{
+					TaskCompletionSource<Message> tcs;
+					bool found;
+					lock (this.messageResponses)
+						found = this.messageResponses.TryGetValue (args.Message.Header.MessageId, out tcs);
+					
+					if (found)
+						tcs.TrySetResult (args.Message);
+				}
 			}
 		}
 

@@ -144,9 +144,9 @@ namespace Tempest.Providers.Network
 		{
 			base.Cleanup();
 
-			// Connecting
-			while (this.connectTcs != null)
-				Thread.Sleep (0);
+			var tcs = Interlocked.Exchange (ref this.connectTcs, null);
+			if (tcs != null)
+				tcs.TrySetCanceled();
 
 			Socket sock = this.socket;
 			this.socket = null;
@@ -232,9 +232,8 @@ namespace Tempest.Providers.Network
 					var tcs = Interlocked.Exchange (ref this.connectTcs, null);
 					if (tcs != null)
 					{
-						tcs.SetResult (new ClientConnectionResult (ConnectionResult.Success, null));
-
-						OnConnected();
+						if (tcs.TrySetResult (new ClientConnectionResult (ConnectionResult.Success, null)))
+							OnConnected();
 					}
 
 					break;

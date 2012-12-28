@@ -31,7 +31,7 @@ namespace Tempest.Tests
 
 		protected override EndPoint EndPoint
 		{
-			get { return new IPEndPoint (IPAddress.Loopback, 42000); }
+			get { return new IPEndPoint (IPAddress.Loopback, 42001); }
 		}
 
 		protected override MessageTypes MessageTypes
@@ -41,12 +41,12 @@ namespace Tempest.Tests
 
 		protected override IConnectionProvider SetUp()
 		{
-			return new UdpConnectionProvider (42000, MockProtocol.Instance, () => new RSACrypto(), serverKey);
+			return new UdpConnectionProvider (42001, MockProtocol.Instance, () => new RSACrypto(), serverKey);
 		}
 
 		protected override IConnectionProvider SetUp (IEnumerable<Protocol> protocols)
 		{
-			return new UdpConnectionProvider (42000, protocols, () => new RSACrypto(), serverKey);
+			return new UdpConnectionProvider (42001, protocols, () => new RSACrypto(), serverKey);
 		}
 
 		protected override IClientConnection SetupClientConnection()

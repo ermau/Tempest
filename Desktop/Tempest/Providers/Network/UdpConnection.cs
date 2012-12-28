@@ -112,6 +112,8 @@ namespace Tempest.Providers.Network
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
+			if (!message.MustBeReliable && !message.PreferReliable)
+				throw new NotSupportedException ("Sending unreliable messages for a response is not supported");
 
 			var tcs = new TaskCompletionSource<Message>();
 			SendCore (message, future: tcs);
@@ -173,6 +175,7 @@ namespace Tempest.Providers.Network
 
 		protected Socket socket;
 
+		protected int nextReliableMessageId;
 		protected int nextMessageId;
 
 		protected readonly Dictionary<int, Tuple<DateTime, Message>> pendingAck = new Dictionary<int, Tuple<DateTime, Message>>();
@@ -180,7 +183,7 @@ namespace Tempest.Providers.Network
 		protected readonly Protocol[] originalProtocols;
 		protected bool requiresHandshake;
 
-		private Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();
+		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();
 
 		protected abstract bool IsConnecting
 		{
@@ -196,11 +199,16 @@ namespace Tempest.Providers.Network
 			if (sock == null)
 				return;
 
+			if (message.Header == null)
+				message.Header = new MessageHeader();
+
 			if (!isResponse)
 			{
-				int mid = Interlocked.Increment (ref this.nextMessageId);
-				if (message.Header == null)
-					message.Header = new MessageHeader();
+				int mid;
+				if (message.MustBeReliable || message.PreferReliable)
+					mid = Interlocked.Increment (ref this.nextReliableMessageId);
+				else
+					mid = Interlocked.Increment (ref this.nextMessageId);
 
 				message.Header.MessageId = mid;
 			}

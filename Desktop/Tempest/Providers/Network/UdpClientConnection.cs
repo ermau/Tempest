@@ -232,7 +232,7 @@ namespace Tempest.Providers.Network
 					var tcs = Interlocked.Exchange (ref this.connectTcs, null);
 					if (tcs != null)
 					{
-						if (tcs.TrySetResult (new ClientConnectionResult (ConnectionResult.Success, null)))
+						if (tcs.TrySetResult (new ClientConnectionResult (ConnectionResult.Success, RemoteKey)))
 							OnConnected();
 					}
 

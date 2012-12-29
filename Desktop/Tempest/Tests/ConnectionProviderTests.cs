@@ -603,6 +603,7 @@ namespace Tempest.Tests
 							return;
 
 						cn.Send (new MockMessage { Content = i.ToString() });
+						Thread.Sleep (1);
 					}
 				}
 				catch (Exception ex)

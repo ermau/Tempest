@@ -46,6 +46,7 @@ namespace Tempest.Tests
 		[TestCase (2, 2, 1)]
 		[TestCase (3, 2, 2, 1)]
 		[TestCase (1, 1, 2)]
+		[TestCase (1, 2, 4, 5, 3)]
 		public void Enqueue (params int[] order)
 		{
 			List<MessageEventArgs> returnedOrder = new List<MessageEventArgs>();

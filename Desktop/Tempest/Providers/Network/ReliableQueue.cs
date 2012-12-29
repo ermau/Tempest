@@ -71,18 +71,17 @@ namespace Tempest.Providers.Network
 				}
 				else
 				{
-					while (d-- > this.queue.Count)
-						this.queue.Add (null);
-
-					var args = this.queue[this.queue.Count - 1];
-					if (args != null)
+					int i = -1;
+					for (int m = this.lastMessageInOrder; m < messageArgs.Message.Header.MessageId; m++)
 					{
-						int largeId = args.Message.Header.MessageId;
-						int pos = (this.queue.Count - 1) - (largeId - mid);
-						this.queue[pos] = messageArgs;
+						if (++i >= this.queue.Count)
+							this.queue.Add (null);
 					}
-					else
+
+					if (i > this.queue.Count)
 						this.queue.Add (messageArgs);
+					else
+						this.queue[i] = messageArgs;
 				}
 			}
 

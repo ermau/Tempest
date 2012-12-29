@@ -233,7 +233,11 @@ namespace Tempest.Providers.Network
 
 		internal void Connect (UdpServerConnection connection)
 		{
-			OnConnectionMade (new ConnectionMadeEventArgs (connection, connection.RemoteKey));
+			var args = new ConnectionMadeEventArgs (connection, connection.RemoteKey);
+			OnConnectionMade (args);
+
+			if (args.Rejected)
+				connection.Dispose();
 		}
 
 		private void OnConnectionMade (ConnectionMadeEventArgs e)

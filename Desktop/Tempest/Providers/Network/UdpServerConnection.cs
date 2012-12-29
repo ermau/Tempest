@@ -152,7 +152,7 @@ namespace Tempest.Providers.Network
 
 				if (!foundHashAlg)
 				{
-					this.NotifyAndDisconnect (ConnectionResult.FailedHandshake);
+					Disconnect (ConnectionResult.FailedHandshake);
 					return;
 				}
 			}
@@ -162,7 +162,7 @@ namespace Tempest.Providers.Network
 				Protocol lp;
 				if (!this.provider.protocols.TryGetValue (protocol.id, out lp) || !lp.CompatibleWith (protocol))
 				{
-					this.NotifyAndDisconnect (ConnectionResult.IncompatibleVersion);
+					Disconnect (ConnectionResult.IncompatibleVersion);
 					return;
 				}
 			}

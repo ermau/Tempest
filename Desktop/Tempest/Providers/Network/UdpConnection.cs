@@ -153,17 +153,17 @@ namespace Tempest.Providers.Network
 
 		public void Disconnect (ConnectionResult reason, string customReason = null)
 		{
-			Disconnect (true, ConnectionResult.FailedUnknown, customReason);
+			Disconnect (true, reason, customReason);
 		}
 
 		public void DisconnectAsync()
 		{
-			Disconnect (false, ConnectionResult.FailedUnknown);
+			Disconnect (true, ConnectionResult.FailedUnknown);
 		}
 
 		public void DisconnectAsync (ConnectionResult reason, string customReason = null)
 		{
-			Disconnect (false, ConnectionResult.FailedUnknown, customReason);
+			Disconnect (true, reason, customReason);
 		}
 
 		public virtual void Dispose()
@@ -262,9 +262,12 @@ namespace Tempest.Providers.Network
 				this.pendingAck.Clear();
 		}
 
-		protected virtual void Disconnect (bool now, ConnectionResult reason, string customReason = null)
+		protected virtual void Disconnect (bool notify, ConnectionResult reason, string customReason = null)
 		{
 			bool raise = IsConnected || IsConnecting;
+
+			if (raise && notify)
+				Send (new DisconnectMessage { Reason = reason, CustomReason = customReason });
 
 			Cleanup();
 
@@ -274,7 +277,7 @@ namespace Tempest.Providers.Network
 
 		protected virtual void OnDisconnected (DisconnectedEventArgs e)
 		{
-			EventHandler<DisconnectedEventArgs> handler = this.Disconnected;
+			EventHandler<DisconnectedEventArgs> handler = Disconnected;
 			if (handler != null)
 				handler (this, e);
 		}
@@ -364,6 +367,7 @@ namespace Tempest.Providers.Network
 
 				case (ushort)TempestMessageType.Disconnect:
 					var msg = (DisconnectMessage)e.Message;
+					Disconnect (false, msg.Reason, msg.CustomReason);
 					break;
 			}
 		}

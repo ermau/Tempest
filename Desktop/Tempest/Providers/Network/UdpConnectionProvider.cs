@@ -240,6 +240,12 @@ namespace Tempest.Providers.Network
 				connection.Dispose();
 		}
 
+		internal void Disconnect (UdpServerConnection connection)
+		{
+			UdpServerConnection o;
+			this.connections.TryRemove (connection.ConnectionId, out o);
+		}
+
 		private void OnConnectionMade (ConnectionMadeEventArgs e)
 		{
 			var handler = this.ConnectionMade;

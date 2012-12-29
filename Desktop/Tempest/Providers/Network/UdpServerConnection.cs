@@ -65,6 +65,13 @@ namespace Tempest.Providers.Network
 		private readonly UdpConnectionProvider provider;
 		private bool receivedProtocols;
 
+		protected override void Cleanup()
+		{
+			base.Cleanup();
+
+			this.provider.Disconnect (this);
+		}
+
 		protected override bool IsConnecting
 		{
 			get { return !this.formallyConnected; }

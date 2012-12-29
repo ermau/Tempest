@@ -138,7 +138,11 @@ namespace Tempest.Providers.Network
 
 			writer.WriteInt32 (messageId);
 
-			var context = new SerializationContext (this.connection, this.protocols[message.Protocol.id], new TypeMap());
+			SerializationContext context;
+			if (this.connection != null)
+				context = new SerializationContext (this.connection, this.protocols[message.Protocol.id], new TypeMap());
+			else
+				context = new SerializationContext (this.protocols[message.Protocol.id], new TypeMap());
 
 			message.WritePayload (context, writer);
 

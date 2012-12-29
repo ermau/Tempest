@@ -252,6 +252,8 @@ namespace Tempest.Providers.Network
 		protected virtual void Cleanup()
 		{
 			this.formallyConnected = false;
+			this.nextMessageId = 0;
+			this.nextReliableMessageId = 0;
 
 			this.serializer = null;
 

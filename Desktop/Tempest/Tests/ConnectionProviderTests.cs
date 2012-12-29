@@ -180,7 +180,7 @@ namespace Tempest.Tests
 			{
 				Assert.DoesNotThrow (() => this.provider.ConnectionlessMessageReceived += cmr);
 				Assert.DoesNotThrow (() => this.provider.ConnectionlessMessageReceived -= cmr);
-				Assert.DoesNotThrow (() => this.provider.SendConnectionlessMessage (new MockMessage (), new IPEndPoint (IPAddress.Loopback, 42)));
+				Assert.DoesNotThrow (() => this.provider.SendConnectionlessMessage (new UnreliableMockMessage(), new IPEndPoint (IPAddress.Loopback, 42)));
 			}
 			else
 			{

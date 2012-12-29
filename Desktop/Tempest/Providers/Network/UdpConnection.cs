@@ -251,6 +251,8 @@ namespace Tempest.Providers.Network
 
 		protected virtual void Cleanup()
 		{
+			RemoteKey = null;
+
 			ConnectionId = 0;
 			this.formallyConnected = false;
 			this.nextMessageId = 0;

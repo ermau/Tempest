@@ -162,6 +162,8 @@ namespace Tempest.Providers.Network
 		{
 			base.Cleanup();
 
+			this.remoteEncryption = null;
+
 			Timer t = Interlocked.Exchange (ref this.connectTimer, null);
 			if (t != null)
 				t.Dispose();

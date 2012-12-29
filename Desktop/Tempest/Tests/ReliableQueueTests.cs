@@ -62,6 +62,14 @@ namespace Tempest.Tests
 			CollectionAssert.AreEqual (order, returnedOrder.Select (m => m.Message.Header.MessageId).ToArray());
 		}
 
+		[Test]
+		public void Clear()
+		{
+			Enqueue (1, 2, 3);
+			this.queue.Clear();
+			Enqueue (1, 2, 3);
+		}
+
 		private MessageEventArgs GetTestMessageArgs (int mid)
 		{
 			var msg = new BlankMessage();

@@ -32,6 +32,7 @@ namespace Tempest.Providers.Network
 	{
 		public void Clear()
 		{
+			this.lastMessageInOrder = 0;
 			lock (this.queue)
 				this.queue.Clear();
 		}

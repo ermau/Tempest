@@ -184,10 +184,14 @@ namespace Tempest.Providers.Network
 			int moffset = e.Offset;
 			int remaining = e.BytesTransferred;
 
+			MessageSerializer mserializer = this.serializer;
+			if (mserializer == null) // If the serializer is null, we're disconnecting.
+				return;
+
 			if (e.BytesTransferred != 0 && e.SocketError == SocketError.Success)
 			{
 				MessageHeader header = null;
-				List<Message> messages = this.serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref this.reader);
+				List<Message> messages = mserializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref this.reader);
 				if (messages != null)
 				{
 					foreach (Message message in messages)

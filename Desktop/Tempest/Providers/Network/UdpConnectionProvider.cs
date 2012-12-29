@@ -257,7 +257,6 @@ namespace Tempest.Providers.Network
 		{
 			try
 			{
-				reader.Position = 0;
 				args.SetBuffer (0, args.Buffer.Length);
 				while (!socket.ReceiveFromAsync (args))
 					Receive (this, args);
@@ -279,6 +278,7 @@ namespace Tempest.Providers.Network
 				return;
 
 			int offset = args.Offset;
+			reader.Position = offset;
 			int moffset = offset;
 			int remaining = args.BytesTransferred;
 

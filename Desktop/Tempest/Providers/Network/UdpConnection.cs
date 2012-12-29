@@ -200,8 +200,15 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("message");
 
 			Socket sock = this.socket;
-			if (sock == null)
+			MessageSerializer mserialzier = this.serializer;
+
+			if (sock == null || mserialzier == null)
+			{
+				if (future != null)
+					future.TrySetCanceled();
+
 				return;
+			}
 
 			if (message.Header == null)
 				message.Header = new MessageHeader();

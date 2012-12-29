@@ -168,7 +168,7 @@ namespace Tempest.Providers.Network
 
 		public virtual void Dispose()
 		{
-			Cleanup();
+			Disconnect (true, ConnectionResult.FailedUnknown);
 		}
 
 		protected bool formallyConnected;

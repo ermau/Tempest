@@ -693,7 +693,7 @@ namespace Tempest.Tests
 
 			c.ConnectAsync (EndPoint, MessageTypes);
 
-			test.Assert (30000);
+			test.Assert (40000);
 		}
 
 		[Test, Repeat (3)]

@@ -116,6 +116,23 @@ namespace Tempest.Providers.Network
 			while (!this.socket.ReceiveFromAsync (receiveArgs))
 				OnReceiveCompleted (this, receiveArgs);
 
+			Timer t = new Timer (30000);
+			Timer previousTimer = Interlocked.Exchange (ref this.connectTimer, t);
+			if (previousTimer != null)
+				previousTimer.Dispose();
+
+			t.AutoReset = false;
+			t.TimesUp += (sender, args) =>
+			{
+				var tcs = this.connectTcs;
+				if (tcs != null)
+					tcs.TrySetResult (new ClientConnectionResult (ConnectionResult.ConnectionFailed, null));
+
+				Disconnect (true, ConnectionResult.ConnectionFailed);
+				t.Dispose();
+			};
+			t.Start();
+
 			RemoteEndPoint = endPoint;
 			Send (new ConnectMessage
 			{
@@ -133,6 +150,7 @@ namespace Tempest.Providers.Network
 
 		private BufferValueReader reader;
 		private TaskCompletionSource<ClientConnectionResult> connectTcs;
+		private Timer connectTimer;
 		private readonly Func<IPublicKeyCrypto> cryptoFactory;
 
 		protected override bool IsConnecting
@@ -144,12 +162,15 @@ namespace Tempest.Providers.Network
 		{
 			base.Cleanup();
 
+			Timer t = Interlocked.Exchange (ref this.connectTimer, null);
+			if (t != null)
+				t.Dispose();
+
 			var tcs = Interlocked.Exchange (ref this.connectTcs, null);
 			if (tcs != null)
 				tcs.TrySetCanceled();
 
-			Socket sock = this.socket;
-			this.socket = null;
+			Socket sock = Interlocked.Exchange (ref this.socket, null);
 			if (sock != null)
 				sock.Dispose();
 		}
@@ -228,6 +249,10 @@ namespace Tempest.Providers.Network
 					ConnectionId = msg.ConnectionId;
 
 					this.formallyConnected = true;
+
+					Timer t = Interlocked.Exchange (ref this.connectTimer, null);
+					if (t != null)
+						t.Dispose();
 
 					var tcs = Interlocked.Exchange (ref this.connectTcs, null);
 					if (tcs != null)

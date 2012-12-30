@@ -31,10 +31,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-
-#if NET_4
 using System.Threading.Tasks;
-#endif
 
 namespace Tempest.Providers.Network
 {
@@ -123,20 +120,14 @@ namespace Tempest.Providers.Network
 			{
 				ThreadPool.QueueUserWorkItem (s =>
 				{
-					#if NET_4
 					Task encryptKeyGen = Task.Factory.StartNew (() =>
 					{
-					#endif
 						this.pkEncryption = this.pkCryptoFactory();
 						this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
-					#if NET_4
 					});
-					#endif
 
-					#if NET_4
 					Task authKeyGen = Task.Factory.StartNew (() =>
 					{
-					#endif
 						this.authentication = this.pkCryptoFactory();
 						if (this.authenticationKey == null)
 							this.authenticationKey = this.authentication.ExportKey (true);
@@ -149,12 +140,10 @@ namespace Tempest.Providers.Network
 							this.enabledHashAlgorithms.AddRange (this.authentication.SupportedHashAlgs);
 						else // Need to maintain preference order
 							this.enabledHashAlgorithms.AddRange (enabledHashAlgs.Where (a => this.authentication.SupportedHashAlgs.Contains (a)));
-					#if NET_4
 					});
 
 					authKeyGen.Wait();
 					encryptKeyGen.Wait();
-					#endif
 
 					this.keyWait.Set();
 				});
@@ -437,9 +426,6 @@ namespace Tempest.Providers.Network
 					#if !SILVERLIGHT
 					e.AcceptSocket.Shutdown (SocketShutdown.Both);
 					e.AcceptSocket.Disconnect (true);
-					//#if !NET_4
-					//lock (ReliableSockets)
-					//#endif
 					//    ReliableSockets.Push (this.reliableSocket);
 					#else
 					e.ConnectSocket.Dispose();
@@ -490,19 +476,8 @@ namespace Tempest.Providers.Network
 					return;
 
 				Socket s = null;
-				//#if NET_4
 				//if (!ReliableSockets.TryPop (out s))
 				//    s = null;
-				//#else
-				//if (ReliableSockets.Count != 0)
-				//{
-				//    lock (ReliableSockets)
-				//    {
-				//        if (ReliableSockets.Count != 0)
-				//            s = ReliableSockets.Pop();
-				//    }
-				//}
-				//#endif
 
 				e.AcceptSocket = s;
 			}
@@ -518,10 +493,6 @@ namespace Tempest.Providers.Network
 				cmade (this, e);
 		}
 
-		//#if NET_4
 		//internal static readonly ConcurrentStack<Socket> ReliableSockets = new ConcurrentStack<Socket>();
-		//#else
-		//internal static readonly Stack<Socket> ReliableSockets = new Stack<Socket>();
-		//#endif
 	}
 }

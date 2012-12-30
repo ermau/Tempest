@@ -29,10 +29,6 @@ using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 
-#if NET_4
-using System.Collections.Concurrent;
-#endif
-
 namespace Tempest
 {
 	public static class SerializerExtensions

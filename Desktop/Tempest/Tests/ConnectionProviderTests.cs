@@ -83,11 +83,7 @@ namespace Tempest.Tests
 				Exception[] exs = this.exceptions.ToArray();
 				this.exceptions.Clear();
 
-				#if NET_4
 				throw new AggregateException (exs);
-				#else
-				throw new Exception ("Error during test", this.exceptions[0]);
-				#endif
 			}
 
 			Trace.WriteLine ("Exiting", "TearDown");
@@ -1468,7 +1464,6 @@ namespace Tempest.Tests
 
 		}
 
-		#if NET_4
 		[Test, Repeat (3)]
 		public void SendAndRespond()
 		{
@@ -1508,7 +1503,6 @@ namespace Tempest.Tests
 
 			test.Assert (10000);
 		}
-		#endif
 
 		private void AssertMessageReceived<T> (T message, Action<T> testResults)
 			where T : Message

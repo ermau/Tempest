@@ -31,9 +31,7 @@ using System.Reflection;
 #if !SAFE
 using System.Reflection.Emit;
 #endif
-#if NET_4
 using System.Collections.Concurrent;
-#endif
 
 namespace Tempest
 {
@@ -121,20 +119,13 @@ namespace Tempest
 		public Message Create (ushort messageType)
 		{
 			Func<Message> mCtor;
-			#if !NET_4
-			lock (this.messageCtors)
-			#endif
-				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
-					return null;
+			if (!this.messageCtors.TryGetValue (messageType, out mCtor))
+				return null;
 
 			return mCtor();
 		}
 
-		#if !NET_4
-		private readonly Dictionary<ushort, Func<Message>> messageCtors = new Dictionary<ushort, Func<Message>>();
-		#else
 		private readonly ConcurrentDictionary<ushort, Func<Message>> messageCtors = new ConcurrentDictionary<ushort, Func<Message>>();
-		#endif
 
 		#if !SAFE
 		private void RegisterTypes (IEnumerable<Type> messageTypes, bool ignoreDupes)

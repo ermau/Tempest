@@ -1,10 +1,10 @@
 ﻿//
-// ConnectedMessage.cs
+// UnreliablePingMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,28 +26,30 @@
 
 namespace Tempest.InternalProtocol
 {
-	public sealed class ConnectedMessage
+	public sealed class UnreliablePingMessage
 		: TempestMessage
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
+		internal UnreliablePingMessage()
+			: base (TempestMessageType.UnreliablePing)
 		{
 		}
 
-		public int ConnectionId
+		public override bool MustBeReliable
 		{
-			get;
-			set;
+			get { return false; }
+		}
+
+		public override bool PreferReliable
+		{
+			get { return false; }
 		}
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
-			writer.WriteInt32 (ConnectionId);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
-			ConnectionId = reader.ReadInt32();
 		}
 	}
 }

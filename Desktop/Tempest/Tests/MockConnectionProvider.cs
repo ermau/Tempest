@@ -130,7 +130,7 @@ namespace Tempest.Tests
 		{
 		}
 
-		private long cid;
+		private int cid;
 		private bool running;
 		private readonly Dictionary<byte, Protocol> protocols;
 
@@ -202,7 +202,8 @@ namespace Tempest.Tests
 
 		public override void SendResponse (Message originalMessage, Message response)
 		{
-			response.MessageId = originalMessage.MessageId;
+			response.Header = new MessageHeader();
+			response.Header.MessageId = originalMessage.Header.MessageId;
 			
 			OnMessageSent (new MessageEventArgs (this, response));
 			connection.ReceiveResponse (new MessageEventArgs (connection, response));
@@ -244,10 +245,10 @@ namespace Tempest.Tests
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 
-		public Task<ClientConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
+		public Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes)
 		{
-			if (endpoint == null)
-				throw new ArgumentNullException ("endpoint");
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
 
 			var tcs = new TaskCompletionSource<ClientConnectionResult>();
 
@@ -291,7 +292,7 @@ namespace Tempest.Tests
 
 		public override void SendResponse (Message originalMessage, Message response)
 		{
-			response.MessageId = originalMessage.MessageId;
+			response.Header.MessageId = originalMessage.Header.MessageId;
 			
 			OnMessageSent (new MessageEventArgs (this, response));
 			connection.ReceiveResponse (new MessageEventArgs (connection, response));
@@ -335,7 +336,7 @@ namespace Tempest.Tests
 			get { return new byte[0]; }
 		}
 
-		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto)
+		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto, bool includePrivate)
 		{
 		}
 
@@ -358,7 +359,7 @@ namespace Tempest.Tests
 			get { return this.connected; }
 		}
 
-		public long ConnectionId
+		public int ConnectionId
 		{
 			get;
 			internal set;
@@ -403,7 +404,8 @@ namespace Tempest.Tests
 		private int messageId;
 		public virtual void Send (Message message)
 		{
-			message.MessageId = Interlocked.Increment (ref this.messageId);
+			message.Header = new MessageHeader();
+			message.Header.MessageId = Interlocked.Increment (ref this.messageId);
 			OnMessageSent (new MessageEventArgs (this, message));
 		}
 
@@ -423,7 +425,8 @@ namespace Tempest.Tests
 			lock (this.responses)
 				this.responses.Add (mid, otcs);
 
-			message.MessageId = mid;
+			message.Header = new MessageHeader();
+			message.Header.MessageId = mid;
 			OnMessageSent (new MessageEventArgs (this, message));
 
 			return tcs.Task;
@@ -472,7 +475,7 @@ namespace Tempest.Tests
 			bool response = false;
 			TaskCompletionSource<Message> tcs;
 			lock (this.responses)
-				response = this.responses.TryGetValue (e.Message.MessageId, out tcs);
+				response = this.responses.TryGetValue (e.Message.Header.MessageId, out tcs);
 
 			if (response)
 				tcs.SetResult (e.Message);
@@ -489,7 +492,7 @@ namespace Tempest.Tests
 			var reader = new BufferValueReader (writer.Buffer);
 			var message = e.Message.Protocol.Create (e.Message.MessageType);
 			message.ReadPayload (context, reader);
-			message.MessageId = e.Message.MessageId;
+			message.Header = e.Message.Header;
 
 			var tmessage = (e.Message as TempestMessage);
 			if (tmessage == null)
@@ -502,11 +505,11 @@ namespace Tempest.Tests
 		{
 			switch (e.Message.MessageType)
 			{
-				case (ushort)TempestMessageType.Ping:
-					Send (new PongMessage());
+				case (ushort)TempestMessageType.ReliablePing:
+					Send (new ReliablePongMessage());
 					break;
 
-				case (ushort)TempestMessageType.Pong:
+				case (ushort)TempestMessageType.ReliablePong:
 					break;
 
 				case (ushort)TempestMessageType.Disconnect:

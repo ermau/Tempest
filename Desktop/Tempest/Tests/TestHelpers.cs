@@ -1,10 +1,10 @@
 ﻿//
-// ConnectedMessage.cs
+// TestHelpers.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,30 +24,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tempest.InternalProtocol
+using System;
+using System.Text;
+
+namespace Tempest.Tests
 {
-	public sealed class ConnectedMessage
-		: TempestMessage
+	public static class TestHelpers
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
+		public static string GetLongString (int length = 1000000)
 		{
-		}
+			if (length <= 0)
+				length = 1000000;
 
-		public int ConnectionId
-		{
-			get;
-			set;
-		}
+			Random r = new Random (43);
+			StringBuilder builder = new StringBuilder (length);
+			for (int i = 0; i < length; ++i)
+				builder.Append ((char)r.Next (1, 20));
 
-		public override void WritePayload (ISerializationContext context, IValueWriter writer)
-		{
-			writer.WriteInt32 (ConnectionId);
-		}
-
-		public override void ReadPayload (ISerializationContext context, IValueReader reader)
-		{
-			ConnectionId = reader.ReadInt32();
+			return builder.ToString();
 		}
 	}
 }

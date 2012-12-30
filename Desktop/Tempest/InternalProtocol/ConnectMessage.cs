@@ -29,7 +29,7 @@ using System.Linq;
 
 namespace Tempest.InternalProtocol
 {
-	public class ConnectMessage
+	public sealed class ConnectMessage
 		: TempestMessage
 	{
 		public ConnectMessage()
@@ -53,6 +53,11 @@ namespace Tempest.InternalProtocol
 		{
 			get;
 			set;
+		}
+
+		public override bool AcceptedConnectionlessly
+		{
+			get { return true; }
 		}
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)

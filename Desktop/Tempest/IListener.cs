@@ -1,10 +1,10 @@
 ﻿//
-// ConnectedMessage.cs
+// IListener.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,30 +24,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tempest.InternalProtocol
+using System;
+
+namespace Tempest
 {
-	public sealed class ConnectedMessage
-		: TempestMessage
+	/// <summary>
+	/// Contract for a listener.
+	/// </summary>
+	/// <see cref="IConnectionProvider"/>
+	/// <see cref="IConnectionlessMessenger"/>
+	public interface IListener
+		: IDisposable
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
-		{
-		}
+		/// <summary>
+		/// Gets whether this listener is currently running or not.
+		/// </summary>
+		/// <seealso cref="Start"/>
+		/// <seealso cref="Stop"/>
+		bool IsRunning { get; }
 
-		public int ConnectionId
-		{
-			get;
-			set;
-		}
+		/// <summary>
+		/// Starts the listener.
+		/// </summary>
+		/// <param name="types">The message types to accept.</param>
+		/// <seealso cref="Stop"/>
+		void Start (MessageTypes types);
 
-		public override void WritePayload (ISerializationContext context, IValueWriter writer)
-		{
-			writer.WriteInt32 (ConnectionId);
-		}
-
-		public override void ReadPayload (ISerializationContext context, IValueReader reader)
-		{
-			ConnectionId = reader.ReadInt32();
-		}
+		/// <summary>
+		/// Stops the listener.
+		/// </summary>
+		/// <seealso cref="Start"/>
+		void Stop();
 	}
 }

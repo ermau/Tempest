@@ -35,11 +35,16 @@ namespace Tempest.Tests
 	public class StreamReaderWriterTests
 		: ReaderWriterPairTests
 	{
-		[SetUp]
-		public void SetUp()
+		protected override IValueWriter GetWriter()
 		{
-			ResettingMemoryStream stream = new ResettingMemoryStream (20480);
-			Setup (new StreamValueWriter (stream), new StreamValueReader (stream));
+			return new StreamValueWriter (new ResettingMemoryStream (20480));
+		}
+
+		protected override IValueReader GetReader (IValueWriter writer)
+		{
+			StreamValueWriter streamWriter = (StreamValueWriter)writer;
+			
+			return new StreamValueReader (streamWriter.stream);
 		}
 
 		[Test]

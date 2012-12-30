@@ -1,5 +1,5 @@
 ﻿//
-// ConnectedMessage.cs
+// ReliablePingMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -26,15 +26,21 @@
 
 namespace Tempest.InternalProtocol
 {
-	public sealed class ConnectedMessage
+	/// <summary>
+	/// Internal Tempest protocol ping message.
+	/// </summary>
+	public sealed class ReliablePingMessage
 		: TempestMessage
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
+		public ReliablePingMessage()
+			: base (TempestMessageType.ReliablePing)
 		{
 		}
 
-		public int ConnectionId
+		/// <summary>
+		/// Gets or sets the ping interval.
+		/// </summary>
+		public int Interval
 		{
 			get;
 			set;
@@ -42,12 +48,12 @@ namespace Tempest.InternalProtocol
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
-			writer.WriteInt32 (ConnectionId);
+			writer.WriteInt32 (Interval);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
-			ConnectionId = reader.ReadInt32();
+			Interval = reader.ReadInt32();
 		}
 	}
 }

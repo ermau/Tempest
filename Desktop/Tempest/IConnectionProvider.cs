@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010 Eric Maupin
+// Copyright (c) 2010-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@
 // THE SOFTWARE.
 
 using System;
-using System.Linq;
 using System.Net;
 
 namespace Tempest
@@ -49,56 +48,16 @@ namespace Tempest
 		All = Reliable | Unreliable
 	}
 
+	/// <summary>
+	/// Contract for a provider of connections.
+	/// </summary>
 	public interface IConnectionProvider
-		: IDisposable
+		: IListener
 	{
 		/// <summary>
 		/// A new connection was made.
 		/// </summary>
 		event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
-
-		/// <summary>
-		/// A connectionless message was received.
-		/// </summary>
-		/// <exception cref="NotSupportedException"><see cref="SupportsConnectionless"/> is <c>false</c>.</exception>
-		event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
-
-		/// <summary>
-		/// Gets whether this connection provider supports connectionless messages.
-		/// </summary>
-		/// <seealso cref="ConnectionlessMessageReceived"/>
-		/// <seealso cref="SendConnectionlessMessage"/>
-		bool SupportsConnectionless { get; }
-
-		/// <summary>
-		/// Gets whether this connection provider is currently running or not.
-		/// </summary>
-		/// <seealso cref="Start"/>
-		/// <seealso cref="Stop"/>
-		bool IsRunning { get; }
-
-		/// <summary>
-		/// Starts the connection provider.
-		/// </summary>
-		/// <param name="types">The message types to accept.</param>
-		/// <seealso cref="Stop"/>
-		void Start (MessageTypes types);
-
-		/// <summary>
-		/// Sends a connectionless <paramref name="message"/> to <paramref name="endPoint"/>.
-		/// </summary>
-		/// <param name="message"></param>
-		/// <param name="endPoint"></param>
-		/// <exception cref="NotSupportedException"><see cref="SupportsConnectionless"/> is <c>false</c>.</exception>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="endPoint"/> is <c>null</c>.</exception>
-		/// <seealso cref="SupportsConnectionless"/>
-		void SendConnectionlessMessage (Message message, EndPoint endPoint);
-
-		/// <summary>
-		/// Stops the connection provider.
-		/// </summary>
-		/// <seealso cref="Start"/>
-		void Stop();
 	}
 
 	/// <summary>
@@ -151,7 +110,7 @@ namespace Tempest
 	}
 
 	/// <summary>
-	/// Provides data for the <see cref="IConnectionProvider.ConnectionlessMessageReceived"/> event.
+	/// Provides data for the <see cref="IConnectionlessMessenger.ConnectionlessMessageReceived"/> event.
 	/// </summary>
 	public class ConnectionlessMessageEventArgs
 		: EventArgs

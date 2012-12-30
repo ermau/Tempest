@@ -27,92 +27,96 @@
 using System;
 using System.Linq;
 using System.Text;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using SetUp = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestInitializeAttribute;
+#endif
 
 namespace Tempest.Tests
 {
 	public abstract class ReaderWriterPairTests
 	{
-		private IValueWriter writer;
-		private IValueReader reader;
-
-		protected void Setup (IValueWriter writer, IValueReader reader)
+		protected abstract IValueWriter GetWriter();
+		protected abstract IValueReader GetReader (IValueWriter writer);
+		protected virtual IValueReader GetReader()
 		{
-			if (writer == null)
-				throw new ArgumentNullException ("writer");
-			if (reader == null)
-				throw new ArgumentNullException ("reader");
-
-			this.writer = writer;
-			this.reader = reader;
+			return GetReader (GetWriter());
 		}
 
 		[Test]
 		public void ReadStringNullEncoding()
 		{
-			Assert.Throws<ArgumentNullException> (() => this.reader.ReadString (null));
+			Assert.Throws<ArgumentNullException> (() => GetReader().ReadString (null));
 		}
 
 		[Test]
 		public void ReadBytesInvalidCount()
 		{
-			Assert.Throws<ArgumentOutOfRangeException> (() => this.reader.ReadBytes (-1));
+			Assert.Throws<ArgumentOutOfRangeException> (() => GetReader().ReadBytes (-1));
 		}
 
 		[Test]
 		public void WriteStringNullEncoding()
 		{
-			Assert.Throws<ArgumentNullException> (() => this.writer.WriteString (null, null));
+			Assert.Throws<ArgumentNullException> (() => GetWriter().WriteString (null, null));
 		}
 
 		[Test]
 		public void WriteBytesNull()
 		{
-			Assert.Throws<ArgumentNullException> (() => this.writer.WriteBytes (null));
-			Assert.Throws<ArgumentNullException> (() => this.writer.WriteBytes (null, 0, 0));
+			Assert.Throws<ArgumentNullException> (() => GetWriter().WriteBytes (null));
+			Assert.Throws<ArgumentNullException> (() => GetWriter().WriteBytes (null, 0, 0));
 		}
 
 		[Test]
 		public void WriteBytesInvalidRange()
 		{
 			byte[] data = new byte[5];
-			Assert.Throws<ArgumentOutOfRangeException> (() => this.writer.WriteBytes (data, 1, 5));
-			Assert.Throws<ArgumentOutOfRangeException> (() => this.writer.WriteBytes (data, 0, 6));
-			Assert.Throws<ArgumentOutOfRangeException> (() => this.writer.WriteBytes (data, 5, 0));
+			Assert.Throws<ArgumentOutOfRangeException> (() => GetWriter().WriteBytes (data, 1, 5));
+			Assert.Throws<ArgumentOutOfRangeException> (() => GetWriter().WriteBytes (data, 0, 6));
+			Assert.Throws<ArgumentOutOfRangeException> (() => GetWriter().WriteBytes (data, 5, 0));
 		}
 
 		[Test]
 		public void ReadWriteBool()
 		{
-			this.writer.WriteBool (true);
-			this.writer.WriteBool (false);
-			this.writer.Flush();
+			IValueWriter writer = GetWriter();
+			writer.WriteBool (true);
+			writer.WriteBool (false);
+			writer.Flush();
 
-			Assert.IsTrue (this.reader.ReadBool());
-			Assert.IsFalse (this.reader.ReadBool());
+			IValueReader reader = GetReader (writer);
+			Assert.IsTrue (reader.ReadBool());
+			Assert.IsFalse (reader.ReadBool());
 		}
 
 		[Test]
 		public void ReadWriteByte ()
 		{
-			this.writer.WriteByte (Byte.MaxValue);
-			this.writer.WriteByte (128);
-			this.writer.WriteByte (Byte.MinValue);
-			this.writer.Flush();
+			IValueWriter writer = GetWriter();
+			writer.WriteByte (Byte.MaxValue);
+			writer.WriteByte (128);
+			writer.WriteByte (Byte.MinValue);
+			writer.Flush();
 
-			Assert.AreEqual (Byte.MaxValue, this.reader.ReadByte());
-			Assert.AreEqual (128, this.reader.ReadByte());
-			Assert.AreEqual (Byte.MinValue, this.reader.ReadByte());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (Byte.MaxValue, reader.ReadByte());
+			Assert.AreEqual (128, reader.ReadByte());
+			Assert.AreEqual (Byte.MinValue, reader.ReadByte());
 		}
 
 		[Test]
 		public void ReadWriteBytes()
 		{
+			IValueWriter writer = GetWriter();
 			byte[] data = new byte[] { 0x4, 0x8, 0xF, 0x10, 0x17, 0x2A };
-			this.writer.WriteBytes (data);
-			this.writer.Flush();
+			writer.WriteBytes (data);
+			writer.Flush();
 
-			data = this.reader.ReadBytes();
+			data = GetReader (writer).ReadBytes();
 			Assert.AreEqual (6, data.Length);
 			Assert.AreEqual (0x4, data[0]);
 			Assert.AreEqual (0x8, data[1]);
@@ -125,11 +129,12 @@ namespace Tempest.Tests
 		[Test]
 		public void ReadWriteBytesSubset()
 		{
+			IValueWriter writer = GetWriter();
 			byte[] data = new byte[] { 0x4, 0x8, 0xF, 0x10, 0x17, 0x2A };
-			this.writer.WriteBytes (data, 2, 3);
-			this.writer.Flush();
+			writer.WriteBytes (data, 2, 3);
+			writer.Flush();
 
-			data = this.reader.ReadBytes();
+			data = GetReader (writer).ReadBytes();
 			Assert.AreEqual (3, data.Length);
 			Assert.AreEqual (0xF, data[0]);
 			Assert.AreEqual (0x10, data[1]);
@@ -139,13 +144,14 @@ namespace Tempest.Tests
 		[Test]
 		public void ReadCountWriteByte()
 		{
+			IValueWriter writer = GetWriter();
 			byte[] data = new byte[] { 0x4, 0x8, 0xF, 0x10, 0x17, 0x2A };
 			for (int i = 0; i < data.Length; ++i)
-				this.writer.WriteByte (data[i]);
+				writer.WriteByte (data[i]);
 
-			this.writer.Flush();
+			writer.Flush();
 
-			data = this.reader.ReadBytes (5);
+			data = GetReader (writer).ReadBytes (5);
 			Assert.AreEqual (5, data.Length);
 			Assert.AreEqual (0x4, data[0]);
 			Assert.AreEqual (0x8, data[1]);
@@ -157,155 +163,193 @@ namespace Tempest.Tests
 		[Test]
 		public void ReadWriteSByte()
 		{
-			this.writer.WriteSByte (SByte.MaxValue);
-			this.writer.WriteSByte (0);
-			this.writer.WriteSByte (SByte.MinValue);
-			this.writer.Flush();
+			IValueWriter writer = GetWriter();
+			writer.WriteSByte (SByte.MaxValue);
+			writer.WriteSByte (0);
+			writer.WriteSByte (SByte.MinValue);
+			writer.Flush();
 
-			Assert.AreEqual (SByte.MaxValue, this.reader.ReadSByte());
-			Assert.AreEqual (0, this.reader.ReadSByte());
-			Assert.AreEqual (SByte.MinValue, this.reader.ReadSByte());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (SByte.MaxValue, reader.ReadSByte());
+			Assert.AreEqual (0, reader.ReadSByte());
+			Assert.AreEqual (SByte.MinValue, reader.ReadSByte());
 		}
 
 		[Test]
 		public void ReadWriteInt16()
 		{
-			this.writer.WriteInt16 (Int16.MaxValue);
-			this.writer.WriteInt16 (0);
-			this.writer.WriteInt16 (Int16.MinValue);
-			this.writer.Flush();
+			IValueWriter writer = GetWriter();
+			writer.WriteInt16 (Int16.MaxValue);
+			writer.WriteInt16 (0);
+			writer.WriteInt16 (Int16.MinValue);
+			writer.Flush();
 
-			Assert.AreEqual (Int16.MaxValue, this.reader.ReadInt16());
-			Assert.AreEqual (0, this.reader.ReadInt16());
-			Assert.AreEqual (Int16.MinValue, this.reader.ReadInt16());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (Int16.MaxValue, reader.ReadInt16());
+			Assert.AreEqual (0, reader.ReadInt16());
+			Assert.AreEqual (Int16.MinValue, reader.ReadInt16());
 		}
 
 		[Test]
 		public void ReadWriteUInt16()
 		{
-			this.writer.WriteUInt16 (UInt16.MaxValue);
-			this.writer.WriteUInt16 (UInt16.MaxValue / 2);
-			this.writer.WriteUInt16 (UInt16.MinValue);
-			this.writer.Flush();
+			IValueWriter writer = GetWriter();
+			writer.WriteUInt16 (UInt16.MaxValue);
+			writer.WriteUInt16 (UInt16.MaxValue / 2);
+			writer.WriteUInt16 (UInt16.MinValue);
+			writer.Flush();
 
-			Assert.AreEqual (UInt16.MaxValue, this.reader.ReadUInt16());
-			Assert.AreEqual (UInt16.MaxValue / 2, this.reader.ReadUInt16());
-			Assert.AreEqual (UInt16.MinValue, this.reader.ReadUInt16());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (UInt16.MaxValue, reader.ReadUInt16());
+			Assert.AreEqual (UInt16.MaxValue / 2, reader.ReadUInt16());
+			Assert.AreEqual (UInt16.MinValue, reader.ReadUInt16());
 		}
 
 		[Test]
 		public void ReadWriteInt32()
 		{
-			this.writer.WriteInt32 (Int32.MaxValue);
-			this.writer.WriteInt32 (0);
-			this.writer.WriteInt32 (Int32.MinValue);
-			this.writer.Flush();
+			IValueWriter writer = GetWriter();
+			writer.WriteInt32 (Int32.MaxValue);
+			writer.WriteInt32 (0);
+			writer.WriteInt32 (Int32.MinValue);
+			writer.Flush();
 
-			Assert.AreEqual (Int32.MaxValue, this.reader.ReadInt32());
-			Assert.AreEqual (0, this.reader.ReadInt32());
-			Assert.AreEqual (Int32.MinValue, this.reader.ReadInt32());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (Int32.MaxValue, reader.ReadInt32());
+			Assert.AreEqual (0, reader.ReadInt32());
+			Assert.AreEqual (Int32.MinValue, reader.ReadInt32());
 		}
 
 		[Test]
 		public void ReadWriteUInt32()
 		{
-			this.writer.WriteUInt32 (UInt32.MaxValue);
-			this.writer.WriteUInt32 (UInt32.MaxValue / 2);
-			this.writer.WriteUInt32 (UInt32.MinValue);
-			this.writer.Flush ();
+			IValueWriter writer = GetWriter();
+			writer.WriteUInt32 (UInt32.MaxValue);
+			writer.WriteUInt32 (UInt32.MaxValue / 2);
+			writer.WriteUInt32 (UInt32.MinValue);
+			writer.Flush ();
 
-			Assert.AreEqual (UInt32.MaxValue, this.reader.ReadUInt32());
-			Assert.AreEqual (UInt32.MaxValue / 2, this.reader.ReadUInt32());			
-			Assert.AreEqual (UInt32.MinValue, this.reader.ReadUInt32());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (UInt32.MaxValue, reader.ReadUInt32());
+			Assert.AreEqual (UInt32.MaxValue / 2, reader.ReadUInt32());			
+			Assert.AreEqual (UInt32.MinValue, reader.ReadUInt32());
 		}
 
 		[Test]
 		public void ReadWriteInt64()
 		{
-			this.writer.WriteInt64 (Int64.MaxValue);
-			this.writer.WriteInt64 (0);
-			this.writer.WriteInt64 (Int64.MinValue);
-			this.writer.Flush ();
+			IValueWriter writer = GetWriter();
+			writer.WriteInt64 (Int64.MaxValue);
+			writer.WriteInt64 (0);
+			writer.WriteInt64 (Int64.MinValue);
+			writer.Flush ();
 
-			Assert.AreEqual (Int64.MaxValue, this.reader.ReadInt64());
-			Assert.AreEqual (0, this.reader.ReadInt64());		
-			Assert.AreEqual (Int64.MinValue, this.reader.ReadInt64());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (Int64.MaxValue, reader.ReadInt64());
+			Assert.AreEqual (0, reader.ReadInt64());		
+			Assert.AreEqual (Int64.MinValue, reader.ReadInt64());
 		}
 
 		[Test]
 		public void ReadWriteUInt64()
 		{
-			this.writer.WriteUInt64 (UInt64.MaxValue);
-			this.writer.WriteUInt64 (UInt64.MaxValue / 2);
-			this.writer.WriteUInt64 (UInt64.MinValue);
-			this.writer.Flush();
+			IValueWriter writer = GetWriter();
+			writer.WriteUInt64 (UInt64.MaxValue);
+			writer.WriteUInt64 (UInt64.MaxValue / 2);
+			writer.WriteUInt64 (UInt64.MinValue);
+			writer.Flush();
 
-			Assert.AreEqual (UInt64.MaxValue, this.reader.ReadUInt64());
-			Assert.AreEqual (UInt64.MaxValue / 2, this.reader.ReadUInt64());
-			Assert.AreEqual (UInt64.MinValue, this.reader.ReadUInt64());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (UInt64.MaxValue, reader.ReadUInt64());
+			Assert.AreEqual (UInt64.MaxValue / 2, reader.ReadUInt64());
+			Assert.AreEqual (UInt64.MinValue, reader.ReadUInt64());
 		}
+
 
 		[Test]
 		public void ReadWriteString()
 		{
 			const string value = "The lazy fox..\n oh forget it.\0";
 
-			this.writer.WriteString (Encoding.UTF8, null);
-			this.writer.WriteString (Encoding.UTF8, String.Empty);
-			this.writer.WriteString (Encoding.UTF8, value);
-			#if !SILVERLIGHT
-			this.writer.WriteString (Encoding.UTF32, value);
-			this.writer.WriteString (Encoding.ASCII, value);
+			IValueWriter writer = GetWriter();
+			writer.WriteString (Encoding.UTF8, null);
+			writer.WriteString (Encoding.UTF8, String.Empty);
+			writer.WriteString (Encoding.UTF8, value);
+
+			#if !SILVERLIGHT && !NETFX_CORE
+			writer.WriteString (Encoding.UTF32, value);
+			writer.WriteString (Encoding.ASCII, value);
 			#endif
 
-			this.writer.Flush ();
+			writer.Flush ();
 
-			Assert.AreEqual (null, this.reader.ReadString (Encoding.UTF8));
-			Assert.AreEqual (String.Empty, this.reader.ReadString (Encoding.UTF8));
-			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF8));
-			#if !SILVERLIGHT
-			Assert.AreEqual (value, this.reader.ReadString (Encoding.UTF32));
-			Assert.AreEqual (value, this.reader.ReadString (Encoding.ASCII));
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (null, reader.ReadString (Encoding.UTF8));
+			Assert.AreEqual (String.Empty, reader.ReadString (Encoding.UTF8));
+			Assert.AreEqual (value, reader.ReadString (Encoding.UTF8));
+
+			#if !SILVERLIGHT && !NETFX_CORE
+			Assert.AreEqual (value, reader.ReadString (Encoding.UTF32));
+			Assert.AreEqual (value, reader.ReadString (Encoding.ASCII));
 			#endif
+		}
+
+		[Test]
+		public void ReadWriteLongString()
+		{
+			string longString = TestHelpers.GetLongString();
+
+			IValueWriter writer = GetWriter();
+			writer.WriteString (Encoding.UTF8, longString);
+			writer.Flush();
+
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (longString, reader.ReadString (Encoding.UTF8));
 		}
 
 		[Test]
 		public void ReadWriteDecimal()
 		{
-			this.writer.WriteDecimal (Decimal.MaxValue);
-			this.writer.WriteDecimal (Decimal.MaxValue / 2);
-			this.writer.WriteDecimal (Decimal.MinValue);
-			this.writer.Flush();
+			IValueWriter writer = GetWriter();
+			writer.WriteDecimal (Decimal.MaxValue);
+			writer.WriteDecimal (Decimal.MaxValue / 2);
+			writer.WriteDecimal (Decimal.MinValue);
+			writer.Flush();
 
-			Assert.AreEqual (Decimal.MaxValue, this.reader.ReadDecimal());
-			Assert.AreEqual (Decimal.MaxValue / 2, this.reader.ReadDecimal());
-			Assert.AreEqual (Decimal.MinValue, this.reader.ReadDecimal());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (Decimal.MaxValue, reader.ReadDecimal());
+			Assert.AreEqual (Decimal.MaxValue / 2, reader.ReadDecimal());
+			Assert.AreEqual (Decimal.MinValue, reader.ReadDecimal());
 		}
 
 		[Test]
 		public void ReadWriteDouble()
 		{
-			this.writer.WriteDouble (Double.MaxValue);
-			this.writer.WriteDouble (Double.MaxValue / 2);
-			this.writer.WriteDouble (Double.MinValue);
-			this.writer.Flush ();
+			IValueWriter writer = GetWriter();
+			writer.WriteDouble (Double.MaxValue);
+			writer.WriteDouble (Double.MaxValue / 2);
+			writer.WriteDouble (Double.MinValue);
+			writer.Flush ();
 
-			Assert.AreEqual (Double.MaxValue, this.reader.ReadDouble ());
-			Assert.AreEqual (Double.MaxValue / 2, this.reader.ReadDouble ());
-			Assert.AreEqual (Double.MinValue, this.reader.ReadDouble ());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (Double.MaxValue, reader.ReadDouble ());
+			Assert.AreEqual (Double.MaxValue / 2, reader.ReadDouble ());
+			Assert.AreEqual (Double.MinValue, reader.ReadDouble ());
 		}
 
 		[Test]
 		public void ReadWriteSingle ()
 		{
-			this.writer.WriteSingle (Single.MaxValue);
-			this.writer.WriteSingle (Single.MaxValue / 2);
-			this.writer.WriteSingle (Single.MinValue);
-			this.writer.Flush ();
+			IValueWriter writer = GetWriter();
+			writer.WriteSingle (Single.MaxValue);
+			writer.WriteSingle (Single.MaxValue / 2);
+			writer.WriteSingle (Single.MinValue);
+			writer.Flush ();
 
-			Assert.AreEqual (Single.MaxValue, this.reader.ReadSingle ());
-			Assert.AreEqual (Single.MaxValue / 2, this.reader.ReadSingle ());
-			Assert.AreEqual (Single.MinValue, this.reader.ReadSingle ());
+			IValueReader reader = GetReader (writer);
+			Assert.AreEqual (Single.MaxValue, reader.ReadSingle ());
+			Assert.AreEqual (Single.MaxValue / 2, reader.ReadSingle ());
+			Assert.AreEqual (Single.MinValue, reader.ReadSingle ());
 		}
 	}
 }

@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2010-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -39,12 +39,12 @@ namespace Tempest
 		event EventHandler<ClientConnectionEventArgs> Connected;
 
 		/// <summary>
-		/// Attempts to asynchronously connect to the <paramref name="endpoint"/> for <paramref name="messageTypes"/>.
+		/// Attempts to asynchronously connect to the <paramref name="endPoint"/> for <paramref name="messageTypes"/>.
 		/// </summary>
-		/// <param name="endpoint">The endpoint to connect to.</param>
+		/// <param name="endPoint">The endpoint to connect to.</param>
 		/// <param name="messageTypes">The type of messages to connect for.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="endpoint"/> is <c>null</c>.</exception>
-		Task<ClientConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes);
+		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
+		Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes);
 	}
 
 	/// <summary>

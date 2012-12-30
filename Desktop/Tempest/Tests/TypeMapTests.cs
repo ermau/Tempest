@@ -44,7 +44,8 @@ namespace Tempest.Tests
 		[Test]
 		public void CtorNull()
 		{
-			Assert.Throws<ArgumentNullException> (() => new TypeMap (null));
+			Assert.Throws<ArgumentNullException> (() => new TypeMap ((IDictionary<Type, ushort>)null));
+			Assert.Throws<ArgumentNullException> (() => new TypeMap ((Dictionary<Type, ushort>)null));
 		}
 
 		[Test]

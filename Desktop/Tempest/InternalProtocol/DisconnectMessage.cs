@@ -31,7 +31,7 @@ namespace Tempest.InternalProtocol
 	/// <summary>
 	/// Internal Tempest protocol disconnect with reason message.
 	/// </summary>
-	public class DisconnectMessage
+	public sealed class DisconnectMessage
 		: TempestMessage
 	{
 		/// <summary>
@@ -60,16 +60,26 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
+		public override bool MustBeReliable
+		{
+			get { return false; }
+		}
+
+		public override bool PreferReliable
+		{
+			get { return true; }
+		}
+
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
-			writer.WriteInt32 ((int)Reason);
+			writer.WriteByte ((byte)Reason);
 			if (Reason == ConnectionResult.Custom)
 				writer.WriteString (CustomReason);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
-			Reason = (ConnectionResult)reader.ReadInt32();
+			Reason = (ConnectionResult)reader.ReadByte();
 			if (Reason == ConnectionResult.Custom)
 				CustomReason = reader.ReadString();
 		}

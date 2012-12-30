@@ -41,10 +41,24 @@ namespace Tempest
 		}
 
 		public TypeMap (IDictionary<Type, ushort> mapping)
+			: this (new Dictionary<Type, ushort> (mapping))
 		{
-			this.map = new Dictionary<Type, ushort> (mapping);
-			this.newMappings = new Dictionary<Type, ushort> (mapping);
-			this.reverseMap = new Dictionary<ushort, Type> (mapping.ToDictionary (kvp => kvp.Value, kvp => kvp.Key));
+		}
+
+		internal TypeMap (Dictionary<Type, ushort> mapping)
+		{
+			if (mapping == null)
+				throw new ArgumentNullException ("mapping");
+
+			this.map = mapping;
+
+			this.newMappings = new Dictionary<Type, ushort> (mapping.Count);
+			this.reverseMap = new Dictionary<ushort, Type> (mapping.Count);
+			foreach (var kvp in mapping)
+			{
+				this.newMappings.Add (kvp.Key, kvp.Value);
+				this.reverseMap.Add (kvp.Value, kvp.Key);
+			}
 		}
 
 		/// <summary>

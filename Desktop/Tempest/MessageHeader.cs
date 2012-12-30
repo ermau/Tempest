@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2010-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,12 +30,50 @@ namespace Tempest
 {
 	public enum HeaderState
 	{
+		/// <summary>
+		/// Default state
+		/// </summary>
+		Empty = 0,
+
+		/// <summary>
+		/// The protocol identifier
+		/// </summary>
 		Protocol = 1,
-		Type = 2,
-		Length = 3,
-		IV = 4,
-		MessageId = 5,
-		TypeMap = 6
+
+		/// <summary>
+		/// The connection ID
+		/// </summary>
+		CID = 2,
+
+		/// <summary>
+		/// The message type
+		/// </summary>
+		Type = 3,
+
+		/// <summary>
+		/// The message length
+		/// </summary>
+		Length = 4,
+
+		/// <summary>
+		/// The encryption initialization vector
+		/// </summary>
+		IV = 5,
+
+		/// <summary>
+		/// The message ID
+		/// </summary>
+		MessageId = 6,
+
+		/// <summary>
+		/// The message type map
+		/// </summary>
+		TypeMap = 7,
+
+		/// <summary>
+		/// The header has been completely read.
+		/// </summary>
+		Complete = 8
 	}
 
 	public class MessageHeader
@@ -113,6 +151,12 @@ namespace Tempest
 		}
 
 		public int MessageId
+		{
+			get;
+			internal set;
+		}
+
+		public int ConnectionId
 		{
 			get;
 			internal set;

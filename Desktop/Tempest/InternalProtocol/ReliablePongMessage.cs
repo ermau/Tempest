@@ -1,10 +1,10 @@
 ﻿//
-// ConnectedMessage.cs
+// ReliablePongMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,28 +26,23 @@
 
 namespace Tempest.InternalProtocol
 {
-	public sealed class ConnectedMessage
+	/// <summary>
+	/// Internal Tempest protocol pong message.
+	/// </summary>
+	public sealed class ReliablePongMessage
 		: TempestMessage
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
+		public ReliablePongMessage()
+			: base (TempestMessageType.ReliablePong)
 		{
-		}
-
-		public int ConnectionId
-		{
-			get;
-			set;
-		}
-
-		public override void WritePayload (ISerializationContext context, IValueWriter writer)
-		{
-			writer.WriteInt32 (ConnectionId);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
-			ConnectionId = reader.ReadInt32();
+		}
+
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
+		{
 		}
 	}
 }

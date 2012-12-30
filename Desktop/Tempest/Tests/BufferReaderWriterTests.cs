@@ -37,11 +37,15 @@ namespace Tempest.Tests
 	public class BufferReaderWriterTests
 		: ReaderWriterPairTests
 	{
-		[SetUp]
-		public void SetUp()
+		protected override IValueWriter GetWriter()
 		{
-			byte[] buffer = new byte[20480];
-			Setup (new BufferValueWriter (buffer), new BufferValueReader (buffer));
+			return new BufferValueWriter (new byte[20480]);
+		}
+
+		protected override IValueReader GetReader (IValueWriter writer)
+		{
+			BufferValueWriter bufferWriter = (BufferValueWriter)writer;
+			return new BufferValueReader (bufferWriter.Buffer);
 		}
 
 		[Test]

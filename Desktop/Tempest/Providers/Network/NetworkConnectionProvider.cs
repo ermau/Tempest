@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2010-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -174,12 +174,6 @@ namespace Tempest.Providers.Network
 
 		public event EventHandler PingFrequencyChanged;
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
-		
-		public event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived
-		{
-			add { throw new NotSupportedException(); }
-			remove { throw new NotSupportedException(); }
-		}
 
 		/// <summary>
 		/// Gets the maximum number of connections allowed on this provider.
@@ -196,11 +190,6 @@ namespace Tempest.Providers.Network
 		public IPEndPoint EndPoint
 		{
 			get { return this.endPoint; }
-		}
-
-		public bool SupportsConnectionless
-		{
-			get { return false; }
 		}
 
 		public bool IsRunning
@@ -242,10 +231,11 @@ namespace Tempest.Providers.Network
 
 		public void Start (MessageTypes types)
 		{
-			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Entering", "NetworkConnectionProvider Start");
+			string category = "NetworkConnectionProvider Start";
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Entering", category);
 			if (this.running)
 			{
-				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting (already running)", "NetworkConnectionProvider Start");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting (already running)", category);
 				return;
 			}
 
@@ -255,35 +245,25 @@ namespace Tempest.Providers.Network
 			this.pingTimer = new Timer (PingFrequency);
 			this.pingTimer.Start();
 
-			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Waiting for keys..", "NetworkConnectionProvider Start");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Waiting for keys..", category);
 			this.keyWait.WaitOne();
-			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Keys ready", "NetworkConnectionProvider Start");
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Keys ready", category);
 			
 			if ((types & MessageTypes.Reliable) == MessageTypes.Reliable)
 			{
-				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Setting up reliable socket", "NetworkConnectionProvider Start");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Setting up reliable socket", category);
 				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 				this.reliableSocket.Bind (this.endPoint);
-				this.reliableSocket.Listen ((int)SocketOptionName.MaxConnections);
+				this.reliableSocket.Listen (MaxConnections);
 				
-				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Reliable socket ready, accepting", "NetworkConnectionProvider Start");
+				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Reliable socket ready, accepting", category);
 				BeginAccepting (null);
 			}
 
 			if ((types & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
-			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting", "NetworkConnectionProvider Start");
-		}
-
-		public void SendConnectionlessMessage (Message message, EndPoint endPoint)
-		{
-			if (message == null)
-				throw new ArgumentNullException ("message");
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
-			
-			throw new NotSupportedException();
+			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting", category);
 		}
 
 		public void Stop()
@@ -369,6 +349,7 @@ namespace Tempest.Providers.Network
 		private readonly IEnumerable<Protocol> protocols;
 		private IPEndPoint endPoint;
 
+		private int nextConnectionId;
 		private readonly List<NetworkServerConnection> serverConnections;
 		private readonly List<NetworkServerConnection> pendingConnections = new List<NetworkServerConnection>();
 		
@@ -412,6 +393,34 @@ namespace Tempest.Providers.Network
 
 			    	BeginAccepting (null);
 			    }
+			}
+		}
+
+		internal int GetConnectionId()
+		{
+			while (true)
+			{
+				int id;
+				do
+				{
+					id = Interlocked.Increment (ref this.nextConnectionId);
+				} while (id == 0);
+
+				bool found = false;
+				lock (this.serverConnections)
+				{
+					for (int i = 0; i < this.serverConnections.Count; i++)
+					{
+						if (this.serverConnections[i].ConnectionId == id)
+						{
+							found = true;
+							break;
+						}
+					}
+				}
+
+				if (!found)
+					return id;
 			}
 		}
 

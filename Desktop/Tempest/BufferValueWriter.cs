@@ -415,7 +415,7 @@ namespace Tempest
 
 			if (value == null)
 			{
-				Write7BitEncodedInt (-1);
+				this.Write7BitEncodedInt (-1);
 				return;
 			}
 
@@ -433,7 +433,7 @@ namespace Tempest
 				this.buffer = newbuffer;
 			}
 
-			Write7BitEncodedInt (data.Length);
+			this.Write7BitEncodedInt (data.Length);
 			Buff.BlockCopy (data, 0, this.buffer, this.position, data.Length);
 			this.position += data.Length;
 		}
@@ -470,18 +470,6 @@ namespace Tempest
 
 		private byte[] buffer;
 		private int position;
-
-		private void Write7BitEncodedInt (int value)
-		{
-			uint v = (uint) value;
-			while (v >= 128)
-			{
-				WriteByte ((byte) (v | 128));
-				v >>= 7;
-			}
-
-			WriteByte ((byte) v);
-		}
 
 		private void EnsureAdditionalCapacity (int additionalCapacity)
 		{

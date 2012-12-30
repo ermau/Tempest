@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,14 +36,14 @@ namespace Tempest.InternalProtocol
 		: ushort
 	{
 		/// <summary>
-		/// Ping.
+		/// Ping over reliable connections.
 		/// </summary>
-		Ping = 1,
+		ReliablePing = 1,
 
 		/// <summary>
-		/// Pong.
+		/// Pong over reliable connections.
 		/// </summary>
-		Pong = 2,
+		ReliablePong = 2,
 
 		/// <summary>
 		/// Disconnect with reason.
@@ -69,6 +69,21 @@ namespace Tempest.InternalProtocol
 		/// Client finalize connection
 		/// </summary>
 		FinalConnect = 7,
+		
+		/// <summary>
+		/// Ping over unreliable connections.
+		/// </summary>
+		UnreliablePing = 8,
+
+		/// <summary>
+		/// Pong over unreliable connections.
+		/// </summary>
+		UnreliablePong = 9,
+
+		/// <summary>
+		/// Acknowledge message received.
+		/// </summary>
+		Acknowledge = 10,
 	}
 
 	/// <summary>
@@ -82,18 +97,21 @@ namespace Tempest.InternalProtocol
 		{
 		}
 
-		internal static readonly Protocol InternalProtocol = new Protocol (0) { id = 1 };
+		internal static readonly Protocol InternalProtocol = new Protocol (0) { id = 1 }; // Error check bypass hack
 		static TempestMessage()
 		{
 			InternalProtocol.Register (new []
 			{
-				new KeyValuePair<Type, Func<Message>> (typeof(PingMessage), () => new PingMessage()),
-				new KeyValuePair<Type, Func<Message>> (typeof(PongMessage), () => new PongMessage()), 
-				new KeyValuePair<Type, Func<Message>> (typeof(DisconnectMessage), () => new DisconnectMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof(ReliablePingMessage), () => new ReliablePingMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(ReliablePongMessage), () => new ReliablePongMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(UnreliablePingMessage), () => new UnreliablePingMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(UnreliablePongMessage), () => new UnreliablePongMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(DisconnectMessage), () => new DisconnectMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(ConnectMessage), () => new ConnectMessage()),
-				new KeyValuePair<Type, Func<Message>> (typeof(AcknowledgeConnectMessage), () => new AcknowledgeConnectMessage()), 
-				new KeyValuePair<Type, Func<Message>> (typeof(FinalConnectMessage), () => new FinalConnectMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof(AcknowledgeConnectMessage), () => new AcknowledgeConnectMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(FinalConnectMessage), () => new FinalConnectMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(ConnectedMessage), () => new ConnectedMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(AcknowledgeMessage), () => new AcknowledgeMessage()), 
 			});
 		}
 	}

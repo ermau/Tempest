@@ -1,10 +1,10 @@
 ﻿//
-// ConnectedMessage.cs
+// IConnectionlessMessenger.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,30 +24,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tempest.InternalProtocol
+using System;
+using System.Net;
+
+namespace Tempest
 {
-	public sealed class ConnectedMessage
-		: TempestMessage
+	public interface IConnectionlessMessenger
+		: IListener
 	{
-		public ConnectedMessage()
-			: base (TempestMessageType.Connected)
-		{
-		}
+		/// <summary>
+		/// A connectionless message was received.
+		/// </summary>
+		event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
 
-		public int ConnectionId
-		{
-			get;
-			set;
-		}
-
-		public override void WritePayload (ISerializationContext context, IValueWriter writer)
-		{
-			writer.WriteInt32 (ConnectionId);
-		}
-
-		public override void ReadPayload (ISerializationContext context, IValueReader reader)
-		{
-			ConnectionId = reader.ReadInt32();
-		}
+		/// <summary>
+		/// Sends a connectionless <paramref name="message"/> to <paramref name="endPoint"/>.
+		/// </summary>
+		/// <param name="message"></param>
+		/// <param name="endPoint"></param>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="endPoint"/> is <c>null</c>.</exception>
+		void SendConnectionlessMessage (Message message, EndPoint endPoint);
 	}
 }

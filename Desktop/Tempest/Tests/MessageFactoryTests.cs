@@ -71,6 +71,16 @@ namespace Tempest.Tests
 		}
 
 		[Test]
+		public void DiscoverFromAssymblyOf()
+		{
+			protocol.DiscoverFromAssemblyOf<MessageFactoryTests>();
+
+			Message m = protocol.Create (1);
+			Assert.IsNotNull (m);
+			Assert.That (m, Is.TypeOf<MockMessage>());
+		}
+
+		[Test]
 		public void DiscoverAssemblyNothing()
 		{
 			protocol.Discover (typeof(string).Assembly);

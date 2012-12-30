@@ -31,7 +31,7 @@ namespace Tempest
 	{
 		byte[] PublicSignature { get; }
 
-		void Serialize (IValueWriter writer, IPublicKeyCrypto crypto);
+		void Serialize (IValueWriter writer, IPublicKeyCrypto crypto, bool includePrivate);
 		void Deserialize (IValueReader reader, IPublicKeyCrypto crypto);
 	}
 }

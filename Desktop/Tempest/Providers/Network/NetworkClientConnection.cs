@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2010-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ using Tempest.InternalProtocol;
 namespace Tempest.Providers.Network
 {
 	public sealed class NetworkClientConnection
-		: NetworkConnection, IClientConnection
+		: NetworkConnection, IClientConnection, IAuthenticatedConnection
 	{
 		public NetworkClientConnection (Protocol protocol)
 			: this (new [] { protocol })
@@ -87,13 +87,14 @@ namespace Tempest.Providers.Network
 			get { return this.serverAuthenticationKey; }
 		}
 
-		public Task<ClientConnectionResult> ConnectAsync (EndPoint endpoint, MessageTypes messageTypes)
+		public Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes)
 		{
 			int c = GetNextCallId();
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+			string category = String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endPoint, messageTypes, this.typeName, connectionId, c);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", category);
 
-			if (endpoint == null)
-				throw new ArgumentNullException ("endpoint");
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
@@ -101,10 +102,12 @@ namespace Tempest.Providers.Network
 			
 			ThreadPool.QueueUserWorkItem (s =>
 			{
+				EndPoint ep = (EndPoint)s;
+
 				SocketAsyncEventArgs args;
 				bool connected;
 
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), category);
 
 				while (this.pendingAsync > 0 || Interlocked.CompareExchange (ref this.connectCompletion, ntcs, null) != null)
 					Thread.Sleep (0);
@@ -114,27 +117,27 @@ namespace Tempest.Providers.Network
 					if (IsConnected)
 						throw new InvalidOperationException ("Already connected");
 
-					RemoteEndPoint = endpoint;
+					RemoteEndPoint = ep;
 
 					args = new SocketAsyncEventArgs();
-					args.RemoteEndPoint = endpoint;
+					args.RemoteEndPoint = ep;
 					args.Completed += ConnectCompleted;
 
 					this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 					int p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), category);
 					connected = !this.reliableSocket.ConnectAsync (args);
 				}
 
 				if (connected)
 				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Connected synchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Connected synchronously", category);
 					ConnectCompleted (this.reliableSocket, args);
 				}
 				else
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endpoint, messageTypes, this.typeName, connectionId, c));
-			});
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", category);
+			}, endPoint);
 
 			return ntcs.Task;
 		}
@@ -142,8 +145,8 @@ namespace Tempest.Providers.Network
 		private int pingFrequency;
 		private Tempest.Timer activityTimer;
 
-		private IPublicKeyCrypto serverAuthentication;
-		private IAsymmetricKey serverAuthenticationKey;
+		internal IPublicKeyCrypto serverAuthentication;
+		internal IAsymmetricKey serverAuthenticationKey;
 
 		private IPublicKeyCrypto serverEncryption;
 		private IAsymmetricKey serverEncryptionKey;
@@ -178,6 +181,8 @@ namespace Tempest.Providers.Network
 		{
 			int c = GetNextCallId();
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
+
+			this.serializer = new ClientMessageSerializer (this, Protocols);
 
 			int p;
 
@@ -244,8 +249,8 @@ namespace Tempest.Providers.Network
 		{
 			switch (e.Message.MessageType)
 			{
-				case (ushort)TempestMessageType.Ping:
-					var ping = (PingMessage)e.Message;
+				case (ushort)TempestMessageType.ReliablePing:
+					var ping = (ReliablePingMessage)e.Message;
 					if (this.pingFrequency == 0 || this.activityTimer == null)
 					{
 						if (this.activityTimer != null)
@@ -261,7 +266,7 @@ namespace Tempest.Providers.Network
 					else if (ping.Interval != this.pingFrequency)
 						this.activityTimer.Interval = ping.Interval;
 					
-					this.pingFrequency = ((PingMessage)e.Message).Interval;
+					this.pingFrequency = ((ReliablePingMessage)e.Message).Interval;
 					break;
 
 				case (ushort)TempestMessageType.AcknowledgeConnect:
@@ -278,7 +283,10 @@ namespace Tempest.Providers.Network
 					encryption.GenerateKey();
 					
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
-					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption);
+					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption, includePrivate: false);
+
+					this.serializer.AES = encryption;
+					this.serializer.HMAC = new HMACSHA256 (encryption.Key);
 
 					Send (new FinalConnectMessage
 					{
@@ -287,8 +295,6 @@ namespace Tempest.Providers.Network
 						PublicAuthenticationKey = authKeyWriter.ToArray()
 					});
 
-					this.aes = encryption;
-					this.hmac = new HMACSHA256 (this.aes.Key);
 				    break;
 
 				case (ushort)TempestMessageType.Connected:
@@ -302,37 +308,11 @@ namespace Tempest.Providers.Network
 						tcs.SetResult (new ClientConnectionResult (ConnectionResult.Success, this.serverAuthenticationKey));
 
 					break;
+
+				default:
+					base.OnTempestMessageReceived(e);
+					break;
 			}
-
-			base.OnTempestMessageReceived(e);
-		}
-
-		protected override void SignMessage (string hashAlg, BufferValueWriter writer)
-		{
-			if (this.hmac == null)
-				writer.WriteBytes (this.pkAuthentication.HashAndSign (hashAlg, writer.Buffer, 0, writer.Length));
-			else
-				base.SignMessage (hashAlg, writer);
-		}
-
-		protected override bool VerifyMessage (string hashAlg, Message message, byte[] signature, byte[] data, int moffset, int length)
-		{
-			if (this.hmac == null)
-			{
-				byte[] resized = new byte[length];
-				Buffer.BlockCopy (data, moffset, resized, 0, length);
-
-				var msg = (AcknowledgeConnectMessage)message;
-
-				this.serverAuthentication = this.publicKeyCryptoFactory();
-				this.serverAuthenticationKey = msg.PublicAuthenticationKey;
-				this.serverAuthentication.ImportKey (this.serverAuthenticationKey);
-
-				this.signingHashAlgorithm = msg.SignatureHashAlgorithm;
-				return this.serverAuthentication.VerifySignedHash (this.signingHashAlgorithm, resized, signature);
-			}
-			else
-				return base.VerifyMessage (hashAlg, message, signature, data, moffset, length);
 		}
 
 		protected override void OnDisconnected (DisconnectedEventArgs e)
@@ -374,6 +354,39 @@ namespace Tempest.Providers.Network
 			var handler = this.ConnectionFailed;
 			if (handler != null)
 				handler (this, e);
+		}
+
+		IPublicKeyCrypto IAuthenticatedConnection.LocalCrypto
+		{
+			get { return this.pkAuthentication; }
+		}
+
+		IAsymmetricKey IAuthenticatedConnection.LocalKey
+		{
+			get { return LocalKey; }
+			set { this.authenticationKey = value; }
+		}
+
+		IPublicKeyCrypto IAuthenticatedConnection.RemoteCrypto
+		{
+			get
+			{
+				if (this.serverAuthentication == null)
+					this.serverAuthentication = this.publicKeyCryptoFactory();
+
+				return this.serverAuthentication;
+			}
+		}
+
+		IAsymmetricKey IAuthenticatedConnection.RemoteKey
+		{
+			get { return this.RemoteKey; }
+			set { this.serverAuthenticationKey = value; }
+		}
+
+		IPublicKeyCrypto IAuthenticatedConnection.Encryption
+		{
+			get { return null; }
 		}
 	}
 }

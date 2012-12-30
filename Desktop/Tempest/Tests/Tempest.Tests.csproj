@@ -64,12 +64,15 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProtocolTests.cs" />
     <Compile Include="ReaderWriterPairTests.cs" />
+    <Compile Include="ReliableQueueTests.cs" />
     <Compile Include="ResettingMemoryStream.cs" />
     <Compile Include="RSAAsymmetricKeyTests.cs" />
     <Compile Include="SerializationContextTests.cs" />
     <Compile Include="ServerTests.cs" />
     <Compile Include="StreamReaderWriterTests.cs" />
+    <Compile Include="TestHelpers.cs" />
     <Compile Include="TypeMapTests.cs" />
+    <Compile Include="UdpConnectionProviderTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Tempest.csproj">

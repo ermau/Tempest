@@ -36,7 +36,7 @@ namespace Tempest.Tests
 		[Test]
 		public void PingMessage()
 		{
-			var msg = new PingMessage();
+			var msg = new ReliablePingMessage();
 			msg.Interval = 500;
 
 			var result = msg.AssertLengthMatches();

@@ -39,7 +39,7 @@ using Tempest.InternalProtocol;
 namespace Tempest.Providers.Network
 {
 	public sealed class UdpClientConnection
-		: UdpConnection, IClientConnection, IAuthenticatedConnection
+		: UdpConnection, IClientConnection, IConnectionlessMessenger, IAuthenticatedConnection
 	{
 		public UdpClientConnection (Protocol protocol)
 			: base (new[] { protocol })
@@ -83,6 +83,48 @@ namespace Tempest.Providers.Network
 		}
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
+		public event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
+
+		public void SendConnectionlessMessage (Message message, EndPoint endPoint)
+		{
+			IConnectionlessMessenger messenger = this.listener;
+			if (messenger != null)
+				messenger.SendConnectionlessMessage (message, endPoint);
+		}
+
+		public bool IsRunning
+		{
+			get
+			{
+				IListener l = this.listener;
+				return l != null && l.IsRunning;
+			}
+		}
+
+		public void Start (MessageTypes messageTypes)
+		{
+			this.listener = new UdpClientConnectionlessListener (this, Protocols);
+			this.listener.ConnectionlessMessageReceived += OnListenerConnectionlessMessageReceived ;
+			this.listener.Start (messageTypes);
+		}
+
+		private void OnListenerConnectionlessMessageReceived (object sender, ConnectionlessMessageEventArgs e)
+		{
+			var received = ConnectionlessMessageReceived;
+			if (received != null)
+				received (this, e);
+		}
+
+		public void Stop()
+		{
+			IConnectionlessMessenger messenger = this.listener;
+			if (messenger != null)
+			{
+				messenger.ConnectionlessMessageReceived -= OnListenerConnectionlessMessageReceived;
+				messenger.Stop();
+				messenger.Dispose();
+			}
+		}
 
 		public Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes)
 		{
@@ -155,13 +197,33 @@ namespace Tempest.Providers.Network
 
 		public override void Dispose()
 		{
+			Stop();
 			base.Dispose();
 		}
+
+		private UdpClientConnectionlessListener listener;
 
 		private BufferValueReader reader;
 		private TaskCompletionSource<ClientConnectionResult> connectTcs;
 		private Timer connectTimer;
 		private readonly Func<IPublicKeyCrypto> cryptoFactory;
+
+		private class UdpClientConnectionlessListener
+			: UdpConnectionlessListener
+		{
+			public UdpClientConnectionlessListener (UdpClientConnection connection, IEnumerable<Protocol> protocols)
+				: base (protocols)
+			{
+				this.connection = connection;
+			}
+
+			private readonly UdpClientConnection connection;
+
+			protected override void HandleConnectionMessage (SocketAsyncEventArgs args, MessageHeader header, BufferValueReader reader)
+			{
+				throw new InvalidOperationException();
+			}
+		}
 
 		protected override bool IsConnecting
 		{

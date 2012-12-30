@@ -195,12 +195,15 @@ namespace Tempest.Providers.Network
 			if (e.BytesTransferred != 0 && e.SocketError == SocketError.Success)
 			{
 				MessageHeader header = null;
-				List<Message> messages = mserializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref this.reader);
+				List<Message> messages = mserializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref currentReader);
 				if (messages != null)
 				{
 					foreach (Message message in messages)
 						Receive (message);
 				}
+
+				if (this.reader != null && currentReader != this.reader)
+					this.reader = currentReader;
 			}
 
 			Socket sock = this.socket;

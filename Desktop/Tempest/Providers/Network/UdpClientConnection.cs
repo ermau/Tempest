@@ -269,9 +269,11 @@ namespace Tempest.Providers.Network
 
 					break;
 				}
-			}
 
-			base.OnTempestMessage (e);
+				default:
+					base.OnTempestMessage (e);
+					break;
+			}
 		}
 
 		private void OnConnected()

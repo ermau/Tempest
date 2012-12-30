@@ -308,9 +308,11 @@ namespace Tempest.Providers.Network
 						tcs.SetResult (new ClientConnectionResult (ConnectionResult.Success, this.serverAuthenticationKey));
 
 					break;
-			}
 
-			base.OnTempestMessageReceived(e);
+				default:
+					base.OnTempestMessageReceived(e);
+					break;
+			}
 		}
 
 		protected override void OnDisconnected (DisconnectedEventArgs e)

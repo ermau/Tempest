@@ -110,7 +110,7 @@ namespace Tempest
 	}
 
 	/// <summary>
-	/// Provides data for the <see cref="IConnectionProvider.ConnectionlessMessageReceived"/> event.
+	/// Provides data for the <see cref="IConnectionlessMessenger.ConnectionlessMessageReceived"/> event.
 	/// </summary>
 	public class ConnectionlessMessageEventArgs
 		: EventArgs

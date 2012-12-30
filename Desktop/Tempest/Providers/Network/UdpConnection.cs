@@ -202,7 +202,7 @@ namespace Tempest.Providers.Network
 			Socket sock = this.socket;
 			MessageSerializer mserialzier = this.serializer;
 
-			if (sock == null || mserialzier == null)
+			if (sock == null || mserialzier == null || (!IsConnected && !IsConnecting))
 			{
 				if (future != null)
 					future.TrySetCanceled();

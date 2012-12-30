@@ -105,15 +105,21 @@ namespace Tempest.Providers.Network
 		{
 			base.Start (types);
 
-			//this.deliveryTimer = new Timer (100);
-			//this.deliveryTimer.TimesUp += OnDeliveryTimer;
-			//this.deliveryTimer.Start();
+			Timer timer = new Timer (100);
+			timer = new Timer (100);
+			timer.TimesUp += OnDeliveryTimer;
+			timer.Start();
+			this.deliveryTimer = timer;
 		}
 
 		public override void Stop()
 		{
-			//this.deliveryTimer.TimesUp -= OnDeliveryTimer;
-			//this.deliveryTimer.Dispose();
+			Timer timer = this.deliveryTimer;
+			if (timer != null)
+			{
+				timer.TimesUp -= OnDeliveryTimer;
+				timer.Dispose();
+			}
 
 			base.Stop();
 		}

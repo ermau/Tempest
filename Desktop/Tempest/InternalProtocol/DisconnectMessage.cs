@@ -72,14 +72,14 @@ namespace Tempest.InternalProtocol
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
-			writer.WriteInt32 ((int)Reason);
+			writer.WriteByte ((byte)Reason);
 			if (Reason == ConnectionResult.Custom)
 				writer.WriteString (CustomReason);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
-			Reason = (ConnectionResult)reader.ReadInt32();
+			Reason = (ConnectionResult)reader.ReadByte();
 			if (Reason == ConnectionResult.Custom)
 				CustomReason = reader.ReadString();
 		}

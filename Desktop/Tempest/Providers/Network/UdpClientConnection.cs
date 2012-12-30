@@ -188,7 +188,7 @@ namespace Tempest.Providers.Network
 
 			byte[] buffer = e.Buffer;
 			int offset = e.Offset;
-			reader.Position = offset;
+			currentReader.Position = offset;
 			int moffset = e.Offset;
 			int remaining = e.BytesTransferred;
 

@@ -121,7 +121,7 @@ namespace Tempest
 		/// <param name="message">The message received connectionlessly.</param>
 		/// <param name="from">Where the message came from.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="from"/> is <c>null</c>.</exception>
-		public ConnectionlessMessageEventArgs (Message message, EndPoint from)
+		public ConnectionlessMessageEventArgs (Message message, Target from)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -144,7 +144,7 @@ namespace Tempest
 		/// <summary>
 		/// Where the message came from.
 		/// </summary>
-		public EndPoint From
+		public Target From
 		{
 			get;
 			private set;

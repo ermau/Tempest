@@ -42,7 +42,7 @@ namespace Tempest.Providers.Network
 			: base (provider.protocols.Values)
 		{
 			ConnectionId = connectionId;
-			RemoteEndPoint = remoteEndpoint;
+			RemoteTarget = remoteEndpoint.ToTarget();
 			this.provider = provider;
 
 			this.socket = this.provider.GetSocket (remoteEndpoint);
@@ -56,7 +56,7 @@ namespace Tempest.Providers.Network
 			LocalKey = key;
 
 			ConnectionId = connectionId;
-			RemoteEndPoint = remoteEndpoint;
+			RemoteTarget = remoteEndpoint.ToTarget();
 			this.provider = provider;
 
 			this.socket = this.provider.GetSocket (remoteEndpoint);
@@ -152,7 +152,7 @@ namespace Tempest.Providers.Network
 
 				if (!foundHashAlg)
 				{
-					this.provider.SendConnectionlessMessage (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion }, RemoteEndPoint);
+					this.provider.SendConnectionlessMessage (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion }, RemoteTarget);
 					Disconnect (false, ConnectionResult.FailedHandshake);
 					return;
 				}
@@ -163,7 +163,7 @@ namespace Tempest.Providers.Network
 				Protocol lp;
 				if (!this.provider.protocols.TryGetValue (protocol.id, out lp) || !lp.CompatibleWith (protocol))
 				{
-					this.provider.SendConnectionlessMessage (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion }, RemoteEndPoint);
+					this.provider.SendConnectionlessMessage (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion }, RemoteTarget);
 					Disconnect (false, ConnectionResult.IncompatibleVersion);
 					return;
 				}

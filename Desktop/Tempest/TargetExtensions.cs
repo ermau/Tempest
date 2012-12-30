@@ -1,5 +1,5 @@
 ﻿//
-// IConnectionlessMessenger.cs
+// TargetExtensions.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -29,20 +29,34 @@ using System.Net;
 
 namespace Tempest
 {
-	public interface IConnectionlessMessenger
-		: IListener
+	public static class TargetExtensions
 	{
-		/// <summary>
-		/// A connectionless message was received.
-		/// </summary>
-		event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
+		public static EndPoint ToEndPoint (this Target self)
+		{
+			if (self == null)
+				throw new ArgumentNullException ("self");
 
-		/// <summary>
-		/// Sends a connectionless <paramref name="message"/> to <paramref name="target"/>.
-		/// </summary>
-		/// <param name="message">The message to send.</param>
-		/// <param name="target">The target to send the message to.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="target"/> is <c>null</c>.</exception>
-		void SendConnectionlessMessage (Message message, Target target);
+			IPAddress ip;
+			if (IPAddress.TryParse (self.Hostname, out ip))
+				return new IPEndPoint (ip, self.Port);
+
+			return new DnsEndPoint (self.Hostname, self.Port);
+		}
+
+		public static Target ToTarget (this EndPoint endPoint)
+		{
+			if (endPoint == null)
+				throw new ArgumentNullException ("endPoint");
+
+			DnsEndPoint dns = endPoint as DnsEndPoint;
+			if (dns != null)
+				return new Target (dns.Host, dns.Port);
+
+			IPEndPoint ip = endPoint as IPEndPoint;
+			if (ip != null)
+				return new Target (ip.Address.ToString(), ip.Port);
+
+			throw new ArgumentException ("Unknown endpoint type", "self");
+		}
 	}
 }

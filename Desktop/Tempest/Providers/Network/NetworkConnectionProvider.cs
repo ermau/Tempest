@@ -63,13 +63,13 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
 		/// </summary>
-		/// <param name="endPoint">The endpoint to listen to.</param>
+		/// <param name="target">The target to listen to.</param>
 		/// <param name="maxConnections">Maximum number of connections to allow.</param>
 		/// <param name="protocol">The protocol to accept.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="target"/> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
-		public NetworkConnectionProvider (Protocol protocol, IPEndPoint endPoint, int maxConnections)
-			: this (new [] { protocol }, endPoint, maxConnections)
+		public NetworkConnectionProvider (Protocol protocol, Target target, int maxConnections)
+			: this (new [] { protocol }, target, maxConnections)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
@@ -78,20 +78,20 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
 		/// </summary>
-		/// <param name="endPoint">The endpoint to listen to.</param>
+		/// <param name="target">The target to listen to.</param>
 		/// <param name="maxConnections">Maximum number of connections to allow.</param>
 		/// <param name="protocols">The protocols to accept.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> or <paramref name="protocols" /> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="target"/> or <paramref name="protocols" /> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections)
-			: this (protocols, endPoint, maxConnections, () => new RSACrypto())
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections)
+			: this (protocols, target, maxConnections, () => new RSACrypto())
 		{
 		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider" /> class.
 		/// </summary>
-		/// <param name="endPoint">The endpoint to listen to.</param>
+		/// <param name="target">The target to listen to.</param>
 		/// <param name="maxConnections">Maximum number of connections to allow.</param>
 		/// <param name="protocols">The protocols to accept.</param>
 		/// <param name="pkCryptoFactory">The public key cryptography provider factory.</param>
@@ -99,21 +99,21 @@ namespace Tempest.Providers.Network
 		/// The signature hash algorithms (in order of preference) to enable from <paramref name="pkCryptoFactory"/>.
 		/// <c>null</c> or an empty collection will enable all of the signature hash algorithms.
 		/// </param>
-		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/>, <paramref name="protocols" /> or <paramref name="pkCryptoFactory" /> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="target"/>, <paramref name="protocols" /> or <paramref name="pkCryptoFactory" /> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IEnumerable<string> enabledHashAlgs = null)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IEnumerable<string> enabledHashAlgs = null)
 		{
 			if (pkCryptoFactory == null)
 				throw new ArgumentNullException ("pkCryptoFactory");
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
+			if (target == null)
+				throw new ArgumentNullException ("target");
 			if (maxConnections <= 0)
 				throw new ArgumentOutOfRangeException ("maxConnections");
 
 			this.protocols = protocols;
-			this.endPoint = endPoint;
+			this.target = target;
 			MaxConnections = maxConnections;
 			this.serverConnections = new List<NetworkServerConnection> (maxConnections);
 
@@ -163,8 +163,8 @@ namespace Tempest.Providers.Network
 				this.keyWait.Set();
 		}
 
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, IPEndPoint endPoint, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
-			: this (protocols, endPoint, maxConnections, pkCryptoFactory, enabledHashAlgorithms)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
+			: this (protocols, target, maxConnections, pkCryptoFactory, enabledHashAlgorithms)
 		{
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
@@ -187,9 +187,9 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Gets the end point that this provider listens to for connections.
 		/// </summary>
-		public IPEndPoint EndPoint
+		public Target Target
 		{
-			get { return this.endPoint; }
+			get { return this.target; }
 		}
 
 		public bool IsRunning
@@ -253,7 +253,7 @@ namespace Tempest.Providers.Network
 			{
 				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Setting up reliable socket", category);
 				this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				this.reliableSocket.Bind (this.endPoint);
+				this.reliableSocket.Bind (Target.ToEndPoint());
 				this.reliableSocket.Listen (MaxConnections);
 				
 				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Reliable socket ready, accepting", category);
@@ -347,7 +347,7 @@ namespace Tempest.Providers.Network
 		private IAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
-		private IPEndPoint endPoint;
+		private Target target;
 
 		private int nextConnectionId;
 		private readonly List<NetworkServerConnection> serverConnections;

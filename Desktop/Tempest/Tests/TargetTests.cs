@@ -1,5 +1,5 @@
 ﻿//
-// IConnectionlessMessenger.cs
+// TargetTests.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -25,24 +25,17 @@
 // THE SOFTWARE.
 
 using System;
-using System.Net;
+using NUnit.Framework;
 
-namespace Tempest
+namespace Tempest.Tests
 {
-	public interface IConnectionlessMessenger
-		: IListener
+	[TestFixture]
+	public class TargetTests
 	{
-		/// <summary>
-		/// A connectionless message was received.
-		/// </summary>
-		event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
-
-		/// <summary>
-		/// Sends a connectionless <paramref name="message"/> to <paramref name="target"/>.
-		/// </summary>
-		/// <param name="message">The message to send.</param>
-		/// <param name="target">The target to send the message to.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="target"/> is <c>null</c>.</exception>
-		void SendConnectionlessMessage (Message message, Target target);
+		[Test]
+		public void CtorNull()
+		{
+			Assert.Throws<ArgumentNullException> (() => new Target (null, 0));
+		}
 	}
 }

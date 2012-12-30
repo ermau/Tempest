@@ -70,6 +70,7 @@
     <Compile Include="SerializationContextTests.cs" />
     <Compile Include="ServerTests.cs" />
     <Compile Include="StreamReaderWriterTests.cs" />
+    <Compile Include="TargetTests.cs" />
     <Compile Include="TestHelpers.cs" />
     <Compile Include="TypeMapTests.cs" />
     <Compile Include="UdpConnectionProviderTests.cs" />

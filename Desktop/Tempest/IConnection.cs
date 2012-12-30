@@ -77,9 +77,9 @@ namespace Tempest
 		MessagingModes Modes { get; }
 
 		/// <summary>
-		/// Gets the remote endpoint for this connection.
+		/// Gets the remote target for this connection.
 		/// </summary>
-		EndPoint RemoteEndPoint { get; }
+		Target RemoteTarget { get; }
 
 		/// <summary>
 		/// Gets the remote authentication key for this connection.

@@ -89,7 +89,7 @@ namespace Tempest.Providers.Network
 		/// <seealso cref="SendBufferLimit" />
 		/// <remarks>
 		/// <para>
-		/// You should consider <see cref="MaxMessageSize"/> * <c>maxConnections</c> (<see cref="NetworkConnectionProvider(Tempest.Protocol,System.Net.IPEndPoint,int)"/>) for receive memory usage.
+		/// You should consider <see cref="MaxMessageSize"/> * <c>maxConnections</c> (<see cref="NetworkConnectionProvider(Tempest.Protocol,Tempest.Target,int)"/>) for receive memory usage.
 		/// </para>
 		/// </remarks>
 		public static int MaxMessageSize
@@ -218,7 +218,7 @@ namespace Tempest.Providers.Network
 			get { return MessagingModes.Async; }
 		}
 
-		public EndPoint RemoteEndPoint
+		public Target RemoteTarget
 		{
 			get;
 			protected set;

@@ -80,7 +80,7 @@ namespace Tempest.Providers.Network
 			get { return MessagingModes.Async; }
 		}
 
-		public EndPoint RemoteEndPoint
+		public Target RemoteTarget
 		{
 			get;
 			protected set;
@@ -243,7 +243,7 @@ namespace Tempest.Providers.Network
 
 			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
 			args.SetBuffer (buffer, 0, length);
-			args.RemoteEndPoint = RemoteEndPoint;
+			args.RemoteEndPoint = RemoteTarget.ToEndPoint();
 			args.Completed += OnSendCompleted;
 			args.UserToken = message;
 

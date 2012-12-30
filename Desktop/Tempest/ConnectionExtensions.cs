@@ -26,8 +26,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Threading;
 using Tempest.InternalProtocol;
 
 namespace Tempest

@@ -100,14 +100,14 @@ namespace Tempest
 		}
 
 		/// <summary>
-		/// Attempts to asynchronously connect to <paramref name="endPoint"/>.
+		/// Attempts to asynchronously connect to <paramref name="target"/>.
 		/// </summary>
-		/// <param name="endPoint">The endpoint to connect to.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
-		public virtual Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint)
+		/// <param name="target">The target to connect to.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="target"/> is <c>null</c>.</exception>
+		public virtual Task<ClientConnectionResult> ConnectAsync (Target target)
 		{
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
+			if (target == null)
+				throw new ArgumentNullException ("target");
 
 			if (this.mode == MessagingModes.Async)
 			{
@@ -117,7 +117,7 @@ namespace Tempest
 					oldWait.Set();
 			}
 
-			return this.connection.ConnectAsync (endPoint, this.messageTypes);
+			return this.connection.ConnectAsync (target, this.messageTypes);
 		}
 
 		/// <summary>

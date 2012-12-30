@@ -85,11 +85,11 @@ namespace Tempest.Providers.Network
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 		public event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
 
-		public void SendConnectionlessMessage (Message message, EndPoint endPoint)
+		public void SendConnectionlessMessage (Message message, Target target)
 		{
 			IConnectionlessMessenger messenger = this.listener;
 			if (messenger != null)
-				messenger.SendConnectionlessMessage (message, endPoint);
+				messenger.SendConnectionlessMessage (message, target);
 		}
 
 		public bool IsRunning
@@ -104,15 +104,8 @@ namespace Tempest.Providers.Network
 		public void Start (MessageTypes messageTypes)
 		{
 			this.listener = new UdpClientConnectionlessListener (this, Protocols);
-			this.listener.ConnectionlessMessageReceived += OnListenerConnectionlessMessageReceived ;
+			this.listener.ConnectionlessMessageReceived += OnListenerConnectionlessMessageReceived;
 			this.listener.Start (messageTypes);
-		}
-
-		private void OnListenerConnectionlessMessageReceived (object sender, ConnectionlessMessageEventArgs e)
-		{
-			var received = ConnectionlessMessageReceived;
-			if (received != null)
-				received (this, e);
 		}
 
 		public void Stop()
@@ -126,12 +119,14 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		public Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes)
+		public Task<ClientConnectionResult> ConnectAsync (Target target, MessageTypes messageTypes)
 		{
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
+			if (target == null)
+				throw new ArgumentNullException ("target");
 			if (!Enum.IsDefined (typeof (MessageTypes), messageTypes))
 				throw new ArgumentOutOfRangeException ("messageTypes");
+
+			EndPoint endPoint = target.ToEndPoint();
 			if (endPoint.AddressFamily != AddressFamily.InterNetwork && endPoint.AddressFamily != AddressFamily.InterNetworkV6)
 				throw new ArgumentException ("Unsupported endpoint AddressFamily");
 
@@ -190,7 +185,7 @@ namespace Tempest.Providers.Network
 				};
 				t.Start();
 
-				RemoteEndPoint = endPoint;
+				RemoteTarget = target;
 				Send (new ConnectMessage
 				{
 					Protocols = Protocols,
@@ -231,6 +226,13 @@ namespace Tempest.Providers.Network
 			{
 				throw new InvalidOperationException();
 			}
+		}
+
+		private void OnListenerConnectionlessMessageReceived (object sender, ConnectionlessMessageEventArgs e)
+		{
+			var received = ConnectionlessMessageReceived;
+			if (received != null)
+				received (this, e);
 		}
 
 		protected override bool IsConnecting

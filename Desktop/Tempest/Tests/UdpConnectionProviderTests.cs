@@ -29,9 +29,9 @@ namespace Tempest.Tests
 			get { return 64000; }
 		}
 
-		protected override EndPoint EndPoint
+		protected override Target Target
 		{
-			get { return new IPEndPoint (IPAddress.Loopback, 42001); }
+			get { return new Target (Target.LoopbackIP, 42001); }
 		}
 
 		protected override MessageTypes MessageTypes

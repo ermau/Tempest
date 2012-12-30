@@ -209,16 +209,16 @@ namespace Tempest.Providers.Network
 				throw new ArgumentException();
 		}
 
-		protected override void OnConnectionlessTempestMessage (TempestMessage tempestMessage, EndPoint endPoint)
+		protected override void OnConnectionlessTempestMessage (TempestMessage tempestMessage, Target target)
 		{
 			ConnectMessage connect = tempestMessage as ConnectMessage;
 			if (connect != null)
 			{
 				UdpServerConnection connection;
 				if (this.cryptoFactory != null)
-					connection = new UdpServerConnection (GetConnectionId(), endPoint, this, this.cryptoFactory(), this.crypto, this.authKey);
+					connection = new UdpServerConnection (GetConnectionId(), target.ToEndPoint(), this, this.cryptoFactory(), this.crypto, this.authKey);
 				else
-					connection = new UdpServerConnection (GetConnectionId(), endPoint, this);
+					connection = new UdpServerConnection (GetConnectionId(), target.ToEndPoint(), this);
 
 				if (!this.connections.TryAdd (connection.ConnectionId, connection))
 					throw new InvalidOperationException ("Reused connection ID");
@@ -226,7 +226,7 @@ namespace Tempest.Providers.Network
 				connection.Receive (connect);
 			}
 			else
-				base.OnConnectionlessTempestMessage (tempestMessage, endPoint);
+				base.OnConnectionlessTempestMessage (tempestMessage, target);
 		}
 
 		private int GetConnectionId()

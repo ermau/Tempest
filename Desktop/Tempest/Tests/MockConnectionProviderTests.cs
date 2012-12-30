@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,6 @@
 // THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -38,9 +35,9 @@ namespace Tempest.Tests
 	{
 		private Protocol p = MockProtocol.Instance;
 
-		protected override EndPoint EndPoint
+		protected override Target Target
 		{
-			get { return new IPEndPoint (IPAddress.Any, 0); }
+			get { return new Target (Target.AnyIP, 0); }
 		}
 
 		protected override MessageTypes MessageTypes
@@ -78,7 +75,7 @@ namespace Tempest.Tests
 			provider.ConnectionMade += test.PassHandler;
 
 			var client = provider.GetClientConnection (MockProtocol.Instance);
-			client.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			client.ConnectAsync (new Target (Target.AnyIP, 0), MessageTypes.Reliable);
 			
 			test.Assert (5000);
 		}

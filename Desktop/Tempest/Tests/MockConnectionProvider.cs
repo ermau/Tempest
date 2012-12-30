@@ -48,29 +48,15 @@ namespace Tempest.Tests
 		}
 
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
-		public event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
 		
 		public bool IsRunning
 		{
 			get { return this.running; }
 		}
 
-		public bool SupportsConnectionless
-		{
-			get { return true; }
-		}
-
 		public void Start (MessageTypes types)
 		{
 			this.running = true;
-		}
-
-		public void SendConnectionlessMessage (Message message, EndPoint endPoint)
-		{
-			if (message == null)
-				throw new ArgumentNullException ("message");
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
 		}
 
 		public void Stop()
@@ -113,7 +99,7 @@ namespace Tempest.Tests
 			
 			MockClientConnection c = new MockClientConnection (this, protocols);
 			c.ConnectionId = Interlocked.Increment (ref this.cid);
-			c.ConnectAsync (new IPEndPoint (IPAddress.Any, 0), MessageTypes.Reliable);
+			c.ConnectAsync (new Target (Target.AnyIP, 0), MessageTypes.Reliable);
 
 			return new Tuple<MockClientConnection, MockServerConnection> (c, c.connection);
 		}
@@ -245,10 +231,10 @@ namespace Tempest.Tests
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 
-		public Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes)
+		public Task<ClientConnectionResult> ConnectAsync (Target target, MessageTypes messageTypes)
 		{
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
+			if (target == null)
+				throw new ArgumentNullException ("target");
 
 			var tcs = new TaskCompletionSource<ClientConnectionResult>();
 
@@ -380,7 +366,7 @@ namespace Tempest.Tests
 			get { return MessagingModes.Async; }
 		}
 
-		public EndPoint RemoteEndPoint
+		public Target RemoteTarget
 		{
 			get;
 			private set;

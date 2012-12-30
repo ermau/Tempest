@@ -87,14 +87,14 @@ namespace Tempest.Providers.Network
 			get { return this.serverAuthenticationKey; }
 		}
 
-		public Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes)
+		public Task<ClientConnectionResult> ConnectAsync (Target target, MessageTypes messageTypes)
 		{
 			int c = GetNextCallId();
-			string category = String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", endPoint, messageTypes, this.typeName, connectionId, c);
+			string category = String.Format ("{2}:{3} {4}:ConnectAsync({0},{1})", target, messageTypes, this.typeName, connectionId, c);
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", category);
 
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
+			if (target == null)
+				throw new ArgumentNullException ("target");
 			if ((messageTypes & MessageTypes.Unreliable) == MessageTypes.Unreliable)
 				throw new NotSupportedException();
 
@@ -102,7 +102,7 @@ namespace Tempest.Providers.Network
 			
 			ThreadPool.QueueUserWorkItem (s =>
 			{
-				EndPoint ep = (EndPoint)s;
+				Target t = (Target)s;
 
 				SocketAsyncEventArgs args;
 				bool connected;
@@ -117,10 +117,10 @@ namespace Tempest.Providers.Network
 					if (IsConnected)
 						throw new InvalidOperationException ("Already connected");
 
-					RemoteEndPoint = ep;
+					RemoteTarget = t;
 
 					args = new SocketAsyncEventArgs();
-					args.RemoteEndPoint = ep;
+					args.RemoteEndPoint = t.ToEndPoint();
 					args.Completed += ConnectCompleted;
 
 					this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -137,13 +137,13 @@ namespace Tempest.Providers.Network
 				}
 				else
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", category);
-			}, endPoint);
+			}, target);
 
 			return ntcs.Task;
 		}
 		
 		private int pingFrequency;
-		private Tempest.Timer activityTimer;
+		private Timer activityTimer;
 
 		internal IPublicKeyCrypto serverAuthentication;
 		internal IAsymmetricKey serverAuthenticationKey;

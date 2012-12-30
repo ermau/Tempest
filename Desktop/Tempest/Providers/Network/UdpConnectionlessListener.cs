@@ -69,16 +69,17 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		public void SendConnectionlessMessage (Message message, EndPoint endPoint)
+		public void SendConnectionlessMessage (Message message, Target target)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
+			if (target == null)
+				throw new ArgumentNullException ("target");
 
 			if (message.MustBeReliable)
 				throw new NotSupportedException ("Reliable messages can not be sent connectionlessly");
 
+			EndPoint endPoint = target.ToEndPoint();
 			if (endPoint.AddressFamily == AddressFamily.InterNetwork && !Socket.OSSupportsIPv4)
 				throw new NotSupportedException ("endPoint's AddressFamily not supported on this OS.");
 			else if (endPoint.AddressFamily == AddressFamily.InterNetworkV6 && !Socket.OSSupportsIPv6)
@@ -197,13 +198,13 @@ namespace Tempest.Providers.Network
 			{
 				var tempestMessage = m as TempestMessage;
 				if (tempestMessage != null)
-					OnConnectionlessTempestMessage (tempestMessage, args.RemoteEndPoint);
+					OnConnectionlessTempestMessage (tempestMessage, args.RemoteEndPoint.ToTarget());
 				else
-					OnConnectionlessMessageReceived (new ConnectionlessMessageEventArgs (m, args.RemoteEndPoint));
+					OnConnectionlessMessageReceived (new ConnectionlessMessageEventArgs (m, args.RemoteEndPoint.ToTarget()));
 			}
 		}
 
-		protected virtual void OnConnectionlessTempestMessage (TempestMessage tempestMessage, EndPoint endPoint)
+		protected virtual void OnConnectionlessTempestMessage (TempestMessage tempestMessage, Target target)
 		{
 		}
 

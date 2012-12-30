@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -48,9 +48,9 @@ namespace Tempest.Tests
 
 		private Protocol p = MockProtocol.Instance;
 		private const int MaxConnections = 5;
-		protected override EndPoint EndPoint
+		protected override Target Target
 		{
-			get { return new IPEndPoint (IPAddress.Loopback, 42000); }
+			get { return new Target (Target.LoopbackIP, 42000); }
 		}
 
 		protected override MessageTypes MessageTypes
@@ -60,12 +60,12 @@ namespace Tempest.Tests
 
 		protected override IConnectionProvider SetUp()
 		{
-			return new NetworkConnectionProvider (new[] { p }, new IPEndPoint (IPAddress.Any, 42000), MaxConnections, () => new RSACrypto(), key) { PingFrequency = 2000 };
+			return new NetworkConnectionProvider (new[] { p }, new Target (Target.AnyIP, 42000), MaxConnections, () => new RSACrypto(), key) { PingFrequency = 2000 };
 		}
 
 		protected override IConnectionProvider SetUp (IEnumerable<Protocol> protocols)
 		{
-			return new NetworkConnectionProvider (protocols, new IPEndPoint (IPAddress.Any, 42000), MaxConnections, () => new RSACrypto(), key) { PingFrequency = 2000 };
+			return new NetworkConnectionProvider (protocols, new Target (Target.AnyIP, 42000), MaxConnections, () => new RSACrypto(), key) { PingFrequency = 2000 };
 		}
 
 		protected override IClientConnection SetupClientConnection ()
@@ -89,14 +89,14 @@ namespace Tempest.Tests
 		[Test]
 		public void CtorInvalid()
 		{
-			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider ((Protocol)null, new IPEndPoint (IPAddress.Any, 42000), 20));
-			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider ((IEnumerable<Protocol>)null, new IPEndPoint (IPAddress.Any, 42000), 20));
+			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider ((Protocol)null, new Target (Target.AnyIP, 42000), 20));
+			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider ((IEnumerable<Protocol>)null, new Target (Target.AnyIP, 42000), 20));
 			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider (p, null, 20));
 			Assert.Throws<ArgumentNullException> (() => new NetworkConnectionProvider (new [] { p }, null, 20));
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), 0));
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new [] { p }, new IPEndPoint (IPAddress.Any, 42000), 0));
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (p, new IPEndPoint (IPAddress.Any, 42000), -1));
-			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new [] { p }, new IPEndPoint (IPAddress.Any, 42000), -1));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (p, new Target (Target.AnyIP, 42000), 0));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new [] { p }, new Target (Target.AnyIP, 42000), 0));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (p, new Target (Target.AnyIP, 42000), -1));
+			Assert.Throws<ArgumentOutOfRangeException> (() => new NetworkConnectionProvider (new [] { p }, new Target (Target.AnyIP, 42000), -1));
 		}
 		
 		[Test, Repeat (3)]
@@ -121,7 +121,7 @@ namespace Tempest.Tests
 				client = GetNewClientConnection();
 				client.Connected += test.PassHandler;
 				client.Disconnected += test.FailHandler;
-				client.ConnectAsync (EndPoint, MessageTypes);
+				client.ConnectAsync (Target, MessageTypes);
 
 				test.Assert (10000);
 			}
@@ -133,7 +133,7 @@ namespace Tempest.Tests
 			provider.ConnectionMade += test.FailHandler;
 			client = GetNewClientConnection();
 			client.Disconnected += test.PassHandler;
-			client.ConnectAsync (EndPoint, MessageTypes);
+			client.ConnectAsync (Target, MessageTypes);
 
 			test.Assert (10000, false);
 		}
@@ -159,7 +159,7 @@ namespace Tempest.Tests
 
 			IClientConnection client = GetNewClientConnection();
 			client.Disconnected += test.FailHandler;
-			client.ConnectAsync (EndPoint, MessageTypes);
+			client.ConnectAsync (Target, MessageTypes);
 
 			test.Assert (10000);
 		}
@@ -181,7 +181,7 @@ namespace Tempest.Tests
 			((NetworkConnectionProvider)provider).PingFrequency = 1000;
 			var client = GetNewClientConnection();
 			client.Disconnected += test.FailHandler;
-			client.ConnectAsync (EndPoint, MessageTypes);
+			client.ConnectAsync (Target, MessageTypes);
 
 			test.Assert (30000, false);
 			Assert.IsNotNull (connection);
@@ -194,13 +194,13 @@ namespace Tempest.Tests
 		{
 			TearDown();
 
-			provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, (IPEndPoint)EndPoint, MaxConnections, () => new RSACrypto(), new string[] { "SHA256" } );
+			provider = new NetworkConnectionProvider (new [] { MockProtocol.Instance }, Target, MaxConnections, () => new RSACrypto(), new string[] { "SHA256" } );
 			provider.Start (MessageTypes);
 
 			var test = new AsyncTest<DisconnectedEventArgs> (d => Assert.AreEqual (ConnectionResult.FailedHandshake, d.Result));
 
 			var client = new NetworkClientConnection (new[] { MockProtocol.Instance }, () => new MockSha1OnlyCrypto());
-			client.ConnectAsync (EndPoint, MessageTypes);
+			client.ConnectAsync (Target, MessageTypes);
 
 			client.Connected += test.FailHandler;
 			client.Disconnected += test.PassHandler;

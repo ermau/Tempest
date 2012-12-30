@@ -39,12 +39,12 @@ namespace Tempest
 		event EventHandler<ClientConnectionEventArgs> Connected;
 
 		/// <summary>
-		/// Attempts to asynchronously connect to the <paramref name="endPoint"/> for <paramref name="messageTypes"/>.
+		/// Attempts to asynchronously connect to the <paramref name="target"/> for <paramref name="messageTypes"/>.
 		/// </summary>
-		/// <param name="endPoint">The endpoint to connect to.</param>
+		/// <param name="target">The target to connect to.</param>
 		/// <param name="messageTypes">The type of messages to connect for.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="endPoint"/> is <c>null</c>.</exception>
-		Task<ClientConnectionResult> ConnectAsync (EndPoint endPoint, MessageTypes messageTypes);
+		/// <exception cref="ArgumentNullException"><paramref name="target"/> is <c>null</c>.</exception>
+		Task<ClientConnectionResult> ConnectAsync (Target target, MessageTypes messageTypes);
 	}
 
 	/// <summary>

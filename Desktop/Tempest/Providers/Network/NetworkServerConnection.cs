@@ -51,7 +51,7 @@ namespace Tempest.Providers.Network
 			this.signatureHashAlgs = signatureHashAlgs;
 			this.provider = provider;
 
-			RemoteEndPoint = reliableSocket.RemoteEndPoint;
+			RemoteTarget = reliableSocket.RemoteEndPoint.ToTarget();
 
 			this.reliableSocket = reliableSocket;
 

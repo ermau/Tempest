@@ -1,5 +1,5 @@
 ﻿//
-// IConnectionlessMessenger.cs
+// Target.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -25,24 +25,35 @@
 // THE SOFTWARE.
 
 using System;
-using System.Net;
 
 namespace Tempest
 {
-	public interface IConnectionlessMessenger
-		: IListener
+	public sealed class Target
 	{
-		/// <summary>
-		/// A connectionless message was received.
-		/// </summary>
-		event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
+		public const string AnyIP = "0.0.0.0";
+		public const string AnyIPv6 = "::";
+		public const string LoopbackIP = "127.0.0.1";
+		public const string LoopbackIPv6 = "[::1]";
 
-		/// <summary>
-		/// Sends a connectionless <paramref name="message"/> to <paramref name="target"/>.
-		/// </summary>
-		/// <param name="message">The message to send.</param>
-		/// <param name="target">The target to send the message to.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="target"/> is <c>null</c>.</exception>
-		void SendConnectionlessMessage (Message message, Target target);
+		public Target (string hostname, int port)
+		{
+			if (hostname == null)
+				throw new ArgumentNullException ("hostname");
+
+			Hostname = hostname;
+			Port = port;
+		}
+
+		public string Hostname
+		{
+			get;
+			private set;
+		}
+
+		public int Port
+		{
+			get;
+			private set;
+		}
 	}
 }

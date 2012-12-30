@@ -175,16 +175,16 @@ namespace Tempest.Providers.Network
 			}
 
 			if (header.ConnectionId == 0)
-				HandleConnectionlessMessage (args, header, reader);
+				HandleConnectionlessMessage (args, header, ref reader);
 			else
-				HandleConnectionMessage (args, header, reader);
+				HandleConnectionMessage (args, header, ref reader);
 
 			StartReceive (socket, args, reader);
 		}
 
-		protected abstract void HandleConnectionMessage (SocketAsyncEventArgs args, MessageHeader header, BufferValueReader reader);
+		protected abstract void HandleConnectionMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader);
 
-		private void HandleConnectionlessMessage (SocketAsyncEventArgs args, MessageHeader header, BufferValueReader reader)
+		private void HandleConnectionlessMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader)
 		{
 			byte[] buffer = args.Buffer;
 

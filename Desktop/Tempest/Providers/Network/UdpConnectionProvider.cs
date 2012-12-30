@@ -128,10 +128,10 @@ namespace Tempest.Providers.Network
 
 		private Timer deliveryTimer;
 
-		protected override void HandleConnectionMessage (SocketAsyncEventArgs args, MessageHeader header, BufferValueReader reader)
+		protected override void HandleConnectionMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader)
 		{
 			byte[] buffer = args.Buffer;
-			int offset = reader.Position;
+			int offset = args.Offset;
 			int moffset = offset;
 			int remaining = args.BytesTransferred;
 
@@ -144,13 +144,13 @@ namespace Tempest.Providers.Network
 				{
 					serializer.DecryptMessage (header, ref reader);
 					header.IsStillEncrypted = false;
-						
+
 					if (!serializer.TryGetHeader (reader, args.BytesTransferred, ref header))
 						return;
 				}
 
 				header.SerializationContext = ((SerializationContext)header.SerializationContext).WithConnection (connection);
-					
+
 				if (serializer != null)
 				{
 					List<Message> messages = connection.serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
@@ -159,6 +159,8 @@ namespace Tempest.Providers.Network
 						foreach (Message message in messages)
 							connection.Receive (message);
 					}
+
+					reader = new BufferValueReader (buffer);
 				}
 			}
 		}

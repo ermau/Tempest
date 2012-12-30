@@ -163,6 +163,7 @@ namespace Tempest.Providers.Network
 			base.Cleanup();
 
 			this.remoteEncryption = null;
+			this.reader = null;
 
 			Timer t = Interlocked.Exchange (ref this.connectTimer, null);
 			if (t != null)

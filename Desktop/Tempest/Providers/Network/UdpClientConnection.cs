@@ -144,6 +144,9 @@ namespace Tempest.Providers.Network
 				while (this.pendingAsync > 0 || Interlocked.CompareExchange (ref this.connectTcs, ntcs, null) != null)
 					Thread.Sleep (0);
 
+				int p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p));
+
 				this.serializer = new ClientMessageSerializer (this, this.originalProtocols);
 
 				IEnumerable<string> hashAlgs = null;
@@ -160,9 +163,6 @@ namespace Tempest.Providers.Network
 				receiveArgs.Completed += OnReceiveCompleted;
 
 				this.reader = new BufferValueReader (receiveArgs.Buffer);
-
-				int p = Interlocked.Increment (ref this.pendingAsync);
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p));
 
 				while (!this.socket.ReceiveFromAsync (receiveArgs))
 					OnReceiveCompleted (this, receiveArgs);

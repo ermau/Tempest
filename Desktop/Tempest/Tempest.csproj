@@ -79,6 +79,7 @@
     <Compile Include="Providers\Network\UdpConnection.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Providers\Network\UdpConnectionlessListener.cs" />
     <Compile Include="Providers\Network\UdpConnectionProvider.cs">
       <SubType>Code</SubType>
     </Compile>

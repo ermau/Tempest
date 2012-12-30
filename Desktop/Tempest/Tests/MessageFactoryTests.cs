@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using NUnit.Framework;
 
@@ -63,7 +64,7 @@ namespace Tempest.Tests
 		[Test]
 		public void DiscoverAssembly()
 		{
-			protocol.Discover (typeof(MessageFactoryTests).Assembly);
+			protocol.Discover (typeof(MessageFactoryTests).GetTypeInfo().Assembly);
 
 			Message m = protocol.Create (1);
 			Assert.IsNotNull (m);
@@ -83,7 +84,7 @@ namespace Tempest.Tests
 		[Test]
 		public void DiscoverAssemblyNothing()
 		{
-			protocol.Discover (typeof(string).Assembly);
+			protocol.Discover (typeof(string).GetTypeInfo().Assembly);
 
 			Message m = protocol.Create (1);
 			Assert.IsNull (m);

@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading;
 using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
@@ -444,7 +445,7 @@ namespace Tempest.Providers.Network
 				}
 
 				length = header.MessageLength;
-				if (length > NetworkConnection.MaxMessageSize)
+				if (length > MaxMessageSize)
 				{
 					Disconnect (true);
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (bad message size)", callCategory);
@@ -569,6 +570,15 @@ namespace Tempest.Providers.Network
 			return messages;
 		}
 
+		#if NETFX_CORE
+		protected const int MaxMessageSize = 65507;
+		#else
+		protected int MaxMessageSize
+		{
+			get { return NetworkConnection.MaxMessageSize; }
+		}
+		#endif
+
 		protected const int ResponseFlag = 16777216;
 		protected const int MaxMessageId = 8388608;
 		protected const int BaseHeaderLength = 15;
@@ -600,6 +610,15 @@ namespace Tempest.Providers.Network
 				this.connection.DisconnectAsync (result);
 		}
 
+		#if NETFX_CORE
+		private static readonly TraceSwitch NTrace = new TraceSwitch (true);
+
+		private static int callId;
+		protected int GetNextCallId()
+		{
+			return Interlocked.Increment (ref callId);
+		}
+		#else
 		protected TraceSwitch NTrace
 		{
 			get { return NetworkConnection.NTrace; }
@@ -609,6 +628,7 @@ namespace Tempest.Providers.Network
 		{
 			return NetworkConnection.GetNextCallId();
 		}
+		#endif
 
 		protected void EncryptMessage (BufferValueWriter writer, ref int headerLength)
 		{

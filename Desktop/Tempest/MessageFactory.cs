@@ -60,9 +60,17 @@ namespace Tempest
 				throw new ArgumentNullException ("assembly");
 			
 			Type mtype = typeof (Message);
-			RegisterTypes (assembly.GetTypes().Where (t => !t.IsGenericType && !t.IsGenericTypeDefinition && mtype.IsAssignableFrom (t) && t.GetConstructor (Type.EmptyTypes) != null), true);
+			RegisterTypes (assembly.GetTypes().Where (t =>
+			{
+				var ti = t.GetTypeInfo();
+				return !ti.IsGenericType
+				       && !ti.IsGenericTypeDefinition
+				       && mtype.IsAssignableFrom (t)
+				       && t.GetConstructor (EmptyTypes) != null;
+			}), true);
 		}
 
+		#if !NETFX_CORE
 		/// <summary>
 		/// Discovers and registers messages from the calling assembly.
 		/// </summary>
@@ -71,6 +79,7 @@ namespace Tempest
 		{
 			Discover (Assembly.GetCallingAssembly());
 		}
+		#endif
 
 		/// <summary>
 		/// Discovers and registers messages from the assembly of type <typeparamref name="T"/>.
@@ -78,7 +87,7 @@ namespace Tempest
 		/// <typeparam name="T">The type who's assembly to discover messages from.</typeparam>
 		public void DiscoverFromAssemblyOf<T>()
 		{
-			Discover (typeof (T).Assembly);
+			Discover (typeof (T).GetTypeInfo().Assembly);
 		}
 		#endif
 
@@ -166,43 +175,30 @@ namespace Tempest
 
 			Type mtype = typeof (Message);
 
-			#if !NET_4
-			lock (messageCtors)
-			#endif
-				foreach (var kvp in messageTypes)
-				{
-					if (!mtype.IsAssignableFrom (kvp.Key))
-						throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
-					if (kvp.Key.IsGenericType || kvp.Key.IsGenericTypeDefinition)
-						throw new ArgumentException (String.Format ("{0} is a generic type which is unsupported", kvp.Key.Name), "messageTypes");
+			foreach (var kvp in messageTypes)
+			{
+				if (!mtype.IsAssignableFrom (kvp.Key))
+					throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
+				if (kvp.Key.GetTypeInfo().IsGenericType || kvp.Key.GetTypeInfo().IsGenericTypeDefinition)
+					throw new ArgumentException (String.Format ("{0} is a generic type which is unsupported", kvp.Key.Name), "messageTypes");
 					
-					Message m = kvp.Value();
-					if (m.Protocol != (Protocol)this)
+				Message m = kvp.Value();
+				if (m.Protocol != (Protocol)this)
+					continue;
+
+				if (m.Authenticated || m.Encrypted)
+					RequiresHandshake = true;
+
+				if (!this.messageCtors.TryAdd (m.MessageType, kvp.Value))
+				{
+					if (ignoreDupes)
 						continue;
 
-					if (m.Authenticated || m.Encrypted)
-						RequiresHandshake = true;
-
-					#if !NET_4
-					if (this.messageCtors.ContainsKey (m.MessageType))
-					{
-						if (ignoreDupes)
-							continue;
-
-						throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
-					}
-					
-					this.messageCtors.Add (m.MessageType, kvp.Value);
-					#else
-					if (!this.messageCtors.TryAdd (m.MessageType, kvp.Value))
-					{
-						if (ignoreDupes)
-							continue;
-
-						throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
-					}
-					#endif
+					throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
 				}
+			}
 		}
+
+		private static readonly Type[] EmptyTypes = new Type[0];
 	}
 }

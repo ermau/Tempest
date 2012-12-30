@@ -32,12 +32,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
-
-#if NET_4
 using System.Collections.Concurrent;
-#endif
 
-#if !SILVERLIGHT
+#if !SILVERLIGHT && !NETFX_CORE
 using System.Runtime.Serialization.Formatters.Binary;
 #endif
 
@@ -112,7 +109,8 @@ namespace Tempest
 
 		private static Func<ISerializationContext, IValueReader, bool, object> GetDeserializer (Type t, ObjectSerializer oserializer)
 		{
-			if (t.IsPrimitive)
+			var ti = t.GetTypeInfo();
+			if (ti.IsPrimitive)
 			{
 				if (t == typeof(bool))
 					return (c, r, sh) => r.ReadBool();
@@ -145,7 +143,7 @@ namespace Tempest
 				return (c, r, sh) => r.ReadDate();
 			else if (t == typeof(string))
 				return (c, r, sh) => !r.ReadBool() ? null : r.ReadString (Encoding.UTF8);
-			else if (t.IsEnum)
+			else if (ti.IsEnum)
 			{
 				Type btype = Enum.GetUnderlyingType (t);
 				return GetDeserializer (btype, oserializer);
@@ -202,7 +200,7 @@ namespace Tempest
 						return value;
 					}
 
-					#if !SILVERLIGHT
+					#if !SILVERLIGHT && !NETFX_CORE
 					if (t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
 						return oserializer.SerializableDeserializer (r);
 					#endif
@@ -234,7 +232,8 @@ namespace Tempest
 
 		private Action<ISerializationContext, IValueWriter, object, bool> GetSerializerAction (Type t)
 		{
-			if (t.IsPrimitive)
+			var ti = t.GetTypeInfo();
+			if (ti.IsPrimitive)
 			{
 				if (t == typeof (bool))
 					return (c, w, v, sh) => w.WriteBool ((bool)v);
@@ -274,7 +273,7 @@ namespace Tempest
 						w.WriteString (Encoding.UTF8, (string)v);
 				};
 			}
-			else if (t.IsEnum)
+			else if (ti.IsEnum)
 			{
 				Type btype = Enum.GetUnderlyingType (t);
 				return GetSerializerAction (btype);
@@ -294,7 +293,7 @@ namespace Tempest
 					Array a = (Array)v;
 					w.WriteInt32 (a.Length);
 
-					if (t.IsPrimitive)
+					if (ti.IsPrimitive)
 					{
 						for (int i = 0; i < a.Length; ++i)
 							w.Write (c, a.GetValue (i));
@@ -354,7 +353,7 @@ namespace Tempest
 						return;
 					}
 
-					#if !SILVERLIGHT
+					#if !SILVERLIGHT && !NETFX_CORE
 					if (t != typeof(object) && t.GetCustomAttributes (true).OfType<SerializableAttribute>().Any ())
 					{
 						SerializableSerializer (w, v);
@@ -379,51 +378,56 @@ namespace Tempest
 			}
 		}
 
-		private void LoadMembers (Type t)
-		{
-			LoadCtor (t);
+		//private void LoadMembers (Type t)
+		//{
+		//	LoadCtor (t);
 
-			if (this.members != null)
-				return;
+		//	if (this.members != null)
+		//		return;
 
-			this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.NonPublic)
-							.Where (mi =>
-							{
-								if (mi.MemberType == MemberTypes.Field)
-								{
-									var fi = (FieldInfo)mi;
-									if (typeof(Delegate).IsAssignableFrom (fi.FieldType.BaseType))
-									    return false;
+		//	this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.NonPublic)
+		//					.Where (mi =>
+		//					{
+		//						if (mi.MemberType == MemberTypes.Field)
+		//						{
+		//							var fi = (FieldInfo)mi;
+		//							if (typeof(Delegate).IsAssignableFrom (fi.FieldType.BaseType))
+		//								return false;
 
-									return !fi.IsInitOnly;
-								}
-								else if (mi.MemberType == MemberTypes.Property)
-								{
-									var p = (PropertyInfo)mi;
-									return (p.GetSetMethod() != null && p.GetIndexParameters().Length == 0);
-								}
+		//							return !fi.IsInitOnly;
+		//						}
+		//						else if (mi.MemberType == MemberTypes.Property)
+		//						{
+		//							var p = (PropertyInfo)mi;
+		//							return (p.GetSetMethod() != null && p.GetIndexParameters().Length == 0);
+		//						}
 
-								return false;
-							})
-							.ToDictionary (mi => mi, mi =>
-							{
-								ObjectSerializer os = null;
-								if (mi.MemberType == MemberTypes.Field)
-									os = GetSerializerInternal (((FieldInfo)mi).FieldType);
-								else if (mi.MemberType == MemberTypes.Property)
-									os = GetSerializerInternal (((PropertyInfo)mi).PropertyType);
+		//						return false;
+		//					})
+		//					.ToDictionary (mi => mi, mi =>
+		//					{
+		//						ObjectSerializer os = null;
+		//						if (mi.MemberType == MemberTypes.Field)
+		//							os = GetSerializerInternal (((FieldInfo)mi).FieldType);
+		//						else if (mi.MemberType == MemberTypes.Property)
+		//							os = GetSerializerInternal (((PropertyInfo)mi).PropertyType);
 
-								return new SerializationPair (os.Deserialize, os.Serialize);
-							});
-		}
+		//						return new SerializationPair (os.Deserialize, os.Serialize);
+		//					});
+		//}
 
 		private void LoadCtor (Type t)
 		{
 			if (this.ctor != null)
 				return;
 
+			#if !NETFX_CORE
 			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new[] { typeof (ISerializationContext), typeof (IValueReader) }, null)
 						?? t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
+			#else
+			this.ctor = t.GetConstructor (new[] { typeof (ISerializationContext), typeof (IValueReader) })
+						?? t.GetConstructor (new Type[0]);
+			#endif
 
 			if (this.ctor == null)
 				throw new ArgumentException ("No empty or (ISerializationContext,IValueReader) constructor found for " + t.Name);
@@ -431,7 +435,7 @@ namespace Tempest
 			this.deserializingConstructor = this.ctor.GetParameters().Length == 2;
 		}
 
-		#if !SILVERLIGHT
+		#if !SILVERLIGHT && !NETFX_CORE
 		private object SerializableDeserializer (IValueReader reader)
 		{
 			bool isNull = false;
@@ -469,11 +473,7 @@ namespace Tempest
 			return this.deserializer (context, reader, skipHeader);
 		}
 
-		#if NET_4
 		private static readonly ConcurrentDictionary<Type, ObjectSerializer> Serializers = new ConcurrentDictionary<Type, ObjectSerializer>();
-		#else
-		private static readonly Dictionary<Type, ObjectSerializer> Serializers = new Dictionary<Type, ObjectSerializer> ();
-		#endif
 
 		internal ObjectSerializer GetSerializerInternal (Type stype)
 		{
@@ -487,29 +487,11 @@ namespace Tempest
 
 		internal static ObjectSerializer GetSerializer (Type type)
 		{
-			if (type == typeof(object) || type.IsInterface || type.IsAbstract)
+			var ti = type.GetTypeInfo();
+			if (type == typeof(object) || ti.IsInterface || ti.IsAbstract)
 				return baseSerializer;
 
-			ObjectSerializer serializer;
-			#if NET_4
-			serializer = Serializers.GetOrAdd (type, t => new ObjectSerializer (t));
-			#else
-			bool exists;
-			lock (Serializers)
-				exists = Serializers.TryGetValue (type, out serializer);
-
-			if (!exists)
-			{
-				serializer = new ObjectSerializer (type);
-				lock (Serializers)
-				{
-					if (!Serializers.ContainsKey (type))
-						Serializers.Add (type, serializer);
-				}
-			}
-			#endif
-
-			return serializer;
+			return Serializers.GetOrAdd (type, t => new ObjectSerializer (t));
 		}
 	}
 }

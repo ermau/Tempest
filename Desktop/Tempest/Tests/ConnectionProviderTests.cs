@@ -47,18 +47,22 @@ namespace Tempest.Tests
 		[SetUp]
 		protected void Setup()
 		{
+			#if !NETFX_CORE
 			AppDomain.CurrentDomain.UnhandledException += HandleUnhandledException;
+			#endif
 
 			Trace.WriteLine ("Entering", "Setup");
 			this.provider = SetUp();
 			Trace.WriteLine ("Exiting", "Setup");
 		}
 
+		#if !NETFX_CORE
 		private void HandleUnhandledException (object sender, UnhandledExceptionEventArgs e)
 		{
 			lock (this.exceptions)
 				this.exceptions.Add ((Exception)e.ExceptionObject);
 		}
+		#endif
 
 		[TearDown]
 		protected void TearDown()
@@ -76,6 +80,7 @@ namespace Tempest.Tests
 			    this.connections.Clear();
 			}
 
+			#if !NETFX_CORE
 			AppDomain.CurrentDomain.UnhandledException -= HandleUnhandledException;
 
 			if (this.exceptions.Count > 0)
@@ -85,6 +90,7 @@ namespace Tempest.Tests
 
 				throw new AggregateException (exs);
 			}
+			#endif
 
 			Trace.WriteLine ("Exiting", "TearDown");
 		}

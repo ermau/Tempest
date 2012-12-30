@@ -27,13 +27,7 @@
 using System;
 using System.Linq;
 using System.Text;
-#if !NETFX_CORE
 using NUnit.Framework;
-#else
-using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
-using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
-using SetUp = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestInitializeAttribute;
-#endif
 
 namespace Tempest.Tests
 {

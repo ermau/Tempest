@@ -86,7 +86,7 @@ namespace Tempest
 		/// </summary>
 		public static void WriteDate (this IValueWriter writer, DateTime date)
 		{
-			#if !SILVERLIGHT && !WINDOWS_PHONE
+			#if !SILVERLIGHT && !WINDOWS_PHONE && !NETFX_CORE
 			WriteLocalDate (writer, date);
 			#else
 			writer.WriteInt64 (date.Ticks);
@@ -98,14 +98,14 @@ namespace Tempest
 		/// </summary>
 		public static DateTime ReadDate (this IValueReader reader)
 		{
-			#if !SILVERLIGHT && !WINDOWS_PHONE
+			#if !SILVERLIGHT && !WINDOWS_PHONE && !NETFX_CORE
 			return ReadLocalDate (reader).Item2;
 			#else
 			return new DateTime (reader.ReadInt64(), DateTimeKind.Unspecified);
 			#endif
 		}
 
-		#if !SILVERLIGHT && !WINDOWS_PHONE
+		#if !SILVERLIGHT && !WINDOWS_PHONE && !NETFX_CORE
 		public static void WriteLocalDate (this IValueWriter writer, DateTime date)
 		{
 			WriteLocalDate (writer, date, TimeZoneInfo.Local);

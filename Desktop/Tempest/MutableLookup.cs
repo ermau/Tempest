@@ -51,7 +51,7 @@ namespace Cadenza.Collections
 				throw new ArgumentNullException ("comparer");
 
 			this.groupings = new Dictionary<TKey, MutableLookupGrouping> (comparer);
-			if (!typeof(TKey).IsValueType)
+			if (default(TKey) == null)
 				this.nullGrouping = new MutableLookupGrouping (default(TKey));
 		}
 
@@ -62,7 +62,7 @@ namespace Cadenza.Collections
 
 			this.groupings = new Dictionary<TKey, MutableLookupGrouping> (lookup.Count);
 
-			if (!typeof(TKey).IsValueType)
+			if (default(TKey) == null)
 				this.nullGrouping = new MutableLookupGrouping (default(TKey), lookup[default(TKey)]);
 			
 			foreach (var grouping in lookup) {

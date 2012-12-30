@@ -169,7 +169,7 @@ namespace Tempest.Tests
 			if (this.complete)
 				return;
 
-			#if !SILVERLIGHT
+			#if !TRACE
 			Trace.WriteLine ("Fail handler called from " + Environment.StackTrace);
 			#endif
 
@@ -238,7 +238,11 @@ namespace Tempest.Tests
 					else if (exception != null)
 						throw new TargetInvocationException (exception);
 
+					#if !NETFX_CORE
 					Thread.Sleep (1);
+					#else
+					System.Threading.Tasks.Task.Delay (1).Wait();
+					#endif
 				}
 
 				if (this.passCount < this.timesToPass && !Debugger.IsAttached)

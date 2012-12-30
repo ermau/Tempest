@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Reflection;
 
 namespace Tempest
 {
@@ -86,7 +87,7 @@ namespace Tempest
 				if (element != null)
 				{
 					etype = element.GetType();
-					if (etype.IsValueType && typeof (T) == typeof (object))
+					if (etype.GetTypeInfo().IsValueType && typeof (T) == typeof (object))
 						etype = typeof (object);
 				}
 				else

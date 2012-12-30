@@ -25,6 +25,8 @@
 // THE SOFTWARE.
 
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Tempest
@@ -35,15 +37,62 @@ namespace Tempest
 		{
 			if (self == null)
 				throw new ArgumentNullException ("self");
-			if (self.Assembly == mscorlib || self.Assembly == Tempest)
+
+			var typeInfo = self.GetTypeInfo();
+			if (typeInfo.Assembly == mscorlib || typeInfo.Assembly == Tempest)
 				return self.FullName;
-			if (!self.Assembly.GlobalAssemblyCache)
-				return String.Format ("{0}, {1}", self.FullName, self.Assembly.GetName().Name);
+
+			#if !NETFX_CORE
+			if (!typeInfo.Assembly.GlobalAssemblyCache)
+				return String.Format ("{0}, {1}", self.FullName, typeInfo.Assembly.GetName().Name);
+			#endif
 			
 			return self.AssemblyQualifiedName;
 		}
 
-		private static readonly Assembly Tempest = typeof (TypeExtensions).Assembly;
-		private static readonly Assembly mscorlib = typeof (string).Assembly;
+		#if !NETFX_CORE
+		public static Type GetTypeInfo (this Type self)
+		{
+			return self;
+		}
+		#else
+		public static bool IsAssignableFrom (this Type baseType, Type derivedType)
+		{
+			return baseType.GetTypeInfo().IsAssignableFrom (derivedType.GetTypeInfo());
+		}
+
+		public static IEnumerable<Type> GetTypes (this Assembly self)
+		{
+			return self.DefinedTypes.Select (ti => ti.BaseType);
+		}
+
+		public static ConstructorInfo GetConstructor (this Type self, Type[] parameterTypes)
+		{
+			foreach (ConstructorInfo constructor in self.GetTypeInfo().DeclaredConstructors)
+			{
+				ParameterInfo[] parameters = constructor.GetParameters();
+				if (parameters.Length != parameterTypes.Length)
+					continue;
+
+				bool match = true;
+				for (int i = 0; i < parameters.Length; i++)
+				{
+					if (parameterTypes[i] != parameters[i].ParameterType)
+					{
+						match = false;
+						break;
+					}
+				}
+
+				if (match)
+					return constructor;
+			}
+
+			return null;
+		}
+		#endif
+
+		private static readonly Assembly Tempest = typeof (TypeExtensions).GetTypeInfo().Assembly;
+		private static readonly Assembly mscorlib = typeof (string).GetTypeInfo().Assembly;
 	}
 }

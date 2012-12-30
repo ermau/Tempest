@@ -178,6 +178,12 @@ namespace Tempest.Providers.Network
 			this.connections.TryRemove (connection.ConnectionId, out o);
 		}
 
+		private void OnDeliveryTimer (object sender, EventArgs eventArgs)
+		{
+			foreach (UdpServerConnection connection in this.connections.Values)
+				connection.ResendPending();
+		}
+
 		private void OnConnectionMade (ConnectionMadeEventArgs e)
 		{
 			var handler = this.ConnectionMade;

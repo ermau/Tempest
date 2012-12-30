@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -169,7 +170,14 @@ namespace Tempest.Providers.Network
 		public virtual void Dispose()
 		{
 			Disconnect (true, ConnectionResult.FailedUnknown);
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for {0} pending asyncs", this.pendingAsync));
+
+			while (this.pendingAsync > 0)
+				Thread.Sleep (1);
 		}
+
+		protected int pendingAsync;
 
 		protected bool formallyConnected;
 		internal MessageSerializer serializer;
@@ -393,5 +401,7 @@ namespace Tempest.Providers.Network
 			if (completed != null)
 				completed (this, new MessageEventArgs (this, (Message)e.UserToken));
 		}
+
+		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "UdpConnectionProvider");
 	}
 }

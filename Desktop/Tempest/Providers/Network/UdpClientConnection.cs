@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -93,51 +94,60 @@ namespace Tempest.Providers.Network
 				throw new ArgumentException ("Unsupported endpoint AddressFamily");
 
 			var ntcs = new TaskCompletionSource<ClientConnectionResult>();
-			while (Interlocked.CompareExchange (ref this.connectTcs, ntcs, null) != null)
-				Thread.Sleep (0);
 
-			this.serializer = new ClientMessageSerializer (this, this.originalProtocols);
+			ThreadPool.QueueUserWorkItem (s =>
+			{
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async..", this.pendingAsync));
 
-			IEnumerable<string> hashAlgs = null;
-			if (this.localCrypto != null)
-				hashAlgs = this.localCrypto.SupportedHashAlgs;
+				while (this.pendingAsync > 0 || Interlocked.CompareExchange (ref this.connectTcs, ntcs, null) != null)
+					Thread.Sleep (0);
 
-			this.socket = new Socket (endPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-			IPAddress localIP = (endPoint.AddressFamily == AddressFamily.InterNetwork) ? IPAddress.Any : IPAddress.IPv6Any;
-			this.socket.Bind (new IPEndPoint (localIP, 0));
+				this.serializer = new ClientMessageSerializer (this, this.originalProtocols);
+
+				IEnumerable<string> hashAlgs = null;
+				if (this.localCrypto != null)
+					hashAlgs = this.localCrypto.SupportedHashAlgs;
+
+				this.socket = new Socket (endPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+				IPAddress localIP = (endPoint.AddressFamily == AddressFamily.InterNetwork) ? IPAddress.Any : IPAddress.IPv6Any;
+				this.socket.Bind (new IPEndPoint (localIP, 0));
 			
-			SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
-			receiveArgs.SetBuffer (new byte[65507], 0, 65507);
-			receiveArgs.RemoteEndPoint = this.socket.LocalEndPoint;
-			receiveArgs.Completed += OnReceiveCompleted;
+				SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
+				receiveArgs.SetBuffer (new byte[65507], 0, 65507);
+				receiveArgs.RemoteEndPoint = this.socket.LocalEndPoint;
+				receiveArgs.Completed += OnReceiveCompleted;
 
-			this.reader = new BufferValueReader (receiveArgs.Buffer);
+				this.reader = new BufferValueReader (receiveArgs.Buffer);
 
-			while (!this.socket.ReceiveFromAsync (receiveArgs))
-				OnReceiveCompleted (this, receiveArgs);
+				int p = Interlocked.Increment (ref this.pendingAsync);
+				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p));
 
-			Timer t = new Timer (30000);
-			Timer previousTimer = Interlocked.Exchange (ref this.connectTimer, t);
-			if (previousTimer != null)
-				previousTimer.Dispose();
+				while (!this.socket.ReceiveFromAsync (receiveArgs))
+					OnReceiveCompleted (this, receiveArgs);
 
-			t.AutoReset = false;
-			t.TimesUp += (sender, args) =>
-			{
-				var tcs = this.connectTcs;
-				if (tcs != null)
-					tcs.TrySetResult (new ClientConnectionResult (ConnectionResult.ConnectionFailed, null));
+				Timer t = new Timer (30000);
+				Timer previousTimer = Interlocked.Exchange (ref this.connectTimer, t);
+				if (previousTimer != null)
+					previousTimer.Dispose();
 
-				Disconnect (true, ConnectionResult.ConnectionFailed);
-				t.Dispose();
-			};
-			t.Start();
+				t.AutoReset = false;
+				t.TimesUp += (sender, args) =>
+				{
+					var tcs = this.connectTcs;
+					if (tcs != null)
+						tcs.TrySetResult (new ClientConnectionResult (ConnectionResult.ConnectionFailed, null));
 
-			RemoteEndPoint = endPoint;
-			Send (new ConnectMessage
-			{
-				Protocols = Protocols,
-				SignatureHashAlgorithms = hashAlgs
+					Disconnect (true, ConnectionResult.ConnectionFailed);
+					t.Dispose();
+				};
+				t.Start();
+
+				RemoteEndPoint = endPoint;
+				Send (new ConnectMessage
+				{
+					Protocols = Protocols,
+					SignatureHashAlgorithms = hashAlgs
+				});
 			});
 
 			return ntcs.Task;
@@ -183,6 +193,9 @@ namespace Tempest.Providers.Network
 			BufferValueReader currentReader = this.reader;
 			MessageSerializer mserializer = this.serializer;
 
+			int p = Interlocked.Decrement (ref this.pendingAsync);
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p));
+
 			if (mserializer == null || currentReader == null) // If these are null, we're disconnect(ing|ed).
 				return;
 
@@ -212,11 +225,16 @@ namespace Tempest.Providers.Network
 				e.SetBuffer (buffer, 0, buffer.Length);
 				try
 				{
+					p = Interlocked.Increment (ref this.pendingAsync);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p));
+
 					while (!sock.ReceiveFromAsync (e))
 						OnReceiveCompleted (this, e);
 				}
 				catch (ObjectDisposedException)
 				{
+					p = Interlocked.Decrement (ref this.pendingAsync);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p));
 				}
 			}
 		}

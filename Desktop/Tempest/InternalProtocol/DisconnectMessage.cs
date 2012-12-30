@@ -60,6 +60,16 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
+		public override bool MustBeReliable
+		{
+			get { return false; }
+		}
+
+		public override bool PreferReliable
+		{
+			get { return true; }
+		}
+
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
 			writer.WriteInt32 ((int)Reason);

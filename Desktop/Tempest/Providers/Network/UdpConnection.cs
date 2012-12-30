@@ -308,7 +308,7 @@ namespace Tempest.Providers.Network
 		{
 			var args = new MessageEventArgs (this, message);
 
-			if (args.Message.MustBeReliable || args.Message.PreferReliable)
+			if (message.Header.MessageId != 0 && (args.Message.MustBeReliable || args.Message.PreferReliable))
 			{
 				bool acked = false;
 				if (!(message is TempestMessage))

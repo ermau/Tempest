@@ -373,7 +373,7 @@ namespace Tempest.Providers.Network
 						connection.Receive (connect);
 					}
 					else
-						OnTempestMessage (tempestMessage);
+						OnConnectionlessTempestMessage (tempestMessage);
 				}
 				else
 					OnConnectionlessMessageReceived (new ConnectionlessMessageEventArgs (m, args.RemoteEndPoint));
@@ -385,9 +385,8 @@ namespace Tempest.Providers.Network
 			return Interlocked.Increment (ref nextConnectionId);
 		}
 
-		private void OnTempestMessage (TempestMessage tempestMessage)
+		private void OnConnectionlessTempestMessage (TempestMessage tempestMessage)
 		{
-			throw new NotImplementedException();
 		}
 
 		private void OnConnectionlessMessageReceived (ConnectionlessMessageEventArgs e)

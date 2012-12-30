@@ -152,7 +152,8 @@ namespace Tempest.Providers.Network
 
 				if (!foundHashAlg)
 				{
-					Disconnect (ConnectionResult.FailedHandshake);
+					this.provider.SendConnectionlessMessage (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion }, RemoteEndPoint);
+					Disconnect (false, ConnectionResult.FailedHandshake);
 					return;
 				}
 			}
@@ -162,7 +163,8 @@ namespace Tempest.Providers.Network
 				Protocol lp;
 				if (!this.provider.protocols.TryGetValue (protocol.id, out lp) || !lp.CompatibleWith (protocol))
 				{
-					Disconnect (ConnectionResult.IncompatibleVersion);
+					this.provider.SendConnectionlessMessage (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion }, RemoteEndPoint);
+					Disconnect (false, ConnectionResult.IncompatibleVersion);
 					return;
 				}
 			}

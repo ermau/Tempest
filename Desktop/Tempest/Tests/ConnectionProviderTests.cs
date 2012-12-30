@@ -172,32 +172,6 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public void ConnectionlessSupport()
-		{
-			EventHandler<ConnectionlessMessageEventArgs> cmr = (sender, e) => { };
-
-			if (this.provider.SupportsConnectionless)
-			{
-				Assert.DoesNotThrow (() => this.provider.ConnectionlessMessageReceived += cmr);
-				Assert.DoesNotThrow (() => this.provider.ConnectionlessMessageReceived -= cmr);
-				Assert.DoesNotThrow (() => this.provider.SendConnectionlessMessage (new UnreliableMockMessage(), new IPEndPoint (IPAddress.Loopback, 42)));
-			}
-			else
-			{
-				Assert.Throws<NotSupportedException> (() => this.provider.ConnectionlessMessageReceived += cmr);
-				Assert.Throws<NotSupportedException> (() => this.provider.SendConnectionlessMessage (new MockMessage (), new IPEndPoint (IPAddress.Loopback, 42)));
-				Assert.Throws<NotSupportedException> (() => this.provider.Start (MessageTypes.Unreliable));
-			}
-		}
-
-		[Test]
-		public void SendConnectionlessMessageNull()
-		{
-			Assert.Throws<ArgumentNullException> (() => this.provider.SendConnectionlessMessage (null, new IPEndPoint (IPAddress.Loopback, 42)));
-			Assert.Throws<ArgumentNullException> (() => this.provider.SendConnectionlessMessage (new MockMessage (), null));
-		}
-
-		[Test]
 		public void StartRepeatedly()
 		{
 			// *knock knock knock* Penny

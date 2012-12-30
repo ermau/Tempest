@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -90,20 +90,24 @@ namespace Tempest
 			lock (this.providers)
 				this.providers.Add (provider, mode);
 
+			IConnectionlessMessenger connectionless = provider as IConnectionlessMessenger;
+
 			switch (mode)
 			{
 				case ExecutionMode.ConnectionOrder:
 					provider.ConnectionMade += OnConnectionMade;
 
-					if (provider.SupportsConnectionless)
-						provider.ConnectionlessMessageReceived += OnConnectionlessMessageReceived;
+					if (connectionless != null)
+						connectionless.ConnectionlessMessageReceived += OnConnectionlessMessageReceived;
+
 					break;
 
 				case ExecutionMode.GlobalOrder:
 					provider.ConnectionMade += OnConnectionMadeGlobal;
 
-					if (provider.SupportsConnectionless)
-						provider.ConnectionlessMessageReceived += OnConnectionlessMessageReceivedGlobal;
+					if (connectionless != null)
+						connectionless.ConnectionlessMessageReceived += OnConnectionlessMessageReceivedGlobal;
+
 					break;
 			}
 

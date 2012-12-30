@@ -51,6 +51,8 @@
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="DisconnectedEventArgs.cs" />
     <Compile Include="ConnectionExtensions.cs" />
+    <Compile Include="IConnectionlessMessenger.cs" />
+    <Compile Include="IListener.cs" />
     <Compile Include="InternalProtocol\AcknowledgeConnectMessage.cs" />
     <Compile Include="IClientContext.cs" />
     <Compile Include="InternalProtocol\AcknowledgeMessage.cs" />

@@ -174,12 +174,6 @@ namespace Tempest.Providers.Network
 
 		public event EventHandler PingFrequencyChanged;
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
-		
-		public event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived
-		{
-			add { throw new NotSupportedException(); }
-			remove { throw new NotSupportedException(); }
-		}
 
 		/// <summary>
 		/// Gets the maximum number of connections allowed on this provider.
@@ -196,11 +190,6 @@ namespace Tempest.Providers.Network
 		public IPEndPoint EndPoint
 		{
 			get { return this.endPoint; }
-		}
-
-		public bool SupportsConnectionless
-		{
-			get { return false; }
 		}
 
 		public bool IsRunning
@@ -275,16 +264,6 @@ namespace Tempest.Providers.Network
 				throw new NotSupportedException();
 
 			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting", category);
-		}
-
-		public void SendConnectionlessMessage (Message message, EndPoint endPoint)
-		{
-			if (message == null)
-				throw new ArgumentNullException ("message");
-			if (endPoint == null)
-				throw new ArgumentNullException ("endPoint");
-			
-			throw new NotSupportedException();
 		}
 
 		public void Stop()

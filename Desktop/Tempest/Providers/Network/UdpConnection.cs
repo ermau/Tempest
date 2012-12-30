@@ -261,6 +261,15 @@ namespace Tempest.Providers.Network
 			this.serializer = null;
 
 			this.rqueue.Clear();
+
+			lock (this.messageResponses)
+			{
+				foreach (var kvp in this.messageResponses)
+					kvp.Value.TrySetCanceled();
+
+				this.messageResponses.Clear();
+			}
+
 			lock (this.pendingAck)
 				this.pendingAck.Clear();
 		}

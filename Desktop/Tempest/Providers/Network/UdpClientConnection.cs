@@ -167,6 +167,12 @@ namespace Tempest.Providers.Network
 				while (!this.socket.ReceiveFromAsync (receiveArgs))
 					OnReceiveCompleted (this, receiveArgs);
 
+				Timer dtimer = new Timer (100);
+				dtimer = new Timer (100);
+				dtimer.TimesUp += OnDeliveryTimer;
+				dtimer.Start();
+				this.deliveryTimer = dtimer;
+
 				Timer t = new Timer (30000);
 				Timer previousTimer = Interlocked.Exchange (ref this.connectTimer, t);
 				if (previousTimer != null)
@@ -206,6 +212,8 @@ namespace Tempest.Providers.Network
 		private BufferValueReader reader;
 		private TaskCompletionSource<ClientConnectionResult> connectTcs;
 		private Timer connectTimer;
+		private Timer deliveryTimer;
+
 		private readonly Func<IPublicKeyCrypto> cryptoFactory;
 
 		private class UdpClientConnectionlessListener
@@ -230,9 +238,21 @@ namespace Tempest.Providers.Network
 			get { return this.connectTcs != null; }
 		}
 
+		private void OnDeliveryTimer (object sender, EventArgs e)
+		{
+			ResendPending();
+		}
+
 		protected override void Cleanup()
 		{
 			base.Cleanup();
+
+			Timer timer = Interlocked.Exchange (ref this.deliveryTimer, null);
+			if (timer != null)
+			{
+				timer.TimesUp -= OnDeliveryTimer;
+				timer.Dispose();
+			}
 
 			this.remoteEncryption = null;
 			this.reader = null;

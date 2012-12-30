@@ -269,6 +269,7 @@ namespace Tempest
 	/// <summary>
 	/// Holds event data for the <see cref="IConnection.MessageReceived"/> event.
 	/// </summary>
+	[System.Diagnostics.DebuggerDisplay ("{Message}")]
 	public class MessageEventArgs
 		: ConnectionEventArgs
 	{

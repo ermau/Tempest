@@ -28,6 +28,7 @@ using System;
 
 namespace Tempest
 {
+	[System.Diagnostics.DebuggerDisplay ("{Header.MessageId}:{GetType()}")]
 	public abstract class Message
 	{
 		protected Message (Protocol protocol, ushort messageType)

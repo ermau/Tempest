@@ -190,7 +190,7 @@ namespace Tempest.Providers.Network
 			{
 				p = Interlocked.Decrement (ref this.pendingAsync);
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
-				Disconnect (ConnectionResult.ConnectionFailed);
+				DisconnectAsync (ConnectionResult.ConnectionFailed);
 				OnConnectionFailed (new ClientConnectionEventArgs (this));
 
 				var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
@@ -240,7 +240,7 @@ namespace Tempest.Providers.Network
 				connectMsg.SignatureHashAlgorithms = this.pkAuthentication.SupportedHashAlgs;
 			}
 
-			Send (connectMsg);
+			SendAsync (connectMsg);
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 		}
@@ -288,7 +288,7 @@ namespace Tempest.Providers.Network
 					this.serializer.AES = encryption;
 					this.serializer.HMAC = new HMACSHA256 (encryption.Key);
 
-					Send (new FinalConnectMessage
+					SendAsync (new FinalConnectMessage
 					{
 						AESKey = this.serverEncryption.Encrypt (encryption.Key),
 						PublicAuthenticationKeyType = this.publicAuthenticationKey.GetType(),

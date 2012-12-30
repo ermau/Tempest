@@ -104,12 +104,11 @@ namespace Tempest.Providers.Network
 		}
 
 		public event EventHandler<MessageEventArgs> MessageReceived;
-		public event EventHandler<MessageEventArgs> MessageSent;
 		public event EventHandler<DisconnectedEventArgs> Disconnected;
 
-		public void Send (Message message)
+		public Task<bool> SendAsync (Message message)
 		{
-			SendCore (message);
+			return SendCore (message);
 		}
 
 		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
@@ -126,7 +125,7 @@ namespace Tempest.Providers.Network
 			return tcs.Task.ContinueWith (t => (TResponse)t.Result);
 		}
 
-		public void SendResponse (Message originalMessage, Message response)
+		public Task<bool> SendResponseAsync (Message originalMessage, Message response)
 		{
 			if (originalMessage == null)
 				throw new ArgumentNullException ("originalMessage");
@@ -139,7 +138,7 @@ namespace Tempest.Providers.Network
 			response.Header.IsResponse = true;
 			response.Header.MessageId = originalMessage.Header.MessageId;
 
-			SendCore (response, isResponse: true);
+			return SendCore (response, isResponse: true);
 		}
 
 		public IEnumerable<MessageEventArgs> Tick()
@@ -147,29 +146,19 @@ namespace Tempest.Providers.Network
 			throw new NotSupportedException();
 		}
 
-		public void Disconnect()
+		public Task DisconnectAsync()
 		{
-			Disconnect (true, ConnectionResult.FailedUnknown);
+			return DisconnectAsync (ConnectionResult.FailedUnknown);
 		}
 
-		public void Disconnect (ConnectionResult reason, string customReason = null)
+		public Task DisconnectAsync (ConnectionResult reason, string customReason = null)
 		{
-			Disconnect (true, reason, customReason);
-		}
-
-		public void DisconnectAsync()
-		{
-			Disconnect (true, ConnectionResult.FailedUnknown);
-		}
-
-		public void DisconnectAsync (ConnectionResult reason, string customReason = null)
-		{
-			Disconnect (true, reason, customReason);
+			return Disconnect (reason, customReason);
 		}
 
 		public virtual void Dispose()
 		{
-			Disconnect (true, ConnectionResult.FailedUnknown);
+			Disconnect (ConnectionResult.FailedUnknown);
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for {0} pending asyncs", this.pendingAsync));
 
@@ -202,7 +191,7 @@ namespace Tempest.Providers.Network
 			get;
 		}
 
-		protected void SendCore (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null)
+		protected Task<bool> SendCore (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -210,12 +199,18 @@ namespace Tempest.Providers.Network
 			Socket sock = this.socket;
 			MessageSerializer mserialzier = this.serializer;
 
+			TaskCompletionSource<bool> tcs = null;
+			if (future == null)
+				tcs = new TaskCompletionSource<bool> (message);
+
 			if (sock == null || mserialzier == null || (!IsConnected && !IsConnecting))
 			{
 				if (future != null)
-					future.TrySetCanceled();
-
-				return;
+					future.TrySetResult (null);
+				else
+					tcs.TrySetResult (false);
+				
+				return (tcs != null) ? tcs.Task : null;
 			}
 
 			if (message.Header == null)
@@ -245,7 +240,7 @@ namespace Tempest.Providers.Network
 			args.SetBuffer (buffer, 0, length);
 			args.RemoteEndPoint = RemoteTarget.ToEndPoint();
 			args.Completed += OnSendCompleted;
-			args.UserToken = message;
+			args.UserToken = tcs;
 
 			try
 			{
@@ -255,6 +250,8 @@ namespace Tempest.Providers.Network
 			catch (ObjectDisposedException)
 			{
 			}
+
+			return (tcs != null) ? tcs.Task : null;
 		}
 
 		protected virtual void Cleanup()
@@ -282,17 +279,25 @@ namespace Tempest.Providers.Network
 				this.pendingAck.Clear();
 		}
 
-		protected virtual void Disconnect (bool notify, ConnectionResult reason, string customReason = null)
+		protected virtual Task Disconnect (ConnectionResult reason, string customReason = null)
 		{
 			bool raise = IsConnected || IsConnecting;
 
-			if (raise && notify)
-				Send (new DisconnectMessage { Reason = reason, CustomReason = customReason });
+			var tcs = new TaskCompletionSource<bool>();
+
+			if (raise)
+			{
+				SendAsync (new DisconnectMessage { Reason = reason, CustomReason = customReason })
+					.Wait();
+			}
 
 			Cleanup();
 
 			if (raise)
 				OnDisconnected (new DisconnectedEventArgs (this, reason, customReason));
+
+			tcs.SetResult (true);
+			return tcs.Task;
 		}
 
 		protected virtual void OnDisconnected (DisconnectedEventArgs e)
@@ -318,7 +323,7 @@ namespace Tempest.Providers.Network
 			}
 
 			foreach (Message message in resending)
-				Send (message);
+				SendAsync (message);
 		}
 
 		internal void Receive (Message message)
@@ -330,7 +335,7 @@ namespace Tempest.Providers.Network
 				bool acked = false;
 				if (!(message is TempestMessage))
 				{
-					Send (new AcknowledgeMessage { MessageId = message.Header.MessageId });
+					SendAsync (new AcknowledgeMessage { MessageId = message.Header.MessageId });
 					acked = true;
 				}
 
@@ -342,7 +347,7 @@ namespace Tempest.Providers.Network
 				}
 
 				if (!acked)
-					Send (new AcknowledgeMessage { MessageId = message.Header.MessageId });
+					SendAsync (new AcknowledgeMessage { MessageId = message.Header.MessageId });
 			}
 			else
 				RouteMessage (args);
@@ -387,19 +392,16 @@ namespace Tempest.Providers.Network
 
 				case (ushort)TempestMessageType.Disconnect:
 					var msg = (DisconnectMessage)e.Message;
-					Disconnect (false, msg.Reason, msg.CustomReason);
+					Disconnect (msg.Reason, msg.CustomReason);
 					break;
 			}
 		}
 
 		private void OnSendCompleted (object sender, SocketAsyncEventArgs e)
 		{
-			if (e.UserToken is TempestMessage)
-				return;
-
-			var completed = MessageSent;
-			if (completed != null)
-				completed (this, new MessageEventArgs (this, (Message)e.UserToken));
+			var tcs = e.UserToken as TaskCompletionSource<bool>;
+			if (tcs != null)
+				tcs.TrySetResult (true);
 		}
 
 		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "UdpConnectionProvider");

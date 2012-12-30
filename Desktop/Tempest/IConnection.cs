@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2010-2012 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Tempest
@@ -105,12 +104,6 @@ namespace Tempest
 		event EventHandler<MessageEventArgs> MessageReceived;
 
 		/// <summary>
-		/// A message completed sending on the transport.
-		/// </summary>
-		/// <exception cref="NotSupportedException"><see cref="Modes"/> is not <see cref="MessagingModes.Async"/>.</exception>
-		event EventHandler<MessageEventArgs> MessageSent;
-
-		/// <summary>
 		/// The connection was lost.
 		/// </summary>
 		event EventHandler<DisconnectedEventArgs> Disconnected;
@@ -120,7 +113,13 @@ namespace Tempest
 		/// </summary>
 		/// <param name="message">The message to send.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
-		void Send (Message message);
+		/// <returns>Whether or not the message was sent.</returns>
+		/// <remarks>
+		/// The returned future will complete when the underlying connection has completed sending the message,
+		/// not when the other end has received it. In some cases, if you're sending while disconnecting, the
+		/// message may fail to send in which case the future's result will be <c>false</c>.
+		/// </remarks>
+		Task<bool> SendAsync (Message message);
 
 		/// <summary>
 		/// Sends a <paramref name="message"/> on this connection and returns a <see cref="Task{TResponse}" /> for the direct response to this <paramref name="message"/>.
@@ -130,7 +129,11 @@ namespace Tempest
 		/// <param name="timeout">The timeout to apply in </param>
 		/// <returns>A <see cref="Task{TResponse}" /> for the direct response to <paramref name="message"/>.</returns>
 		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
-		/// <seealso cref="SendResponse"/>
+		/// <seealso cref="SendResponseAsync"/>
+		/// <remarks>
+		/// In some cases, such as sending a message while disconnecting, the message may fail to send
+		/// in which case the future's result will be <c>null</c>.
+		/// </remarks>
 		Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message;
 
 		/// <summary>
@@ -145,7 +148,12 @@ namespace Tempest
 		/// </exception>
 		/// <exception cref="ArgumentException"><paramref name="originalMessage" />'s <see cref="Message.IsResponse"/> is <c>true</c>.</exception>
 		/// <seealso cref="SendFor{TResponse}"/>
-		void SendResponse (Message originalMessage, Message response);
+		/// <remarks>
+		/// The returned future will complete when the underlying connection has completed sending the message,
+		/// not when the other end has received it. In some cases, if you're sending while disconnecting, the
+		/// message may fail to send in which case the future's result will be <c>false</c>.
+		/// </remarks>
+		Task<bool> SendResponseAsync (Message originalMessage, Message response);
 
 		/// <summary>
 		/// Sends and receives all pending messages.
@@ -155,24 +163,9 @@ namespace Tempest
 		IEnumerable<MessageEventArgs> Tick();
 
 		/// <summary>
-		/// Immediately closes the connection.
-		/// </summary>
-		void Disconnect();
-
-		/// <summary>
-		/// Immediately closes the connection.
-		/// </summary>
-		/// <param name="reason">Reason for the disconnection.</param>
-		/// <param name="customReason">A custom reason, if any.</param>
-		/// <exception cref="ArgumentNullException">
-		/// If <paramref name="reason"/> == <see cref="ConnectionResult.Custom"/> and <paramref name="customReason"/> is <c>null</c>.
-		/// </exception>
-		void Disconnect (ConnectionResult reason, string customReason = null);
-
-		/// <summary>
 		/// Asynchronously closes the connection.
 		/// </summary>
-		void DisconnectAsync();
+		Task DisconnectAsync();
 
 		/// <summary>
 		/// Asynchronously closes the connection.
@@ -182,7 +175,7 @@ namespace Tempest
 		/// <exception cref="ArgumentNullException">
 		/// If <paramref name="reason"/> == <see cref="ConnectionResult.Custom"/> and <paramref name="customReason"/> is <c>null</c>.
 		/// </exception>
-		void DisconnectAsync (ConnectionResult reason, string customReason = null);
+		Task DisconnectAsync (ConnectionResult reason, string customReason = null);
 	}
 
 	/// <summary>

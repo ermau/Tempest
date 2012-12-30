@@ -180,13 +180,13 @@ namespace Tempest.Providers.Network
 					if (tcs != null)
 						tcs.TrySetResult (new ClientConnectionResult (ConnectionResult.ConnectionFailed, null));
 
-					Disconnect (true, ConnectionResult.ConnectionFailed);
+					Disconnect (ConnectionResult.ConnectionFailed);
 					t.Dispose();
 				};
 				t.Start();
 
 				RemoteTarget = target;
-				Send (new ConnectMessage
+				SendAsync (new ConnectMessage
 				{
 					Protocols = Protocols,
 					SignatureHashAlgorithms = hashAlgs
@@ -343,7 +343,7 @@ namespace Tempest.Providers.Network
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
 					LocalKey.Serialize (authKeyWriter, this.remoteEncryption, includePrivate: false);
 
-					Send (new FinalConnectMessage
+					SendAsync (new FinalConnectMessage
 					{
 						AESKey = this.remoteEncryption.Encrypt (encryption.Key),
 						PublicAuthenticationKeyType = LocalKey.GetType(),

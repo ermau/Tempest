@@ -185,17 +185,6 @@ namespace Tempest
 				this.connections.Clear();
 		}
 
-		public void DisconnectWithReason (IConnection connection, string reason)
-		{
-			if (connection == null)
-				throw new ArgumentNullException ("connection");
-			if (reason == null)
-				throw new ArgumentNullException ("reason");
-
-			connection.Send (new DisconnectMessage { Reason = ConnectionResult.Custom, CustomReason = reason });
-			connection.DisconnectAsync (ConnectionResult.Custom, reason);
-		}
-
 		private volatile bool running = false;
 		private readonly Dictionary<IConnection, ExecutionMode> connections = new Dictionary<IConnection, ExecutionMode>();
 		private readonly Dictionary<IConnectionProvider, ExecutionMode> providers = new Dictionary<IConnectionProvider, ExecutionMode>();

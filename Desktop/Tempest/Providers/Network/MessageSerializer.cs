@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
@@ -439,7 +440,7 @@ namespace Tempest.Providers.Network
 
 				if (header == null || header.Message == null)
 				{
-					Disconnect (true);
+					Disconnect();
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not found)", callCategory);
 					return null;
 				}
@@ -447,7 +448,7 @@ namespace Tempest.Providers.Network
 				length = header.MessageLength;
 				if (length > MaxMessageSize)
 				{
-					Disconnect (true);
+					Disconnect();
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (bad message size)", callCategory);
 					return null;
 				}
@@ -461,7 +462,7 @@ namespace Tempest.Providers.Network
 
 				if (messageIdCallback != null && !messageIdCallback (header))
 				{
-					Disconnect (true);
+					Disconnect();
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message id callback was false)", callCategory);
 					return null;
 				}
@@ -493,7 +494,7 @@ namespace Tempest.Providers.Network
 						byte[] signature = reader.ReadBytes();
 						if (!VerifyMessage (this.signingHashAlgorithm, header.Message, signature, buffer, messageOffset, payloadLength - messageOffset))
 						{
-							Disconnect (true, ConnectionResult.MessageAuthenticationFailed);
+							Disconnect (ConnectionResult.MessageAuthenticationFailed);
 							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message auth failed)", callCategory);
 							return null;
 						}
@@ -501,7 +502,7 @@ namespace Tempest.Providers.Network
 				}
 				catch (Exception ex)
 				{
-					Disconnect (true);
+					Disconnect();
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting for error: " + ex, callCategory);
 					return null;
 				}
@@ -588,26 +589,17 @@ namespace Tempest.Providers.Network
 		protected Dictionary<byte, Protocol> protocols;
 		private string signingHashAlgorithm = "SHA256";
 
-		private void Disconnect (bool now)
+
+		private Task Disconnect (ConnectionResult result = ConnectionResult.FailedUnknown)
 		{
 			if (this.connection == null)
-				return;
+			{
+				TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+				tcs.SetResult(false);
+				return tcs.Task;
+			}
 
-			if (now)
-				this.connection.Disconnect();
-			else
-				this.connection.DisconnectAsync();
-		}
-
-		private void Disconnect (bool now, ConnectionResult result)
-		{
-			if (this.connection == null)
-				return;
-
-			if (now)
-				this.connection.Disconnect (result);
-			else
-				this.connection.DisconnectAsync (result);
+			return this.connection.DisconnectAsync (result);
 		}
 
 		#if NETFX_CORE

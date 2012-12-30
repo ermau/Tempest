@@ -152,7 +152,7 @@ namespace Tempest.Tests
 
 			Assert.IsNotNull (connection);
 
-			connection.Disconnect();
+			connection.DisconnectAsync();
 
 			AsyncTest test  = new AsyncTest();
 			provider.ConnectionMade += test.PassHandler;

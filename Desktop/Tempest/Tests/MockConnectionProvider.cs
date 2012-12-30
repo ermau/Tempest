@@ -133,7 +133,7 @@ namespace Tempest.Tests
 					Protocol lp;
 					if (!this.protocols.TryGetValue (ip.id, out lp) || !lp.CompatibleWith (ip))
 					{
-						connection.Disconnect (false, ConnectionResult.IncompatibleVersion);
+						connection.Disconnect (ConnectionResult.IncompatibleVersion);
 						return;
 					}
 				}
@@ -144,8 +144,8 @@ namespace Tempest.Tests
 
 			if (e.Rejected)
 			{
-				connection.Disconnect (true, ConnectionResult.ConnectionFailed);
-				c.Disconnect (true, ConnectionResult.ConnectionFailed);
+				connection.Disconnect (ConnectionResult.ConnectionFailed);
+				c.Disconnect (ConnectionResult.ConnectionFailed);
 			}
 		}
 
@@ -168,43 +168,56 @@ namespace Tempest.Tests
 			this.connection = connection;
 		}
 
-		public override void Send (Message message)
+		public override Task<bool> SendAsync (Message message)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
 			if (!IsConnected)
-				return;
+			{
+				TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+				tcs.SetResult (false);
+				return tcs.Task;
+			}
 
-			base.Send (message);
+			Task<bool> task = base.SendAsync (message);
 			connection.Receive (new MessageEventArgs (connection, message));
+			return task;
 		}
 
 		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
 		{
 			Task<TResponse> task = base.SendFor<TResponse> (message, timeout);
-			Send (message);
+			SendAsync (message);
 			return task;
 		}
 
-		public override void SendResponse (Message originalMessage, Message response)
+		public override Task<bool> SendResponseAsync (Message originalMessage, Message response)
 		{
+			var tcs = new TaskCompletionSource<bool>();
+
 			response.Header = new MessageHeader();
 			response.Header.MessageId = originalMessage.Header.MessageId;
 			
-			OnMessageSent (new MessageEventArgs (this, response));
 			connection.ReceiveResponse (new MessageEventArgs (connection, response));
+
+			tcs.SetResult (true);
+			return tcs.Task;
 		}
 
-		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
+		protected internal override Task Disconnect (ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
-			if (connection == null)
-				return;
-
-			var c = connection;
-			connection = null;
-			c.Disconnect (now, reason, customReason);
-
-			base.Disconnect (now, reason, customReason);
+			var c = Interlocked.Exchange (ref this.connection, null);
+			if (c != null)
+			{
+				c.OnDisconnected (new DisconnectedEventArgs (c, reason, customReason));
+				return base.Disconnect (reason, customReason);
+			}
+			else
+			{
+				TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+				tcs.SetResult (false);
+				return tcs.Task;
+			}
 		}
 	}
 
@@ -258,15 +271,20 @@ namespace Tempest.Tests
 			return tcs.Task;
 		}
 
-		public override void Send (Message message)
+		public override Task<bool> SendAsync (Message message)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
 			if (!IsConnected)
-				return;
+			{
+				TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+				tcs.SetResult (false);
+				return tcs.Task;
+			}
 			
-			base.Send (message);
+			Task<bool> task = base.SendAsync (message);
 			connection.Receive (new MessageEventArgs (connection, message));
+			return task;
 		}
 
 		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
@@ -276,27 +294,33 @@ namespace Tempest.Tests
 			return task;
 		}
 
-		public override void SendResponse (Message originalMessage, Message response)
+		public override Task<bool> SendResponseAsync (Message originalMessage, Message response)
 		{
+			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+
 			response.Header.MessageId = originalMessage.Header.MessageId;
-			
-			OnMessageSent (new MessageEventArgs (this, response));
 			connection.ReceiveResponse (new MessageEventArgs (connection, response));
-		}
-
-		protected internal override void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
-		{
-			if (connection == null)
-				return;
-
-			var c = connection;
-			connection = null;
-			c.Disconnect (now, reason, customReason);
-			
-			base.Disconnect (now, reason, customReason);
+			tcs.SetResult (true);
+			return tcs.Task;
 		}
 
 		internal MockServerConnection connection;
+
+		protected internal override Task Disconnect (ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
+		{
+			var c = Interlocked.Exchange (ref this.connection, null);
+			if (c != null)
+			{
+				c.OnDisconnected (new DisconnectedEventArgs (c, reason, customReason));
+				return base.Disconnect (reason, customReason);
+			}
+			else
+			{
+				TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+				tcs.SetResult (false);
+				return tcs.Task;
+			}
+		}
 
 		private void OnConnected (ClientConnectionEventArgs e)
 		{
@@ -384,15 +408,18 @@ namespace Tempest.Tests
 		}
 
 		public event EventHandler<MessageEventArgs> MessageReceived;
-		public event EventHandler<MessageEventArgs> MessageSent;
 		public event EventHandler<DisconnectedEventArgs> Disconnected;
 
 		private int messageId;
-		public virtual void Send (Message message)
+		public virtual Task<bool> SendAsync (Message message)
 		{
+			var tcs = new TaskCompletionSource<bool>();
+			tcs.SetResult (true);
+
 			message.Header = new MessageHeader();
 			message.Header.MessageId = Interlocked.Increment (ref this.messageId);
-			OnMessageSent (new MessageEventArgs (this, message));
+
+			return tcs.Task;
 		}
 
 		private readonly Dictionary<int, TaskCompletionSource<Message>> responses = new Dictionary<int, TaskCompletionSource<Message>>();
@@ -413,47 +440,46 @@ namespace Tempest.Tests
 
 			message.Header = new MessageHeader();
 			message.Header.MessageId = mid;
-			OnMessageSent (new MessageEventArgs (this, message));
 
 			return tcs.Task;
 		}
 
-		public abstract void SendResponse (Message originalMessage, Message response);
+		public abstract Task<bool> SendResponseAsync (Message originalMessage, Message response);
 
 		public IEnumerable<MessageEventArgs> Tick()
 		{
 			throw new NotSupportedException();
 		}
 
-		public void Disconnect()
+		public Task DisconnectAsync()
 		{
-			Disconnect (true);
+			return DisconnectAsync (ConnectionResult.FailedUnknown);
 		}
 
-		public void Disconnect (ConnectionResult reason, string customReason = null)
+		public Task DisconnectAsync (ConnectionResult reason, string customReason = null)
 		{
-			Disconnect (true, reason, customReason);
+			return Disconnect (reason, customReason);
 		}
 
-		public void DisconnectAsync()
-		{
-			Disconnect (false);
-		}
-
-		public void DisconnectAsync (ConnectionResult reason, string customReason = null)
-		{
-			Disconnect (false, reason, customReason);
-		}
-
-		protected internal virtual void Disconnect (bool now, ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
+		protected internal virtual Task Disconnect (ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
 			this.connected = false;
 
+			Cleanup();
+
 			var e = new DisconnectedEventArgs (this, reason, customReason);
-			if (now)
-				OnDisconnected (e);
-			else
-				ThreadPool.QueueUserWorkItem (s => OnDisconnected ((DisconnectedEventArgs)s), e);
+			return Task.Factory.StartNew (s => OnDisconnected ((DisconnectedEventArgs)s), e);
+		}
+
+		protected virtual void Cleanup()
+		{
+			lock (this.responses)
+			{
+				foreach (var response in this.responses)
+					response.Value.TrySetResult (null);
+
+				this.responses.Clear();
+			}
 		}
 
 		internal void ReceiveResponse (MessageEventArgs e)
@@ -492,7 +518,7 @@ namespace Tempest.Tests
 			switch (e.Message.MessageType)
 			{
 				case (ushort)TempestMessageType.ReliablePing:
-					Send (new ReliablePongMessage());
+					SendAsync (new ReliablePongMessage());
 					break;
 
 				case (ushort)TempestMessageType.ReliablePong:
@@ -500,12 +526,12 @@ namespace Tempest.Tests
 
 				case (ushort)TempestMessageType.Disconnect:
 					var msg = (DisconnectMessage)e.Message;
-					Disconnect (true, msg.Reason, msg.CustomReason);
+					DisconnectAsync (msg.Reason, msg.CustomReason);
 					break;
 			}
 		}
 
-		protected void OnDisconnected (DisconnectedEventArgs e)
+		protected internal void OnDisconnected (DisconnectedEventArgs e)
 		{
 			var handler = Disconnected;
 			if (handler != null)
@@ -515,13 +541,6 @@ namespace Tempest.Tests
 		protected void OnMessageReceived (MessageEventArgs e)
 		{
 			EventHandler<MessageEventArgs> handler = MessageReceived;
-			if (handler != null)
-				handler (this, e);
-		}
-
-		protected void OnMessageSent (MessageEventArgs e)
-		{
-			EventHandler<MessageEventArgs> handler = MessageSent;
 			if (handler != null)
 				handler (this, e);
 		}

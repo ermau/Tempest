@@ -125,7 +125,7 @@ namespace Tempest.Providers.Network
 			this.formallyConnected = true;
 			this.provider.Connect (this);
 
-			Send (new ConnectedMessage { ConnectionId = ConnectionId });
+			SendAsync (new ConnectedMessage { ConnectionId = ConnectionId });
 		}
 
 		private void OnConnectMessage (ConnectMessage msg)
@@ -153,7 +153,7 @@ namespace Tempest.Providers.Network
 				if (!foundHashAlg)
 				{
 					this.provider.SendConnectionlessMessage (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion }, RemoteTarget);
-					Disconnect (false, ConnectionResult.FailedHandshake);
+					Disconnect (ConnectionResult.FailedHandshake);
 					return;
 				}
 			}
@@ -164,7 +164,7 @@ namespace Tempest.Providers.Network
 				if (!this.provider.protocols.TryGetValue (protocol.id, out lp) || !lp.CompatibleWith (protocol))
 				{
 					this.provider.SendConnectionlessMessage (new DisconnectMessage { Reason = ConnectionResult.IncompatibleVersion }, RemoteTarget);
-					Disconnect (false, ConnectionResult.IncompatibleVersion);
+					Disconnect (ConnectionResult.IncompatibleVersion);
 					return;
 				}
 			}
@@ -179,11 +179,11 @@ namespace Tempest.Providers.Network
 				this.formallyConnected = true;
 				this.provider.Connect (this);
 
-				Send (new ConnectedMessage { ConnectionId = ConnectionId });
+				SendAsync (new ConnectedMessage { ConnectionId = ConnectionId });
 			}
 			else
 			{
-				Send (new AcknowledgeConnectMessage
+				SendAsync (new AcknowledgeConnectMessage
 				{
 					SignatureHashAlgorithm = this.serializer.SigningHashAlgorithm,
 					EnabledProtocols = Protocols,

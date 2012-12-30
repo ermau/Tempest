@@ -92,7 +92,7 @@ namespace Tempest.Tests
 				Assert.IsTrue (e.Requested);
 			});
 
-			client.Connected += (sender, e) => client.Disconnect (true);
+			client.Connected += (sender, e) => client.DisconnectAsync();
 			client.Disconnected += test.PassHandler;
 
 			client.ConnectAsync (new Target (Target.AnyIP, 0));
@@ -120,7 +120,7 @@ namespace Tempest.Tests
 				}).Start();
 				
 				Thread.Sleep (50);
-				client.Disconnect (true);
+				client.DisconnectAsync();
 			};
 
 			client.Disconnected += test.PassHandler;
@@ -141,7 +141,7 @@ namespace Tempest.Tests
 				Assert.IsTrue (e.Requested);
 			});
 
-			client.Connected += (sender, e) => client.DisconnectWithReason ("reason");
+			client.Connected += (sender, e) => client.DisconnectAsync (ConnectionResult.Custom, "reason");
 			client.Disconnected += test.PassHandler;
 
 			client.ConnectAsync (new Target (Target.AnyIP, 0));
@@ -156,7 +156,7 @@ namespace Tempest.Tests
 
 			Action<MessageEventArgs<MockMessage>> handler = e =>
 			{
-				client.Disconnect (true);
+				client.DisconnectAsync().Wait();
 				test.PassHandler (null, EventArgs.Empty);
 			};
 
@@ -176,7 +176,7 @@ namespace Tempest.Tests
 				Assert.AreEqual (ConnectionResult.EncryptionMismatch, e.Reason);
 			});
 
-			client.Connected += (s, e) => connection.Disconnect (true, ConnectionResult.EncryptionMismatch);
+			client.Connected += (s, e) => connection.Disconnect (ConnectionResult.EncryptionMismatch);
 			client.Disconnected += test.PassHandler;
 
 			client.ConnectAsync (new Target (Target.AnyIP, 0));

@@ -238,11 +238,7 @@ namespace Tempest.Tests
 					else if (exception != null)
 						throw new TargetInvocationException (exception);
 
-					#if !NETFX_CORE
 					Thread.Sleep (1);
-					#else
-					System.Threading.Tasks.Task.Delay (1).Wait();
-					#endif
 				}
 
 				if (this.passCount < this.timesToPass && !Debugger.IsAttached)

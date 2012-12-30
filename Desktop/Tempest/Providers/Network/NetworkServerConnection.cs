@@ -95,7 +95,12 @@ namespace Tempest.Providers.Network
 			//    return;
 			//}
 
-			Send (new ReliablePingMessage { Interval = provider.PingFrequency });
+			SendAsync (new ReliablePingMessage { Interval = provider.PingFrequency }).ContinueWith (t =>
+			{
+				if (t.Result)
+					Interlocked.Increment (ref this.pingsOut);
+			});
+
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}
 
@@ -103,7 +108,7 @@ namespace Tempest.Providers.Network
 		{
 			if (!this.formallyConnected)
 			{
-				Disconnect();
+				DisconnectAsync();
 				return;
 			}
 
@@ -122,7 +127,7 @@ namespace Tempest.Providers.Network
 
 					if (!msg.Protocols.Any())
 					{
-						Disconnect (ConnectionResult.FailedHandshake);
+						DisconnectAsync (ConnectionResult.FailedHandshake);
 						return;
 					}
 
@@ -141,7 +146,7 @@ namespace Tempest.Providers.Network
 
 						if (!foundHashAlg)
 						{
-							this.NotifyAndDisconnect (ConnectionResult.FailedHandshake);
+							DisconnectAsync (ConnectionResult.FailedHandshake);
 							return;
 						}
 					}
@@ -153,7 +158,7 @@ namespace Tempest.Providers.Network
 						Protocol lp;
 						if (!this.protocols.TryGetValue (ip.id, out lp) || !lp.CompatibleWith (ip))
 						{
-							this.NotifyAndDisconnect (ConnectionResult.IncompatibleVersion);
+							DisconnectAsync (ConnectionResult.IncompatibleVersion);
 							return;
 						}
 					}
@@ -165,14 +170,14 @@ namespace Tempest.Providers.Network
 					{
 						this.formallyConnected = true;
 						this.provider.Connect (this);
-						e.Connection.Send (new ConnectedMessage());
+						e.Connection.SendAsync (new ConnectedMessage());
 					}
 					else
 					{
 						while (!this.authReady)
 							Thread.Sleep(0);
 
-						e.Connection.Send (new AcknowledgeConnectMessage
+						e.Connection.SendAsync (new AcknowledgeConnectMessage
 						{
 							SignatureHashAlgorithm = this.serializer.SigningHashAlgorithm,
 							EnabledProtocols = this.protocols.Values,
@@ -186,7 +191,7 @@ namespace Tempest.Providers.Network
 				case (ushort)TempestMessageType.FinalConnect:
 					if (!this.receivedProtocols)
 					{
-						Disconnect (ConnectionResult.FailedHandshake);
+						DisconnectAsync (ConnectionResult.FailedHandshake);
 						return;
 					}
 
@@ -194,7 +199,7 @@ namespace Tempest.Providers.Network
 
 					if (finalConnect.AESKey == null || finalConnect.AESKey.Length == 0 || finalConnect.PublicAuthenticationKey == null)
 					{
-						Disconnect (ConnectionResult.FailedHandshake);
+						DisconnectAsync (ConnectionResult.FailedHandshake);
 						return;
 					}
 
@@ -207,27 +212,19 @@ namespace Tempest.Providers.Network
 					}
 					catch
 					{
-						Disconnect (ConnectionResult.FailedHandshake);
+						DisconnectAsync (ConnectionResult.FailedHandshake);
 						return;
 					}
 
 					this.formallyConnected = true;
 					this.provider.Connect (this);
 
-					Send (new ConnectedMessage { ConnectionId = ConnectionId });
+					SendAsync (new ConnectedMessage { ConnectionId = ConnectionId });
 
 					break;
 		    }
 
 		    base.OnTempestMessageReceived(e);
-		}
-
-		protected override void OnMessageSent (MessageEventArgs e)
-		{
-			if (e.Message is ReliablePingMessage)
-				Interlocked.Increment (ref this.pingsOut);
-
-			base.OnMessageSent(e);
 		}
 
 		protected override void Recycle()

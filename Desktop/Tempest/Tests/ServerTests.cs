@@ -148,7 +148,7 @@ namespace Tempest.Tests
 			
 			var c = provider.GetClientConnection (protocol);
 			c.ConnectAsync (new Target (Target.AnyIP, 0), MessageTypes.Reliable);
-			c.Send (new MockMessage () { Content = "hi" });
+			c.SendAsync (new MockMessage () { Content = "hi" });
 
 			test.Assert (10000);
 		}
@@ -175,7 +175,7 @@ namespace Tempest.Tests
 			
 			var c = provider.GetClientConnection (protocol);
 			c.ConnectAsync (new Target (Target.AnyIP, 0), MessageTypes.Reliable);
-			c.Send (new MockMessage { Content = "hi" });
+			c.SendAsync (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
 		}
@@ -204,7 +204,7 @@ namespace Tempest.Tests
 			
 			var c = provider.GetClientConnection (protocol);
 			c.ConnectAsync (new Target (Target.AnyIP, 0), MessageTypes.Reliable);
-			c.Send (new MockMessage { Content = "hi" });
+			c.SendAsync (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
 		}
@@ -232,7 +232,7 @@ namespace Tempest.Tests
 			
 			var c = provider.GetClientConnection (protocol);
 			c.ConnectAsync (new Target (Target.AnyIP, 0), MessageTypes.Reliable);
-			c.Send (new MockMessage { Content = "hi" });
+			c.SendAsync (new MockMessage { Content = "hi" });
 
 			test.Assert (10000);
 		}

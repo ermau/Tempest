@@ -116,24 +116,14 @@ namespace Tempest
 		/// <summary>
 		/// Disconnects from the server.
 		/// </summary>
-		/// <param name="now">Whether or not to disconnect immediately or wait for pending messages.</param>
-		public virtual void Disconnect (bool now)
+		public virtual Task DisconnectAsync()
 		{
-			Disconnect (now, ConnectionResult.Custom, "Requested");
+			return Disconnect (ConnectionResult.Custom, "Requested");
 		}
 
-		/// <summary>
-		/// Disconnects after sending a disconnection message with <paramref name="reason"/>.
-		/// </summary>
-		/// <param name="reason">The reason given for disconnection.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="reason"/> is <c>null</c>.</exception>
-		public void DisconnectWithReason (string reason)
+		public virtual Task DisconnectAsync (ConnectionResult reason, string customReason = null)
 		{
-			if (reason == null)
-				throw new ArgumentNullException ("reason");
-
-			this.connection.Send (new DisconnectMessage { Reason = ConnectionResult.Custom, CustomReason = reason });
-			Disconnect (false, ConnectionResult.Custom, reason);
+			return Disconnect (reason, customReason);
 		}
 
 		/// <summary>
@@ -168,7 +158,7 @@ namespace Tempest
 			}
 
 			if (this.disconnecting)
-				Disconnect (true);
+				DisconnectAsync();
 		}
 
 		private bool disconnecting;
@@ -183,16 +173,10 @@ namespace Tempest
 		private volatile bool running;
 		private readonly MessageTypes messageTypes;
 
-		private void Disconnect (bool now, ConnectionResult reason, string customReason)
+		private Task Disconnect (ConnectionResult reason, string customReason)
 		{
 			this.disconnecting = true;
-			if (now)
-				this.connection.Disconnect (reason, customReason);
-			else
-			{
-				this.connection.DisconnectAsync (reason, customReason);
-				return;
-			}
+			Task task = this.connection.DisconnectAsync (reason, customReason);
 
 			this.running = false;
 
@@ -206,16 +190,12 @@ namespace Tempest
 				while (this.mqueue.TryDequeue (out e)) ;
 			}
 
-			ThreadPool.QueueUserWorkItem (s =>
-			{
-				Thread runner = this.messageRunner;
-				if (runner != null)
-					runner.Join();
-
-				this.messageRunner = null;
-			});
+			Thread runner = Interlocked.Exchange (ref this.messageRunner, null);
+			if (runner != null)
+				task = task.ContinueWith (t => runner.Join());
 			
 			this.disconnecting = false;
+			return task;
 		}
 
 		private void ConnectionOnMessageReceived (object sender, MessageEventArgs e)
@@ -255,7 +235,7 @@ namespace Tempest
 
 				if (this.disconnecting)
 				{
-					ThreadPool.QueueUserWorkItem (now => Disconnect ((bool)now), true);
+					DisconnectAsync();
 					return;
 				}
 
@@ -285,7 +265,7 @@ namespace Tempest
 
 				if (this.disconnecting)
 				{
-					ThreadPool.QueueUserWorkItem (now => Disconnect ((bool)now), true);
+					DisconnectAsync();
 					return;
 				}
 
@@ -301,7 +281,7 @@ namespace Tempest
 		private void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
 		{
 			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
-			Disconnect (true, e.Result, e.CustomReason);
+			Disconnect (e.Result, e.CustomReason);
 			OnDisconnected (new ClientDisconnectedEventArgs (e.Result == ConnectionResult.Custom, e.Result, e.CustomReason));
 		}
 

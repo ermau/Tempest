@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using Tempest;
 
 namespace SimpleChat.Client
@@ -22,9 +23,9 @@ namespace SimpleChat.Client
 			get { return this.users; }
 		}
 
-		public void SendMessage (string message)
+		public Task<bool> SendMessage (string message)
 		{
-			Connection.Send (new SayMessage { Message = message });
+			return Connection.SendAsync (new SayMessage { Message = message });
 		}
 
 		private readonly ObservableCollection<User> users = new ObservableCollection<User>();

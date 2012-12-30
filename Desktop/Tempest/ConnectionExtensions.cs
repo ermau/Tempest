@@ -26,7 +26,6 @@
 
 using System;
 using System.Collections.Generic;
-using Tempest.InternalProtocol;
 
 namespace Tempest
 {
@@ -35,59 +34,6 @@ namespace Tempest
 	/// </summary>
 	public static class ConnectionExtensions
 	{
-		/// <summary>
-		/// Notifies the connection of the reason of disconnection and disconnects.
-		/// </summary>
-		/// <param name="self">The connection to notify and disconnect.</param>
-		/// <param name="reason">The reason to disconnect.</param>
-		public static void NotifyAndDisconnect (this IConnection self, ConnectionResult reason)
-		{
-			if (self == null)
-				throw new ArgumentNullException ("self");
-
-			self.Send (new DisconnectMessage { Reason = reason });
-			self.DisconnectAsync (reason);
-		}
-
-		/// <summary>
-		/// Notifies the connection of the reason of disconnection and disconnects.
-		/// </summary>
-		/// <param name="self">The connection to notify and disconnect.</param>
-		/// <param name="reason">The reason to disconnect.</param>
-		/// <param name="customReason">The custom reason</param>
-		public static void NotifyAndDisconnect (this IConnection self, ConnectionResult reason, string customReason)
-		{
-			if (self == null)
-				throw new ArgumentNullException ("self");
-
-			self.Send (new DisconnectMessage { Reason = reason, CustomReason = customReason });
-			self.DisconnectAsync (reason);
-		}
-
-		public static void On<TMessage> (this IConnection self, Func<TMessage, bool> predicate, Action<TMessage, MessageEventArgs> callback)
-			where TMessage : Message
-		{
-			if (self == null)
-				throw new ArgumentNullException ("self");
-			if (predicate == null)
-				throw new ArgumentNullException ("predicate");
-			if (callback == null)
-				throw new ArgumentNullException ("callback");
-
-			EventHandler<MessageEventArgs> evcallback = null;
-			evcallback = (s, e) =>
-			{
-				TMessage msg = e.Message as TMessage;
-				if (msg == null || !predicate (msg))
-					return;
-
-				self.MessageReceived -= evcallback;
-				callback (msg, e);
-			};
-
-			self.MessageReceived += evcallback;
-		}
-
 		/// <summary>
 		/// Sends a message to all of the connections.
 		/// </summary>
@@ -104,8 +50,8 @@ namespace Tempest
 			if (msg == null)
 				throw new ArgumentNullException ("msg");
 
-			foreach (IConnection c in connections)
-				c.Send (msg);
+			foreach (IConnection connection in connections)
+				connection.SendAsync (msg);
 		}
 	}
 }

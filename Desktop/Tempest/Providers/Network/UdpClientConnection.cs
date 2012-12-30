@@ -180,14 +180,17 @@ namespace Tempest.Providers.Network
 
 		private void OnReceiveCompleted (object sender, SocketAsyncEventArgs e)
 		{
+			BufferValueReader currentReader = this.reader;
+			MessageSerializer mserializer = this.serializer;
+
+			if (mserializer == null || currentReader == null) // If these are null, we're disconnect(ing|ed).
+				return;
+
 			byte[] buffer = e.Buffer;
 			int offset = e.Offset;
+			reader.Position = offset;
 			int moffset = e.Offset;
 			int remaining = e.BytesTransferred;
-
-			MessageSerializer mserializer = this.serializer;
-			if (mserializer == null) // If the serializer is null, we're disconnecting.
-				return;
 
 			if (e.BytesTransferred != 0 && e.SocketError == SocketError.Success)
 			{
@@ -203,7 +206,6 @@ namespace Tempest.Providers.Network
 			Socket sock = this.socket;
 			if (sock != null)
 			{
-				this.reader.Position = 0;
 				e.SetBuffer (buffer, 0, buffer.Length);
 				try
 				{

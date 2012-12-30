@@ -178,6 +178,9 @@ namespace Tempest.Providers.Network
 			if (socket == null)
 				return;
 
+			if (message.Header == null)
+				message.Header = new MessageHeader();
+
 			int length;
 			byte[] buffer = new byte[512];
 			buffer = this.connectionlessSerializer.GetBytes (message, out length, buffer);

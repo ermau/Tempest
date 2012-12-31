@@ -37,19 +37,18 @@ namespace Tempest.Providers.Network
 		: UdpConnectionlessListener, IConnectionProvider
 	{
 		public UdpConnectionProvider (int port, Protocol protocol)
-			: base (new[] { protocol })
+			: base (new[] { protocol }, port)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
 			if (port <= 0)
 				throw new ArgumentOutOfRangeException ("port");
 
-			this.port = port;
 			ValidateProtocols (this.protocols.Values);
 		}
 
 		public UdpConnectionProvider (int port, Protocol protocol, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey authKey)
-			: base (new[] { protocol })
+			: base (new[] { protocol }, port)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
@@ -60,7 +59,6 @@ namespace Tempest.Providers.Network
 			if (port <= 0)
 				throw new ArgumentOutOfRangeException ("port");
 
-			this.port = port;
 			this.cryptoFactory = cryptoFactory;
 			this.crypto = cryptoFactory();
 			this.crypto.ImportKey (authKey);
@@ -74,7 +72,7 @@ namespace Tempest.Providers.Network
 		}
 
 		public UdpConnectionProvider (int port, IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey authKey)
-			: base (protocols)
+			: base (protocols, port)
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
@@ -85,7 +83,6 @@ namespace Tempest.Providers.Network
 			if (port <= 0)
 				throw new ArgumentOutOfRangeException ("port");
 
-			this.port = port;
 			this.cryptoFactory = cryptoFactory;
 			this.crypto = cryptoFactory();
 			this.crypto.ImportKey (authKey);

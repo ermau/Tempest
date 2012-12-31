@@ -11,8 +11,9 @@ namespace Tempest.Providers.Network
 	public abstract class UdpConnectionlessListener
 		: IConnectionlessMessenger
 	{
-		protected UdpConnectionlessListener (IEnumerable<Protocol> protocols)
+		protected UdpConnectionlessListener (IEnumerable<Protocol> protocols, int port)
 		{
+			this.port = port;
 			this.protocols = protocols.ToDictionary (p => p.id);
 
 			this.protocols.Add (1, TempestMessage.InternalProtocol);
@@ -24,6 +25,16 @@ namespace Tempest.Providers.Network
 		public bool IsRunning
 		{
 			get { return this.running; }
+		}
+
+		public EndPoint IPEndPoint
+		{
+			get { return (this.socket4 != null) ? this.socket4.LocalEndPoint : null; }
+		}
+
+		public EndPoint IPv6EndPoint
+		{
+			get { return (this.socket6 != null) ? this.socket6.LocalEndPoint : null; }
 		}
 
 		public virtual void Start (MessageTypes types)

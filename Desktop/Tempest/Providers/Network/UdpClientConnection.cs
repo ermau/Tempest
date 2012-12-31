@@ -85,14 +85,9 @@ namespace Tempest.Providers.Network
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 		public event EventHandler<ConnectionlessMessageEventArgs> ConnectionlessMessageReceived;
 
-		public EndPoint IPEndPoint
+		public IEnumerable<Target> LocalTargets
 		{
-			get { return (this.listener != null) ? this.listener.IPEndPoint : null; }
-		}
-
-		public EndPoint IPv6EndPoint
-		{
-			get { return (this.listener != null) ? this.listener.IPv6EndPoint : null; }
+			get { return this.listener.LocalTargets; }
 		}
 
 		public void SendConnectionlessMessage (Message message, Target target)

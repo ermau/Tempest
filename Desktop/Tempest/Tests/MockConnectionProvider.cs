@@ -49,6 +49,11 @@ namespace Tempest.Tests
 
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
 		
+		public IEnumerable<Target> LocalTargets
+		{
+			get { return Enumerable.Empty<Target>(); }
+		}
+
 		public bool IsRunning
 		{
 			get { return this.running; }

@@ -164,6 +164,11 @@ namespace Tempest.Providers.Network
 		public event EventHandler PingFrequencyChanged;
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
 
+		public IEnumerable<Target> LocalTargets
+		{
+			get { return new[] { Target }; }
+		}
+
 		/// <summary>
 		/// Gets the maximum number of connections allowed on this provider.
 		/// </summary>

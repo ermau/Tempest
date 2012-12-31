@@ -27,14 +27,15 @@ namespace Tempest.Providers.Network
 			get { return this.running; }
 		}
 
-		public EndPoint IPEndPoint
+		public IEnumerable<Target> LocalTargets
 		{
-			get { return (this.socket4 != null) ? this.socket4.LocalEndPoint : null; }
-		}
-
-		public EndPoint IPv6EndPoint
-		{
-			get { return (this.socket6 != null) ? this.socket6.LocalEndPoint : null; }
+			get
+			{
+				if (this.socket4 != null)
+					yield return this.socket4.LocalEndPoint.ToTarget();
+				if (this.socket6 != null)
+					yield return this.socket6.LocalEndPoint.ToTarget();
+			}
 		}
 
 		public virtual void Start (MessageTypes types)

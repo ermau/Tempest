@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
 namespace Tempest
 {
@@ -42,6 +43,11 @@ namespace Tempest
 		/// <seealso cref="Start"/>
 		/// <seealso cref="Stop"/>
 		bool IsRunning { get; }
+
+		/// <summary>
+		/// Gets the local targets being listened to. Empty until started.
+		/// </summary>
+		IEnumerable<Target> LocalTargets { get; }
 
 		/// <summary>
 		/// Starts the listener.

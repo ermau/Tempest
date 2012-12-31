@@ -131,41 +131,19 @@ namespace Tempest.Providers.Network
 
 		private Timer deliveryTimer;
 
-		protected override void HandleConnectionMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader)
+		protected override bool TryGetConnection (int connectionId, out UdpConnection connection)
 		{
-			byte[] buffer = args.Buffer;
-			int offset = args.Offset;
-			int moffset = offset;
-			int remaining = args.BytesTransferred;
+			connection = null;
 
-			UdpServerConnection connection;
-			if (this.connections.TryGetValue (header.ConnectionId, out connection))
+			UdpServerConnection server;
+			bool found = this.connections.TryGetValue (connectionId, out server);
+			if (found)
 			{
-				MessageSerializer serializer = connection.serializer;
-
-				if (header.State == HeaderState.IV)
-				{
-					serializer.DecryptMessage (header, ref reader);
-					header.IsStillEncrypted = false;
-
-					if (!serializer.TryGetHeader (reader, args.BytesTransferred, ref header))
-						return;
-				}
-
-				header.SerializationContext = ((SerializationContext)header.SerializationContext).WithConnection (connection);
-
-				if (serializer != null)
-				{
-					List<Message> messages = connection.serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
-					if (messages != null)
-					{
-						foreach (Message message in messages)
-							connection.Receive (message);
-					}
-
-					reader = new BufferValueReader (buffer);
-				}
+				connection = server;
+				return true;
 			}
+
+			return false;
 		}
 
 		internal void Connect (UdpServerConnection connection)

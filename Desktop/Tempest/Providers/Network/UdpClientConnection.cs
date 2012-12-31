@@ -227,9 +227,16 @@ namespace Tempest.Providers.Network
 
 			private readonly UdpClientConnection connection;
 
-			protected override void HandleConnectionMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader)
+			protected override bool TryGetConnection (int connectionId, out UdpConnection oconnection)
 			{
-				throw new InvalidOperationException();
+				oconnection = null;
+				if (connectionId == this.connection.ConnectionId)
+				{
+					oconnection = this.connection;
+					return true;
+				}
+
+				return false;
 			}
 		}
 

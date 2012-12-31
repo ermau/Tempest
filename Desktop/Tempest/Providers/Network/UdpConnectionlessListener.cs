@@ -195,7 +195,44 @@ namespace Tempest.Providers.Network
 			StartReceive (socket, args, reader);
 		}
 
-		protected abstract void HandleConnectionMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader);
+		protected abstract bool TryGetConnection (int connectionId, out UdpConnection connection);
+
+		protected virtual void HandleConnectionMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader)
+		{
+			UdpConnection connection;
+			if (!TryGetConnection (header.ConnectionId, out connection))
+				return;
+
+			byte[] buffer = args.Buffer;
+			int offset = args.Offset;
+			int moffset = offset;
+			int remaining = args.BytesTransferred;
+
+			MessageSerializer serializer = connection.serializer;
+
+			if (header.State == HeaderState.IV)
+			{
+				serializer.DecryptMessage (header, ref reader);
+				header.IsStillEncrypted = false;
+
+				if (!serializer.TryGetHeader (reader, args.BytesTransferred, ref header))
+					return;
+			}
+
+			header.SerializationContext = ((SerializationContext)header.SerializationContext).WithConnection (connection);
+
+			if (serializer != null)
+			{
+				List<Message> messages = connection.serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
+				if (messages != null)
+				{
+					foreach (Message message in messages)
+						connection.Receive (message);
+				}
+
+				reader = new BufferValueReader (buffer);
+			}
+		}
 
 		private void HandleConnectionlessMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader)
 		{

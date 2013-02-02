@@ -50,6 +50,18 @@ namespace Tempest.Providers.Network
 
 	internal class MessageSerializer
 	{
+		public static int GetNextMessageId (ref int holder)
+		{
+			int current, next;
+			do
+			{
+				current = holder;
+				next = (current == MaxMessageId) ? 0 : current + 1;
+			} while (Interlocked.CompareExchange (ref holder, next, current) != current);
+
+			return next;
+		}
+
 		public MessageSerializer (IEnumerable<Protocol> protocols)
 		{
 			if (protocols == null)

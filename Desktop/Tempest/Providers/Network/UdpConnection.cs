@@ -220,9 +220,9 @@ namespace Tempest.Providers.Network
 			{
 				int mid;
 				if (message.MustBeReliable || message.PreferReliable)
-					mid = Interlocked.Increment (ref this.nextReliableMessageId);
+					mid = MessageSerializer.GetNextMessageId (ref this.nextReliableMessageId);
 				else
-					mid = Interlocked.Increment (ref this.nextMessageId);
+					mid = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
 
 				message.Header.MessageId = mid;
 			}

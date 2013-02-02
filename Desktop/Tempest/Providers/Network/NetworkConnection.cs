@@ -317,7 +317,6 @@ namespace Tempest.Providers.Network
 		protected ConnectionResult disconnectingReason;
 		protected string disconnectingCustomReason;
 
-		protected readonly object messageIdSync = new object();
 		protected int nextMessageId;
 		protected int lastMessageId;
 
@@ -463,13 +462,7 @@ namespace Tempest.Providers.Network
 				{
 					message.Header = new MessageHeader();
 					Monitor.Enter (this.sendSync);
-					lock (this.messageIdSync)
-					{
-						message.Header.MessageId = this.nextMessageId++;
-
-						if (this.nextMessageId > MaxMessageId)
-							this.nextMessageId = 0;
-					}
+					message.Header.MessageId = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
 				}
 
 				if (responseFuture != null)

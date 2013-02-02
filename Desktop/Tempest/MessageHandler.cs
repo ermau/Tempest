@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2011-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,19 +31,71 @@ using System.Threading;
 
 namespace Tempest
 {
-	public abstract class MessageHandler
+	public class MessageHandler
 		: IContext
 	{
-		private bool handlersLocked;
-		private readonly Dictionary<MessageType, List<Action<MessageEventArgs>>> handlers = new Dictionary<MessageType, List<Action<MessageEventArgs>>>();
-		private readonly Dictionary<MessageType, List<Action<ConnectionlessMessageEventArgs>>> connectionlessHandlers = new Dictionary<MessageType, List<Action<ConnectionlessMessageEventArgs>>>();
+		public List<Action<MessageEventArgs>> GetHandlers (Message message)
+		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
 
-		void IContext.LockHandlers()
+			List<Action<MessageEventArgs>> mhandlers = null;
+
+			bool locked = false;
+			try
+			{
+				var mtype = new MessageType (message);
+				if (!this.handlersLocked)
+					Monitor.Enter (this.handlers, ref locked);
+
+				if (!this.handlers.TryGetValue (mtype, out mhandlers))
+					this.handlers[mtype] = mhandlers = new List<Action<MessageEventArgs>>();
+				else if (locked)
+					mhandlers = mhandlers.ToList();
+			}
+			finally
+			{
+				if (locked)
+					Monitor.Exit (this.handlers);
+			}
+
+			return mhandlers;
+		}
+
+		public List<Action<ConnectionlessMessageEventArgs>> GetConnectionlessHandlers (Message message)
+		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+
+			List<Action<ConnectionlessMessageEventArgs>> mhandlers = null;
+
+			bool locked = false;
+			try
+			{
+				var mtype = new MessageType (message);
+				if (!this.handlersLocked)
+					Monitor.Enter (this.connectionlessHandlers, ref locked);
+
+				if (!this.connectionlessHandlers.TryGetValue (mtype, out mhandlers))
+					this.connectionlessHandlers[mtype] = mhandlers = new List<Action<ConnectionlessMessageEventArgs>>();
+				else if (locked)
+					mhandlers = mhandlers.ToList();
+			}
+			finally
+			{
+				if (locked)
+					Monitor.Exit (this.connectionlessHandlers);
+			}
+
+			return mhandlers;
+		}
+
+		public void LockHandlers()
 		{
 			this.handlersLocked = true;
 		}
 
-		void IContext.RegisterMessageHandler (Protocol protocol, ushort messageType, Action<MessageEventArgs> handler)
+		public void RegisterMessageHandler (Protocol protocol, ushort messageType, Action<MessageEventArgs> handler)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
@@ -53,7 +105,7 @@ namespace Tempest
 				throw new InvalidOperationException ("Handlers locked");
 
 			bool locked = false;
-			
+
 			try
 			{
 				var mtype = new MessageType (protocol, messageType);
@@ -73,7 +125,7 @@ namespace Tempest
 			}
 		}
 
-		void IContext.RegisterConnectionlessMessageHandler (Protocol protocol, ushort messageType, Action<ConnectionlessMessageEventArgs> handler)
+		public void RegisterConnectionlessMessageHandler (Protocol protocol, ushort messageType, Action<ConnectionlessMessageEventArgs> handler)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
@@ -83,7 +135,7 @@ namespace Tempest
 				throw new InvalidOperationException ("Handlers locked");
 
 			bool locked = false;
-			
+
 			try
 			{
 				var mtype = new MessageType (protocol, messageType);
@@ -103,57 +155,9 @@ namespace Tempest
 			}
 		}
 
-		protected List<Action<MessageEventArgs>> GetHandlers (Message message)
-		{
-			List<Action<MessageEventArgs>> mhandlers = null;
-
-			bool locked = false;
-			try
-			{
-				var mtype = new MessageType (message);
-				if (!this.handlersLocked)
-					Monitor.Enter (this.handlers, ref locked);
-
-				if (!this.handlers.TryGetValue (mtype, out mhandlers))
-					this.handlers[mtype] = mhandlers = new List<Action<MessageEventArgs>>();
-				else if (locked)
-					mhandlers = mhandlers.ToList();
-					
-			}
-			finally
-			{
-				if (locked)
-					Monitor.Exit (this.handlers);
-			}
-
-			return mhandlers;
-		}
-
-		protected List<Action<ConnectionlessMessageEventArgs>> GetConnectionlessHandlers (Message message)
-		{
-			List<Action<ConnectionlessMessageEventArgs>> mhandlers = null;
-
-			bool locked = false;
-			try
-			{
-				var mtype = new MessageType (message);
-				if (!this.handlersLocked)
-					Monitor.Enter (this.connectionlessHandlers, ref locked);
-
-				if (!this.connectionlessHandlers.TryGetValue (mtype, out mhandlers))
-					this.connectionlessHandlers[mtype] = mhandlers = new List<Action<ConnectionlessMessageEventArgs>>();
-				else if (locked)
-					mhandlers = mhandlers.ToList();
-					
-			}
-			finally
-			{
-				if (locked)
-					Monitor.Exit (this.connectionlessHandlers);
-			}
-
-			return mhandlers;
-		}
+		private bool handlersLocked;
+		private readonly Dictionary<MessageType, List<Action<MessageEventArgs>>> handlers = new Dictionary<MessageType, List<Action<MessageEventArgs>>>();
+		private readonly Dictionary<MessageType, List<Action<ConnectionlessMessageEventArgs>>> connectionlessHandlers = new Dictionary<MessageType, List<Action<ConnectionlessMessageEventArgs>>>();
 
 		private class MessageType
 			: IEquatable<MessageType>

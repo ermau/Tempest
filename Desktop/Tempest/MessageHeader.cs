@@ -117,6 +117,15 @@ namespace Tempest
 			internal set;
 		}
 
+		/// <summary>
+		/// Gets whether the message is continued in the next message
+		/// </summary>
+		public bool IsContinued
+		{
+			get;
+			internal set;
+		}
+
 		public int HeaderLength
 		{
 			get;

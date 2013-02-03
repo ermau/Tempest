@@ -213,9 +213,11 @@ namespace Tempest.Providers.Network
 
 			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
-			int len = length << 1;
+			int len = length << 2;
 			if (hasTypes)
 				len |= 1; // serialization header
+			if (message.Header.IsContinued)
+				len |= 2;
 
 			#if SAFE
 			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, LengthOffset, sizeof(int));
@@ -236,7 +238,7 @@ namespace Tempest.Providers.Network
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Entering {0}", (header == null) ? "without existing header" : "with existing header"), callCategory);
 
-			int mlen; bool hasTypeHeader; Message msg = null; Protocol p;
+			int mlen; bool hasTypeHeader, isContinued; Message msg = null; Protocol p;
 
 			int headerLength = BaseHeaderLength;
 
@@ -302,12 +304,14 @@ namespace Tempest.Providers.Network
 				{
 					mlen = header.MessageLength;
 					hasTypeHeader = header.HasTypeHeader;
+					isContinued = header.IsContinued;
 				}
 				else
 				{
 					mlen = reader.ReadInt32();
 					hasTypeHeader = (mlen & 1) == 1;
-					mlen >>= 1;
+					isContinued = (mlen & 2) == 2;
+					mlen >>= 2;
 
 					if (mlen <= 0)
 					{
@@ -317,6 +321,7 @@ namespace Tempest.Providers.Network
 
 					header.MessageLength = mlen;
 					header.HasTypeHeader = hasTypeHeader;
+					header.IsContinued = isContinued;
 					header.State = HeaderState.Length;
 
 					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have message of length: {0}, {1} type header", mlen, (hasTypeHeader) ? "with" : "without"), callCategory);

@@ -464,6 +464,8 @@ namespace Tempest.Providers.Network
 					Monitor.Enter (this.sendSync);
 					message.Header.MessageId = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
 				}
+				else
+					message.Header.IsResponse = true;
 
 				if (responseFuture != null)
 				{

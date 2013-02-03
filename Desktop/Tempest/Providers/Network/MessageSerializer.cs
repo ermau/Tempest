@@ -335,10 +335,11 @@ namespace Tempest.Providers.Network
 				else if (msg.Encrypted)// && AES != null)
 				{
 					int ivLength = reader.ReadInt32(); //AES.IV.Length;
-					headerLength += ivLength;
+					headerLength += ivLength + sizeof(int);
 
 					if (remaining < headerLength)
 					{
+						reader.Position -= sizeof (int);
 						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (IV))", callCategory);
 						return false;
 					}
@@ -663,7 +664,7 @@ namespace Tempest.Providers.Network
 			writer.WriteInt32 (payload.Length);
 			writer.InsertBytes (writer.Length, payload, 0, payload.Length);
 
-			headerLength += iv.Length;
+			headerLength += iv.Length + sizeof(int);
 		}
 
 		internal void DecryptMessage (MessageHeader header, ref BufferValueReader r)

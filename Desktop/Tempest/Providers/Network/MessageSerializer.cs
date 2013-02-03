@@ -259,7 +259,7 @@ namespace Tempest.Providers.Network
 
 					if (!this.protocols.TryGetValue (pid, out p))
 					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Protocol " + pid + " not found)", callCategory);
+						Trace.WriteLineIf (NTrace.TraceWarning, "Exiting (Protocol " + pid + " not found)", callCategory);
 						return true;
 					}
 
@@ -286,7 +286,7 @@ namespace Tempest.Providers.Network
 
 					if (msg == null)
 					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (Message " + type + " not found)", callCategory);
+						Trace.WriteLineIf (NTrace.TraceWarning, "Exiting (Message " + type + " not found)", callCategory);
 						return true;
 					}
 
@@ -311,7 +311,7 @@ namespace Tempest.Providers.Network
 
 					if (mlen <= 0)
 					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (length invalid)", callCategory);
+						Trace.WriteLineIf (NTrace.TraceWarning, "Exiting (length invalid)", callCategory);
 						return true;
 					}
 
@@ -423,7 +423,7 @@ namespace Tempest.Providers.Network
 			}
 			catch (Exception ex)
 			{
-				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error): " + ex, callCategory);
+				Trace.WriteLineIf (NTrace.TraceError, "Exiting (error): " + ex, callCategory);
 				header = null;
 				return true;
 			}

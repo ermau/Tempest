@@ -249,6 +249,8 @@ namespace Tempest.Providers.Network
 			}
 			catch (ObjectDisposedException)
 			{
+				if (tcs != null)
+					tcs.SetResult (false);
 			}
 
 			return (tcs != null) ? tcs.Task : null;

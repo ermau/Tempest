@@ -153,19 +153,9 @@ namespace Tempest.Providers.Network
 				if (this.localCrypto != null)
 					hashAlgs = this.localCrypto.SupportedHashAlgs;
 
-				this.socket = new Socket (endPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-				IPAddress localIP = (endPoint.AddressFamily == AddressFamily.InterNetwork) ? IPAddress.Any : IPAddress.IPv6Any;
-				this.socket.Bind (new IPEndPoint (localIP, 0));
-			
-				SocketAsyncEventArgs receiveArgs = new SocketAsyncEventArgs();
-				receiveArgs.SetBuffer (new byte[65507], 0, 65507);
-				receiveArgs.RemoteEndPoint = this.socket.LocalEndPoint;
-				receiveArgs.Completed += OnReceiveCompleted;
+				Start (messageTypes);
 
-				this.reader = new BufferValueReader (receiveArgs.Buffer);
-
-				while (!this.socket.ReceiveFromAsync (receiveArgs))
-					OnReceiveCompleted (this, receiveArgs);
+				this.socket = this.listener.GetSocket (target);
 
 				Timer dtimer = new Timer (100);
 				dtimer = new Timer (100);
@@ -195,6 +185,10 @@ namespace Tempest.Providers.Network
 				{
 					Protocols = Protocols,
 					SignatureHashAlgorithms = hashAlgs
+				}).ContinueWith (st =>
+				{
+					int pa = Interlocked.Decrement (ref this.pendingAsync);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", pa));
 				});
 			});
 
@@ -209,7 +203,6 @@ namespace Tempest.Providers.Network
 
 		private UdpClientConnectionlessListener listener;
 
-		private BufferValueReader reader;
 		private TaskCompletionSource<ClientConnectionResult> connectTcs;
 		private Timer connectTimer;
 		private Timer deliveryTimer;
@@ -230,13 +223,18 @@ namespace Tempest.Providers.Network
 			protected override bool TryGetConnection (int connectionId, out UdpConnection oconnection)
 			{
 				oconnection = null;
-				if (connectionId == this.connection.ConnectionId)
+				if (this.connection.ConnectionId == 0 || connectionId == this.connection.ConnectionId)
 				{
 					oconnection = this.connection;
 					return true;
 				}
 
 				return false;
+			}
+
+			protected override void OnConnectionlessTempestMessage (TempestMessage tempestMessage, Target target)
+			{
+				this.connection.OnConnectionlessTempestMessage (tempestMessage, target);
 			}
 		}
 
@@ -261,6 +259,8 @@ namespace Tempest.Providers.Network
 		{
 			base.Cleanup();
 
+			Stop();
+
 			Timer timer = Interlocked.Exchange (ref this.deliveryTimer, null);
 			if (timer != null)
 			{
@@ -269,7 +269,6 @@ namespace Tempest.Providers.Network
 			}
 
 			this.remoteEncryption = null;
-			this.reader = null;
 
 			Timer t = Interlocked.Exchange (ref this.connectTimer, null);
 			if (t != null)
@@ -278,61 +277,11 @@ namespace Tempest.Providers.Network
 			var tcs = Interlocked.Exchange (ref this.connectTcs, null);
 			if (tcs != null)
 				tcs.TrySetCanceled();
-
-			Socket sock = Interlocked.Exchange (ref this.socket, null);
-			if (sock != null)
-				sock.Dispose();
 		}
 
-		private void OnReceiveCompleted (object sender, SocketAsyncEventArgs e)
+		private void OnConnectionlessTempestMessage (TempestMessage tempestMessage, Target target)
 		{
-			BufferValueReader currentReader = this.reader;
-			MessageSerializer mserializer = this.serializer;
-
-			int p = Interlocked.Decrement (ref this.pendingAsync);
-			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p));
-
-			if (mserializer == null || currentReader == null) // If these are null, we're disconnect(ing|ed).
-				return;
-
-			byte[] buffer = e.Buffer;
-			int offset = e.Offset;
-			currentReader.Position = offset;
-			int moffset = e.Offset;
-			int remaining = e.BytesTransferred;
-
-			if (e.BytesTransferred != 0 && e.SocketError == SocketError.Success)
-			{
-				MessageHeader header = null;
-				List<Message> messages = mserializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref currentReader);
-				if (messages != null)
-				{
-					foreach (Message message in messages)
-						Receive (message);
-				}
-
-				if (this.reader != null && currentReader != this.reader)
-					this.reader = currentReader;
-			}
-
-			Socket sock = this.socket;
-			if (sock != null)
-			{
-				e.SetBuffer (buffer, 0, buffer.Length);
-				try
-				{
-					p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p));
-
-					while (!sock.ReceiveFromAsync (e))
-						OnReceiveCompleted (this, e);
-				}
-				catch (ObjectDisposedException)
-				{
-					p = Interlocked.Decrement (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p));
-				}
-			}
+			OnTempestMessage (new MessageEventArgs (this, tempestMessage));
 		}
 
 		protected override void OnTempestMessage (MessageEventArgs e)

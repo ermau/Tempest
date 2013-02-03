@@ -16,7 +16,9 @@ namespace Tempest.Providers.Network
 			this.port = port;
 			this.protocols = protocols.ToDictionary (p => p.id);
 
-			this.protocols.Add (1, TempestMessage.InternalProtocol);
+			if (!this.protocols.ContainsKey (1))
+				this.protocols.Add (1, TempestMessage.InternalProtocol);
+
 			this.connectionlessSerializer = new MessageSerializer (this.protocols.Values);
 		}
 
@@ -42,6 +44,9 @@ namespace Tempest.Providers.Network
 		{
 			if (this.running)
 				return;
+
+			while (this.pendingAsync > 0)
+				Thread.Sleep (0);
 
 			this.running = true;
 			this.mtypes = types;
@@ -116,18 +121,24 @@ namespace Tempest.Providers.Network
 			var args = new SocketAsyncEventArgs();
 			args.SetBuffer (buffer, 0, length);
 			args.RemoteEndPoint = endPoint;
+			args.Completed += (sender, eventArgs) => Interlocked.Decrement (ref this.pendingAsync);
 
 			try
 			{
+				Interlocked.Increment (ref this.pendingAsync);
 				socket.SendToAsync (args);
 			}
 			catch (SocketException)
 			{
+				Interlocked.Decrement (ref this.pendingAsync);
 			}
 		}
 
 		public virtual void Stop()
 		{
+			while (this.pendingAsync > 0)
+				Thread.Sleep (0);
+
 			Socket four = Interlocked.Exchange (ref this.socket4, null);
 			if (four != null)
 				four.Dispose();
@@ -153,8 +164,27 @@ namespace Tempest.Providers.Network
 		private MessageSerializer connectionlessSerializer;
 		internal readonly Dictionary<byte, Protocol> protocols = new Dictionary<byte, Protocol>();
 
+		private int pendingAsync;
+
+		protected internal Socket GetSocket (Target target)
+		{
+			EndPoint endPoint = target.ToEndPoint();
+	
+			if (endPoint.AddressFamily == AddressFamily.InterNetwork)
+				return this.socket4;
+			else if (endPoint.AddressFamily == AddressFamily.InterNetworkV6)
+				return this.socket6;
+			else
+				throw new ArgumentException();
+		}
+
 		private void StartReceive (Socket socket, SocketAsyncEventArgs args, BufferValueReader reader)
 		{
+			if (!this.running)
+				return;
+
+			Interlocked.Increment (ref this.pendingAsync);
+
 			try
 			{
 				args.SetBuffer (0, args.Buffer.Length);
@@ -163,6 +193,7 @@ namespace Tempest.Providers.Network
 			}
 			catch (ObjectDisposedException) // Socket is disposed, we're done.
 			{
+				Interlocked.Decrement (ref this.pendingAsync);
 			}
 		}
 
@@ -173,7 +204,10 @@ namespace Tempest.Providers.Network
 			BufferValueReader reader = cnd.Item2;
 
 			if (args.BytesTransferred == 0 || args.SocketError != SocketError.Success)
+			{
+				Interlocked.Decrement (ref this.pendingAsync);
 				return;
+			}
 
 			int offset = args.Offset;
 			reader.Position = offset;
@@ -183,6 +217,7 @@ namespace Tempest.Providers.Network
 			// We don't currently support partial messages, so an incomplete message is a bad one.
 			if (!this.connectionlessSerializer.TryGetHeader (reader, args.BytesTransferred, ref header) || header.Message == null)
 			{
+				Interlocked.Decrement (ref this.pendingAsync);
 				StartReceive (socket, args, reader);
 				return;
 			}
@@ -192,6 +227,7 @@ namespace Tempest.Providers.Network
 			else
 				HandleConnectionMessage (args, header, ref reader);
 
+			Interlocked.Decrement (ref this.pendingAsync);
 			StartReceive (socket, args, reader);
 		}
 

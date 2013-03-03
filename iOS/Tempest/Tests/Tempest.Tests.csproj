@@ -184,9 +184,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Tempest.csproj">
+    <ProjectReference Include="..\Tempest.iOS.csproj">
       <Project>{7994a7c5-fbc5-486e-a345-0b7499a34589}</Project>
-      <Name>Tempest</Name>
+      <Name>Tempest.iOS</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

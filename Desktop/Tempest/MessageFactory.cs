@@ -47,7 +47,7 @@ namespace Tempest
 			private set;
 		}
 
-		#if !SAFE
+		#if !NOEMIT
 		/// <summary>
 		/// Discovers and registers message types from <paramref name="assembly"/>.
 		/// </summary>
@@ -104,7 +104,7 @@ namespace Tempest
 			RegisterTypesWithCtors (messageTypes, false);
 		}
 
-		#if !SAFE
+		#if !NOEMIT
 		/// <summary>
 		/// Registers <paramref name="messageTypes"/> with their parameter-less constructor.
 		/// </summary>
@@ -136,7 +136,7 @@ namespace Tempest
 
 		private readonly ConcurrentDictionary<ushort, Func<Message>> messageCtors = new ConcurrentDictionary<ushort, Func<Message>>();
 
-		#if !SAFE
+		#if !NOEMIT
 		private void RegisterTypes (IEnumerable<Type> messageTypes, bool ignoreDupes)
 		{
 		    if (messageTypes == null)

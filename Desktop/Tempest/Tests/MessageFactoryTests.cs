@@ -44,7 +44,7 @@ namespace Tempest.Tests
 			protocol = new Protocol (MockProtocol.Instance.id, MockProtocol.Instance.Version);
 		}
 
-		#if !SAFE
+		#if !NOEMIT
 		[Test]
 		public void DiscoverNull()
 		{
@@ -94,7 +94,7 @@ namespace Tempest.Tests
 		[Test]
 		public void RegisterNull()
 		{
-			#if !SAFE
+			#if !NOEMIT
 			Assert.Throws<ArgumentNullException> (() => protocol.Register ((IEnumerable<Type>)null));
 			#endif
 
@@ -143,7 +143,7 @@ namespace Tempest.Tests
 			}
 		}
 
-		#if !SAFE
+		#if !NOEMIT
 		[Test]
 		public void RegisterTypeInvalid()
 		{
@@ -180,7 +180,7 @@ namespace Tempest.Tests
 				}));
 		}
 
-		#if !SAFE
+		#if !NOEMIT
 		[Test]
 		public void RegisterType()
 		{

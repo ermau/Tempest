@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,6 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -1404,7 +1399,7 @@ namespace Tempest.Tests
 			{
 				Assert.IsFalse (msg.Encrypted);
 				Assert.IsTrue (msg.Authenticated);
-				Assert.IsInstanceOf<string> (msg.Object);
+				Assert.IsTrue (msg.Object is string);
 				Assert.AreEqual (cmessage.Object, msg.Object);
 			});
 		}
@@ -1422,7 +1417,7 @@ namespace Tempest.Tests
 			{
 				Assert.IsFalse (msg.Encrypted);
 				Assert.IsTrue (msg.Authenticated);
-				Assert.IsInstanceOf<string> (msg.Object);
+				Assert.IsTrue (msg.Object is string);
 				Assert.AreEqual (cmessage.Object, msg.Object);
 			});
 
@@ -1440,7 +1435,7 @@ namespace Tempest.Tests
 			{
 				Assert.IsTrue (msg.Encrypted);
 				Assert.IsFalse (msg.Authenticated);
-				Assert.IsInstanceOf<string> (msg.Object);
+				Assert.IsTrue (msg.Object is string);
 				Assert.AreEqual (cmessage.Object, msg.Object);
 			});
 		}
@@ -1458,7 +1453,7 @@ namespace Tempest.Tests
 			{
 				Assert.IsTrue (msg.Encrypted);
 				Assert.IsFalse (msg.Authenticated);
-				Assert.IsInstanceOf<string> (msg.Object);
+				Assert.IsTrue (msg.Object is string);
 				Assert.AreEqual (cmessage.Object, msg.Object);
 			});
 

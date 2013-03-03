@@ -191,7 +191,7 @@ namespace Tempest.Tests
 			{
 				var me = (MessageEventArgs)e;
 				Assert.AreSame (connection, me.Connection);
-				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
+				Assert.IsTrue (me.Message is MockMessage);
 				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
 			});
 
@@ -211,7 +211,7 @@ namespace Tempest.Tests
 			{
 				var me = (MessageEventArgs)e;
 				Assert.AreSame (connection, me.Connection);
-				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
+				Assert.IsTrue (me.Message is MockMessage);
 				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
 			});
 
@@ -253,7 +253,7 @@ namespace Tempest.Tests
 			{
 				var me = (MessageEventArgs)e;
 				Assert.AreSame (connection, me.Connection);
-				Assert.IsInstanceOf (typeof(MockMessage2), me.Message);
+				Assert.IsTrue (me.Message is MockMessage2);
 				Assert.AreEqual ("hi", ((MockMessage2)me.Message).Content);
 			});
 

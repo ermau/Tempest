@@ -130,11 +130,11 @@ namespace Tempest.Tests
 		{
 			IServerConnection connection = null;
 
-			var test = new AsyncTest(e =>
+			var test = new AsyncTest (e =>
 			{
 				var me = (MessageEventArgs)e;
 				Assert.AreSame (connection, me.Connection);
-				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
+				Assert.IsTrue (me.Message is MockMessage);
 				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
 			});
 
@@ -189,7 +189,7 @@ namespace Tempest.Tests
 			{
 				var me = (MessageEventArgs)e;
 				Assert.AreSame (connection, me.Connection);
-				Assert.IsInstanceOf (typeof(MockMessage), me.Message);
+				Assert.IsTrue (me.Message is MockMessage);
 				Assert.AreEqual ("hi", ((MockMessage)me.Message).Content);
 			});
 

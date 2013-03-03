@@ -118,12 +118,12 @@ namespace Cadenza.Collections.Tests
 			var lookup = new MutableLookup<string, string>();
 			lookup.Add ("key", values);
 			Assert.AreEqual (1, lookup.Count);
-			Assert.Contains (values[0], lookup["key"].ToList());
-			Assert.Contains (values[1], lookup["key"].ToList());
+			CollectionAssert.Contains (lookup["key"], values[0]);
+			CollectionAssert.Contains (lookup["key"], values[1]);
 			lookup.Add ("key2", values);
 			Assert.AreEqual (2, lookup.Count);
-			Assert.Contains (values[0], lookup["key2"].ToList());
-			Assert.Contains (values[1], lookup["key2"].ToList());
+			CollectionAssert.Contains (lookup["key2"], values[0]);
+			CollectionAssert.Contains (lookup["key2"], values[1]);
 		}
 
 		[Test]
@@ -394,6 +394,8 @@ namespace Cadenza.Collections.Tests
 
 			var v = values.ToList();
 			Assert.AreEqual (3, v.Count);
+			CollectionAssert.Contains (v, "blah");
+			CollectionAssert.Contains (v, "monkeys");
 			Assert.Contains ("blah", v);
 			Assert.Contains ("monkeys", v);
 			Assert.Contains (null, v);

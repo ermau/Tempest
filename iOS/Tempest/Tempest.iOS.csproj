@@ -1,0 +1,319 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{7994A7C5-FBC5-486E-A345-0B7499A34589}</ProjectGuid>
+    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Tempest</RootNamespace>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <AssemblyName>Tempest</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Debug</OutputPath>
+    <DefineConstants>DEBUG;NET_4;NOEMIT;SAFE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <MtouchLink>None</MtouchLink>
+    <MtouchDebug>True</MtouchDebug>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <MtouchSdkVersion>Default</MtouchSdkVersion>
+    <MtouchProfiling>False</MtouchProfiling>
+    <MtouchExtraArgs />
+    <MtouchArch>Default, ARMv7</MtouchArch>
+    <MtouchUseLlvm>False</MtouchUseLlvm>
+    <MtouchUseThumb>False</MtouchUseThumb>
+    <MtouchUseSGen>False</MtouchUseSGen>
+    <MtouchUseRefCounting>False</MtouchUseRefCounting>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <MtouchLink>None</MtouchLink>
+    <DefineConstants>NET_4;NOEMIT;SAFE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhone\Debug</OutputPath>
+    <DefineConstants>DEBUG;NET_4;NOEMIT;SAFE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <MtouchDebug>true</MtouchDebug>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <DefineConstants>NET_4;NOEMIT;SAFE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\iPhone\Ad-Hoc</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+    <CodesignKey>iPhone Distribution</CodesignKey>
+    <BuildIpa>True</BuildIpa>
+    <DefineConstants>NET_4;NOEMIT;SAFE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\iPhone\AppStore</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+    <CodesignKey>iPhone Distribution</CodesignKey>
+    <DefineConstants>NET_4;NOEMIT;SAFE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhoneSimulator'">
+    <DefineConstants>NET_4;NOEMIT;SAFE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'AppStore|iPhoneSimulator'">
+    <DefineConstants>NET_4;NOEMIT;SAFE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Desktop\Tempest\AnonymousSerializer.cs">
+      <Link>AnonymousSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\ArrayExtensions.cs">
+      <Link>ArrayExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\BufferValueReader.cs">
+      <Link>BufferValueReader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\BufferValueWriter.cs">
+      <Link>BufferValueWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\CollectionExtensions.cs">
+      <Link>CollectionExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\ConnectionExtensions.cs">
+      <Link>ConnectionExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\DisconnectedEventArgs.cs">
+      <Link>DisconnectedEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IAsymmetricKey.cs">
+      <Link>IAsymmetricKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IClientConnection.cs">
+      <Link>IClientConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IClientContext.cs">
+      <Link>IClientContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IConnection.cs">
+      <Link>IConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IConnectionlessMessenger.cs">
+      <Link>IConnectionlessMessenger.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IConnectionProvider.cs">
+      <Link>IConnectionProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IContext.cs">
+      <Link>IContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IListener.cs">
+      <Link>IListener.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\AcknowledgeConnectMessage.cs">
+      <Link>InternalProtocol\AcknowledgeConnectMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\AcknowledgeMessage.cs">
+      <Link>InternalProtocol\AcknowledgeMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ConnectedMessage.cs">
+      <Link>InternalProtocol\ConnectedMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ConnectMessage.cs">
+      <Link>InternalProtocol\ConnectMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\DisconnectMessage.cs">
+      <Link>InternalProtocol\DisconnectMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\FinalConnectMessage.cs">
+      <Link>InternalProtocol\FinalConnectMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ReliablePingMessage.cs">
+      <Link>InternalProtocol\ReliablePingMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ReliablePongMessage.cs">
+      <Link>InternalProtocol\ReliablePongMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\TempestMessage.cs">
+      <Link>InternalProtocol\TempestMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\UnreliablePingMessage.cs">
+      <Link>InternalProtocol\UnreliablePingMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\UnreliablePongMessage.cs">
+      <Link>InternalProtocol\UnreliablePongMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IPublicKeyCrypto.cs">
+      <Link>IPublicKeyCrypto.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\ISerializable.cs">
+      <Link>ISerializable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\ISerializationContext.cs">
+      <Link>ISerializationContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\ISerializer.cs">
+      <Link>ISerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IServerConnection.cs">
+      <Link>IServerConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IServerContext.cs">
+      <Link>IServerContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IValueReader.cs">
+      <Link>IValueReader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IValueWriter.cs">
+      <Link>IValueWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\LocalClient.cs">
+      <Link>LocalClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Message.cs">
+      <Link>Message.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\MessageFactory.cs">
+      <Link>MessageFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\MessageHandler.cs">
+      <Link>MessageHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\MessageHeader.cs">
+      <Link>MessageHeader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\MutableLookup.cs">
+      <Link>MutableLookup.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\ObjectSerializer.cs">
+      <Link>ObjectSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Properties\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Protocol.cs">
+      <Link>Protocol.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\ClientMessageSerializer.cs">
+      <Link>Providers\Network\ClientMessageSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\MessageSerializer.cs">
+      <Link>Providers\Network\MessageSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkClientConnection.cs">
+      <Link>Providers\Network\NetworkClientConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkConnection.cs">
+      <Link>Providers\Network\NetworkConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkConnectionProvider.cs">
+      <Link>Providers\Network\NetworkConnectionProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkServerConnection.cs">
+      <Link>Providers\Network\NetworkServerConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\ReliableQueue.cs">
+      <Link>Providers\Network\ReliableQueue.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\ServerMessageSerializer.cs">
+      <Link>Providers\Network\ServerMessageSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\UdpClientConnection.cs">
+      <Link>Providers\Network\UdpClientConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\UdpConnection.cs">
+      <Link>Providers\Network\UdpConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\UdpConnectionlessListener.cs">
+      <Link>Providers\Network\UdpConnectionlessListener.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\UdpConnectionProvider.cs">
+      <Link>Providers\Network\UdpConnectionProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\UdpServerConnection.cs">
+      <Link>Providers\Network\UdpServerConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\RSAAsymmetricKey.cs">
+      <Link>RSAAsymmetricKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\RSACrypto.cs">
+      <Link>RSACrypto.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\SerializationContext.cs">
+      <Link>SerializationContext.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\SerializerExtensions.cs">
+      <Link>SerializerExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Server.cs">
+      <Link>Server.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\StreamValueReader.cs">
+      <Link>StreamValueReader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\StreamValueWriter.cs">
+      <Link>StreamValueWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Target.cs">
+      <Link>Target.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\TargetExtensions.cs">
+      <Link>TargetExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Timer.cs">
+      <Link>Timer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\TypeExtensions.cs">
+      <Link>TypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\TypeMap.cs">
+      <Link>TypeMap.cs</Link>
+    </Compile>
+    <Compile Include="DnsEndPoint.cs" />
+    <Compile Include="TraceSwitch.cs" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="monotouch" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.MonoTouch.CSharp.targets" />
+</Project>

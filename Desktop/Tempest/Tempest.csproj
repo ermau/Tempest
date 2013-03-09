@@ -60,6 +60,7 @@
     <Compile Include="InternalProtocol\ConnectMessage.cs" />
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />
     <Compile Include="InternalProtocol\FinalConnectMessage.cs" />
+    <Compile Include="InternalProtocol\PartialMessage.cs" />
     <Compile Include="InternalProtocol\ReliablePongMessage.cs" />
     <Compile Include="InternalProtocol\UnreliablePingMessage.cs" />
     <Compile Include="InternalProtocol\UnreliablePongMessage.cs" />

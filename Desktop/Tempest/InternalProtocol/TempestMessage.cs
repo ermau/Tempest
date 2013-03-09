@@ -84,6 +84,11 @@ namespace Tempest.InternalProtocol
 		/// Acknowledge message received.
 		/// </summary>
 		Acknowledge = 10,
+
+		/// <summary>
+		/// Partial message received.
+		/// </summary>
+		Partial = 11
 	}
 
 	/// <summary>

@@ -350,12 +350,23 @@ namespace Tempest.Providers.Network
 			}
 		}
 
+		public List<Message> BufferMessages (byte[] buffer)
+		{
+			int offset = 0;
+			int moffset = 0;
+			int remaining = buffer.Length;
+
+			MessageHeader header = null;
+			var reader = new BufferValueReader (buffer);
+
+			return BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
+		}
+
 		public
 			#if !SAFE
 			unsafe
 			#endif
 			List<Message> BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref MessageHeader header, ref BufferValueReader reader, Func<MessageHeader, bool> messageIdCallback = null)
-
 		{
 			List<Message> messages = new List<Message>();
 

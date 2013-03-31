@@ -26,7 +26,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Collections.Concurrent;
 
@@ -99,6 +98,17 @@ namespace Tempest
 					break;
 
 				case ExecutionMode.GlobalOrder:
+					var q = this.mqueue;
+					if (q == null)
+					{
+						#if NET_4
+						q = new ConcurrentQueue<EventArgs>();
+						#else
+						q = new Queue<EventArgs>();
+						#endif
+						Interlocked.CompareExchange (ref this.mqueue, q, null);
+					}
+
 					provider.ConnectionMade += OnConnectionMadeGlobal;
 
 					if (connectionless != null)
@@ -319,7 +329,7 @@ namespace Tempest
 		}
 		
 		#if NET_4
-		private readonly ConcurrentQueue<EventArgs>  mqueue = new ConcurrentQueue<EventArgs>();
+		private ConcurrentQueue<EventArgs> mqueue;
 		private void MessageRunner()
 		{
 			while (this.running)
@@ -332,7 +342,7 @@ namespace Tempest
 			}
 		}
 		#else
-		private readonly Queue<EventArgs> mqueue = new Queue<EventArgs>();
+		private Queue<EventArgs> mqueue;
 		private void MessageRunner()
 		{
 			while (this.running)

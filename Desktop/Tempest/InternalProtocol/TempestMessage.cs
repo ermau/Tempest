@@ -116,7 +116,8 @@ namespace Tempest.InternalProtocol
 				new KeyValuePair<Type, Func<Message>> (typeof(AcknowledgeConnectMessage), () => new AcknowledgeConnectMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(FinalConnectMessage), () => new FinalConnectMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(ConnectedMessage), () => new ConnectedMessage()),
-				new KeyValuePair<Type, Func<Message>> (typeof(AcknowledgeMessage), () => new AcknowledgeMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof(AcknowledgeMessage), () => new AcknowledgeMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(PartialMessage), () => new PartialMessage()),
 			});
 		}
 	}

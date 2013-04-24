@@ -183,6 +183,7 @@ namespace Tempest.Providers.Network
 		internal readonly ReliableQueue rqueue = new ReliableQueue();
 		protected readonly List<Protocol> originalProtocols;
 		protected bool requiresHandshake;
+		internal readonly ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>> partials = new ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>>();
 
 		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();
 
@@ -388,6 +389,10 @@ namespace Tempest.Providers.Network
 		{
 			switch (e.Message.MessageType)
 			{
+				case (ushort)TempestMessageType.Partial:
+					ReceivePartialMessage ((PartialMessage)e.Message);
+					break;
+
 				case (ushort)TempestMessageType.Acknowledge:
 					this.pendingAck.Remove (e.Message.Header.MessageId);
 					break;
@@ -397,6 +402,29 @@ namespace Tempest.Providers.Network
 					Disconnect (msg.Reason, msg.CustomReason);
 					break;
 			}
+		}
+
+		internal void ReceivePartialMessage (PartialMessage message)
+		{
+			var queue = this.partials.GetOrAdd (message.OriginalMessageId, id => new ConcurrentQueue<PartialMessage>());
+			queue.Enqueue (message);
+
+			if (queue.Count != message.Count)
+				return;
+
+			this.partials.TryRemove (message.OriginalMessageId, out queue);
+
+			byte[] payload = new byte[queue.Sum (p => p.Payload.Length)];
+
+			int offset = 0;
+			foreach (PartialMessage msg in queue)
+			{
+				byte[] partialPayload = msg.Payload;
+				Buffer.BlockCopy (partialPayload, 0, payload, offset, partialPayload.Length);
+				offset += partialPayload.Length;
+			}
+
+			Receive (this.serializer.BufferMessages (payload).Single());
 		}
 
 		private void OnSendCompleted (object sender, SocketAsyncEventArgs e)

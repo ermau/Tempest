@@ -237,21 +237,71 @@ namespace Tempest.Providers.Network
 			int length;
 			byte[] buffer = this.serializer.GetBytes (message, out length, new byte[2048]);
 
-			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-			args.SetBuffer (buffer, 0, length);
-			args.RemoteEndPoint = RemoteTarget.ToEndPoint();
-			args.Completed += OnSendCompleted;
-			args.UserToken = tcs;
+			if (length > 497)
+			{
+				byte count = (byte)Math.Ceiling ((length / 497f));
 
-			try
-			{
-				if (!sock.SendToAsync (args))
-					OnSendCompleted (this, args);
+				int i = 0;
+				
+				int remaining = length;
+				do
+				{
+					int len = Math.Min (497, remaining);
+
+					var partial = new PartialMessage
+					{
+						OriginalMessageId = (ushort)message.Header.MessageId,
+						Count = count,
+						Header = new MessageHeader()
+					};
+
+					partial.SetPayload (buffer, i, len);
+
+					byte[] pbuffer = this.serializer.GetBytes (partial, out length, new byte[600]);
+
+					SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+					args.SetBuffer (pbuffer, 0, length);
+					args.RemoteEndPoint = RemoteTarget.ToEndPoint();
+
+					remaining -= len;
+					i += len;
+
+					if (remaining == 0)
+					{
+						args.Completed += OnSendCompleted;
+						args.UserToken = tcs;
+					}
+
+					try
+					{
+						if (!sock.SendToAsync (args) && remaining == 0)
+							OnSendCompleted (this, args);
+					}
+					catch (ObjectDisposedException)
+					{
+						if (tcs != null)
+							tcs.SetResult (false);
+					}
+				} while (remaining > 0);
 			}
-			catch (ObjectDisposedException)
+			else
 			{
-				if (tcs != null)
-					tcs.SetResult (false);
+				SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+				args.SetBuffer (buffer, 0, length);
+				args.RemoteEndPoint = RemoteTarget.ToEndPoint();
+				args.Completed += OnSendCompleted;
+				args.UserToken = tcs;
+
+				try
+				{
+					if (!sock.SendToAsync (args))
+						OnSendCompleted (this, args);
+				}
+				catch (ObjectDisposedException)
+				{
+					if (tcs != null)
+						tcs.SetResult (false);
+				}
 			}
 
 			return (tcs != null) ? tcs.Task : null;

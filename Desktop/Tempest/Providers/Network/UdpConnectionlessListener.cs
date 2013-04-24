@@ -304,6 +304,9 @@ namespace Tempest.Providers.Network
 			int remaining = args.BytesTransferred;
 
 			List<Message> messages = this.connectionlessSerializer.BufferMessages (ref buffer, ref bufferOffset, ref messageOffset, ref remaining, ref header, ref reader);
+			if (messages == null)
+				return;
+
 			foreach (Message m in messages)
 			{
 				var tempestMessage = m as TempestMessage;

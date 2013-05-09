@@ -474,7 +474,11 @@ namespace Tempest.Providers.Network
 				offset += partialPayload.Length;
 			}
 
-			Receive (this.serializer.BufferMessages (payload).Single());
+			List<Message> messages = this.serializer.BufferMessages (payload);
+			if (messages != null && messages.Count == 1)
+				Receive (messages[0]);
+			else
+				DisconnectAsync();
 		}
 
 		private void OnSendCompleted (object sender, SocketAsyncEventArgs e)

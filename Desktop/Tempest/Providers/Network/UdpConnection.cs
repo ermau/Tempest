@@ -319,6 +319,7 @@ namespace Tempest.Providers.Network
 			this.serializer = null;
 
 			this.rqueue.Clear();
+			this.partials.Clear();
 
 			lock (this.messageResponses)
 			{

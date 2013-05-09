@@ -235,7 +235,7 @@ namespace Tempest.Providers.Network
 			}
 
 			int length;
-			byte[] buffer = this.serializer.GetBytes (message, out length, new byte[2048]);
+			byte[] buffer = mserialzier.GetBytes (message, out length, new byte[2048]);
 
 			if (length > 497)
 			{
@@ -257,7 +257,7 @@ namespace Tempest.Providers.Network
 
 					partial.SetPayload (buffer, i, len);
 
-					byte[] pbuffer = this.serializer.GetBytes (partial, out length, new byte[600]);
+					byte[] pbuffer = mserialzier.GetBytes (partial, out length, new byte[600]);
 
 					SocketAsyncEventArgs args = new SocketAsyncEventArgs();
 					args.SetBuffer (pbuffer, 0, length);

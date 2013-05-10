@@ -387,10 +387,19 @@ namespace Tempest.Providers.Network
 					if (now - pending.Item1 > span)
 						resending.Add (pending.Item2);
 				}
+
+				foreach (Message message in resending)
+					this.pendingAck.Remove (message.Header.MessageId);
 			}
 
 			foreach (Message message in resending)
-				SendAsync (message);
+			{
+				TaskCompletionSource<Message> future;
+				lock (this.messageResponses)
+					this.messageResponses.TryGetValue (message.Header.MessageId, out future);
+
+				SendCore (message, dontSetId: true, future: future);
+			}
 		}
 
 		internal void Receive (Message message)

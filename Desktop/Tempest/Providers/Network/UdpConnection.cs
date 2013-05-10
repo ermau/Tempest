@@ -313,7 +313,7 @@ namespace Tempest.Providers.Network
 				catch (ObjectDisposedException)
 				{
 					if (tcs != null)
-						tcs.SetResult (false);
+						tcs.TrySetResult (false);
 				}
 			}
 

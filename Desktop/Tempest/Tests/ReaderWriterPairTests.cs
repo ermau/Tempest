@@ -291,7 +291,7 @@ namespace Tempest.Tests
 		[Test]
 		public void ReadWriteLongString()
 		{
-			string longString = TestHelpers.GetLongString();
+			string longString = TestHelpers.GetLongString (new Random (43));
 
 			IValueWriter writer = GetWriter();
 			writer.WriteString (Encoding.UTF8, longString);

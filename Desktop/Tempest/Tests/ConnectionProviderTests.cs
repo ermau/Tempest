@@ -41,6 +41,8 @@ namespace Tempest.Tests
 
 		private readonly List<Exception> exceptions = new List<Exception>();
 
+		private Random random;
+
 		[SetUp]
 		protected void Setup()
 		{
@@ -49,6 +51,7 @@ namespace Tempest.Tests
 			#endif
 
 			Trace.WriteLine ("Entering", "Setup");
+			random = new Random (43);
 			this.provider = SetUp();
 			Trace.WriteLine ("Exiting", "Setup");
 		}
@@ -467,7 +470,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void SendLongMessageAsync()
 		{
-			string content = TestHelpers.GetLongString (MaxPayloadSize - sizeof (int));
+			string content = TestHelpers.GetLongString (random, MaxPayloadSize - sizeof (int));
 
 			var c = GetNewClientConnection();
 			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
@@ -701,7 +704,7 @@ namespace Tempest.Tests
 						e.Connection.SendAsync (new AuthenticatedMessage
 						{
 							Number = i,
-							Message = TestHelpers.GetLongString (MaxPayloadSize - sizeof(int) * 2)
+							Message = TestHelpers.GetLongString (random, MaxPayloadSize - sizeof(int) * 2)
 						});
 					}
 				}
@@ -1064,7 +1067,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void EncryptedLongMessage()
 		{
-			string message = TestHelpers.GetLongString (MaxPayloadSize - sizeof (int));
+			string message = TestHelpers.GetLongString (random, MaxPayloadSize - sizeof (int));
 			var cmessage = new EncryptedMessage
 			{
 				Message = message,
@@ -1110,7 +1113,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void AuthenticatedLongMessage()
 		{
-			var message = TestHelpers.GetLongString (MaxPayloadSize - sizeof(int) * 2);
+			var message = TestHelpers.GetLongString (random, MaxPayloadSize - sizeof(int) * 2);
 			var cmessage = new AuthenticatedMessage
 			{
 				Message = message,
@@ -1236,7 +1239,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void EncryptedAndAuthenticatedLongMessage()
 		{
-			string message = TestHelpers.GetLongString (MaxPayloadSize - sizeof (int) * 2);
+			string message = TestHelpers.GetLongString (random, MaxPayloadSize - sizeof (int) * 2);
 
 			var cmessage = new AuthenticatedAndEncryptedMessage
 			{

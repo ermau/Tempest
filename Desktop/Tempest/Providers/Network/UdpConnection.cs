@@ -262,7 +262,7 @@ namespace Tempest.Providers.Network
 						SetMessageId (partial);
 
 					lock (this.pendingAck)
-						this.pendingAck.Add (partial.Header.MessageId, new Tuple<DateTime, Message> (DateTime.Now, partial));
+						this.pendingAck.Add (partial.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, partial));
 
 					byte[] pbuffer = mserialzier.GetBytes (partial, out length, new byte[600]);
 
@@ -296,7 +296,7 @@ namespace Tempest.Providers.Network
 				if (message.PreferReliable || message.MustBeReliable)
 				{
 					lock (this.pendingAck)
-						this.pendingAck.Add (message.Header.MessageId, new Tuple<DateTime, Message> (DateTime.Now, message));
+						this.pendingAck.Add (message.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, message));
 				}
 
 				SocketAsyncEventArgs args = new SocketAsyncEventArgs();

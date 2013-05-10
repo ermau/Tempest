@@ -74,12 +74,14 @@ namespace Tempest.InternalProtocol
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
+			writer.WriteUInt16 (OriginalMessageId);
 			writer.WriteByte (Count);
 			writer.WriteBytes (Payload, this.offset, this.length);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
+			OriginalMessageId = reader.ReadUInt16();
 			Count = reader.ReadByte();
 			Payload = reader.ReadBytes();
 		}

@@ -192,6 +192,14 @@ namespace Tempest.Providers.Network
 			get;
 		}
 
+		private void SetMessageId (Message message)
+		{
+			if (message.MustBeReliable || message.PreferReliable)
+				message.Header.MessageId = MessageSerializer.GetNextMessageId (ref this.nextReliableMessageId);
+			else
+				message.Header.MessageId = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
+		}
+
 		protected Task<bool> SendCore (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null)
 		{
 			if (message == null)
@@ -218,15 +226,7 @@ namespace Tempest.Providers.Network
 				message.Header = new MessageHeader();
 
 			if (!isResponse)
-			{
-				int mid;
-				if (message.MustBeReliable || message.PreferReliable)
-					mid = MessageSerializer.GetNextMessageId (ref this.nextReliableMessageId);
-				else
-					mid = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
-
-				message.Header.MessageId = mid;
-			}
+				SetMessageId (message);
 
 			if (future != null)
 			{
@@ -256,6 +256,10 @@ namespace Tempest.Providers.Network
 					};
 
 					partial.SetPayload (buffer, i, len);
+					if (i == 0) // We have to fill the gap the original id uses for reliability
+						partial.Header.MessageId = message.Header.MessageId;
+					else
+						SetMessageId (partial);
 
 					byte[] pbuffer = mserialzier.GetBytes (partial, out length, new byte[600]);
 

@@ -261,6 +261,9 @@ namespace Tempest.Providers.Network
 					else
 						SetMessageId (partial);
 
+					lock (this.pendingAck)
+						this.pendingAck.Add (partial.Header.MessageId, new Tuple<DateTime, Message> (DateTime.Now, partial));
+
 					byte[] pbuffer = mserialzier.GetBytes (partial, out length, new byte[600]);
 
 					SocketAsyncEventArgs args = new SocketAsyncEventArgs();
@@ -284,12 +287,18 @@ namespace Tempest.Providers.Network
 					catch (ObjectDisposedException)
 					{
 						if (tcs != null)
-							tcs.SetResult (false);
+							tcs.TrySetResult (false);
 					}
 				} while (remaining > 0);
 			}
 			else
 			{
+				if (message.PreferReliable || message.MustBeReliable)
+				{
+					lock (this.pendingAck)
+						this.pendingAck.Add (message.Header.MessageId, new Tuple<DateTime, Message> (DateTime.Now, message));
+				}
+
 				SocketAsyncEventArgs args = new SocketAsyncEventArgs();
 				args.SetBuffer (buffer, 0, length);
 				args.RemoteEndPoint = RemoteTarget.ToEndPoint();

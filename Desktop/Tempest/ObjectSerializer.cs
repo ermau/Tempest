@@ -206,21 +206,6 @@ namespace Tempest
 					#endif
 
 					throw new ArgumentException ("No serializer found for type " + t);
-
-					//oserializer.LoadMembers (t);
-
-					//value = oserializer.ctor.Invoke (null);
-
-					//foreach (var kvp in oserializer.members)
-					//{
-					//    object mvalue = kvp.Value.Deserializer (c, r, false);
-					//    if (kvp.Key.MemberType == MemberTypes.Field)
-					//        ((FieldInfo)kvp.Key).SetValue (value, mvalue);
-					//    else if (kvp.Key.MemberType == MemberTypes.Property)
-					//        ((PropertyInfo)kvp.Key).SetValue (value, mvalue, null);
-					//}
-
-					//return value;
 				};
 			}
 		}
@@ -362,59 +347,9 @@ namespace Tempest
 					#endif
 
 					throw new ArgumentException ("No serializer found or specified for type " + t, "value");
-
-					//LoadMembers (t);
-
-					//var props = this.members;
-
-					//foreach (var kvp in props)
-					//{
-					//    if (kvp.Key.MemberType == MemberTypes.Field)
-					//        kvp.Value.Serializer (c, w, ((FieldInfo)kvp.Key).GetValue (v), false);
-					//    else if (kvp.Key.MemberType == MemberTypes.Property)
-					//        kvp.Value.Serializer (c, w, ((PropertyInfo)kvp.Key).GetValue (v, null), false);
-					//}
 				};
 			}
 		}
-
-		//private void LoadMembers (Type t)
-		//{
-		//	LoadCtor (t);
-
-		//	if (this.members != null)
-		//		return;
-
-		//	this.members = t.GetMembers (BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.GetField | BindingFlags.NonPublic)
-		//					.Where (mi =>
-		//					{
-		//						if (mi.MemberType == MemberTypes.Field)
-		//						{
-		//							var fi = (FieldInfo)mi;
-		//							if (typeof(Delegate).IsAssignableFrom (fi.FieldType.BaseType))
-		//								return false;
-
-		//							return !fi.IsInitOnly;
-		//						}
-		//						else if (mi.MemberType == MemberTypes.Property)
-		//						{
-		//							var p = (PropertyInfo)mi;
-		//							return (p.GetSetMethod() != null && p.GetIndexParameters().Length == 0);
-		//						}
-
-		//						return false;
-		//					})
-		//					.ToDictionary (mi => mi, mi =>
-		//					{
-		//						ObjectSerializer os = null;
-		//						if (mi.MemberType == MemberTypes.Field)
-		//							os = GetSerializerInternal (((FieldInfo)mi).FieldType);
-		//						else if (mi.MemberType == MemberTypes.Property)
-		//							os = GetSerializerInternal (((PropertyInfo)mi).PropertyType);
-
-		//						return new SerializationPair (os.Deserialize, os.Serialize);
-		//					});
-		//}
 
 		private void LoadCtor (Type t)
 		{

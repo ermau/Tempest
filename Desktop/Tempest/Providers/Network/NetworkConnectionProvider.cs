@@ -134,7 +134,7 @@ namespace Tempest.Providers.Network
 				this.keyWait.Set();
 		}
 
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, IAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, RSAAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
 			: this (protocols, target, maxConnections, enabledHashAlgorithms)
 		{
 			if (authKey == null)
@@ -176,7 +176,7 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Gets the public authentication key for the server.
 		/// </summary>
-		public IAsymmetricKey PublicAuthenticationKey
+		public RSAAsymmetricKey PublicAuthenticationKey
 		{
 			get { return this.publicAuthenticationKey; }
 		}
@@ -184,7 +184,7 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Gets the public encryption key for the server.
 		/// </summary>
-		public IAsymmetricKey PublicEncryptionKey
+		public RSAAsymmetricKey PublicEncryptionKey
 		{
 			get { return this.publicEncryptionKey; }
 		}
@@ -314,12 +314,12 @@ namespace Tempest.Providers.Network
 		private readonly ManualResetEvent keyWait = new ManualResetEvent (false);
 		private readonly List<string> enabledHashAlgorithms = new List<string>();
 
-		internal IPublicKeyCrypto pkEncryption;
-		private IAsymmetricKey publicEncryptionKey;
+		internal RSACrypto pkEncryption;
+		private RSAAsymmetricKey publicEncryptionKey;
 
-		internal IPublicKeyCrypto authentication;
-		internal IAsymmetricKey authenticationKey;
-		private IAsymmetricKey publicAuthenticationKey;
+		internal RSACrypto authentication;
+		internal RSAAsymmetricKey authenticationKey;
+		private RSAAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
 		private Target target;

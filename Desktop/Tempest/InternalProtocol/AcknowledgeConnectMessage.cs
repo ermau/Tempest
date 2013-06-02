@@ -60,13 +60,13 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
-		public IAsymmetricKey PublicEncryptionKey
+		public RSAAsymmetricKey PublicEncryptionKey
 		{
 			get;
 			set;
 		}
 
-		public IAsymmetricKey PublicAuthenticationKey
+		public RSAAsymmetricKey PublicAuthenticationKey
 		{
 			get;
 			set;
@@ -99,8 +99,8 @@ namespace Tempest.InternalProtocol
 
 			ConnectionId = reader.ReadInt32();
 
-			PublicEncryptionKey = reader.Read<IAsymmetricKey> (context);
-			PublicAuthenticationKey = reader.Read<IAsymmetricKey> (context);
+			PublicEncryptionKey = reader.Read<RSAAsymmetricKey> (context);
+			PublicAuthenticationKey = reader.Read<RSAAsymmetricKey> (context);
 		}
 	}
 }

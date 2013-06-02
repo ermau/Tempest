@@ -48,7 +48,7 @@ namespace Tempest.Providers.Network
 			this.socket = this.provider.GetSocket (remoteEndpoint);
 		}
 
-		internal UdpServerConnection (int connectionId, EndPoint remoteEndpoint, UdpConnectionProvider provider, IPublicKeyCrypto remoteCrypto, IPublicKeyCrypto localCrypto, IAsymmetricKey key)
+		internal UdpServerConnection (int connectionId, EndPoint remoteEndpoint, UdpConnectionProvider provider, RSACrypto remoteCrypto, RSACrypto localCrypto, RSAAsymmetricKey key)
 			: base (provider.protocols.Values)
 		{
 			this.remoteCrypto = remoteCrypto;
@@ -194,28 +194,28 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.LocalCrypto
+		RSACrypto IAuthenticatedConnection.LocalCrypto
 		{
 			get { return this.localCrypto; }
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.Encryption
+		RSACrypto IAuthenticatedConnection.Encryption
 		{
 			get { return this.provider.pkEncryption; }
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.LocalKey
+		RSAAsymmetricKey IAuthenticatedConnection.LocalKey
 		{
 			get { return LocalKey; }
 			set { LocalKey = value; }
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.RemoteCrypto
+		RSACrypto IAuthenticatedConnection.RemoteCrypto
 		{
 			get { return this.remoteCrypto; }
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.RemoteKey
+		RSAAsymmetricKey IAuthenticatedConnection.RemoteKey
 		{
 			get { return RemoteKey; }
 			set { RemoteKey = value; }

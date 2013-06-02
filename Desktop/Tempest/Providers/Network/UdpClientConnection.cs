@@ -57,14 +57,14 @@ namespace Tempest.Providers.Network
 			this.serializer = new ClientMessageSerializer (this, protocols);
 		}
 
-		public UdpClientConnection (Protocol protocol, IAsymmetricKey key)
+		public UdpClientConnection (Protocol protocol, RSAAsymmetricKey key)
 			: this (new[] { protocol }, key)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
 		}
 
-		public UdpClientConnection (IEnumerable<Protocol> protocols, IAsymmetricKey key)
+		public UdpClientConnection (IEnumerable<Protocol> protocols, RSAAsymmetricKey key)
 			: base (protocols, new RSACrypto(), new RSACrypto(), key)
 		{
 			if (protocols == null)
@@ -293,7 +293,7 @@ namespace Tempest.Providers.Network
 					encryption.GenerateKey();
 
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
-					LocalKey.Serialize (authKeyWriter, this.remoteEncryption, includePrivate: false);
+					LocalKey.Serialize (authKeyWriter, this.remoteEncryption);
 
 					SendAsync (new FinalConnectMessage
 					{
@@ -343,19 +343,19 @@ namespace Tempest.Providers.Network
 				connected (this, new ClientConnectionEventArgs (this));
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.LocalCrypto
+		RSACrypto IAuthenticatedConnection.LocalCrypto
 		{
 			get { return this.localCrypto; }
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.RemoteKey
+		RSAAsymmetricKey IAuthenticatedConnection.RemoteKey
 		{
 			get { return RemoteKey; }
 			set { RemoteKey = value; }
 		}
 
-		private IPublicKeyCrypto remoteEncryption;
-		IPublicKeyCrypto IAuthenticatedConnection.Encryption
+		private RSACrypto remoteEncryption;
+		RSACrypto IAuthenticatedConnection.Encryption
 		{
 			get
 			{
@@ -366,13 +366,13 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.LocalKey
+		RSAAsymmetricKey IAuthenticatedConnection.LocalKey
 		{
 			get { return LocalKey; }
 			set { LocalKey = value; }
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.RemoteCrypto
+		RSACrypto IAuthenticatedConnection.RemoteCrypto
 		{
 			get { return this.remoteCrypto; }
 		}

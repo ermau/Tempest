@@ -39,7 +39,7 @@ namespace Tempest.Tests
 	public class NetworkProviderTests
 		: ConnectionProviderTests
 	{
-		private static IAsymmetricKey key;
+		private static RSAAsymmetricKey key;
 		static NetworkProviderTests()
 		{
 			var rsa = new RSACrypto();
@@ -73,7 +73,7 @@ namespace Tempest.Tests
 			return new NetworkClientConnection (p, key);
 		}
 
-		protected override IClientConnection SetupClientConnection (out IAsymmetricKey k)
+		protected override IClientConnection SetupClientConnection (out RSAAsymmetricKey k)
 		{
 			var c = new NetworkClientConnection (p);
 			k = c.LocalKey;
@@ -295,9 +295,9 @@ namespace Tempest.Tests
 		//}
 
 		private class MockSha1OnlyCrypto
-			: RSACrypto, IPublicKeyCrypto
+			: RSACrypto
 		{
-			IEnumerable<string> IPublicKeyCrypto.SupportedHashAlgs
+			IEnumerable<string> SupportedHashAlgs
 			{
 				get { return new[] { "SHA1" }; }
 			}

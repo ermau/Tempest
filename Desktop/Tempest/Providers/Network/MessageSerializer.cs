@@ -39,13 +39,13 @@ namespace Tempest.Providers.Network
 	internal interface IAuthenticatedConnection
 		: IConnection
 	{
-		IPublicKeyCrypto LocalCrypto { get; }
-		new IAsymmetricKey LocalKey { get; set; }
+		RSACrypto LocalCrypto { get; }
+		new RSAAsymmetricKey LocalKey { get; set; }
 
-		IPublicKeyCrypto RemoteCrypto { get; }
-		new IAsymmetricKey RemoteKey { get; set; }
+		RSACrypto RemoteCrypto { get; }
+		new RSAAsymmetricKey RemoteKey { get; set; }
 
-		IPublicKeyCrypto Encryption { get; }
+		RSACrypto Encryption { get; }
 	}
 
 	internal class MessageSerializer
@@ -154,45 +154,13 @@ namespace Tempest.Providers.Network
 
 			SerializationContext context;
 			if (this.connection != null)
-				context = new SerializationContext (this.connection, this.protocols[message.Protocol.id], new TypeMap());
+				context = new SerializationContext (this.connection, this.protocols[message.Protocol.id]);
 			else
-				context = new SerializationContext (this.protocols[message.Protocol.id], new TypeMap());
+				context = new SerializationContext (this.protocols[message.Protocol.id]);
 
 			message.WritePayload (context, writer);
 
 			int headerLength = BaseHeaderLength;
-
-			IList<KeyValuePair<Type, ushort>> types;
-			bool hasTypes = context.TypeMap.TryGetNewTypes (out types);
-			if (hasTypes)
-			{
-				if (types.Count > Int16.MaxValue)
-					throw new ArgumentException ("Too many different types for serialization");
-
-				int payloadLen = writer.Length;
-				byte[] payload = writer.Buffer;
-				writer = new BufferValueWriter (new byte[1024 + writer.Length]);
-				writer.WriteByte (message.Protocol.id);
-				writer.WriteInt32 (cid);
-				writer.WriteUInt16 (message.MessageType);
-				writer.Length += sizeof (int); // length placeholder
-				writer.WriteInt32 (messageId);
-
-				writer.Length += sizeof (ushort); // type header length placeholder
-				writer.WriteUInt16 ((ushort)types.Count);
-				for (int i = 0; i < types.Count; ++i)
-					writer.WriteString (types[i].Key.GetSimplestName());
-
-				#if SAFE
-				Buffer.BlockCopy (BitConverter.GetBytes ((ushort)(writer.Length - BaseHeaderLength)), 0, writer.Buffer, BaseHeaderLength, sizeof (ushort));
-				#else
-				fixed (byte* mptr = writer.Buffer)
-					*((ushort*) (mptr + BaseHeaderLength)) = (ushort)(writer.Length - BaseHeaderLength);
-				#endif
-
-				headerLength = writer.Length;
-				writer.InsertBytes (headerLength, payload, BaseHeaderLength, payloadLen - BaseHeaderLength);
-			}
 
 			if (message.Encrypted)
 			{
@@ -213,11 +181,9 @@ namespace Tempest.Providers.Network
 
 			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
-			int len = length << 2;
-			if (hasTypes)
-				len |= 1; // serialization header
+			int len = length << 1;
 			if (message.Header.IsContinued)
-				len |= 2;
+				len |= 1;
 
 			#if SAFE
 			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, LengthOffset, sizeof(int));
@@ -238,7 +204,7 @@ namespace Tempest.Providers.Network
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Entering {0}", (header == null) ? "without existing header" : "with existing header"), callCategory);
 
-			int mlen; bool hasTypeHeader, isContinued; Message msg = null; Protocol p;
+			int mlen; bool isContinued; Message msg = null; Protocol p;
 
 			int headerLength = BaseHeaderLength;
 
@@ -303,15 +269,13 @@ namespace Tempest.Providers.Network
 				if (header.State >= HeaderState.Length)
 				{
 					mlen = header.MessageLength;
-					hasTypeHeader = header.HasTypeHeader;
 					isContinued = header.IsContinued;
 				}
 				else
 				{
 					mlen = reader.ReadInt32();
-					hasTypeHeader = (mlen & 1) == 1;
-					isContinued = (mlen & 2) == 2;
-					mlen >>= 2;
+					isContinued = (mlen & 1) == 1;
+					mlen >>= 1;
 
 					if (mlen <= 0)
 					{
@@ -320,11 +284,10 @@ namespace Tempest.Providers.Network
 					}
 
 					header.MessageLength = mlen;
-					header.HasTypeHeader = hasTypeHeader;
 					header.IsContinued = isContinued;
 					header.State = HeaderState.Length;
 
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have message of length: {0}, {1} type header", mlen, (hasTypeHeader) ? "with" : "without"), callCategory);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have message of length: {0}", mlen), callCategory);
 				}
 
 				if (header.State == HeaderState.IV)
@@ -371,56 +334,9 @@ namespace Tempest.Providers.Network
 					header.MessageId = identV & ~ResponseFlag;
 					header.IsResponse = (identV & ResponseFlag) == ResponseFlag;
 
-					header.State = HeaderState.MessageId;
+					header.State = HeaderState.Complete;
 
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Have message ID: " + header.MessageId, callCategory);
-				}
-
-				if (header.State < HeaderState.TypeMap)
-				{
-					TypeMap map;
-					if (hasTypeHeader)
-					{
-						Trace.WriteLineIf (NTrace.TraceVerbose, "Has type header, reading types", callCategory);
-
-						if (remaining < headerLength + (sizeof(ushort) * 2))
-						{
-							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (types))", callCategory);
-							return false;
-						}
-
-						if (header.TypeHeaderLength == 0)
-						{
-							ushort typeheaderLength = reader.ReadUInt16();
-							headerLength += typeheaderLength;
-							header.TypeHeaderLength = typeheaderLength;
-						}
-
-						if (remaining < headerLength)
-						{
-							Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not buffered (types))", callCategory);
-							return false;
-						}
-
-						ushort numTypes = reader.ReadUInt16();
-						var types = new Dictionary<Type, ushort> (numTypes);
-						for (ushort i = 0; i < numTypes; ++i)
-							types[Type.GetType (reader.ReadString())] = i;
-
-						map = new TypeMap (types);
-					}
-					else
-						map = new TypeMap();
-
-					SerializationContext context;
-					if (this.connection != null)
-						context = new SerializationContext (this.connection, p, map);
-					else
-						context = new SerializationContext (p, map);
-
-					header.SerializationContext = context;
-					header.HeaderLength = headerLength;
-					header.State = HeaderState.Complete;
 				}
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);

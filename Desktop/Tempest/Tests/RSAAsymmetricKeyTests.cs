@@ -49,21 +49,22 @@ namespace Tempest.Tests
 			var writer = new BufferValueWriter (buffer);
 
 			p.Serialize (null, writer);
-			writer.Flush();
-
 			int len = writer.Length;
+			writer.Flush();
 
 			var reader = new BufferValueReader (buffer);
 			var key = new RSAAsymmetricKey (null, reader);
 
-			AssertArrayMatches (p.D, key.D);
-			AssertArrayMatches (p.DP, key.DP);
-			AssertArrayMatches (p.DQ, key.DQ);
+			Assert.AreEqual (len, reader.Position);
+
+			Assert.IsNull (key.D);
+			Assert.IsNull (key.DP);
+			Assert.IsNull (key.DQ);
 			AssertArrayMatches (p.Exponent, key.Exponent);
-			AssertArrayMatches (p.InverseQ, key.InverseQ);
+			Assert.IsNull (key.InverseQ);
 			AssertArrayMatches (p.Modulus, key.Modulus);
-			AssertArrayMatches (p.P, key.P);
-			AssertArrayMatches (p.Q, key.Q);
+			Assert.IsNull (key.P);
+			Assert.IsNull (key.Q);
 
 			Assert.IsNotNull (key.PublicSignature);
 		}

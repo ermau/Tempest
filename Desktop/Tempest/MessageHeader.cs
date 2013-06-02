@@ -66,11 +66,6 @@ namespace Tempest
 		MessageId = 6,
 
 		/// <summary>
-		/// The message type map
-		/// </summary>
-		TypeMap = 7,
-
-		/// <summary>
 		/// The header has been completely read.
 		/// </summary>
 		Complete = 8
@@ -100,18 +95,6 @@ namespace Tempest
 		/// Gets the total length of the message (including <see cref="HeaderLength"/>).
 		/// </summary>
 		public int MessageLength
-		{
-			get;
-			internal set;
-		}
-
-		public bool HasTypeHeader
-		{
-			get;
-			internal set;
-		}
-
-		public ushort TypeHeaderLength
 		{
 			get;
 			internal set;

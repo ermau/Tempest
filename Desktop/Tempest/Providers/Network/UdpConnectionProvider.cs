@@ -47,7 +47,7 @@ namespace Tempest.Providers.Network
 			ValidateProtocols (this.protocols.Values);
 		}
 
-		public UdpConnectionProvider (int port, Protocol protocol, IAsymmetricKey authKey)
+		public UdpConnectionProvider (int port, Protocol protocol, RSAAsymmetricKey authKey)
 			: base (new[] { protocol }, port)
 		{
 			if (protocol == null)
@@ -68,7 +68,7 @@ namespace Tempest.Providers.Network
 			ValidateProtocols (this.protocols.Values);
 		}
 
-		public UdpConnectionProvider (int port, IEnumerable<Protocol> protocols, IAsymmetricKey authKey)
+		public UdpConnectionProvider (int port, IEnumerable<Protocol> protocols, RSAAsymmetricKey authKey)
 			: base (protocols, port)
 		{
 			if (protocols == null)
@@ -87,7 +87,7 @@ namespace Tempest.Providers.Network
 
 		public event EventHandler<ConnectionMadeEventArgs> ConnectionMade;
 
-		public IAsymmetricKey PublicKey
+		public RSAAsymmetricKey PublicKey
 		{
 			get { return this.authKey; }
 		}
@@ -115,9 +115,9 @@ namespace Tempest.Providers.Network
 			base.Stop();
 		}
 
-		internal IPublicKeyCrypto pkEncryption;
-		private IPublicKeyCrypto crypto;
-		private IAsymmetricKey authKey;
+		internal RSACrypto pkEncryption;
+		private RSACrypto crypto;
+		private RSAAsymmetricKey authKey;
 
 		private int nextConnectionId;
 		private readonly ConcurrentDictionary<int, UdpServerConnection> connections = new ConcurrentDictionary<int, UdpServerConnection>();

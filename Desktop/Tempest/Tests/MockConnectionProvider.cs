@@ -322,7 +322,7 @@ namespace Tempest.Tests
 	}
 
 	public class MockAsymmetricKey
-		: IAsymmetricKey
+		: RSAAsymmetricKey
 	{
 		public void Serialize(ISerializationContext context, IValueWriter writer)
 		{
@@ -337,11 +337,11 @@ namespace Tempest.Tests
 			get { return new byte[0]; }
 		}
 
-		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto, bool includePrivate)
+		public void Serialize (IValueWriter writer, RSACrypto crypto, bool includePrivate)
 		{
 		}
 
-		public void Deserialize (IValueReader reader, IPublicKeyCrypto crypto)
+		public void Deserialize (IValueReader reader, RSACrypto crypto)
 		{
 		}
 	}
@@ -387,13 +387,13 @@ namespace Tempest.Tests
 			private set;
 		}
 
-		public IAsymmetricKey RemoteKey
+		public RSAAsymmetricKey RemoteKey
 		{
 			get { return new MockAsymmetricKey(); }
 		}
 
 		private MockAsymmetricKey key = new MockAsymmetricKey();
-		public IAsymmetricKey LocalKey
+		public RSAAsymmetricKey LocalKey
 		{
 			get { return this.key; }
 		}
@@ -488,7 +488,7 @@ namespace Tempest.Tests
 
 		internal void Receive (MessageEventArgs e)
 		{
-			var context = new SerializationContext (new TypeMap());
+			var context = new SerializationContext ();
 			var writer = new BufferValueWriter (new byte[1024]);
 			e.Message.WritePayload (context, writer);
 

@@ -50,7 +50,7 @@ namespace Tempest.Providers.Network
 			this.originalProtocols = ps;
 		}
 
-		internal UdpConnection (IEnumerable<Protocol> protocols, IPublicKeyCrypto remoteCrypto, IPublicKeyCrypto localCrypto, IAsymmetricKey localKey)
+		internal UdpConnection (IEnumerable<Protocol> protocols, RSACrypto remoteCrypto, RSACrypto localCrypto, RSAAsymmetricKey localKey)
 			: this (protocols)
 		{
 			this.remoteCrypto = remoteCrypto;
@@ -86,13 +86,13 @@ namespace Tempest.Providers.Network
 			protected set;
 		}
 
-		public IAsymmetricKey RemoteKey
+		public RSAAsymmetricKey RemoteKey
 		{
 			get;
 			protected set;
 		}
 
-		public IAsymmetricKey LocalKey
+		public RSAAsymmetricKey LocalKey
 		{
 			get;
 			protected set;
@@ -170,9 +170,9 @@ namespace Tempest.Providers.Network
 
 		protected bool formallyConnected;
 		internal MessageSerializer serializer;
-		protected IPublicKeyCrypto localCrypto;
+		protected RSACrypto localCrypto;
 
-		protected IPublicKeyCrypto remoteCrypto;
+		protected RSACrypto remoteCrypto;
 
 		protected Socket socket;
 

@@ -71,7 +71,7 @@ namespace Tempest.Providers.Network
 				ReliableReceiveCompleted (this, asyncArgs);
 		}
 
-		public override IAsymmetricKey RemoteKey
+		public override RSAAsymmetricKey RemoteKey
 		{
 			get { return this.publicAuthenticationKey; }
 		}
@@ -239,29 +239,29 @@ namespace Tempest.Providers.Network
 			base.Recycle();
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.LocalCrypto
+		RSACrypto IAuthenticatedConnection.LocalCrypto
 		{
 			get { return this.provider.authentication; }
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.LocalKey
+		RSAAsymmetricKey IAuthenticatedConnection.LocalKey
 		{
 			get { return LocalKey; }
 			set { this.authenticationKey = value; }
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.RemoteCrypto
+		RSACrypto IAuthenticatedConnection.RemoteCrypto
 		{
 			get { return this.pkAuthentication; }
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.RemoteKey
+		RSAAsymmetricKey IAuthenticatedConnection.RemoteKey
 		{
 			get { return this.RemoteKey; }
 			set { this.publicAuthenticationKey = value; }
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.Encryption
+		RSACrypto IAuthenticatedConnection.Encryption
 		{
 			get { return this.provider.pkEncryption; }
 		}

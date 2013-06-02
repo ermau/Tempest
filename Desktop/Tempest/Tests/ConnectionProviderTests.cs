@@ -104,7 +104,7 @@ namespace Tempest.Tests
 		protected abstract IConnectionProvider SetUp (IEnumerable<Protocol> protocols);
 
 		protected abstract IClientConnection SetupClientConnection();
-		protected virtual IClientConnection SetupClientConnection (out IAsymmetricKey key)
+		protected virtual IClientConnection SetupClientConnection (out RSAAsymmetricKey key)
 		{
 			key = null;
 			return SetupClientConnection();
@@ -122,7 +122,7 @@ namespace Tempest.Tests
 			return c;
 		}
 
-		protected IClientConnection GetNewClientConnection (out IAsymmetricKey key)
+		protected IClientConnection GetNewClientConnection (out RSAAsymmetricKey key)
 		{
 			var c = SetupClientConnection (out key);
 
@@ -222,7 +222,7 @@ namespace Tempest.Tests
 		{
 			this.provider.Start (MessageTypes);
 
-			IAsymmetricKey key = null;
+			RSAAsymmetricKey key = null;
 
 			var test = new AsyncTest (e =>
 			{
@@ -702,105 +702,6 @@ namespace Tempest.Tests
 						{
 							Number = i,
 							Message = TestHelpers.GetLongString (MaxPayloadSize - sizeof(int) * 2)
-						});
-					}
-				}
-				catch (Exception ex)
-				{
-					test.FailWith (ex);
-				}
-			})).Start();
-
-			c.Disconnected += test.FailHandler;
-			c.MessageReceived += test.PassHandler;
-			c.ConnectAsync (Target, MessageTypes);
-
-			test.Assert (900000);
-		}
-
-		[Test, Repeat (3)]
-		public void StressRandomLongTypeHeaderedAuthenticatedMessage()
-		{
-			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
-
-			const int messages = 1000;
-
-			var test = new AsyncTest (e =>
-			{
-				var me = (e as MessageEventArgs);
-				Assert.IsNotNull (me);
-				Assert.AreSame (c, me.Connection);
-			}, messages);
-
-			int overhead = (sizeof (int) * 2) + typeof (string).GetSimplestName().Length;
-
-			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
-			{
-				try
-				{
-					for (int i = 0; i < messages; ++i)
-					{
-						if (i > Int32.MaxValue)
-							System.Diagnostics.Debugger.Break();
-
-						if (!e.Connection.IsConnected)
-							return;
-
-						e.Connection.SendAsync (new AuthenticatedTypeHeaderedMessage
-						{
-							Object = TestHelpers.GetLongString (MaxPayloadSize - overhead)
-						});
-					}
-				}
-				catch (Exception ex)
-				{
-					test.FailWith (ex);
-				}
-			})).Start();
-
-			c.Disconnected += test.FailHandler;
-			c.MessageReceived += test.PassHandler;
-			c.ConnectAsync (Target, MessageTypes);
-
-			test.Assert (900000);
-		}
-
-		[Test, Repeat (3)]
-		public void StressRandomLongTypeHeaderedEncryptedMessage()
-		{
-			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
-
-			int overhead = (sizeof (int) * 2) + typeof (string).GetSimplestName().Length;
-			const int messages = 1000;
-
-			var test = new AsyncTest (e =>
-			{
-				var me = (e as MessageEventArgs);
-				Assert.IsNotNull (me);
-				Assert.AreSame (c, me.Connection);
-			}, messages);
-
-			this.provider.Start (MessageTypes);
-			this.provider.ConnectionMade += (sender, e) => (new Thread (() =>
-			{
-				try
-				{
-					for (int i = 0; i < messages; ++i)
-					{
-						if (i > Int32.MaxValue)
-							System.Diagnostics.Debugger.Break();
-
-						if (!e.Connection.IsConnected)
-							return;
-
-						e.Connection.SendAsync (new EncryptedTypeHeaderedMessage
-						{
-							Object = TestHelpers.GetLongString (MaxPayloadSize - overhead)
 						});
 					}
 				}
@@ -1424,78 +1325,6 @@ namespace Tempest.Tests
 				Assert.Fail ("Failed to connect");
 
 			test.Assert (10000);
-		}
-
-		[Test, Repeat (3)]
-		public void AuthenticatedTypeHeaderedMessage()
-		{
-			var cmessage = new AuthenticatedTypeHeaderedMessage
-			{
-				Object = "foo"
-			};
-
-			AssertMessageReceived (cmessage, msg =>
-			{
-				Assert.IsFalse (msg.Encrypted);
-				Assert.IsTrue (msg.Authenticated);
-				Assert.IsTrue (msg.Object is string);
-				Assert.AreEqual (cmessage.Object, msg.Object);
-			});
-		}
-
-		[Test, Repeat (3)]
-		public void AuthenticatedTypeHeaderedMessageLong()
-		{
-			int overhead = (sizeof (int) * 2) + typeof (string).GetSimplestName().Length;
-			var cmessage = new AuthenticatedTypeHeaderedMessage
-			{
-				Object = TestHelpers.GetLongString (MaxPayloadSize - overhead)
-			};
-
-			AssertMessageReceived (cmessage, msg =>
-			{
-				Assert.IsFalse (msg.Encrypted);
-				Assert.IsTrue (msg.Authenticated);
-				Assert.IsTrue (msg.Object is string);
-				Assert.AreEqual (cmessage.Object, msg.Object);
-			});
-
-		}
-
-		[Test, Repeat (3)]
-		public void EncryptedTypeHeaderedMessage()
-		{
-			var cmessage = new EncryptedTypeHeaderedMessage
-			{
-				Object = "foo"
-			};
-
-			AssertMessageReceived (cmessage, msg =>
-			{
-				Assert.IsTrue (msg.Encrypted);
-				Assert.IsFalse (msg.Authenticated);
-				Assert.IsTrue (msg.Object is string);
-				Assert.AreEqual (cmessage.Object, msg.Object);
-			});
-		}
-
-		[Test, Repeat (3)]
-		public void EncryptedTypeHeaderedMessageLong()
-		{
-			int overhead = (sizeof (int) * 2) + typeof (string).GetSimplestName().Length;
-			var cmessage = new EncryptedTypeHeaderedMessage
-			{
-				Object = TestHelpers.GetLongString (MaxPayloadSize - overhead)
-			};
-
-			AssertMessageReceived (cmessage, msg =>
-			{
-				Assert.IsTrue (msg.Encrypted);
-				Assert.IsFalse (msg.Authenticated);
-				Assert.IsTrue (msg.Object is string);
-				Assert.AreEqual (cmessage.Object, msg.Object);
-			});
-
 		}
 
 		[Test, Repeat (3)]

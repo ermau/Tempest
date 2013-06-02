@@ -52,7 +52,7 @@ namespace Tempest.Providers.Network
 				Interlocked.Add (ref sendBufferLimit, AutoSizeFactor);
 		}
 
-		public NetworkClientConnection (Protocol protocol, IAsymmetricKey authKey)
+		public NetworkClientConnection (Protocol protocol, RSAAsymmetricKey authKey)
 			: base (new [] { protocol }, authKey, false)
 		{
 			if (NetworkConnection.AutoSizeSendBufferLimit)
@@ -62,7 +62,7 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("authKey");
 		}
 
-		public NetworkClientConnection (IEnumerable<Protocol> protocols, IAsymmetricKey authKey)
+		public NetworkClientConnection (IEnumerable<Protocol> protocols, RSAAsymmetricKey authKey)
 			: base (protocols, authKey, false)
 		{
 			if (NetworkConnection.AutoSizeSendBufferLimit)
@@ -75,7 +75,7 @@ namespace Tempest.Providers.Network
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
 
-		public override IAsymmetricKey RemoteKey
+		public override RSAAsymmetricKey RemoteKey
 		{
 			get { return this.serverAuthenticationKey; }
 		}
@@ -138,11 +138,11 @@ namespace Tempest.Providers.Network
 		private int pingFrequency;
 		private Timer activityTimer;
 
-		internal IPublicKeyCrypto serverAuthentication;
-		internal IAsymmetricKey serverAuthenticationKey;
+		internal RSACrypto serverAuthentication;
+		internal RSAAsymmetricKey serverAuthenticationKey;
 
-		private IPublicKeyCrypto serverEncryption;
-		private IAsymmetricKey serverEncryptionKey;
+		private RSACrypto serverEncryption;
+		private RSAAsymmetricKey serverEncryptionKey;
 
 		private TaskCompletionSource<ClientConnectionResult> connectCompletion;
 		
@@ -277,7 +277,7 @@ namespace Tempest.Providers.Network
 					encryption.GenerateKey();
 					
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
-					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption, includePrivate: false);
+					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption);
 
 					this.serializer.AES = encryption;
 					this.serializer.HMAC = new HMACSHA256 (encryption.Key);
@@ -350,18 +350,18 @@ namespace Tempest.Providers.Network
 				handler (this, e);
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.LocalCrypto
+		RSACrypto IAuthenticatedConnection.LocalCrypto
 		{
 			get { return this.pkAuthentication; }
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.LocalKey
+		RSAAsymmetricKey IAuthenticatedConnection.LocalKey
 		{
 			get { return LocalKey; }
 			set { this.authenticationKey = value; }
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.RemoteCrypto
+		RSACrypto IAuthenticatedConnection.RemoteCrypto
 		{
 			get
 			{
@@ -372,13 +372,13 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.RemoteKey
+		RSAAsymmetricKey IAuthenticatedConnection.RemoteKey
 		{
 			get { return this.RemoteKey; }
 			set { this.serverAuthenticationKey = value; }
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.Encryption
+		RSACrypto IAuthenticatedConnection.Encryption
 		{
 			get { return null; }
 		}

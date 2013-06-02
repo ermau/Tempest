@@ -60,11 +60,9 @@
     <Compile Include="InternalProtocol\ConnectMessage.cs" />
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />
     <Compile Include="InternalProtocol\FinalConnectMessage.cs" />
-    <Compile Include="IAsymmetricKey.cs" />
     <Compile Include="InternalProtocol\ReliablePongMessage.cs" />
     <Compile Include="InternalProtocol\UnreliablePingMessage.cs" />
     <Compile Include="InternalProtocol\UnreliablePongMessage.cs" />
-    <Compile Include="IPublicKeyCrypto.cs" />
     <Compile Include="ISerializable.cs" />
     <Compile Include="ISerializationContext.cs" />
     <Compile Include="ISerializer.cs" />

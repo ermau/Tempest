@@ -233,6 +233,10 @@ namespace Tempest.Providers.Network
 
 					header.Protocol = p;
 					header.State = HeaderState.Protocol;
+					if (this.connection != null)
+						header.SerializationContext = new SerializationContext (this.connection, p);
+					else
+						header.SerializationContext = new SerializationContext (p);
 				}
 
 				if (header.State < HeaderState.CID)

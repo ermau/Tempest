@@ -138,7 +138,7 @@ namespace Tempest.Providers.Network
 			response.Header.IsResponse = true;
 			response.Header.MessageId = originalMessage.Header.MessageId;
 
-			return SendCore (response, isResponse: true);
+			return SendCore (response, dontSetId: true);
 		}
 
 		public IEnumerable<MessageEventArgs> Tick()
@@ -200,7 +200,7 @@ namespace Tempest.Providers.Network
 				message.Header.MessageId = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
 		}
 
-		protected Task<bool> SendCore (Message message, bool isResponse = false, TaskCompletionSource<Message> future = null)
+		protected Task<bool> SendCore (Message message, bool dontSetId = false, TaskCompletionSource<Message> future = null)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -225,7 +225,7 @@ namespace Tempest.Providers.Network
 			if (message.Header == null)
 				message.Header = new MessageHeader();
 
-			if (!isResponse)
+			if (!dontSetId)
 				SetMessageId (message);
 
 			if (future != null)

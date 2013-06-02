@@ -467,7 +467,8 @@ namespace Tempest.Providers.Network
 					break;
 
 				case (ushort)TempestMessageType.Acknowledge:
-					this.pendingAck.Remove (e.Message.Header.MessageId);
+					lock (this.pendingAck)
+						this.pendingAck.Remove (e.Message.Header.MessageId);
 					break;
 
 				case (ushort)TempestMessageType.Disconnect:

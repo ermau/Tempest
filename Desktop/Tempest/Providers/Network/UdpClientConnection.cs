@@ -190,8 +190,8 @@ namespace Tempest.Providers.Network
 
 		public override void Dispose()
 		{
-			Stop();
 			base.Dispose();
+			Stop();
 		}
 
 		private UdpClientConnectionlessListener listener;

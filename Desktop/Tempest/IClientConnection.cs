@@ -56,7 +56,7 @@ namespace Tempest
 		/// </summary>
 		/// <param name="result">The result of the connection attempt.</param>
 		/// <param name="publicKey">The server's public authentication key, if it has one.</param>
-		public ClientConnectionResult (ConnectionResult result, IAsymmetricKey publicKey)
+		public ClientConnectionResult (ConnectionResult result, RSAAsymmetricKey publicKey)
 		{
 			if (!Enum.IsDefined (typeof(ConnectionResult), result))
 				throw new ArgumentException ("result is not a valid member of ConnectionResult", "result");
@@ -77,7 +77,7 @@ namespace Tempest
 		/// <summary>
 		/// Gets the server's public authentication key, if encryption or authentication enabled.
 		/// </summary>
-		public IAsymmetricKey ServerPublicKey
+		public RSAAsymmetricKey ServerPublicKey
 		{
 			get;
 			private set;
@@ -95,7 +95,7 @@ namespace Tempest
 		/// </summary>
 		/// <param name="connection">The connection for the event.</param>
 		/// <param name="publicKey">The server's public authentication key, if it has one.</param>
-		public ClientConnectedEventArgs (IClientConnection connection, IAsymmetricKey publicKey)
+		public ClientConnectedEventArgs (IClientConnection connection, RSAAsymmetricKey publicKey)
 			: base (connection)
 		{
 			ServerPublicKey = publicKey;
@@ -104,7 +104,7 @@ namespace Tempest
 		/// <summary>
 		/// Gets the server's public authentication key, if encryption or authentication enabled.
 		/// </summary>
-		public IAsymmetricKey ServerPublicKey
+		public RSAAsymmetricKey ServerPublicKey
 		{
 			get;
 			private set;

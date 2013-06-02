@@ -55,7 +55,7 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("protocols");
 		}
 
-		public UdpClientConnection (Protocol protocol, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey key)
+		public UdpClientConnection (Protocol protocol, Func<RSACrypto> cryptoFactory, RSAAsymmetricKey key)
 			: base (new[] { protocol }, cryptoFactory(), cryptoFactory(), key)
 		{
 			if (protocol == null)
@@ -69,7 +69,7 @@ namespace Tempest.Providers.Network
 			this.serializer = new ClientMessageSerializer (this, new[] { protocol });
 		}
 
-		public UdpClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey key)
+		public UdpClientConnection (IEnumerable<Protocol> protocols, Func<RSACrypto> cryptoFactory, RSAAsymmetricKey key)
 			: base (protocols, cryptoFactory(), cryptoFactory(), key)
 		{
 			if (protocols == null)
@@ -207,7 +207,7 @@ namespace Tempest.Providers.Network
 		private Timer connectTimer;
 		private Timer deliveryTimer;
 
-		private readonly Func<IPublicKeyCrypto> cryptoFactory;
+		private readonly Func<RSACrypto> cryptoFactory;
 
 		private class UdpClientConnectionlessListener
 			: UdpConnectionlessListener
@@ -302,7 +302,7 @@ namespace Tempest.Providers.Network
 					encryption.GenerateKey();
 
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
-					LocalKey.Serialize (authKeyWriter, this.remoteEncryption, includePrivate: false);
+					LocalKey.Serialize (authKeyWriter, this.remoteEncryption);
 
 					SendAsync (new FinalConnectMessage
 					{
@@ -352,19 +352,19 @@ namespace Tempest.Providers.Network
 				connected (this, new ClientConnectionEventArgs (this));
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.LocalCrypto
+		RSACrypto IAuthenticatedConnection.LocalCrypto
 		{
 			get { return this.localCrypto; }
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.RemoteKey
+		RSAAsymmetricKey IAuthenticatedConnection.RemoteKey
 		{
 			get { return RemoteKey; }
 			set { RemoteKey = value; }
 		}
 
-		private IPublicKeyCrypto remoteEncryption;
-		IPublicKeyCrypto IAuthenticatedConnection.Encryption
+		private RSACrypto remoteEncryption;
+		RSACrypto IAuthenticatedConnection.Encryption
 		{
 			get
 			{
@@ -375,13 +375,13 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		IAsymmetricKey IAuthenticatedConnection.LocalKey
+		RSAAsymmetricKey IAuthenticatedConnection.LocalKey
 		{
 			get { return LocalKey; }
 			set { LocalKey = value; }
 		}
 
-		IPublicKeyCrypto IAuthenticatedConnection.RemoteCrypto
+		RSACrypto IAuthenticatedConnection.RemoteCrypto
 		{
 			get { return this.remoteCrypto; }
 		}

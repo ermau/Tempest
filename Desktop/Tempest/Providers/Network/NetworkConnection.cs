@@ -92,7 +92,7 @@ namespace Tempest.Providers.Network
 			set { maxMessageSize = value; }
 		}
 
-		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey, bool generateKey)
+		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<RSACrypto> publicKeyCryptoFactory, RSAAsymmetricKey authKey, bool generateKey)
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
@@ -213,12 +213,12 @@ namespace Tempest.Providers.Network
 			protected set;
 		}
 
-		public abstract IAsymmetricKey RemoteKey
+		public abstract RSAAsymmetricKey RemoteKey
 		{
 			get;
 		}
 
-		public IAsymmetricKey LocalKey
+		public RSAAsymmetricKey LocalKey
 		{
 			get
 			{
@@ -304,11 +304,11 @@ namespace Tempest.Providers.Network
 		protected Dictionary<byte, Protocol> protocols;
 		protected bool requiresHandshake;
 
-		internal readonly Func<IPublicKeyCrypto> publicKeyCryptoFactory;
+		internal readonly Func<RSACrypto> publicKeyCryptoFactory;
 
-		internal IPublicKeyCrypto pkAuthentication;
-		protected IAsymmetricKey authenticationKey;
-		internal IAsymmetricKey publicAuthenticationKey;
+		internal RSACrypto pkAuthentication;
+		protected RSAAsymmetricKey authenticationKey;
+		internal RSAAsymmetricKey publicAuthenticationKey;
 
 		protected readonly object stateSync = new object();
 		protected int pendingAsync;

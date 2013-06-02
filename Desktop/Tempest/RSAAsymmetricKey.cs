@@ -57,7 +57,7 @@ namespace Tempest
 	#endif
 
 	public class RSAAsymmetricKey
-		: IAsymmetricKey
+		: ISerializable
 	{
 		public RSAAsymmetricKey()
 		{
@@ -150,59 +150,29 @@ namespace Tempest
 		
 		public void Serialize (ISerializationContext context, IValueWriter writer)
 		{
-			if (writer.WriteBool (D != null))
-			{
-				writer.WriteBytes (D);
-				writer.WriteBytes (DP);
-				writer.WriteBytes (DQ);
-				writer.WriteBytes (InverseQ);
-				writer.WriteBytes (P);
-				writer.WriteBytes (Q);
-			}
+			if (!writer.WriteBool (this.publicKey != null))
+				return;
 
-			if (writer.WriteBool (this.publicKey != null))
-			{
-				writer.WriteBytes (this.publicKey);
-				writer.WriteInt32 (this.exponentOffset);
-			}
+			writer.WriteBytes (this.publicKey);
+			writer.WriteInt32 (this.exponentOffset);
 		}
 
-		public void Serialize (IValueWriter writer, IPublicKeyCrypto crypto, bool includePrivate)
+		public void Serialize (IValueWriter writer, RSACrypto crypto)
 		{
-			if (writer.WriteBool (includePrivate && D != null))
-			{
-				writer.WriteBytes (crypto.Encrypt (D));
-				writer.WriteBytes (crypto.Encrypt (DP));
-				writer.WriteBytes (crypto.Encrypt (DQ));
-				writer.WriteBytes (crypto.Encrypt (InverseQ));
-				writer.WriteBytes (crypto.Encrypt (P));
-				writer.WriteBytes (crypto.Encrypt (Q));
-			}
+			if (!writer.WriteBool (this.publicKey != null))
+				return;
 
-			if (writer.WriteBool (this.publicKey != null))
-			{
-				writer.WriteBytes (crypto.Encrypt (Exponent));
+			writer.WriteBytes (crypto.Encrypt (this.Exponent));
 
-				int first = Modulus.Length / 2;
-				writer.WriteBytes (crypto.Encrypt (Modulus.Copy (0, first)));
-				writer.WriteBytes (crypto.Encrypt (Modulus.Copy (first, Modulus.Length - first)));
-			}
+			int first = this.Modulus.Length / 2;
+			writer.WriteBytes (crypto.Encrypt (this.Modulus.Copy (0, first)));
+			writer.WriteBytes (crypto.Encrypt (this.Modulus.Copy (first, this.Modulus.Length - first)));
 		}
 
 		public void Deserialize (ISerializationContext context, IValueReader reader)
 		{
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
-
-			if (reader.ReadBool())
-			{
-				D = reader.ReadBytes();
-				DP = reader.ReadBytes();
-				DQ = reader.ReadBytes();
-				InverseQ = reader.ReadBytes();
-				P = reader.ReadBytes();
-				Q = reader.ReadBytes();
-			}
 
 			if (reader.ReadBool())
 			{
@@ -213,22 +183,12 @@ namespace Tempest
 			SetupSignature();
 		}
 
-		public void Deserialize (IValueReader reader, IPublicKeyCrypto crypto)
+		public void Deserialize (IValueReader reader, RSACrypto crypto)
 		{
 			if (reader == null)
 				throw new ArgumentNullException ("reader");
 			if (crypto == null)
 				throw new ArgumentNullException ("crypto");
-
-			if (reader.ReadBool())
-			{
-				D = crypto.Decrypt (reader.ReadBytes());
-				DP = crypto.Decrypt (reader.ReadBytes());
-				DQ = crypto.Decrypt (reader.ReadBytes());
-				InverseQ = crypto.Decrypt (reader.ReadBytes());
-				P = crypto.Decrypt (reader.ReadBytes());
-				Q = crypto.Decrypt (reader.ReadBytes());
-			}
 
 			if (reader.ReadBool())
 			{

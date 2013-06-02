@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,16 +33,15 @@ namespace Tempest.Tests
 	{
 		public static ISerializationContext GetContext (Protocol protocol)
 		{
-			return new SerializationContext (new MockClientConnection (new MockConnectionProvider (protocol)), protocol, new TypeMap());
+			return new SerializationContext (new MockClientConnection (new MockConnectionProvider (protocol)), protocol);
 		}
 
 		[Test]
 		public void CtorNull()
 		{
 			Assert.Throws<ArgumentNullException> (() => new SerializationContext (null));
-			Assert.Throws<ArgumentNullException> (() => new SerializationContext (null, MockProtocol.Instance, new TypeMap()));
-			Assert.Throws<ArgumentNullException> (() => new SerializationContext (new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance)), null, new TypeMap()));
-			Assert.Throws<ArgumentNullException> (() => new SerializationContext (new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance)), MockProtocol.Instance, null));
+			Assert.Throws<ArgumentNullException> (() => new SerializationContext (null, MockProtocol.Instance));
+			Assert.Throws<ArgumentNullException> (() => new SerializationContext (new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance)), null));
 		}
 
 		[Test]
@@ -50,24 +49,9 @@ namespace Tempest.Tests
 		{
 			var c = new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance));
 
-			var context = new SerializationContext (c, MockProtocol.Instance, new TypeMap());
+			var context = new SerializationContext (c, MockProtocol.Instance);
 			Assert.AreSame (c, context.Connection);
 			Assert.AreSame (MockProtocol.Instance, context.Protocol);
-		}
-
-		[Test]
-		public void CtorTypeMap()
-		{
-			var map = new TypeMap();
-			ushort id;
-			map.GetTypeId (typeof (string), out id);
-			map.GetTypeId (typeof (int), out id);
-
-			var c = new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance));
-
-			var context = new SerializationContext (c, MockProtocol.Instance, map);
-
-			Assert.AreSame (map, context.TypeMap);
 		}
 	}
 }

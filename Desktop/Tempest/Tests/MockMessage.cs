@@ -91,8 +91,6 @@ namespace Tempest.Tests
 				new KeyValuePair<Type, Func<Message>> (typeof (AuthenticatedMessage), () => new AuthenticatedMessage()), 
 				new KeyValuePair<Type, Func<Message>> (typeof (EncryptedMessage), () => new EncryptedMessage()), 
 				new KeyValuePair<Type, Func<Message>> (typeof (AuthenticatedAndEncryptedMessage), () => new AuthenticatedAndEncryptedMessage()), 
-				new KeyValuePair<Type, Func<Message>> (typeof (AuthenticatedTypeHeaderedMessage), () => new AuthenticatedTypeHeaderedMessage()), 
-				new KeyValuePair<Type, Func<Message>> (typeof (EncryptedTypeHeaderedMessage), () => new EncryptedTypeHeaderedMessage()), 
 			});
 		}
 	}
@@ -237,101 +235,6 @@ namespace Tempest.Tests
 		public override bool Encrypted
 		{
 			get { return true; }
-		}
-	}
-
-	public class AuthenticatedTypeHeaderedMessage
-		: Message
-	{
-		public AuthenticatedTypeHeaderedMessage()
-			: base (MockProtocol.Instance, 6)
-		{
-		}
-
-		public override bool Authenticated
-		{
-			get { return true; }
-		}
-
-		public object Object
-		{
-			get;
-			set;
-		}
-
-		public override void WritePayload (ISerializationContext context, IValueWriter writer)
-		{
-			writer.Write (context, Object, typeof(object));
-		}
-
-		public override void ReadPayload (ISerializationContext context, IValueReader reader)
-		{
-			Object = reader.Read (context);
-		}
-	}
-
-	public class EncryptedTypeHeaderedMessage
-		: Message
-	{
-		public EncryptedTypeHeaderedMessage()
-			: base (MockProtocol.Instance, 7)
-		{
-		}
-
-		public override bool Encrypted
-		{
-			get { return true; }
-		}
-
-		public object Object
-		{
-			get;
-			set;
-		}
-
-		public override void WritePayload (ISerializationContext context, IValueWriter writer)
-		{
-			writer.Write (context, Object, typeof(object));
-		}
-
-		public override void ReadPayload (ISerializationContext context, IValueReader reader)
-		{
-			Object = reader.Read (context);
-		}
-	}
-
-	public class AuthenticatedEncryptedTypeHeaderedMessage
-		: Message
-	{
-		public AuthenticatedEncryptedTypeHeaderedMessage()
-			: base (MockProtocol.Instance, 8)
-		{
-		}
-
-		public override bool Encrypted
-		{
-			get { return true; }
-		}
-
-		public override bool  Authenticated
-		{
-			get { return true; }
-		}
-
-		public object Object
-		{
-			get;
-			set;
-		}
-
-		public override void WritePayload (ISerializationContext context, IValueWriter writer)
-		{
-			writer.Write (context, Object, typeof(object));
-		}
-
-		public override void ReadPayload (ISerializationContext context, IValueReader reader)
-		{
-			Object = reader.Read (context);
 		}
 	}
 

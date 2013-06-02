@@ -170,18 +170,11 @@ namespace Tempest
 				{
 					if (!skipHeader)
 					{
-						ushort objectHeader = r.ReadUInt16();
-						if ((objectHeader & 1) == 0)
+						bool isLive = r.ReadBool();
+						if (!isLive)
 						    return null;
 
-						objectHeader >>= 1;
-
-						Type actualType;
-						if (!c.TypeMap.TryGetType (objectHeader, out actualType))
-							throw new Exception ("Type not found in TypeMap");
-
-						if (actualType != t)
-							return GetSerializer (actualType).deserializer (c, r, true);
+						return GetSerializer (t).deserializer (c, r, true);
 					}
 
 					object value;
@@ -297,29 +290,14 @@ namespace Tempest
 				{
 					if (!sh)
 					{
-						ushort objectHeader = 0;
-						//if (v == null)
-						//{
-						//    w.WriteBool (false);
-						//    return;
-						//}
-
-						Type actualType = null;
-						if (v != null)
+						if (v == null)
 						{
-						    actualType = v.GetType();
-						    c.TypeMap.GetTypeId (actualType, out objectHeader);
-
-						    objectHeader <<= 1;
-						    objectHeader |= 1;
+						    w.WriteBool (false);
+						    return;
 						}
 
-						w.WriteUInt16 (objectHeader);
-						if (v == null)
-						    return;
-
-						//w.WriteBool (true);
-						//w.WriteString (String.Format ("{0}, {1}", actualType.FullName, actualType.Assembly.GetName().Name));
+						Type actualType = v.GetType();
+						w.WriteBool (true);
 
 						if (!t.IsAssignableFrom (actualType))
 							throw new ArgumentException();

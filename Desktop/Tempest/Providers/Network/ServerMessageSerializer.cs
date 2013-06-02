@@ -56,7 +56,7 @@ namespace Tempest.Providers.Network
 				byte[] resized = new byte[length];
 				Buffer.BlockCopy (data, moffset, resized, 0, length);
 
-				IAsymmetricKey key = (IAsymmetricKey)Activator.CreateInstance (msg.PublicAuthenticationKeyType);
+				RSAAsymmetricKey key = (RSAAsymmetricKey)Activator.CreateInstance (msg.PublicAuthenticationKeyType);
 				key.Deserialize (new BufferValueReader (msg.PublicAuthenticationKey), this.connection.Encryption);
 
 				this.connection.RemoteKey = key;

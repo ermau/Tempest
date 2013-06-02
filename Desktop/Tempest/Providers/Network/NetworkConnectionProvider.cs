@@ -98,7 +98,7 @@ namespace Tempest.Providers.Network
 		/// </param>
 		/// <exception cref="ArgumentNullException"><paramref name="target"/>, <paramref name="protocols" /> or <paramref name="pkCryptoFactory" /> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IEnumerable<string> enabledHashAlgs = null)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, Func<RSACrypto> pkCryptoFactory, IEnumerable<string> enabledHashAlgs = null)
 		{
 			if (pkCryptoFactory == null)
 				throw new ArgumentNullException ("pkCryptoFactory");
@@ -152,7 +152,7 @@ namespace Tempest.Providers.Network
 				this.keyWait.Set();
 		}
 
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, Func<RSACrypto> pkCryptoFactory, RSAAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
 			: this (protocols, target, maxConnections, pkCryptoFactory, enabledHashAlgorithms)
 		{
 			if (authKey == null)
@@ -194,7 +194,7 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Gets the public authentication key for the server.
 		/// </summary>
-		public IAsymmetricKey PublicAuthenticationKey
+		public RSAAsymmetricKey PublicAuthenticationKey
 		{
 			get { return this.publicAuthenticationKey; }
 		}
@@ -202,7 +202,7 @@ namespace Tempest.Providers.Network
 		/// <summary>
 		/// Gets the public encryption key for the server.
 		/// </summary>
-		public IAsymmetricKey PublicEncryptionKey
+		public RSAAsymmetricKey PublicEncryptionKey
 		{
 			get { return this.publicEncryptionKey; }
 		}
@@ -331,14 +331,14 @@ namespace Tempest.Providers.Network
 
 		private readonly ManualResetEvent keyWait = new ManualResetEvent (false);
 		private readonly List<string> enabledHashAlgorithms = new List<string>();
-		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
+		internal readonly Func<RSACrypto> pkCryptoFactory;
 
-		internal IPublicKeyCrypto pkEncryption;
-		private IAsymmetricKey publicEncryptionKey;
+		internal RSACrypto pkEncryption;
+		private RSAAsymmetricKey publicEncryptionKey;
 
-		internal IPublicKeyCrypto authentication;
-		internal IAsymmetricKey authenticationKey;
-		private IAsymmetricKey publicAuthenticationKey;
+		internal RSACrypto authentication;
+		internal RSAAsymmetricKey authenticationKey;
+		private RSAAsymmetricKey publicAuthenticationKey;
 		
 		private readonly IEnumerable<Protocol> protocols;
 		private Target target;

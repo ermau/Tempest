@@ -36,7 +36,6 @@ using System.Security.Cryptography;
 namespace Tempest
 {
 	public class RSACrypto
-		: IPublicKeyCrypto
 	{
 		private readonly int keySize;
 
@@ -167,7 +166,7 @@ namespace Tempest
 			#endif
 		}
 
-		public IAsymmetricKey ExportKey (bool includePrivate)
+		public RSAAsymmetricKey ExportKey (bool includePrivate)
 		{
 			#if !SILVERLIGHT
 			return new RSAAsymmetricKey (this.rsaCrypto.ExportParameters (includePrivate));
@@ -183,7 +182,7 @@ namespace Tempest
 			#endif
 		}
 
-		public void ImportKey (IAsymmetricKey key)
+		public void ImportKey (RSAAsymmetricKey key)
 		{
 			if (key == null)
 				throw new ArgumentNullException ("key");

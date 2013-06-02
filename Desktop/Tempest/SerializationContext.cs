@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011-2012 Eric Maupin
+// Copyright (c) 2011-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,16 +31,11 @@ namespace Tempest
 	public class SerializationContext
 		: ISerializationContext
 	{
-		public SerializationContext (TypeMap map)
+		public SerializationContext()
 		{
-			if (map == null)
-				throw new ArgumentNullException ("map");
-
-			this.map = map;
 		}
 
-		public SerializationContext (Protocol protocol, TypeMap map)
-			: this (map)
+		public SerializationContext (Protocol protocol)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
@@ -48,8 +43,8 @@ namespace Tempest
 			Protocol = protocol;
 		}
 
-		public SerializationContext (IConnection connection, Protocol protocol, TypeMap map)
-			: this (protocol, map)
+		public SerializationContext (IConnection connection, Protocol protocol)
+			: this (protocol)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
@@ -69,19 +64,12 @@ namespace Tempest
 			private set;
 		}
 
-		public TypeMap TypeMap
-		{
-			get { return this.map; }
-		}
-
 		public SerializationContext WithConnection (IConnection connection)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
 
-			return new SerializationContext (connection, Protocol, TypeMap);
+			return new SerializationContext (connection, Protocol);
 		}
-
-		private readonly TypeMap map;
 	}
 }

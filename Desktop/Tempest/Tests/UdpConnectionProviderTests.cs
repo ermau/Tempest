@@ -12,8 +12,8 @@ namespace Tempest.Tests
 	public class UdpConnectionProviderTests
 		: ConnectionProviderTests
 	{
-		private static IAsymmetricKey serverKey;
-		private static IAsymmetricKey localKey;
+		private static RSAAsymmetricKey serverKey;
+		private static RSAAsymmetricKey localKey;
 
 		static UdpConnectionProviderTests()
 		{
@@ -59,7 +59,7 @@ namespace Tempest.Tests
 			return new UdpClientConnection (protocols, () => new RSACrypto(), localKey);
 		}
 
-		protected override IClientConnection SetupClientConnection (out IAsymmetricKey key)
+		protected override IClientConnection SetupClientConnection (out RSAAsymmetricKey key)
 		{
 			key = localKey;
 			return SetupClientConnection();

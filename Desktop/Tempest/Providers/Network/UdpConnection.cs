@@ -402,7 +402,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		internal void Receive (Message message)
+		internal void Receive (Message message, bool skipQueue = false)
 		{
 			var args = new MessageEventArgs (this, message);
 
@@ -415,12 +415,17 @@ namespace Tempest.Providers.Network
 					acked = true;
 				}
 
-				List<MessageEventArgs> messages = this.rqueue.Enqueue (args);
-				if (messages != null)
+				if (!skipQueue)
 				{
-					foreach (MessageEventArgs messageEventArgs in messages)
-						RouteMessage (messageEventArgs);
+					List<MessageEventArgs> messages = this.rqueue.Enqueue (args);
+					if (messages != null)
+					{
+						foreach (MessageEventArgs messageEventArgs in messages)
+							RouteMessage (messageEventArgs);
+					}
 				}
+				else
+					RouteMessage (args);
 
 				if (!acked)
 					SendAsync (new AcknowledgeMessage { MessageId = message.Header.MessageId });
@@ -500,7 +505,7 @@ namespace Tempest.Providers.Network
 
 			List<Message> messages = this.serializer.BufferMessages (payload);
 			if (messages != null && messages.Count == 1)
-				Receive (messages[0]);
+				Receive (messages[0], skipQueue: true);
 			else
 				DisconnectAsync();
 		}

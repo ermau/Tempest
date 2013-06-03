@@ -50,13 +50,14 @@ namespace Tempest.Tests
 		public void EnqueueInOrder()
 		{
 			var first = GetTestMessageArgs (1);
-			var msgs = this.queue.Enqueue (first);
+			List<MessageEventArgs> msgs;
+			Assert.IsTrue (this.queue.TryEnqueue (first, out msgs));
 			Assert.IsNotNull (msgs);
 			CollectionAssert.IsNotEmpty (msgs);
 			CollectionAssert.Contains (msgs, first);
 
 			var second = GetTestMessageArgs (2);
-			msgs = this.queue.Enqueue (second);
+			Assert.IsTrue (this.queue.TryEnqueue (second, out msgs));
 			Assert.IsNotNull (msgs);
 			CollectionAssert.IsNotEmpty (msgs);
 			CollectionAssert.Contains (msgs, second);
@@ -77,7 +78,8 @@ namespace Tempest.Tests
 			for (int i = 0; i < order.Length; i++)
 			{
 				var args = GetTestMessageArgs (order[i]);
-				var results = this.queue.Enqueue (args);
+				List<MessageEventArgs> results;
+				this.queue.TryEnqueue (args, out results);
 				if (results != null)
 					returnedOrder.AddRange (results);
 			}

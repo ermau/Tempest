@@ -37,16 +37,17 @@ namespace Tempest.Providers.Network
 				this.queue.Clear();
 		}
 
-		public List<MessageEventArgs> Enqueue (MessageEventArgs messageArgs)
+		public bool TryEnqueue (MessageEventArgs messageArgs, out List<MessageEventArgs> received)
 		{
+			received = null;
+
 			var msg = messageArgs.Message;
 			int mid = msg.Header.MessageId;
 
 			// HACK: We should really disconnect these guys if they're sending +2000 messages
 			if (mid <= this.lastMessageInOrder || mid > (this.lastMessageInOrder + 2000))
-				return null;
+				return false;
 
-			List<MessageEventArgs> received = null;
 			lock (this.queue)
 			{
 				int d = mid - this.lastMessageInOrder;
@@ -86,7 +87,7 @@ namespace Tempest.Providers.Network
 				}
 			}
 
-			return received;
+			return true;
 		}
 		
 		// BUG: doesn't handle MID rollover

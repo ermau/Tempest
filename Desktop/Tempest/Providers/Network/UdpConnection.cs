@@ -406,29 +406,19 @@ namespace Tempest.Providers.Network
 		{
 			var args = new MessageEventArgs (this, message);
 
-			if (message.Header.MessageId != 0 && (args.Message.MustBeReliable || args.Message.PreferReliable))
+			if (!skipQueue && message.Header.MessageId != 0 && (args.Message.MustBeReliable || args.Message.PreferReliable))
 			{
-				bool acked = false;
-				if (!(message is TempestMessage))
+				List<MessageEventArgs> messages;
+				if (this.rqueue.TryEnqueue (args, out messages))
 				{
-					SendAsync (new AcknowledgeMessage { MessageId = message.Header.MessageId });
-					acked = true;
-				}
-
-				if (!skipQueue)
-				{
-					List<MessageEventArgs> messages = this.rqueue.Enqueue (args);
 					if (messages != null)
 					{
 						foreach (MessageEventArgs messageEventArgs in messages)
 							RouteMessage (messageEventArgs);
 					}
-				}
-				else
-					RouteMessage (args);
 
-				if (!acked)
-					SendAsync (new AcknowledgeMessage { MessageId = message.Header.MessageId });
+					SendAsync (new AcknowledgeMessage { MessageIds = new[] { message.Header.MessageId } });
+				}
 			}
 			else
 				RouteMessage (args);
@@ -473,7 +463,11 @@ namespace Tempest.Providers.Network
 
 				case (ushort)TempestMessageType.Acknowledge:
 					lock (this.pendingAck)
-						this.pendingAck.Remove (e.Message.Header.MessageId);
+					{
+						int[] msgIds = ((AcknowledgeMessage)e.Message).MessageIds;
+						foreach (int id in msgIds)
+							this.pendingAck.Remove (id);
+					}
 					break;
 
 				case (ushort)TempestMessageType.Disconnect:

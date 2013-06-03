@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2012-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ namespace Tempest.InternalProtocol
 		{
 		}
 
-		public int MessageId
+		public int[] MessageIds
 		{
 			get;
 			set;
@@ -52,12 +52,16 @@ namespace Tempest.InternalProtocol
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
-			writer.WriteInt32 (MessageId);
+			writer.WriteInt32 (MessageIds.Length);
+			for (int i = 0; i < MessageIds.Length; i++)
+				writer.WriteInt32 (MessageIds[i]);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
-			MessageId = reader.ReadInt32();
+			MessageIds = new int[reader.ReadInt32()];
+			for (int i = 0; i < MessageIds.Length; i++)
+				MessageIds[i] = reader.ReadInt32();
 		}
 	}
 }

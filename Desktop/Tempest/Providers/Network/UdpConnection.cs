@@ -485,12 +485,13 @@ namespace Tempest.Providers.Network
 			if (queue.Count != message.Count)
 				return;
 
-			this.partials.TryRemove (message.OriginalMessageId, out queue);
+			if (!this.partials.TryRemove (message.OriginalMessageId, out queue))
+				return;
 
 			byte[] payload = new byte[queue.Sum (p => p.Payload.Length)];
 
 			int offset = 0;
-			foreach (PartialMessage msg in queue)
+			foreach (PartialMessage msg in queue.OrderBy (p => p.Header.MessageId))
 			{
 				byte[] partialPayload = msg.Payload;
 				Buffer.BlockCopy (partialPayload, 0, payload, offset, partialPayload.Length);

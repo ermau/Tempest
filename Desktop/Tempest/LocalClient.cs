@@ -28,10 +28,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Tempest.InternalProtocol;
 using System.Collections.Concurrent;
 
 namespace Tempest
@@ -330,6 +328,8 @@ namespace Tempest
 
 		private void OnConnectionConnected (object sender, ClientConnectionEventArgs e)
 		{
+			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
+
 			this.running = true;
 
 			if (!this.polling)

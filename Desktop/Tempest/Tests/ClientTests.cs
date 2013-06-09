@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2012-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -77,6 +77,33 @@ namespace Tempest.Tests
 
 			client.Connected += test.PassHandler;
 			client.Disconnected += test.FailHandler;
+
+			client.ConnectAsync (new Target (Target.AnyIP, 0));
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public void IsConnected()
+		{
+			var test = new AsyncTest (passTimes: 2);
+
+			bool first = true;
+
+			client.PropertyChanged += (o, e) => {
+				if (e.PropertyName != "IsConnected")
+					return;
+
+				if (first) {
+					Assert.IsTrue (client.IsConnected);
+					first = false;
+
+					client.DisconnectAsync();
+				} else
+					Assert.IsFalse (client.IsConnected);
+
+				test.PassHandler (null, EventArgs.Empty);
+			};
 
 			client.ConnectAsync (new Target (Target.AnyIP, 0));
 

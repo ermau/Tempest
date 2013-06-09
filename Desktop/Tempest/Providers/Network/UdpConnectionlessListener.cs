@@ -51,7 +51,7 @@ namespace Tempest.Providers.Network
 			this.running = true;
 			this.mtypes = types;
 
-			if (Socket.OSSupportsIPv4)
+			//if (Socket.OSSupportsIPv4)
 			{
 				this.socket4 = new Socket (AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 				this.socket4.EnableBroadcast = true;

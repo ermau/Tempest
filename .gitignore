@@ -8,3 +8,4 @@ _ReSharper*
 *.ide
 *.dotSettings
 *.docstates
+packages

@@ -42,7 +42,7 @@ namespace Tempest
 			if (typeInfo.Assembly == mscorlib || typeInfo.Assembly == Tempest)
 				return self.FullName;
 
-			#if !NETFX_CORE
+			#if !NETFX_CORE && !SILVERLIGHT
 			if (!typeInfo.Assembly.GlobalAssemblyCache)
 				return String.Format ("{0}, {1}", self.FullName, typeInfo.Assembly.GetName().Name);
 			#endif

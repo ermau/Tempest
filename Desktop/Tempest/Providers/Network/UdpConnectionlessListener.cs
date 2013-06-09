@@ -245,6 +245,8 @@ namespace Tempest.Providers.Network
 			int remaining = args.BytesTransferred;
 
 			MessageSerializer serializer = connection.serializer;
+			if (serializer == null)
+				return;
 
 			if (header.State == HeaderState.IV)
 			{
@@ -257,17 +259,14 @@ namespace Tempest.Providers.Network
 
 			header.SerializationContext = ((SerializationContext)header.SerializationContext).WithConnection (connection);
 
-			if (serializer != null)
+			List<Message> messages = connection.serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
+			if (messages != null)
 			{
-				List<Message> messages = connection.serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
-				if (messages != null)
-				{
-					foreach (Message message in messages)
-						connection.Receive (message);
-				}
-
-				reader = new BufferValueReader (buffer);
+				foreach (Message message in messages)
+					connection.Receive (message);
 			}
+
+			reader = new BufferValueReader (buffer);
 		}
 
 		private void HandleConnectionlessMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader)

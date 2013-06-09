@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,15 +23,10 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 using System;
 using System.Collections.Generic;
-
-#if SILVERLIGHT
-using RSA;
-using RSA.SignatureProviders;
-#else
 using System.Security.Cryptography;
-#endif
 
 namespace Tempest
 {
@@ -68,15 +63,13 @@ namespace Tempest
 			catch
 			{
 			}
-
-			this.rsaCrypto = new RSACryptoServiceProvider (keySize);
+			
 			#else
 			nalgs.Add ("SHA256");
 			nalgs.Add ("SHA1");
-
-			this.rsaCrypto = new RSA.RSACrypto (keySize);
 			#endif
 
+			this.rsaCrypto = new RSACryptoServiceProvider (keySize);
 			this.algs = nalgs;
 		}
 
@@ -95,11 +88,7 @@ namespace Tempest
 			if (data == null)
 				throw new ArgumentNullException ("data");
 
-			#if !SILVERLIGHT
 			return this.rsaCrypto.Encrypt (data, true);
-			#else
-			return this.rsaCrypto.Encrypt (data);
-			#endif
 		}
 
 		public byte[] Decrypt (byte[] data)
@@ -107,11 +96,7 @@ namespace Tempest
 			if (data == null)
 				throw new ArgumentNullException ("data");
 
-			#if !SILVERLIGHT
 			return this.rsaCrypto.Decrypt (data, true);
-			#else
-			return this.rsaCrypto.Decrypt (data);
-			#endif
 		}
 
 		public byte[] HashAndSign (string hashAlg, byte[] data, int offset, int count)
@@ -123,35 +108,24 @@ namespace Tempest
 
 			#if !SILVERLIGHT
 			var hasher = CryptoConfig.CreateFromName (hashAlg) as HashAlgorithm;
+			#else
+			HashAlgorithm hasher = null;
+			switch (hashAlg) {
+				case "SHA1":
+					hasher = new SHA1Managed();
+					break;
+
+				case "SHA256":
+					hasher = new SHA256Managed();
+					break;
+			}
+			#endif
+
 			if (hasher == null)
 				throw new ArgumentException ("Hash algorithm not found", "hashAlg");
 			
 			return this.rsaCrypto.SignData (data, offset, count, hashAlg);
-			#else
-			byte[] d = new byte[count];
-			Array.Copy (data, offset, d, 0, count);
-
-			return this.rsaCrypto.SignData (d, GetSignatureProvider (hashAlg));
-			#endif
 		}
-
-		#if SILVERLIGHT
-		private static ISignatureProvider GetSignatureProvider (string hashAlg)
-		{
-			ISignatureProvider signatureProvider = null;
-			switch (hashAlg)
-			{
-				case "SHA1":
-					signatureProvider = new EMSAPKCS1v1_5_SHA1();
-					break;
-
-				case "SHA256":
-					signatureProvider = new EMSAPKCS1v1_5_SHA256();
-					break;
-			}
-			return signatureProvider;
-		}
-		#endif
 
 		public bool VerifySignedHash (string hashAlg, byte[] data, byte[] signature)
 		{
@@ -160,27 +134,12 @@ namespace Tempest
 			if (signature == null)
 				throw new ArgumentNullException ("signature");
 
-			#if !SILVERLIGHT
 			return this.rsaCrypto.VerifyData (data, hashAlg, signature);
-			#else
-			return this.rsaCrypto.VerifyData (data, signature, GetSignatureProvider (hashAlg));
-			#endif
 		}
 
 		public IAsymmetricKey ExportKey (bool includePrivate)
 		{
-			#if !SILVERLIGHT
 			return new RSAAsymmetricKey (this.rsaCrypto.ExportParameters (includePrivate));
-			#else
-			var parameters = this.rsaCrypto.ExportParameters();
-			if (!includePrivate)
-			{
-				var p = parameters;
-				parameters = new RSAParameters { N = p.N, E = p.E };
-			}
-
-			return new RSAAsymmetricKey (parameters);
-			#endif
 		}
 
 		public void ImportKey (IAsymmetricKey key)
@@ -195,12 +154,7 @@ namespace Tempest
 			this.rsaCrypto.ImportParameters (rsaKey);
 		}
 		
-		#if !SILVERLIGHT
 		private readonly RSACryptoServiceProvider rsaCrypto;
-		#else
-		private readonly RSA.RSACrypto rsaCrypto;
-		#endif
-
 		private readonly IEnumerable<string> algs;
 	}
 }

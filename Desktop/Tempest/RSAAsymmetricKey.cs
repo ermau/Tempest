@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +27,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-
-#if SILVERLIGHT
-using RSA;
-#else
 using System.Security.Cryptography;
-#endif
 
 namespace Tempest
 {
@@ -63,7 +58,6 @@ namespace Tempest
 		{
 		}
 
-		#if !SILVERLIGHT
 		public RSAAsymmetricKey (byte[] cspBlob)
 		{
 			using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
@@ -73,7 +67,6 @@ namespace Tempest
 				ImportRSAParameters (rsa.ExportParameters (true));
 			}
 		}
-		#endif
 
 		public RSAAsymmetricKey (RSAParameters parameters)
 		{
@@ -256,22 +249,10 @@ namespace Tempest
 				DQ = key.DQ,
 				P = key.P,
 				Q = key.Q,
-
-				#if !SILVERLIGHT
 				InverseQ = key.InverseQ,
 				Exponent = key.Exponent,
 				Modulus = key.Modulus,
-				#else
-				IQ = key.InverseQ,
-				E = key.Exponent,
-				N = key.Modulus
-				#endif
 			};
-		}
-
-		public static implicit operator RSAAsymmetricKey (RSAParameters rsaParameters)
-		{
-			return new RSAAsymmetricKey (rsaParameters);
 		}
 
 		private int exponentOffset;
@@ -308,25 +289,14 @@ namespace Tempest
 			D = parameters.D;
 			DP = parameters.DP;
 			DQ = parameters.DQ;
-			#if !SILVERLIGHT
 			InverseQ = parameters.InverseQ;
-			#else
-			InverseQ = parameters.IQ;
-			#endif
 			P = parameters.P;
 			Q = parameters.Q;
 
-			#if !SILVERLIGHT
 			this.publicKey = new byte[parameters.Modulus.Length + parameters.Exponent.Length];
 			Buffer.BlockCopy (parameters.Modulus, 0, this.publicKey, 0, parameters.Modulus.Length);
 			Buffer.BlockCopy (parameters.Exponent, 0, this.publicKey, parameters.Modulus.Length, parameters.Exponent.Length);
 			this.exponentOffset = parameters.Modulus.Length;
-			#else
-			this.publicKey = new byte[parameters.N.Length + parameters.E.Length];
-			Buffer.BlockCopy (parameters.N, 0, this.publicKey, 0, parameters.N.Length);
-			Buffer.BlockCopy (parameters.E, 0, this.publicKey, parameters.N.Length, parameters.E.Length);
-			this.exponentOffset = parameters.N.Length;
-			#endif
 
 			SetupSignature();
 		}

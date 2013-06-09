@@ -230,6 +230,9 @@ namespace Tempest
 					return;
 			}
 
+			#if !NET_4
+			lock (this.mqueue)
+			#endif
 			this.mqueue.Enqueue (e);
 
 			e.Connection.MessageReceived -= OnConnectionMessageReceived;
@@ -260,19 +263,31 @@ namespace Tempest
 		
 		private void OnConnectionlessMessageReceivedGlobal (object sender, ConnectionlessMessageEventArgs e)
 		{
+			#if !NET_4
+			lock (this.mqueue)
+			#endif
 			this.mqueue.Enqueue (e);
+
 			this.wait.Set();
 		}
 
 		private void OnConnectionMadeGlobalEvent (object sender, ConnectionMadeEventArgs e)
 		{
+			#if !NET_4
+			lock (this.mqueue)
+			#endif
 			this.mqueue.Enqueue (e);
+
 			this.wait.Set();
 		}
 
 		private void OnGlobalMessageReceived (object sender, MessageEventArgs e)
 		{
+			#if !NET_4
+			lock (this.mqueue)
+			#endif
 			this.mqueue.Enqueue (e);
+
 			this.wait.Set();
 		}
 
@@ -304,6 +319,7 @@ namespace Tempest
 			}
 		}
 		
+		#if NET_4
 		private readonly ConcurrentQueue<EventArgs>  mqueue = new ConcurrentQueue<EventArgs>();
 		private void MessageRunner()
 		{
@@ -316,6 +332,28 @@ namespace Tempest
 					HandleInlineEvent (e);
 			}
 		}
+		#else
+		private readonly Queue<EventArgs> mqueue = new Queue<EventArgs>();
+		private void MessageRunner()
+		{
+			while (this.running)
+			{
+				this.wait.WaitOne();
+
+				while (this.mqueue.Count > 0)
+				{
+					EventArgs e = null;
+					lock (this.mqueue)
+					{
+						if (this.mqueue.Count != 0)
+							e = this.mqueue.Dequeue();
+					}
+
+					HandleInlineEvent (e);
+				}
+			}
+		}
+		#endif
 
 		protected virtual void OnConnectionMessageReceived (object sender, MessageEventArgs e)
 		{

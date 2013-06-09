@@ -424,6 +424,7 @@ namespace Tempest.Providers.Network
 			}
 
 			SocketAsyncEventArgs eargs = null;
+			#if NET_4
 			if (timeout > 0)
 			    throw new NotSupportedException ("Response timeout not supported");
 
@@ -450,8 +451,26 @@ namespace Tempest.Providers.Network
 					}
 				}
 			}
-
+			#else
+			while (eargs == null)
+			{
+				lock (writerAsyncArgs)
+				{
+					if (writerAsyncArgs.Count != 0)
+						eargs = writerAsyncArgs.Pop();
+					else if (bufferCount != sendBufferLimit)
+					{
+						bufferCount++;
+						eargs = new SocketAsyncEventArgs();
+						eargs.SetBuffer (new byte[1024], 0, 1024);
+					}
+				}
+			}
+			#endif
+			
+			#if !SILVERLIGHT
 			eargs.AcceptSocket = null;
+			#endif
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Have writer args", callCategory);
 
@@ -479,6 +498,9 @@ namespace Tempest.Providers.Network
 					int sp = Interlocked.Decrement (ref this.pendingAsync);
 					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", sp), callCategory);
 					
+					#if !NET_4
+					lock (writerAsyncArgs)
+					#endif
 					writerAsyncArgs.Push (eargs);
 					
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (serializer is null, probably disconnecting)", callCategory);
@@ -505,7 +527,11 @@ namespace Tempest.Providers.Network
 					Interlocked.Decrement (ref this.pendingAsync);
 					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 					
+					#if !NET_4
+					lock (writerAsyncArgs)
+					#endif
 					writerAsyncArgs.Push (eargs);
+
 					if (tcs != null)
 					{
 						tcs.SetResult (false);
@@ -831,7 +857,11 @@ namespace Tempest.Providers.Network
 		internal static int sendBufferLimit = Environment.ProcessorCount;
 		private static bool autoSizeSendBufferLimit = true;
 
+		#if NET_4
 		private static readonly ConcurrentStack<SocketAsyncEventArgs> writerAsyncArgs = new ConcurrentStack<SocketAsyncEventArgs>();
+		#else
+		private static readonly Stack<SocketAsyncEventArgs> writerAsyncArgs = new Stack<SocketAsyncEventArgs>();
+		#endif
 
 		private static void ReliableSendCompleted (object sender, SocketAsyncEventArgs e)
 		{
@@ -846,6 +876,9 @@ namespace Tempest.Providers.Network
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 			#endif
 
+			#if !NET_4
+			lock (writerAsyncArgs)
+			#endif
 			writerAsyncArgs.Push (e);
 
 			int p;

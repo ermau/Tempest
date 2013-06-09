@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ namespace Tempest
 			if (typeInfo.Assembly == mscorlib || typeInfo.Assembly == Tempest)
 				return self.FullName;
 
-			#if !NETFX_CORE
+			#if !NETFX_CORE && !SILVERLIGHT
 			if (!typeInfo.Assembly.GlobalAssemblyCache)
 				return String.Format ("{0}, {1}", self.FullName, typeInfo.Assembly.GetName().Name);
 			#endif

@@ -18,13 +18,15 @@
     <SilverlightApplication>false</SilverlightApplication>
     <ValidateXaml>true</ValidateXaml>
     <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>Bin\Debug</OutputPath>
-    <DefineConstants>TRACE;DEBUG;SILVERLIGHT;WINDOWS_PHONE;SAFE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;SILVERLIGHT;WINDOWS_PHONE;SAFE;NOEMIT</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
@@ -34,18 +36,30 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>Bin\Release</OutputPath>
-    <DefineConstants>TRACE;SILVERLIGHT;WINDOWS_PHONE;TASKS;SAFE</DefineConstants>
+    <DefineConstants>TRACE;SILVERLIGHT;WINDOWS_PHONE;SAFE;NOEMIT</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AsyncCtpLibrary_Phone, Version=1.1.4304.19911, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\AsyncCtpLibrary_Phone.dll</HintPath>
-    </Reference>
     <Reference Include="DH.Scrypt">
       <HintPath>..\..\Silverlight\Tempest\DH.Scrypt.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Threading.Tasks">
+      <HintPath>..\..\packages\Microsoft.Bcl.Async.1.0.16\lib\sl4-windowsphone71\Microsoft.Threading.Tasks.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Threading.Tasks.Extensions">
+      <HintPath>..\..\packages\Microsoft.Bcl.Async.1.0.16\lib\sl4-windowsphone71\Microsoft.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Threading.Tasks.Extensions.Phone">
+      <HintPath>..\..\packages\Microsoft.Bcl.Async.1.0.16\lib\sl4-windowsphone71\Microsoft.Threading.Tasks.Extensions.Phone.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime">
+      <HintPath>..\..\packages\Microsoft.Bcl.1.0.19\lib\sl4-windowsphone71\System.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks">
+      <HintPath>..\..\packages\Microsoft.Bcl.1.0.19\lib\sl4-windowsphone71\System.Threading.Tasks.dll</HintPath>
     </Reference>
     <Reference Include="System.Windows" />
     <Reference Include="system" />
@@ -66,9 +80,6 @@
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\BufferValueWriter.cs">
       <Link>BufferValueWriter.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\ClientBase.cs">
-      <Link>ClientBase.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\CollectionExtensions.cs">
       <Link>CollectionExtensions.cs</Link>
@@ -91,14 +102,23 @@
     <Compile Include="..\..\Desktop\Tempest\IConnection.cs">
       <Link>IConnection.cs</Link>
     </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IConnectionlessMessenger.cs">
+      <Link>IConnectionlessMessenger.cs</Link>
+    </Compile>
     <Compile Include="..\..\Desktop\Tempest\IConnectionProvider.cs">
       <Link>IConnectionProvider.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\IContext.cs">
       <Link>IContext.cs</Link>
     </Compile>
+    <Compile Include="..\..\Desktop\Tempest\IListener.cs">
+      <Link>IListener.cs</Link>
+    </Compile>
     <Compile Include="..\..\Desktop\Tempest\InternalProtocol\AcknowledgeConnectMessage.cs">
       <Link>InternalProtocol\AcknowledgeConnectMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\AcknowledgeMessage.cs">
+      <Link>InternalProtocol\AcknowledgeMessage.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ConnectedMessage.cs">
       <Link>InternalProtocol\ConnectedMessage.cs</Link>
@@ -112,11 +132,20 @@
     <Compile Include="..\..\Desktop\Tempest\InternalProtocol\FinalConnectMessage.cs">
       <Link>InternalProtocol\FinalConnectMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\PingMessage.cs">
-      <Link>InternalProtocol\PingMessage.cs</Link>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ReliablePingMessage.cs">
+      <Link>InternalProtocol\ReliablePingMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ReliablePongMessage.cs">
+      <Link>InternalProtocol\ReliablePongMessage.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\InternalProtocol\TempestMessage.cs">
       <Link>InternalProtocol\TempestMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\UnreliablePingMessage.cs">
+      <Link>InternalProtocol\UnreliablePingMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\UnreliablePongMessage.cs">
+      <Link>InternalProtocol\UnreliablePongMessage.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\IPublicKeyCrypto.cs">
       <Link>IPublicKeyCrypto.cs</Link>
@@ -142,6 +171,9 @@
     <Compile Include="..\..\Desktop\Tempest\IValueWriter.cs">
       <Link>IValueWriter.cs</Link>
     </Compile>
+    <Compile Include="..\..\Desktop\Tempest\LocalClient.cs">
+      <Link>LocalClient.cs</Link>
+    </Compile>
     <Compile Include="..\..\Desktop\Tempest\Message.cs">
       <Link>Message.cs</Link>
     </Compile>
@@ -154,9 +186,6 @@
     <Compile Include="..\..\Desktop\Tempest\MessageHeader.cs">
       <Link>MessageHeader.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\MessageStream.cs">
-      <Link>MessageStream.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\MutableLookup.cs">
       <Link>MutableLookup.cs</Link>
     </Compile>
@@ -165,6 +194,12 @@
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\Protocol.cs">
       <Link>Protocol.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\ClientMessageSerializer.cs">
+      <Link>Providers\Network\ClientMessageSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\MessageSerializer.cs">
+      <Link>Providers\Network\MessageSerializer.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkClientConnection.cs">
       <Link>Providers\Network\NetworkClientConnection.cs</Link>
@@ -184,14 +219,20 @@
     <Compile Include="..\..\Desktop\Tempest\SerializerExtensions.cs">
       <Link>SerializerExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\ServerBase.cs">
-      <Link>ServerBase.cs</Link>
+    <Compile Include="..\..\Desktop\Tempest\Server.cs">
+      <Link>Server.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\StreamValueReader.cs">
       <Link>StreamValueReader.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\StreamValueWriter.cs">
       <Link>StreamValueWriter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Target.cs">
+      <Link>Target.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\TargetExtensions.cs">
+      <Link>TargetExtensions.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\Timer.cs">
       <Link>Timer.cs</Link>
@@ -202,13 +243,15 @@
     <Compile Include="..\..\Desktop\Tempest\TypeMap.cs">
       <Link>TypeMap.cs</Link>
     </Compile>
-    <Compile Include="..\..\Silverlight\Tempest\Trace.cs">
-      <Link>Trace.cs</Link>
+    <Compile Include="..\..\iOS\Tempest\TraceSwitch.cs">
+      <Link>TraceSwitch.cs</Link>
     </Compile>
     <Compile Include="InternalBufferOverflowException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.$(TargetFrameworkProfile).Overrides.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.CSharp.targets" />
   <ProjectExtensions>
@@ -216,6 +259,8 @@
       <UserProperties ProjectLinkerExcludeFilter="\\?desktop(\\.*)?$;\\?silverlight(\\.*)?$;\.desktop;\.silverlight;\.xaml;^service references(\\.*)?$;\.clientconfig;^web references(\\.*)?$" ProjectLinkReference="d6a2003c-cbb2-47b0-b306-521141d3068d" />
     </VisualStudio>
   </ProjectExtensions>
+  <Import Project="..\..\packages\Microsoft.Bcl.Build.1.0.7\tools\Microsoft.Bcl.Build.targets" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

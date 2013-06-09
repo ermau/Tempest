@@ -434,7 +434,12 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		public unsafe List<Message> BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref MessageHeader header, ref BufferValueReader reader, Func<MessageHeader, bool> messageIdCallback = null)
+		public
+			#if !SAFE
+			unsafe
+			#endif
+			List<Message> BufferMessages (ref byte[] buffer, ref int bufferOffset, ref int messageOffset, ref int remainingData, ref MessageHeader header, ref BufferValueReader reader, Func<MessageHeader, bool> messageIdCallback = null)
+
 		{
 			List<Message> messages = new List<Message>();
 

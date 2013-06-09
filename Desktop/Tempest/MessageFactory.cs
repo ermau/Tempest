@@ -128,13 +128,19 @@ namespace Tempest
 		public Message Create (ushort messageType)
 		{
 			Func<Message> mCtor;
-			if (!this.messageCtors.TryGetValue (messageType, out mCtor))
-				return null;
+			lock (this.messageCtors) {
+				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
+					return null;
+			}
 
 			return mCtor();
 		}
 
+		#if !NET_4
+		private readonly Dictionary<ushort, Func<Message>> messageCtors = new Dictionary<ushort, Func<Message>>();
+		#else
 		private readonly ConcurrentDictionary<ushort, Func<Message>> messageCtors = new ConcurrentDictionary<ushort, Func<Message>>();
+		#endif
 
 		#if !NOEMIT
 		private void RegisterTypes (IEnumerable<Type> messageTypes, bool ignoreDupes)
@@ -175,6 +181,9 @@ namespace Tempest
 
 			Type mtype = typeof (Message);
 
+			#if !NET_4
+			lock (messageCtors)
+			#endif
 			foreach (var kvp in messageTypes)
 			{
 				if (!mtype.IsAssignableFrom (kvp.Key))
@@ -189,6 +198,17 @@ namespace Tempest
 				if (m.Authenticated || m.Encrypted)
 					RequiresHandshake = true;
 
+				#if !NET_4
+				if (this.messageCtors.ContainsKey (m.MessageType))
+				{
+					if (ignoreDupes)
+						continue;
+
+					throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
+				}
+
+				this.messageCtors.Add (m.MessageType, kvp.Value);
+				#else
 				if (!this.messageCtors.TryAdd (m.MessageType, kvp.Value))
 				{
 					if (ignoreDupes)
@@ -196,6 +216,7 @@ namespace Tempest
 
 					throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
 				}
+				#endif
 			}
 		}
 

@@ -47,23 +47,20 @@ namespace Tempest.Providers.Network
 			ValidateProtocols (this.protocols.Values);
 		}
 
-		public UdpConnectionProvider (int port, Protocol protocol, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey authKey)
+		public UdpConnectionProvider (int port, Protocol protocol, IAsymmetricKey authKey)
 			: base (new[] { protocol }, port)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
-			if (cryptoFactory == null)
-				throw new ArgumentNullException ("cryptoFactory");
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
 			if (port <= 0)
 				throw new ArgumentOutOfRangeException ("port");
 
-			this.cryptoFactory = cryptoFactory;
-			this.crypto = cryptoFactory();
+			this.crypto = new RSACrypto();
 			this.crypto.ImportKey (authKey);
 
-			this.pkEncryption = cryptoFactory();
+			this.pkEncryption = new RSACrypto();
 			this.pkEncryption.ImportKey (authKey);
 
 			this.authKey = authKey;
@@ -71,20 +68,17 @@ namespace Tempest.Providers.Network
 			ValidateProtocols (this.protocols.Values);
 		}
 
-		public UdpConnectionProvider (int port, IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey authKey)
+		public UdpConnectionProvider (int port, IEnumerable<Protocol> protocols, IAsymmetricKey authKey)
 			: base (protocols, port)
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
-			if (cryptoFactory == null)
-				throw new ArgumentNullException ("cryptoFactory");
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
 			if (port <= 0)
 				throw new ArgumentOutOfRangeException ("port");
 
-			this.cryptoFactory = cryptoFactory;
-			this.crypto = cryptoFactory();
+			this.crypto = new RSACrypto();
 			this.crypto.ImportKey (authKey);
 			this.authKey = authKey;
 
@@ -121,7 +115,6 @@ namespace Tempest.Providers.Network
 			base.Stop();
 		}
 
-		private readonly Func<IPublicKeyCrypto> cryptoFactory;
 		internal IPublicKeyCrypto pkEncryption;
 		private IPublicKeyCrypto crypto;
 		private IAsymmetricKey authKey;
@@ -189,12 +182,7 @@ namespace Tempest.Providers.Network
 			ConnectMessage connect = tempestMessage as ConnectMessage;
 			if (connect != null)
 			{
-				UdpServerConnection connection;
-				if (this.cryptoFactory != null)
-					connection = new UdpServerConnection (GetConnectionId(), target.ToEndPoint(), this, this.cryptoFactory(), this.crypto, this.authKey);
-				else
-					connection = new UdpServerConnection (GetConnectionId(), target.ToEndPoint(), this);
-
+				UdpServerConnection connection = new UdpServerConnection (GetConnectionId(), target.ToEndPoint(), this);
 				if (!this.connections.TryAdd (connection.ConnectionId, connection))
 					throw new InvalidOperationException ("Reused connection ID");
 

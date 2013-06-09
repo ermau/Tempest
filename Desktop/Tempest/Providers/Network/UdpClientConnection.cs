@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2012-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ namespace Tempest.Providers.Network
 		: UdpConnection, IClientConnection, IConnectionlessMessenger, IAuthenticatedConnection
 	{
 		public UdpClientConnection (Protocol protocol)
-			: base (new[] { protocol })
+			: this (new[] { protocol })
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
@@ -53,33 +53,26 @@ namespace Tempest.Providers.Network
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
+
+			this.serializer = new ClientMessageSerializer (this, protocols);
 		}
 
-		public UdpClientConnection (Protocol protocol, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey key)
-			: base (new[] { protocol }, cryptoFactory(), cryptoFactory(), key)
+		public UdpClientConnection (Protocol protocol, IAsymmetricKey key)
+			: this (new[] { protocol }, key)
 		{
 			if (protocol == null)
 				throw new ArgumentNullException ("protocol");
-			if (cryptoFactory == null)
-				throw new ArgumentNullException ("cryptoFactory");
-			if (key == null)
-				throw new ArgumentNullException ("key");
-
-			this.cryptoFactory = cryptoFactory;
-			this.serializer = new ClientMessageSerializer (this, new[] { protocol });
 		}
 
-		public UdpClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> cryptoFactory, IAsymmetricKey key)
-			: base (protocols, cryptoFactory(), cryptoFactory(), key)
+		public UdpClientConnection (IEnumerable<Protocol> protocols, IAsymmetricKey key)
+			: base (protocols, new RSACrypto(), new RSACrypto(), key)
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
-			if (cryptoFactory == null)
-				throw new ArgumentNullException ("cryptoFactory");
 			if (key == null)
 				throw new ArgumentNullException ("key");
 
-			this.cryptoFactory = cryptoFactory;
+			this.serializer = new ClientMessageSerializer (this, protocols);
 		}
 
 		public event EventHandler<ClientConnectionEventArgs> Connected;
@@ -207,8 +200,6 @@ namespace Tempest.Providers.Network
 		private Timer connectTimer;
 		private Timer deliveryTimer;
 
-		private readonly Func<IPublicKeyCrypto> cryptoFactory;
-
 		private class UdpClientConnectionlessListener
 			: UdpConnectionlessListener
 		{
@@ -295,7 +286,7 @@ namespace Tempest.Providers.Network
 					this.serializer.Protocols = this.serializer.Protocols.Intersect (msg.EnabledProtocols);
 					ConnectionId = msg.ConnectionId;
 
-					this.remoteEncryption = this.cryptoFactory();
+					this.remoteEncryption = new RSACrypto();
 					this.remoteEncryption.ImportKey (msg.PublicEncryptionKey);
 
 					var encryption = new AesManaged { KeySize = 256 };
@@ -369,7 +360,7 @@ namespace Tempest.Providers.Network
 			get
 			{
 				if (this.remoteEncryption == null)
-					this.remoteEncryption = this.cryptoFactory();
+					this.remoteEncryption = new RSACrypto();
 
 				return this.remoteEncryption;
 			}

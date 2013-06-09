@@ -41,22 +41,22 @@ namespace Tempest.Tests
 
 		protected override IConnectionProvider SetUp()
 		{
-			return new UdpConnectionProvider (42001, MockProtocol.Instance, () => new RSACrypto(), serverKey);
+			return new UdpConnectionProvider (42001, MockProtocol.Instance, serverKey);
 		}
 
 		protected override IConnectionProvider SetUp (IEnumerable<Protocol> protocols)
 		{
-			return new UdpConnectionProvider (42001, protocols, () => new RSACrypto(), serverKey);
+			return new UdpConnectionProvider (42001, protocols, serverKey);
 		}
 
 		protected override IClientConnection SetupClientConnection()
 		{
-			return new UdpClientConnection (MockProtocol.Instance, () => new RSACrypto(), localKey);
+			return new UdpClientConnection (MockProtocol.Instance, localKey);
 		}
 
 		protected override IClientConnection SetupClientConnection (IEnumerable<Protocol> protocols)
 		{
-			return new UdpClientConnection (protocols, () => new RSACrypto(), localKey);
+			return new UdpClientConnection (protocols, localKey);
 		}
 
 		protected override IClientConnection SetupClientConnection (out IAsymmetricKey key)

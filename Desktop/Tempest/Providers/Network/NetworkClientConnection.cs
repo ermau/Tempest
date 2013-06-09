@@ -46,23 +46,13 @@ namespace Tempest.Providers.Network
 		}
 
 		public NetworkClientConnection (IEnumerable<Protocol> protocols)
-			: this (protocols, () => new RSACrypto())
-		{
-		}
-
-		public NetworkClientConnection (Protocol protocol, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
-			: this (new [] { protocol }, publicKeyCryptoFactory)
-		{
-		}
-
-		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory)
-			: base (protocols, publicKeyCryptoFactory, null, true)
+			: base (protocols, null, true)
 		{
 			Interlocked.Add (ref sendBufferLimit, AutoSizeFactor);
 		}
 
-		public NetworkClientConnection (Protocol protocol, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
-			: base (new [] { protocol }, publicKeyCryptoFactory, authKey, false)
+		public NetworkClientConnection (Protocol protocol, IAsymmetricKey authKey)
+			: base (new [] { protocol }, authKey, false)
 		{
 			Interlocked.Add (ref sendBufferLimit, AutoSizeFactor);
 
@@ -70,8 +60,8 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("authKey");
 		}
 
-		public NetworkClientConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey)
-			: base (protocols, publicKeyCryptoFactory, authKey, false)
+		public NetworkClientConnection (IEnumerable<Protocol> protocols, IAsymmetricKey authKey)
+			: base (protocols, authKey, false)
 		{
 			Interlocked.Add (ref sendBufferLimit, AutoSizeFactor);
 
@@ -275,7 +265,7 @@ namespace Tempest.Providers.Network
 				    this.protocols = this.protocols.Values.Intersect (msg.EnabledProtocols).ToDictionary (pr => pr.id);
 					ConnectionId = msg.ConnectionId;
 
-					this.serverEncryption = this.publicKeyCryptoFactory();
+					this.serverEncryption = new RSACrypto();
 					this.serverEncryption.ImportKey (msg.PublicEncryptionKey);
 					this.serverEncryptionKey = msg.PublicEncryptionKey;
 
@@ -372,7 +362,7 @@ namespace Tempest.Providers.Network
 			get
 			{
 				if (this.serverAuthentication == null)
-					this.serverAuthentication = this.publicKeyCryptoFactory();
+					this.serverAuthentication = new RSACrypto();
 
 				return this.serverAuthentication;
 			}

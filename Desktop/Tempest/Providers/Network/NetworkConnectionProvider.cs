@@ -73,35 +73,19 @@ namespace Tempest.Providers.Network
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="NetworkConnectionProvider"/> class.
-		/// </summary>
-		/// <param name="target">The target to listen to.</param>
-		/// <param name="maxConnections">Maximum number of connections to allow.</param>
-		/// <param name="protocols">The protocols to accept.</param>
-		/// <exception cref="ArgumentNullException"><paramref name="target"/> or <paramref name="protocols" /> is <c>null</c>.</exception>
-		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections)
-			: this (protocols, target, maxConnections, () => new RSACrypto())
-		{
-		}
-
-		/// <summary>
 		/// Initializes a new instance of the <see cref="NetworkConnectionProvider" /> class.
 		/// </summary>
 		/// <param name="target">The target to listen to.</param>
 		/// <param name="maxConnections">Maximum number of connections to allow.</param>
 		/// <param name="protocols">The protocols to accept.</param>
-		/// <param name="pkCryptoFactory">The public key cryptography provider factory.</param>
 		/// <param name="enabledHashAlgs">
-		/// The signature hash algorithms (in order of preference) to enable from <paramref name="pkCryptoFactory"/>.
+		/// The signature hash algorithms (in order of preference) to enable.
 		/// <c>null</c> or an empty collection will enable all of the signature hash algorithms.
 		/// </param>
-		/// <exception cref="ArgumentNullException"><paramref name="target"/>, <paramref name="protocols" /> or <paramref name="pkCryptoFactory" /> is <c>null</c>.</exception>
+		/// <exception cref="ArgumentNullException"><paramref name="target"/> or <paramref name="protocols" /> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxConnections"/> is &lt;= 0</exception>
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IEnumerable<string> enabledHashAlgs = null)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, IEnumerable<string> enabledHashAlgs = null)
 		{
-			if (pkCryptoFactory == null)
-				throw new ArgumentNullException ("pkCryptoFactory");
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
 			if (target == null)
@@ -114,21 +98,19 @@ namespace Tempest.Providers.Network
 			MaxConnections = maxConnections;
 			this.serverConnections = new List<NetworkServerConnection> (maxConnections);
 
-			this.pkCryptoFactory = pkCryptoFactory;
-
 			if (protocols.Any (p => p != null && p.RequiresHandshake))
 			{
 				ThreadPool.QueueUserWorkItem (s =>
 				{
 					Task encryptKeyGen = Task.Factory.StartNew (() =>
 					{
-						this.pkEncryption = this.pkCryptoFactory();
+						this.pkEncryption = new RSACrypto();
 						this.publicEncryptionKey = this.pkEncryption.ExportKey (false);
 					});
 
 					Task authKeyGen = Task.Factory.StartNew (() =>
 					{
-						this.authentication = this.pkCryptoFactory();
+						this.authentication = new RSACrypto();
 						if (this.authenticationKey == null)
 							this.authenticationKey = this.authentication.ExportKey (true);
 						else
@@ -152,8 +134,8 @@ namespace Tempest.Providers.Network
 				this.keyWait.Set();
 		}
 
-		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, Func<IPublicKeyCrypto> pkCryptoFactory, IAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
-			: this (protocols, target, maxConnections, pkCryptoFactory, enabledHashAlgorithms)
+		public NetworkConnectionProvider (IEnumerable<Protocol> protocols, Target target, int maxConnections, IAsymmetricKey authKey, IEnumerable<string> enabledHashAlgorithms = null)
+			: this (protocols, target, maxConnections, enabledHashAlgorithms)
 		{
 			if (authKey == null)
 				throw new ArgumentNullException ("authKey");
@@ -331,7 +313,6 @@ namespace Tempest.Providers.Network
 
 		private readonly ManualResetEvent keyWait = new ManualResetEvent (false);
 		private readonly List<string> enabledHashAlgorithms = new List<string>();
-		internal readonly Func<IPublicKeyCrypto> pkCryptoFactory;
 
 		internal IPublicKeyCrypto pkEncryption;
 		private IAsymmetricKey publicEncryptionKey;

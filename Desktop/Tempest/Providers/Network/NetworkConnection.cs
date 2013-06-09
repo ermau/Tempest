@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using Tempest.InternalProtocol;
 using System.Threading;
 using System.Threading.Tasks;
@@ -92,22 +93,18 @@ namespace Tempest.Providers.Network
 			set { maxMessageSize = value; }
 		}
 
-		protected NetworkConnection (IEnumerable<Protocol> protocols, Func<IPublicKeyCrypto> publicKeyCryptoFactory, IAsymmetricKey authKey, bool generateKey)
+		protected NetworkConnection (IEnumerable<Protocol> protocols, IAsymmetricKey authKey, bool generateKey)
 		{
 			if (protocols == null)
 				throw new ArgumentNullException ("protocols");
-			if (publicKeyCryptoFactory == null)
-				throw new ArgumentNullException ("publicKeyCrypto");
 
 			this.authenticationKey = authKey;
 			this.requiresHandshake = protocols.Any (p => p.RequiresHandshake);
 			if (this.requiresHandshake)
 			{
-				this.publicKeyCryptoFactory = publicKeyCryptoFactory;
-
 				ThreadPool.QueueUserWorkItem (s =>
 				{
-					this.pkAuthentication = this.publicKeyCryptoFactory();
+					this.pkAuthentication = new RSACrypto();
 
 					if (this.authenticationKey == null)
 					{
@@ -303,8 +300,6 @@ namespace Tempest.Providers.Network
 
 		protected Dictionary<byte, Protocol> protocols;
 		protected bool requiresHandshake;
-
-		internal readonly Func<IPublicKeyCrypto> publicKeyCryptoFactory;
 
 		internal IPublicKeyCrypto pkAuthentication;
 		protected IAsymmetricKey authenticationKey;

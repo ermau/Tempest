@@ -1,10 +1,10 @@
 ﻿//
-// Server.cs
+// TempestServer.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010-2012 Eric Maupin
+// Copyright (c) 2010-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Tempest.InternalProtocol;
 using System.Collections.Concurrent;
 
 namespace Tempest
@@ -52,15 +51,15 @@ namespace Tempest
 	/// <summary>
 	/// Tempest servers.
 	/// </summary>
-	public class Server
+	public class TempestServer
 		: MessageHandler, IServerContext
 	{
-		public Server (MessageTypes messageTypes)
+		public TempestServer (MessageTypes messageTypes)
 		{
 			this.messageTypes = messageTypes;
 		}
 
-		public Server (IConnectionProvider provider, MessageTypes messageTypes)
+		public TempestServer (IConnectionProvider provider, MessageTypes messageTypes)
 			: this (messageTypes)
 		{
 			AddConnectionProvider (provider);

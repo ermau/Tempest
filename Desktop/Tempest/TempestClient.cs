@@ -1,5 +1,5 @@
 ﻿//
-// LocalClient.cs
+// TempestClient.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -37,10 +37,10 @@ namespace Tempest
 	/// <summary>
 	/// Tempest clients.
 	/// </summary>
-	public class LocalClient
+	public class TempestClient
 		: MessageHandler, IClientContext, INotifyPropertyChanged
 	{
-		public LocalClient (IClientConnection connection, MessageTypes mtypes, bool poll = false)
+		public TempestClient (IClientConnection connection, MessageTypes mtypes, bool poll = false)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");

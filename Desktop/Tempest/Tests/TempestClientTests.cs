@@ -1,5 +1,5 @@
 ﻿//
-// ClientTests.cs
+// TempestClientTests.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
@@ -33,12 +33,12 @@ using NUnit.Framework;
 namespace Tempest.Tests
 {
 	[TestFixture]
-	public class ClientTests
+	public class TempestClientTests
 		: ContextTests
 	{
 		private static readonly Protocol protocol = MockProtocol.Instance;
 
-		private LocalClient client;
+		private TempestClient client;
 		private MockConnectionProvider provider;
 		private MockClientConnection connection;
 
@@ -54,14 +54,14 @@ namespace Tempest.Tests
 			provider.Start (MessageTypes.Reliable);
 
 			connection = new MockClientConnection (provider);
-			client = new LocalClient (connection, MessageTypes.All, false);
+			client = new TempestClient (connection, MessageTypes.All, false);
 		}
 
 		[Test]
 		public void CtorInvalid()
 		{
-			Assert.Throws<ArgumentNullException> (() => new LocalClient (null, MessageTypes.All, true));
-			Assert.Throws<ArgumentException> (() => new LocalClient (connection, (MessageTypes)9999));
+			Assert.Throws<ArgumentNullException> (() => new TempestClient (null, MessageTypes.All, true));
+			Assert.Throws<ArgumentException> (() => new TempestClient (connection, (MessageTypes)9999));
 		}
 
 		[Test]
@@ -73,7 +73,7 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void Connected()
 		{
-			var test = new AsyncTest();
+			var test = new AsyncTest ();
 
 			client.Connected += test.PassHandler;
 			client.Disconnected += test.FailHandler;

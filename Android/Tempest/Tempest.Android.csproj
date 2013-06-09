@@ -145,9 +145,6 @@
     <Compile Include="..\..\Desktop\Tempest\IValueWriter.cs">
       <Link>IValueWriter.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\LocalClient.cs">
-      <Link>LocalClient.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\Message.cs">
       <Link>Message.cs</Link>
     </Compile>
@@ -223,9 +220,6 @@
     <Compile Include="..\..\Desktop\Tempest\SerializerExtensions.cs">
       <Link>SerializerExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\Server.cs">
-      <Link>Server.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\StreamValueReader.cs">
       <Link>StreamValueReader.cs</Link>
     </Compile>
@@ -237,6 +231,12 @@
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\TargetExtensions.cs">
       <Link>TargetExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\TempestClient.cs">
+      <Link>TempestClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\TempestServer.cs">
+      <Link>TempestServer.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\Timer.cs">
       <Link>Timer.cs</Link>

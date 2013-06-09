@@ -47,7 +47,7 @@
     <Compile Include="AsyncTest.cs" />
     <Compile Include="AsyncTestTests.cs" />
     <Compile Include="BufferReaderWriterTests.cs" />
-    <Compile Include="ClientTests.cs" />
+    <Compile Include="TempestClientTests.cs" />
     <Compile Include="ConnectionProviderExtensions.cs" />
     <Compile Include="ConnectionProviderTests.cs" />
     <Compile Include="ContextTests.cs" />
@@ -68,7 +68,7 @@
     <Compile Include="ResettingMemoryStream.cs" />
     <Compile Include="RSAAsymmetricKeyTests.cs" />
     <Compile Include="SerializationContextTests.cs" />
-    <Compile Include="ServerTests.cs" />
+    <Compile Include="TempestServerTests.cs" />
     <Compile Include="StreamReaderWriterTests.cs" />
     <Compile Include="TargetTests.cs" />
     <Compile Include="TestHelpers.cs" />

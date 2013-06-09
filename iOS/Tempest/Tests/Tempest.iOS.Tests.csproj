@@ -70,9 +70,6 @@
     <Compile Include="..\..\..\Desktop\Tempest\Tests\BufferReaderWriterTests.cs">
       <Link>Tests\BufferReaderWriterTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\Desktop\Tempest\Tests\ClientTests.cs">
-      <Link>Tests\ClientTests.cs</Link>
-    </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\ConnectionProviderExtensions.cs">
       <Link>Tests\ConnectionProviderExtensions.cs</Link>
     </Compile>
@@ -127,14 +124,17 @@
     <Compile Include="..\..\..\Desktop\Tempest\Tests\SerializationContextTests.cs">
       <Link>Tests\SerializationContextTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\Desktop\Tempest\Tests\ServerTests.cs">
-      <Link>Tests\ServerTests.cs</Link>
-    </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\StreamReaderWriterTests.cs">
       <Link>Tests\StreamReaderWriterTests.cs</Link>
     </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\TargetTests.cs">
       <Link>Tests\TargetTests.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\TempestClientTests.cs">
+      <Link>Tests\TempestClientTests.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\TempestServerTests.cs">
+      <Link>Tests\TempestServerTests.cs</Link>
     </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\TestHelpers.cs">
       <Link>Tests\TestHelpers.cs</Link>

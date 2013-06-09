@@ -95,7 +95,7 @@
     <Compile Include="Protocol.cs" />
     <Compile Include="BufferValueReader.cs" />
     <Compile Include="BufferValueWriter.cs" />
-    <Compile Include="LocalClient.cs" />
+    <Compile Include="TempestClient.cs" />
     <Compile Include="RSACrypto.cs" />
     <Compile Include="SerializationContext.cs" />
     <Compile Include="SerializerExtensions.cs" />
@@ -115,7 +115,7 @@
     <Compile Include="Providers\Network\NetworkConnection.cs" />
     <Compile Include="Providers\Network\NetworkConnectionProvider.cs" />
     <Compile Include="Providers\Network\NetworkServerConnection.cs" />
-    <Compile Include="Server.cs" />
+    <Compile Include="TempestServer.cs" />
     <Compile Include="StreamValueReader.cs" />
     <Compile Include="StreamValueWriter.cs" />
     <Compile Include="InternalProtocol\TempestMessage.cs" />

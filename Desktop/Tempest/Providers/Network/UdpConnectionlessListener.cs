@@ -97,9 +97,9 @@ namespace Tempest.Providers.Network
 				throw new NotSupportedException ("Reliable messages can not be sent connectionlessly");
 
 			EndPoint endPoint = target.ToEndPoint();
-			if (endPoint.AddressFamily == AddressFamily.InterNetwork && !Socket.OSSupportsIPv4)
+			/*if (endPoint.AddressFamily == AddressFamily.InterNetwork && !Socket.OSSupportsIPv4)
 				throw new NotSupportedException ("endPoint's AddressFamily not supported on this OS.");
-			else if (endPoint.AddressFamily == AddressFamily.InterNetworkV6 && !Socket.OSSupportsIPv6)
+			else*/ if (endPoint.AddressFamily == AddressFamily.InterNetworkV6 && !Socket.OSSupportsIPv6)
 				throw new NotSupportedException ("endPoint's AddressFamily not supported on this OS.");
 			else if (endPoint.AddressFamily != AddressFamily.InterNetwork && endPoint.AddressFamily != AddressFamily.InterNetworkV6)
 				throw new NotSupportedException ("endPoint's AddressFamily not supported on this provider.");

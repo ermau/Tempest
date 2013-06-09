@@ -154,10 +154,10 @@ namespace Tempest.Tests
 		{
 			var test = new AsyncTest();
 
-			Action<MessageEventArgs<MockMessage>> handler = e =>
-			{
-				client.DisconnectAsync().Wait();
-				test.PassHandler (null, EventArgs.Empty);
+			Action<MessageEventArgs<MockMessage>> handler = e => {
+				client.DisconnectAsync().ContinueWith (t => {
+					test.PassHandler (null, EventArgs.Empty);
+				});
 			};
 
 			client.RegisterMessageHandler (handler);

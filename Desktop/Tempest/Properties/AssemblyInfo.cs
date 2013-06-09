@@ -18,3 +18,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion ("0.8.0.0")]
 
 [assembly: InternalsVisibleTo ("Tempest.Tests")]
+[assembly: InternalsVisibleTo ("TempestTests")]

@@ -61,88 +61,88 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Desktop\Tempest\Tests\AsyncTest.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\AsyncTest.cs">
       <Link>Tests\AsyncTest.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\AsyncTestTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\AsyncTestTests.cs">
       <Link>Tests\AsyncTestTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\BufferReaderWriterTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\BufferReaderWriterTests.cs">
       <Link>Tests\BufferReaderWriterTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ClientTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ClientTests.cs">
       <Link>Tests\ClientTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ConnectionProviderExtensions.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ConnectionProviderExtensions.cs">
       <Link>Tests\ConnectionProviderExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ConnectionProviderTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ConnectionProviderTests.cs">
       <Link>Tests\ConnectionProviderTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ContextTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ContextTests.cs">
       <Link>Tests\ContextTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ExtensionsTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ExtensionsTests.cs">
       <Link>Tests\ExtensionsTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\InternalProtocolMessageTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\InternalProtocolMessageTests.cs">
       <Link>Tests\InternalProtocolMessageTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\MessageExtensions.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MessageExtensions.cs">
       <Link>Tests\MessageExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\MessageFactoryTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MessageFactoryTests.cs">
       <Link>Tests\MessageFactoryTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\MockConnectionProvider.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MockConnectionProvider.cs">
       <Link>Tests\MockConnectionProvider.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\MockConnectionProviderTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MockConnectionProviderTests.cs">
       <Link>Tests\MockConnectionProviderTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\MockMessage.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\MockMessage.cs">
       <Link>Tests\MockMessage.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\NetworkProviderTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\NetworkProviderTests.cs">
       <Link>Tests\NetworkProviderTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ObjectSerializerTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ObjectSerializerTests.cs">
       <Link>Tests\ObjectSerializerTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ProtocolTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ProtocolTests.cs">
       <Link>Tests\ProtocolTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ReaderWriterPairTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ReaderWriterPairTests.cs">
       <Link>Tests\ReaderWriterPairTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ReliableQueueTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ReliableQueueTests.cs">
       <Link>Tests\ReliableQueueTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ResettingMemoryStream.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ResettingMemoryStream.cs">
       <Link>Tests\ResettingMemoryStream.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\RSAAsymmetricKeyTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\RSAAsymmetricKeyTests.cs">
       <Link>Tests\RSAAsymmetricKeyTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\SerializationContextTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\SerializationContextTests.cs">
       <Link>Tests\SerializationContextTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\ServerTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\ServerTests.cs">
       <Link>Tests\ServerTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\StreamReaderWriterTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\StreamReaderWriterTests.cs">
       <Link>Tests\StreamReaderWriterTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\TargetTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\TargetTests.cs">
       <Link>Tests\TargetTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\TestHelpers.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\TestHelpers.cs">
       <Link>Tests\TestHelpers.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\TypeMapTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\TypeMapTests.cs">
       <Link>Tests\TypeMapTests.cs</Link>
     </Compile>
-    <Compile Include="..\Desktop\Tempest\Tests\UdpConnectionProviderTests.cs">
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\UdpConnectionProviderTests.cs">
       <Link>Tests\UdpConnectionProviderTests.cs</Link>
     </Compile>
     <Compile Include="Main.cs" />

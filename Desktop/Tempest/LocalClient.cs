@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011 Eric Maupin
+// Copyright (c) 2011-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,11 @@ namespace Tempest
 				this.mode = MessagingModes.Inline;
 			else
 			{
+				#if NET_4
 				this.mqueue = new ConcurrentQueue<MessageEventArgs>();
+				#else
+				this.mqueue = new Queue<MessageEventArgs>();
+				#endif
 				this.connection.MessageReceived += ConnectionOnMessageReceived;
 				this.mode = MessagingModes.Async;
 			}
@@ -139,9 +143,17 @@ namespace Tempest
 			{
 				messages = new List<MessageEventArgs> (mqueue.Count * 2);
 
+				#if NET_4
 				MessageEventArgs e;
 				while (this.mqueue.TryDequeue (out e))
 					messages.Add (e);
+				#else
+				lock (this.mqueue)
+				{
+					while (this.mqueue.Count > 0)
+						messages.Add (this.mqueue.Dequeue());
+				}
+				#endif
 			}
 			else
 				messages = this.connection.Tick().ToList();
@@ -166,7 +178,11 @@ namespace Tempest
 		private readonly MessagingModes mode;
 		private readonly bool polling;
 
+		#if NET_4
 		private readonly ConcurrentQueue<MessageEventArgs> mqueue;
+		#else
+		private readonly Queue<MessageEventArgs> mqueue;
+		#endif
 
 		private AutoResetEvent mwait;
 		private Thread messageRunner;
@@ -186,8 +202,13 @@ namespace Tempest
 				if (wait != null)
 					wait.Set();
 
+				#if NET_4
 				MessageEventArgs e;
 				while (this.mqueue.TryDequeue (out e)) ;
+				#else
+				lock (this.mqueue)
+					this.mqueue.Clear();
+				#endif
 			}
 
 			Thread runner = Interlocked.Exchange (ref this.messageRunner, null);
@@ -210,14 +231,18 @@ namespace Tempest
 
 		private void InlineMessageRunner()
 		{
+			#if NET_4
 			SpinWait wait = new SpinWait();
+			#endif
 
 		    while (this.running)
 		    {
 				List<MessageEventArgs> messages = this.connection.Tick().ToList();
-				if (this.running && messages.Any())
+				if (this.running && messages.Count > 0)
 				{
+					#if NET_4
 					wait.Reset();
+					#endif
 
 					foreach (MessageEventArgs e in messages)
 					{
@@ -239,21 +264,39 @@ namespace Tempest
 					return;
 				}
 
+				#if NET_4
 				wait.SpinOnce();
+				#else
+				Thread.Sleep (1);
+				#endif
 		    }
 		}
 
 		private void AsyncMessageRunner ()
 		{
+			#if NET_4
 			ConcurrentQueue<MessageEventArgs> q = this.mqueue;			
+			#else
+			Queue<MessageEventArgs> q = this.mqueue;
+			#endif		
 
 			while (this.running)
 			{
 				while (q.Count > 0 && this.running)
 				{
 					MessageEventArgs e;
+					#if NET_4
 					if (!q.TryDequeue (out e))
 						continue;
+					#else
+					lock (q)
+					{
+						if (q.Count == 0)
+							continue;
+
+						e = q.Dequeue();
+					}
+					#endif
 
 					List<Action<MessageEventArgs>> mhandlers = GetHandlers (e.Message);
 					if (mhandlers == null)

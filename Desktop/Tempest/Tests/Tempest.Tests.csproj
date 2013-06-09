@@ -78,7 +78,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Tempest.csproj">
       <Project>{D6A2003C-CBB2-47B0-B306-521141D3068D}</Project>
-      <Name>Tempest %28Desktop\Tempest%29</Name>
+      <Name>Tempest</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

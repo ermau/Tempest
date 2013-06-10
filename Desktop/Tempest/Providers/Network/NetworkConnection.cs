@@ -74,8 +74,8 @@ namespace Tempest.Providers.Network
 		/// </summary>
 		public static int AutoSizeFactor
 		{
-			get;
-			set;
+			get { return autoSizeFactor; }
+			set { autoSizeFactor = value; }
 		}
 
 		/// <summary>
@@ -852,6 +852,7 @@ namespace Tempest.Providers.Network
 		internal static int maxMessageSize = 1048576;
 		internal static int sendBufferLimit = Environment.ProcessorCount;
 		private static bool autoSizeSendBufferLimit = true;
+		private static int autoSizeFactor = 1;
 
 		#if NET_4
 		private static readonly ConcurrentStack<SocketAsyncEventArgs> writerAsyncArgs = new ConcurrentStack<SocketAsyncEventArgs>();

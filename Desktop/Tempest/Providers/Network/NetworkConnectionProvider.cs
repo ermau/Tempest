@@ -358,13 +358,13 @@ namespace Tempest.Providers.Network
 			    bool atMax = (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections);
 
 				bool connected = this.serverConnections.Remove (connection);
+				if (connected && NetworkConnection.AutoSizeSendBufferLimit)
+					Interlocked.Add (ref NetworkConnection.sendBufferLimit, NetworkConnection.AutoSizeFactor * -1);
+
 			    if ((connected || this.pendingConnections.Remove (connection)) && atMax)
 			    {
 					if (connected)
 						this.pingTimer.TimesUp -= connection.Ping;
-
-					if (NetworkConnection.AutoSizeSendBufferLimit)
-						Interlocked.Add (ref NetworkConnection.sendBufferLimit, NetworkConnection.AutoSizeFactor * -1);
 
 			    	BeginAccepting (null);
 			    }
@@ -439,10 +439,10 @@ namespace Tempest.Providers.Network
 
 				BeginAccepting (e);
 
+				this.pendingConnections.Add (connection);
+
 				if (NetworkConnection.AutoSizeSendBufferLimit)
 					Interlocked.Add (ref NetworkConnection.sendBufferLimit, NetworkConnection.AutoSizeFactor);
-
-				this.pendingConnections.Add (connection);
 			}
 		}
 

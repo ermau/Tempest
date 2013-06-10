@@ -458,6 +458,7 @@ namespace Tempest.Providers.Network
 						bufferCount++;
 						eargs = new SocketAsyncEventArgs();
 						eargs.SetBuffer (new byte[1024], 0, 1024);
+						eargs.Completed += ReliableSendCompleted;
 					}
 				}
 			}

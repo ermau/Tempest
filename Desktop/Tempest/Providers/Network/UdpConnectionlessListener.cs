@@ -259,7 +259,7 @@ namespace Tempest.Providers.Network
 
 			header.SerializationContext = ((SerializationContext)header.SerializationContext).WithConnection (connection);
 
-			List<Message> messages = connection.serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
+			List<Message> messages = serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
 			if (messages != null)
 			{
 				foreach (Message message in messages)

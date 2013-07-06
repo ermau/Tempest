@@ -409,6 +409,9 @@ namespace Tempest.Providers.Network
 			if (!IsConnected)
 			{
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (not connected)", callCategory);
+				if (responseFuture != null)
+					responseFuture.TrySetResult (null);
+
 				if (tcs != null)
 				{
 					tcs.SetResult (false);
@@ -527,6 +530,9 @@ namespace Tempest.Providers.Network
 					lock (writerAsyncArgs)
 					#endif
 					writerAsyncArgs.Push (eargs);
+
+					if (responseFuture != null)
+						responseFuture.TrySetResult (null);
 
 					if (tcs != null)
 					{

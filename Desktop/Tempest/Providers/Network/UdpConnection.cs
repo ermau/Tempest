@@ -272,7 +272,7 @@ namespace Tempest.Providers.Network
 			lock (this.messageResponses)
 			{
 				foreach (var kvp in this.messageResponses)
-					kvp.Value.TrySetCanceled();
+					kvp.Value.TrySetResult (null);
 
 				this.messageResponses.Clear();
 			}

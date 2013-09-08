@@ -140,13 +140,13 @@ namespace Tempest.Providers.Network
 			if (this.requiresHandshake)
 			{
 				bool foundHashAlg = false;
-				foreach (string hashAlg in this.localCrypto.SupportedHashAlgs)
-				{
-					if (msg.SignatureHashAlgorithms.Contains (hashAlg))
-					{
-						signingHashAlgorithm = hashAlg;
-						foundHashAlg = true;
-						break;
+				if (this.localCrypto != null) {
+					foreach (string hashAlg in this.localCrypto.SupportedHashAlgs) {
+						if (msg.SignatureHashAlgorithms.Contains (hashAlg)) {
+							signingHashAlgorithm = hashAlg;
+							foundHashAlg = true;
+							break;
+						}
 					}
 				}
 

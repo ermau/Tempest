@@ -836,14 +836,21 @@ namespace Tempest.Tests
 			});
 
 			this.provider.ConnectionMade += (s, e) => {
-				e.Connection.Disconnected += test.PassHandler;
+				e.Connection.Disconnected += (ds, de) => {
+					Assert.IsFalse (e.Connection.IsConnected, "IsConnected was still true");
+					test.PassHandler (ds, de);
+				};
 			};
 
 			var c = GetNewClientConnection();
 
 			var wait = new AutoResetEvent (false);
 
-			c.Disconnected += test.PassHandler;
+			c.Disconnected += (s, e) => {
+				Assert.IsFalse (c.IsConnected, "IsConnected was still true");
+				test.PassHandler (s, e);
+			};
+
 			c.Connected += (sender, e) => wait.Set();
 			c.ConnectAsync (Target, MessageTypes);
 
@@ -874,12 +881,19 @@ namespace Tempest.Tests
 			}, 2);
 
 			this.provider.ConnectionMade += (s, e) => {
-				e.Connection.Disconnected += test.PassHandler;
+				e.Connection.Disconnected += (ds, de) => {
+					Assert.IsFalse (e.Connection.IsConnected, "IsConnected was still true");
+					test.PassHandler (ds, de);
+				};
 			};
 
 			var c = GetNewClientConnection();
 
-			c.Disconnected += test.PassHandler;
+			c.Disconnected += (ds, de) => {
+				Assert.IsFalse (c.IsConnected, "IsConnected was still true");
+				test.PassHandler (ds, de);
+			};
+
 			c.Connected += (sender, e) => c.DisconnectAsync();
 			c.ConnectAsync (Target, MessageTypes);
 
@@ -892,14 +906,20 @@ namespace Tempest.Tests
 			var test = new AsyncTest (2);
 
 			var c = GetNewClientConnection();
-			c.Disconnected += test.PassHandler;
+			c.Disconnected += (s, e) => {
+				Assert.IsFalse (c.IsConnected, "IsConnected was still true");
+				test.PassHandler (s, e);
+			};;
 
 			var wait = new AutoResetEvent (false);
 
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (s, e) =>
 			{
-				e.Connection.Disconnected += test.PassHandler;
+				e.Connection.Disconnected += (ds, de) => {
+					Assert.IsFalse (e.Connection.IsConnected, "IsConnected was still true");
+					test.PassHandler (ds, de);
+				};
 				wait.Set();
 			};
 
@@ -916,18 +936,25 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void DisconnectFromServerOnClient()
 		{
-			var test = new AsyncTest();
+			var test = new AsyncTest (2);
 
 			var c = GetNewClientConnection();
-			c.Disconnected += test.PassHandler;
+			c.Disconnected += (ds, de) => {
+				Assert.IsFalse (c.IsConnected, "IsConnected was still true");
+				test.PassHandler (ds, de);
+			};
 
 			this.provider.Start (MessageTypes);
 
 			IServerConnection sc = null;
 
 			var wait = new AutoResetEvent (false);
-			this.provider.ConnectionMade += (s, e) =>
-			{
+			this.provider.ConnectionMade += (s, e) => {
+				e.Connection.Disconnected += (ds, de) => {
+					Assert.IsFalse (e.Connection.IsConnected, "IsConnected was still true");
+					test.PassHandler (ds, de);
+				};
+
 				sc = e.Connection;
 				wait.Set();
 			};

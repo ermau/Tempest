@@ -835,6 +835,10 @@ namespace Tempest.Tests
 				}
 			});
 
+			this.provider.ConnectionMade += (s, e) => {
+				e.Connection.Disconnected += test.PassHandler;
+			};
+
 			var c = GetNewClientConnection();
 
 			var wait = new AutoResetEvent (false);
@@ -855,7 +859,7 @@ namespace Tempest.Tests
 		public void DisconnectFromClientOnClientInConnectedHandler()
 		{
 			this.provider.Start (MessageTypes);
-
+			
 			var test = new AsyncTest (e =>
 			{
 				var args = (DisconnectedEventArgs)e;
@@ -867,7 +871,11 @@ namespace Tempest.Tests
 					default:
 						return true;
 				}
-			});
+			}, 2);
+
+			this.provider.ConnectionMade += (s, e) => {
+				e.Connection.Disconnected += test.PassHandler;
+			};
 
 			var c = GetNewClientConnection();
 
@@ -881,9 +889,10 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void DisconnectFromClientOnServer()
 		{
-			var test = new AsyncTest();
+			var test = new AsyncTest (2);
 
 			var c = GetNewClientConnection();
+			c.Disconnected += test.PassHandler;
 
 			var wait = new AutoResetEvent (false);
 
@@ -952,9 +961,10 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void DisconnectFromServerOnServerWithinConnectionMade()
 		{
-			var test = new AsyncTest();
+			var test = new AsyncTest (2);
 
 			var c = GetNewClientConnection();
+			c.Disconnected += test.PassHandler;
 
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) =>
@@ -971,9 +981,10 @@ namespace Tempest.Tests
 		[Test, Repeat (3)]
 		public void DisconnectFromServerOnServer()
 		{
-			var test = new AsyncTest();
+			var test = new AsyncTest (2);
 
 			var c = GetNewClientConnection();
+			c.Disconnected += test.PassHandler;
 			IServerConnection sc = null;
 
 			var wait = new AutoResetEvent (false);

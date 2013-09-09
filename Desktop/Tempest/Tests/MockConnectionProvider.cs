@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2012-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -211,18 +211,11 @@ namespace Tempest.Tests
 
 		protected internal override Task Disconnect (ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
-			var c = Interlocked.Exchange (ref this.connection, null);
-			if (c != null)
-			{
-				c.OnDisconnected (new DisconnectedEventArgs (c, reason, customReason));
-				return base.Disconnect (reason, customReason);
-			}
-			else
-			{
-				TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
-				tcs.SetResult (false);
-				return tcs.Task;
-			}
+			return base.Disconnect (reason, customReason).ContinueWith (t => {
+				var c = Interlocked.Exchange (ref this.connection, null);
+				if (c != null)
+					c.Disconnect (reason, customReason).Wait();
+			});
 		}
 	}
 
@@ -313,18 +306,11 @@ namespace Tempest.Tests
 
 		protected internal override Task Disconnect (ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
-			var c = Interlocked.Exchange (ref this.connection, null);
-			if (c != null)
-			{
-				c.OnDisconnected (new DisconnectedEventArgs (c, reason, customReason));
-				return base.Disconnect (reason, customReason);
-			}
-			else
-			{
-				TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
-				tcs.SetResult (false);
-				return tcs.Task;
-			}
+			return base.Disconnect (reason, customReason).ContinueWith (t => {
+				var c = Interlocked.Exchange (ref this.connection, null);
+				if (c != null)
+					c.Disconnect (reason, customReason).Wait();
+			});
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

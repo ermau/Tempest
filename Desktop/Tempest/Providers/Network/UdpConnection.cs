@@ -402,28 +402,25 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		internal void Receive (Message message, bool skipQueue = false)
+		internal void Receive (Message message, bool fromPartials = false)
 		{
 			var args = new MessageEventArgs (this, message);
 
-			if (args.Message.MustBeReliable || args.Message.PreferReliable) {
+			if (!fromPartials && message.Header.MessageId != 0 && (args.Message.MustBeReliable || args.Message.PreferReliable)) {
+				// We generally always need to ACK. partials have their pieces acked individually.
 				SendAsync (new AcknowledgeMessage { MessageIds = new[] { message.Header.MessageId } });
 
-				if (!skipQueue && message.Header.MessageId != 0) {
-					List<MessageEventArgs> messages;
-					if (this.rqueue.TryEnqueue (args, out messages)) {
-						if (messages != null) {
-							foreach (MessageEventArgs messageEventArgs in messages)
-								RouteMessage (messageEventArgs);
-						}
-
+				List<MessageEventArgs> messages;
+				if (this.rqueue.TryEnqueue (args, out messages)) {
+					if (messages != null) {
+						foreach (MessageEventArgs messageEventArgs in messages)
+							RouteMessage (messageEventArgs);
 					}
 
-					return;
 				}
 			}
-		
-			RouteMessage (args);
+			else
+				RouteMessage (args);
 		}
 
 		private void RouteMessage (MessageEventArgs args)
@@ -502,7 +499,7 @@ namespace Tempest.Providers.Network
 
 			List<Message> messages = this.serializer.BufferMessages (payload);
 			if (messages != null && messages.Count == 1)
-				Receive (messages[0], skipQueue: true);
+				Receive (messages[0], fromPartials: true);
 			else
 				DisconnectAsync();
 		}

@@ -87,9 +87,6 @@
     <Compile Include="..\..\Desktop\Tempest\DisconnectedEventArgs.cs">
       <Link>DisconnectedEventArgs.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IAsymmetricKey.cs">
-      <Link>IAsymmetricKey.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\IClientConnection.cs">
       <Link>IClientConnection.cs</Link>
     </Compile>
@@ -129,6 +126,9 @@
     <Compile Include="..\..\Desktop\Tempest\InternalProtocol\FinalConnectMessage.cs">
       <Link>InternalProtocol\FinalConnectMessage.cs</Link>
     </Compile>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\PartialMessage.cs">
+      <Link>InternalProtocol\PartialMessage.cs</Link>
+    </Compile>
     <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ReliablePingMessage.cs">
       <Link>InternalProtocol\ReliablePingMessage.cs</Link>
     </Compile>
@@ -143,9 +143,6 @@
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\InternalProtocol\UnreliablePongMessage.cs">
       <Link>InternalProtocol\UnreliablePongMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IPublicKeyCrypto.cs">
-      <Link>IPublicKeyCrypto.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\ISerializable.cs">
       <Link>ISerializable.cs</Link>

@@ -182,7 +182,12 @@ namespace Tempest.Providers.Network
 			ConnectMessage connect = tempestMessage as ConnectMessage;
 			if (connect != null)
 			{
-				UdpServerConnection connection = new UdpServerConnection (GetConnectionId(), target.ToEndPoint(), this);
+				UdpServerConnection connection;
+				if (this.authKey != null)
+					connection = new UdpServerConnection(GetConnectionId(), target.ToEndPoint(), this, new RSACrypto(), this.crypto, this.authKey);
+				else
+					connection = new UdpServerConnection (GetConnectionId(), target.ToEndPoint(), this);
+
 				if (!this.connections.TryAdd (connection.ConnectionId, connection))
 					throw new InvalidOperationException ("Reused connection ID");
 

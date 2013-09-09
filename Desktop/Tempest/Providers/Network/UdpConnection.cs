@@ -406,22 +406,24 @@ namespace Tempest.Providers.Network
 		{
 			var args = new MessageEventArgs (this, message);
 
-			if (!skipQueue && message.Header.MessageId != 0 && (args.Message.MustBeReliable || args.Message.PreferReliable))
-			{
-				List<MessageEventArgs> messages;
-				if (this.rqueue.TryEnqueue (args, out messages))
-				{
-					if (messages != null)
-					{
-						foreach (MessageEventArgs messageEventArgs in messages)
-							RouteMessage (messageEventArgs);
+			if (args.Message.MustBeReliable || args.Message.PreferReliable) {
+				SendAsync (new AcknowledgeMessage { MessageIds = new[] { message.Header.MessageId } });
+
+				if (!skipQueue && message.Header.MessageId != 0) {
+					List<MessageEventArgs> messages;
+					if (this.rqueue.TryEnqueue (args, out messages)) {
+						if (messages != null) {
+							foreach (MessageEventArgs messageEventArgs in messages)
+								RouteMessage (messageEventArgs);
+						}
+
 					}
 
-					SendAsync (new AcknowledgeMessage { MessageIds = new[] { message.Header.MessageId } });
+					return;
 				}
 			}
-			else
-				RouteMessage (args);
+		
+			RouteMessage (args);
 		}
 
 		private void RouteMessage (MessageEventArgs args)

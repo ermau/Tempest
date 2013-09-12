@@ -147,12 +147,18 @@ namespace Tempest.Providers.Network
 			var args = new SocketAsyncEventArgs();
 			args.SetBuffer (buffer, 0, length);
 			args.RemoteEndPoint = endPoint;
-			args.Completed += (sender, eventArgs) => Interlocked.Decrement (ref this.pendingAsync);
+			args.Completed += (sender, eventArgs) => {
+				Interlocked.Decrement (ref this.pendingAsync);
+				eventArgs.Dispose();
+			};
 
 			try
 			{
 				Interlocked.Increment (ref this.pendingAsync);
-				socket.SendToAsync (args);
+				if (!socket.SendToAsync (args)) {
+					Interlocked.Decrement (ref this.pendingAsync);
+					args.Dispose();
+				}
 			}
 			catch (SocketException)
 			{

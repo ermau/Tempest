@@ -273,11 +273,11 @@ namespace Tempest.Providers.Network
 					remaining -= len;
 					i += len;
 
-					if (remaining == 0)
-					{
+					if (remaining == 0) {
 						args.Completed += OnSendCompleted;
 						args.UserToken = tcs;
-					}
+					} else
+						args.Completed += (o, s) => s.Dispose();
 
 					try
 					{
@@ -509,6 +509,8 @@ namespace Tempest.Providers.Network
 			var tcs = e.UserToken as TaskCompletionSource<bool>;
 			if (tcs != null)
 				tcs.TrySetResult (true);
+
+			e.Dispose();
 		}
 
 		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "UdpConnectionProvider");

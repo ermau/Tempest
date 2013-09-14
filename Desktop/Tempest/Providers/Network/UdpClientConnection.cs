@@ -151,7 +151,6 @@ namespace Tempest.Providers.Network
 				this.socket = this.listener.GetSocket (target);
 
 				Timer dtimer = new Timer (100);
-				dtimer = new Timer (100);
 				dtimer.TimesUp += OnDeliveryTimer;
 				dtimer.Start();
 				this.deliveryTimer = dtimer;

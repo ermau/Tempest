@@ -124,6 +124,8 @@ namespace Tempest.Providers.Network
 
 		private Timer deliveryTimer;
 
+		private readonly TimeSpan pingTimeout = TimeSpan.FromSeconds (15);
+
 		protected override bool TryGetConnection (int connectionId, out UdpConnection connection)
 		{
 			connection = null;
@@ -156,8 +158,12 @@ namespace Tempest.Providers.Network
 
 		private void OnDeliveryTimer (object sender, EventArgs eventArgs)
 		{
-			foreach (UdpServerConnection connection in this.connections.Values)
+			foreach (UdpServerConnection connection in this.connections.Values) {
 				connection.ResendPending();
+
+				if ((DateTime.Now - connection.LastPing) > this.pingTimeout)
+					connection.DisconnectAsync (ConnectionResult.TimedOut);
+			}
 		}
 
 		private void OnConnectionMade (ConnectionMadeEventArgs e)

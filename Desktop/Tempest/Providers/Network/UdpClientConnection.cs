@@ -199,6 +199,12 @@ namespace Tempest.Providers.Network
 		private Timer connectTimer;
 		private Timer deliveryTimer;
 
+		private DateTime lastPing = DateTime.MinValue;
+		private DateTime lastPong = DateTime.MinValue;
+
+		private readonly TimeSpan pingInterval = TimeSpan.FromSeconds (5);
+		private readonly TimeSpan pingTimeout = TimeSpan.FromSeconds (15);
+
 		private class UdpClientConnectionlessListener
 			: UdpConnectionlessListener
 		{
@@ -243,6 +249,14 @@ namespace Tempest.Providers.Network
 		private void OnDeliveryTimer (object sender, EventArgs e)
 		{
 			ResendPending();
+
+			if ((DateTime.Now - this.lastPing) > this.pingInterval) {
+				this.lastPing = DateTime.Now;
+
+				SendAsync (new UnreliablePingMessage());
+			} else if (DateTime.Now - this.lastPong > this.pingTimeout) {
+				DisconnectAsync (ConnectionResult.TimedOut);
+			}
 		}
 
 		protected override void Cleanup()
@@ -278,6 +292,11 @@ namespace Tempest.Providers.Network
 		{
 			switch (e.Message.MessageType)
 			{
+				case (ushort)TempestMessageType.UnreliablePong: {
+					this.lastPong = DateTime.Now;
+					break;
+				}
+
 				case (ushort)TempestMessageType.AcknowledgeConnect:
 				{
 					var msg = (AcknowledgeConnectMessage)e.Message;

@@ -122,7 +122,7 @@ namespace Tempest.Providers.Network
 			var tcs = new TaskCompletionSource<Message>();
 			SendCore (message, future: tcs);
 
-			return tcs.Task.ContinueWith (t => (TResponse)t.Result);
+			return tcs.Task.ContinueWith (t => (TResponse)t.Result, TaskScheduler.Default);
 		}
 
 		public Task<bool> SendResponseAsync (Message originalMessage, Message response)

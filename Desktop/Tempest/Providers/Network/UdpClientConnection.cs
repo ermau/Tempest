@@ -250,6 +250,9 @@ namespace Tempest.Providers.Network
 		{
 			ResendPending();
 
+			if (!IsConnected)
+				return;
+
 			if ((DateTime.Now - this.lastPing) > this.pingInterval) {
 				this.lastPing = DateTime.Now;
 
@@ -332,6 +335,7 @@ namespace Tempest.Providers.Network
 					
 					ConnectionId = msg.ConnectionId;
 
+					this.lastPong = DateTime.Now;
 					this.formallyConnected = true;
 
 					Timer t = Interlocked.Exchange (ref this.connectTimer, null);

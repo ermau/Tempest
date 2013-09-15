@@ -346,6 +346,7 @@ namespace Tempest.Providers.Network
 
 		private readonly object sendSync = new object();
 
+		#if !SILVERLIGHT
 		private readonly Lazy<MessageResponseManager> responses =
 			new Lazy<MessageResponseManager> (() => new MessageResponseManager());
 
@@ -353,6 +354,14 @@ namespace Tempest.Providers.Network
 		{
 			get { return this.responses.Value; }
 		}
+		#else
+		private readonly MessageResponseManager responses = new MessageResponseManager();
+
+		protected MessageResponseManager Responses
+		{
+			get { return this.responses; }
+		}
+		#endif
 
 		private int pingFrequency;
 		protected virtual int PingFrequency
@@ -383,8 +392,12 @@ namespace Tempest.Providers.Network
 				}, TaskScheduler.Current);
 			}
 
+			#if !SILVERLIGHT
 			if (this.responses.IsValueCreated)
 				this.responses.Value.CheckTimeouts();
+			#else
+			Responses.CheckTimeouts();
+			#endif
 		}
 
 		protected virtual void Recycle()
@@ -404,8 +417,12 @@ namespace Tempest.Providers.Network
 				this.lastMessageId = 0;
 				this.nextMessageId = 0;
 
+				#if !SILVERLIGHT
 				if (this.responses.IsValueCreated)
 					this.responses.Value.Clear();
+				#else
+				Responses.Clear();
+				#endif
 
 				this.serializer = null;
 			}
@@ -644,7 +661,7 @@ namespace Tempest.Providers.Network
 							OnMessageReceived (args);
 
 							if (message.Header.IsResponse)
-								this.responses.Value.Receive (message);
+								Responses.Receive (message);
 						}
 					}
 				}

@@ -189,13 +189,6 @@ namespace Tempest.Tests
 			return task;
 		}
 
-		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
-		{
-			Task<TResponse> task = base.SendFor<TResponse> (message, timeout);
-			SendAsync (message);
-			return task;
-		}
-
 		public override Task<bool> SendResponseAsync (Message originalMessage, Message response)
 		{
 			var tcs = new TaskCompletionSource<bool>();
@@ -231,7 +224,6 @@ namespace Tempest.Tests
 				throw new ArgumentNullException ("provider");
 
 			this.provider = provider;
-			//this.connection = new MockServerConnection (this);
 		}
 
 		public MockClientConnection (MockConnectionProvider provider, IEnumerable<Protocol> protocols)
@@ -285,13 +277,6 @@ namespace Tempest.Tests
 			return task;
 		}
 
-		public override Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
-		{
-			Task<TResponse> task = base.SendFor<TResponse> (message, timeout);
-			connection.Receive (new MessageEventArgs (connection, message));
-			return task;
-		}
-
 		public override Task<bool> SendResponseAsync (Message originalMessage, Message response)
 		{
 			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
@@ -324,11 +309,11 @@ namespace Tempest.Tests
 	public class MockAsymmetricKey
 		: RSAAsymmetricKey
 	{
-		public void Serialize(ISerializationContext context, IValueWriter writer)
+		public void Serialize (ISerializationContext context, IValueWriter writer)
 		{
 		}
 
-		public void Deserialize(ISerializationContext context, IValueReader reader)
+		public void Deserialize (ISerializationContext context, IValueReader reader)
 		{
 		}
 
@@ -413,26 +398,20 @@ namespace Tempest.Tests
 			return tcs.Task;
 		}
 
-		private readonly Dictionary<int, TaskCompletionSource<Message>> responses = new Dictionary<int, TaskCompletionSource<Message>>();
-		public virtual Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
+		private readonly MessageResponseManager responses = new MessageResponseManager();
+
+		public Task<Message> SendFor (Message message, int timeout = 0)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
-			if (timeout > 0)
-				throw new NotSupportedException();
 
-			var tcs = new TaskCompletionSource<TResponse>();
-			var otcs = new TaskCompletionSource<Message>();
-			otcs.Task.ContinueWith (t => tcs.SetResult ((TResponse)t.Result));
+			Task<bool> sendTask = SendAsync (message);
+			return this.responses.SendFor (message, sendTask, timeout);
+		}
 
-			int mid = Interlocked.Increment (ref this.messageId);
-			lock (this.responses)
-				this.responses.Add (mid, otcs);
-
-			message.Header = new MessageHeader();
-			message.Header.MessageId = mid;
-
-			return tcs.Task;
+		public  Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
+		{
+			return SendFor (message, timeout).ContinueWith (t => (TResponse)t.Result, TaskScheduler.Default);
 		}
 
 		public abstract Task<bool> SendResponseAsync (Message originalMessage, Message response);
@@ -464,24 +443,13 @@ namespace Tempest.Tests
 
 		protected virtual void Cleanup()
 		{
-			lock (this.responses)
-			{
-				foreach (var response in this.responses)
-					response.Value.TrySetResult (null);
-
-				this.responses.Clear();
-			}
+			this.responses.Clear();
 		}
 
 		internal void ReceiveResponse (MessageEventArgs e)
 		{
-			bool response = false;
-			TaskCompletionSource<Message> tcs;
-			lock (this.responses)
-				response = this.responses.TryGetValue (e.Message.Header.MessageId, out tcs);
-
-			if (response)
-				tcs.SetResult (e.Message);
+			if (e.Message.Header.IsResponse)
+				this.responses.Receive (e.Message);
 
 			Receive (e);
 		}

@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Tempest
@@ -124,9 +125,22 @@ namespace Tempest
 		/// <summary>
 		/// Sends a <paramref name="message"/> on this connection and returns a <see cref="Task{TResponse}" /> for the direct response to this <paramref name="message"/>.
 		/// </summary>
+		/// <param name="message">The message to send.</param>
+		/// <param name="responseTimeout">A timeout for the resposne in milliseconds.</param>
+		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
+		/// <seealso cref="SendResponseAsync"/>
+		/// <remarks>
+		/// In some cases, such as sending a message while disconnecting, the message may fail to send
+		/// in which case the future's result will be <c>null</c>.
+		/// </remarks>
+		Task<Message> SendFor (Message message, int responseTimeout = 0);
+
+		/// <summary>
+		/// Sends a <paramref name="message"/> on this connection and returns a <see cref="Task{TResponse}" /> for the direct response to this <paramref name="message"/>.
+		/// </summary>
 		/// <typeparam name="TResponse">The type of message being expected in response.</typeparam>
 		/// <param name="message">The message to send.</param>
-		/// <param name="timeout">The timeout to apply in </param>
+		/// <param name="responseTimeout">A timeout for the response in milliseconds.</param>
 		/// <returns>A <see cref="Task{TResponse}" /> for the direct response to <paramref name="message"/>.</returns>
 		/// <exception cref="ArgumentNullException"><paramref name="message"/> is <c>null</c>.</exception>
 		/// <seealso cref="SendResponseAsync"/>
@@ -134,7 +148,7 @@ namespace Tempest
 		/// In some cases, such as sending a message while disconnecting, the message may fail to send
 		/// in which case the future's result will be <c>null</c>.
 		/// </remarks>
-		Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message;
+		Task<TResponse> SendFor<TResponse> (Message message, int responseTimeout = 0) where TResponse : Message;
 
 		/// <summary>
 		/// Sends a <paramref name="response"/> to <paramref name="originalMessage"/>.

@@ -75,6 +75,11 @@ namespace Tempest.Tests
 			return this.connection.SendAsync (message);
 		}
 
+		public Task<Message> SendFor (Message message, int timeout = 0)
+		{
+			return this.connection.SendFor (message, timeout);
+		}
+
 		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
 		{
 			return this.connection.SendFor<TResponse> (message, timeout);

@@ -48,6 +48,7 @@
     <Compile Include="AsyncTestTests.cs" />
     <Compile Include="BufferReaderWriterTests.cs" />
     <Compile Include="MessageBuffer.cs" />
+    <Compile Include="MessageResponseManagerTests.cs" />
     <Compile Include="TempestClientTests.cs" />
     <Compile Include="ConnectionProviderExtensions.cs" />
     <Compile Include="ConnectionProviderTests.cs" />

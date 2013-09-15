@@ -69,6 +69,7 @@
     <Compile Include="ISerializer.cs" />
     <Compile Include="IServerContext.cs" />
     <Compile Include="MessageHeader.cs" />
+    <Compile Include="MessageResponseManager.cs" />
     <Compile Include="ObjectSerializer.cs" />
     <Compile Include="InternalProtocol\ReliablePingMessage.cs" />
     <Compile Include="Providers\Network\ClientMessageSerializer.cs" />

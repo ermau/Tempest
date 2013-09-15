@@ -218,7 +218,7 @@ namespace Tempest.Providers.Network
 			this.running = true;
 			this.mtypes = types;
 
-			this.pingTimer = new Timer (PingFrequency);
+			this.pingTimer = new Timer (100);
 			this.pingTimer.Start();
 
 			Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Waiting for keys..", category);
@@ -335,7 +335,7 @@ namespace Tempest.Providers.Network
 				if (this.pendingConnections.Remove (connection))
 				{
 					this.serverConnections.Add (connection);
-					this.pingTimer.TimesUp += connection.Ping;
+					this.pingTimer.TimesUp += connection.PingTimerCallback;
 				}
 			}
 
@@ -364,7 +364,7 @@ namespace Tempest.Providers.Network
 			    if ((connected || this.pendingConnections.Remove (connection)) && atMax)
 			    {
 					if (connected)
-						this.pingTimer.TimesUp -= connection.Ping;
+						this.pingTimer.TimesUp -= connection.PingTimerCallback;
 
 			    	BeginAccepting (null);
 			    }

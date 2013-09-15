@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010-2012 Eric Maupin
+// Copyright (c) 2010-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
-using System.Security.Cryptography;
 using Tempest.InternalProtocol;
 using System.Threading;
 using System.Threading.Tasks;
@@ -180,7 +179,7 @@ namespace Tempest.Providers.Network
 		public int ResponseTime
 		{
 			get;
-			private set;
+			protected set;
 		}
 
 		/// <summary>
@@ -249,16 +248,20 @@ namespace Tempest.Providers.Network
 
 		public Task<bool> SendAsync (Message message)
 		{
-			return SendMessage (message);
+			return SendMessage (message, isResponse: false);
+		}
+
+		public Task<Message> SendFor (Message message, int timeout = 0)
+		{
+			Task<Message> responseTask;
+			SendMessage (message, false, true, timeout, out responseTask);
+			return responseTask;
 		}
 
 		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
 			where TResponse : Message
 		{
-			var tcs = new TaskCompletionSource<Message>();
-			SendMessage (message, false, tcs, timeout);
-
-			return tcs.Task.ContinueWith (t => (TResponse)t.Result);
+			return SendFor (message, timeout).ContinueWith (t => (TResponse)t.Result, TaskScheduler.Default);
 		}
 
 		public Task<bool> SendResponseAsync (Message originalMessage, Message response)
@@ -272,6 +275,7 @@ namespace Tempest.Providers.Network
 
 			response.Header = new MessageHeader();
 			response.Header.MessageId = originalMessage.Header.MessageId;
+
 			return SendMessage (response, isResponse: true);
 		}
 
@@ -285,9 +289,20 @@ namespace Tempest.Providers.Network
 			return Disconnect (reason, customReason);
 		}
 
-		public void Dispose()
+		public virtual void Dispose()
 		{
-			Dispose (true);
+			if (this.disposed)
+				return;
+
+			this.disposed = true;
+			Disconnect();
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for {0} pending asyncs", this.pendingAsync), String.Format ("{0}:{1} Dispose()", this.typeName, connectionId));
+
+			while (this.pendingAsync > 0)
+				Thread.Sleep (1);
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Disposed", String.Format ("{0}:{1} Dispose()", this.typeName, connectionId));
 		}
 
 		protected bool authReady;
@@ -329,20 +344,47 @@ namespace Tempest.Providers.Network
 
 		internal MessageSerializer serializer;
 
-		protected void Dispose (bool disposing)
+		private readonly object sendSync = new object();
+
+		private readonly Lazy<MessageResponseManager> responses =
+			new Lazy<MessageResponseManager> (() => new MessageResponseManager());
+
+		protected MessageResponseManager Responses
 		{
-			if (this.disposed)
-				return;
+			get { return this.responses.Value; }
+		}
 
-			this.disposed = true;
-			Disconnect();
+		private int pingFrequency;
+		protected virtual int PingFrequency
+		{
+			get { return this.pingFrequency; }
+		}
+		
+		private DateTime lastPing;
+		protected void Ping()
+		{
+			var now = DateTime.Now;
+			var last = (now - lastPing);
 
-			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for {0} pending asyncs", this.pendingAsync), String.Format ("{0}:{1} Dispose()", this.typeName, connectionId));
+			//if (this.pingsOut >= 2)
+			//{
+			//    Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (" + this.pingsOut + " pings out)", callCategory);
+			//    Disconnect(); // Connection timed out
+			//    return;
+			//}
 
-			while (this.pendingAsync > 0)
-				Thread.Sleep (1);
+			if (last.TotalMilliseconds >= PingFrequency) {
+				Interlocked.Increment (ref this.pingsOut);
 
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Disposed", String.Format ("{0}:{1} Dispose()", this.typeName, connectionId));
+				long sent = Stopwatch.GetTimestamp();
+				SendFor (new ReliablePingMessage { Interval = this.pingFrequency }).ContinueWith (t => {
+					long responseTime = Stopwatch.GetTimestamp() - sent;
+					ResponseTime = (int)TimeSpan.FromTicks (responseTime).TotalMilliseconds;
+				}, TaskScheduler.Current);
+			}
+
+			if (this.responses.IsValueCreated)
+				this.responses.Value.CheckTimeouts();
 		}
 
 		protected virtual void Recycle()
@@ -362,13 +404,8 @@ namespace Tempest.Providers.Network
 				this.lastMessageId = 0;
 				this.nextMessageId = 0;
 
-				lock (this.messageResponses)
-				{
-					foreach (var kvp in this.messageResponses)
-						kvp.Value.TrySetResult (null);
-
-					this.messageResponses.Clear();
-				}
+				if (this.responses.IsValueCreated)
+					this.responses.Value.Clear();
 
 				this.serializer = null;
 			}
@@ -388,10 +425,13 @@ namespace Tempest.Providers.Network
 				dc (this, e);
 		}
 
-		private readonly object sendSync = new object();
-		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();	
-	
-		private Task<bool> SendMessage (Message message, bool isResponse = false, TaskCompletionSource<Message> responseFuture = null, int timeout = 0)
+		private Task<bool> SendMessage (Message message, bool isResponse)
+		{
+			Task<Message> responseTask;
+			return SendMessage (message, isResponse, false, 0, out responseTask);
+		}
+
+		private Task<bool> SendMessage (Message message, bool isResponse, bool requestingResponse, int responseTimeout, out Task<Message> responseTask)
 		{
 			string callCategory = null;
 			#if TRACE
@@ -400,32 +440,28 @@ namespace Tempest.Providers.Network
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
-			TaskCompletionSource<bool> tcs = null;
-			if (responseFuture == null)
-				tcs = new TaskCompletionSource<bool> (message);
+			responseTask = null;
+
+			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool> (message);
 
 			if (message == null)
 				throw new ArgumentNullException ("message");
 			if (!IsConnected)
 			{
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (not connected)", callCategory);
-				if (responseFuture != null)
-					responseFuture.TrySetResult (null);
+				tcs.SetResult (false);
 
-				if (tcs != null)
-				{
-					tcs.SetResult (false);
-					return tcs.Task;
+				if (requestingResponse) {
+					var responseTcs = new TaskCompletionSource<Message>();
+					responseTcs.SetCanceled();
+					responseTask = responseTcs.Task;
 				}
 
-				return null;
+				return tcs.Task;
 			}
 
 			SocketAsyncEventArgs eargs = null;
 			#if NET_4
-			if (timeout > 0)
-			    throw new NotSupportedException ("Response timeout not supported");
-
 			if (!writerAsyncArgs.TryPop (out eargs))
 			{
 				while (eargs == null)
@@ -481,15 +517,12 @@ namespace Tempest.Providers.Network
 					message.Header = new MessageHeader();
 					Monitor.Enter (this.sendSync);
 					message.Header.MessageId = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
+
+					if (requestingResponse)
+						responseTask = Responses.SendFor (message, tcs.Task, responseTimeout);
 				}
 				else
 					message.Header.IsResponse = true;
-
-				if (responseFuture != null)
-				{
-					lock (this.messageResponses)
-						this.messageResponses.Add (message.Header.MessageId, responseFuture);
-				}
 
 				MessageSerializer slzr = this.serializer;
 				if (slzr == null)
@@ -503,13 +536,8 @@ namespace Tempest.Providers.Network
 					writerAsyncArgs.Push (eargs);
 					
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (serializer is null, probably disconnecting)", callCategory);
-					if (tcs != null)
-					{
-						tcs.SetResult (false);
-						return tcs.Task;
-					}
-					else
-						return null;
+					tcs.SetResult (false);
+					return tcs.Task;
 				}
 
 				int length;
@@ -531,16 +559,8 @@ namespace Tempest.Providers.Network
 					#endif
 					writerAsyncArgs.Push (eargs);
 
-					if (responseFuture != null)
-						responseFuture.TrySetResult (null);
-
-					if (tcs != null)
-					{
-						tcs.SetResult (false);
-						return tcs.Task;
-					}
-					else
-						return null;
+					tcs.SetResult (false);
+					return tcs.Task;
 				}
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Sending", callCategory);
@@ -559,7 +579,7 @@ namespace Tempest.Providers.Network
 			}
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
-			return (tcs != null) ? tcs.Task : null;
+			return tcs.Task;
 		}
 
 		protected void ReliableReceiveCompleted (object sender, SocketAsyncEventArgs e)
@@ -624,19 +644,7 @@ namespace Tempest.Providers.Network
 							OnMessageReceived (args);
 
 							if (message.Header.IsResponse)
-							{
-								bool found;
-								TaskCompletionSource<Message> tcs;
-								lock (this.messageResponses)
-								{
-									found = this.messageResponses.TryGetValue (message.Header.MessageId, out tcs);
-									if (found)
-										this.messageResponses.Remove (message.Header.MessageId);
-								}
-
-								if (found)
-									tcs.SetResult (message);
-							}
+								this.responses.Value.Receive (message);
 						}
 					}
 				}
@@ -688,7 +696,6 @@ namespace Tempest.Providers.Network
 			return true;
 		}
 
-		protected long lastSent;
 		protected int pingsOut = 0;
 
 		protected virtual void OnTempestMessageReceived (MessageEventArgs e)
@@ -696,24 +703,12 @@ namespace Tempest.Providers.Network
 			switch (e.Message.MessageType)
 			{
 				case (ushort)TempestMessageType.ReliablePing:
+					var ping = (ReliablePingMessage)e.Message;
+					this.pingFrequency = ping.Interval;
 					SendResponseAsync (e.Message, new ReliablePongMessage());
-					
-					#if !SILVERLIGHT
-					this.lastSent = Stopwatch.GetTimestamp();
-					#else
-					this.lastSent = DateTime.Now.Ticks;
-					#endif
 					break;
 
 				case (ushort)TempestMessageType.ReliablePong:
-					#if !SILVERLIGHT
-					long timestamp = Stopwatch.GetTimestamp();
-					#else
-					long timestamp = DateTime.Now.Ticks;
-					#endif
-					
-					// BUG: Doesn't really track response times, last sent to last received could be seen as really short with high delay
-					ResponseTime = (int)Math.Round (TimeSpan.FromTicks (timestamp - this.lastSent).TotalMilliseconds, 0);
 					this.pingsOut = 0;
 					break;
 
@@ -892,9 +887,7 @@ namespace Tempest.Providers.Network
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (error)", callCategory);
 				
-				if (t.Value != null)
-					t.Value.TrySetResult (false);
-
+				t.Value.TrySetResult (false);
 				return;
 			}
 
@@ -904,8 +897,7 @@ namespace Tempest.Providers.Network
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), callCategory);
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 
-			if (t.Value != null)
-				t.Value.TrySetResult (true);
+			t.Value.TrySetResult (true);
 		}
 	}
 }

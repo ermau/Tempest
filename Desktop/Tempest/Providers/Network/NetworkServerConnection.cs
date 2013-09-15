@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010-2012 Eric Maupin
+// Copyright (c) 2010-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
@@ -79,8 +80,13 @@ namespace Tempest.Providers.Network
 		private bool receivedProtocols;
 		private readonly IEnumerable<string> signatureHashAlgs;
 		internal readonly NetworkConnectionProvider provider;
-		
-		internal void Ping (object sender, EventArgs e)
+
+		protected override int PingFrequency
+		{
+			get { return this.provider.PingFrequency; }
+		}
+
+		internal void PingTimerCallback (object sender, EventArgs e)
 		{
 			string callCategory = null;
 			#if TRACE
@@ -88,18 +94,7 @@ namespace Tempest.Providers.Network
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
-			//if (this.pingsOut >= 2)
-			//{
-			//    Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (" + this.pingsOut + " pings out)", callCategory);
-			//    Disconnect(); // Connection timed out
-			//    return;
-			//}
-
-			SendAsync (new ReliablePingMessage { Interval = provider.PingFrequency }).ContinueWith (t =>
-			{
-				if (t.Result)
-					Interlocked.Increment (ref this.pingsOut);
-			});
+			Ping();
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);
 		}

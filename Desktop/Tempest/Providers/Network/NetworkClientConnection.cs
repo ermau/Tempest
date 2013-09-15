@@ -252,8 +252,8 @@ namespace Tempest.Providers.Network
 
 						if (ping.Interval != 0)
 						{
-							this.activityTimer = new Tempest.Timer (ping.Interval);
-							this.activityTimer.TimesUp += ActivityCallback;
+							this.activityTimer = new Tempest.Timer (100);
+							this.activityTimer.TimesUp += OnActivityTimer;
 							this.activityTimer.Start();
 						}
 					}
@@ -324,16 +324,9 @@ namespace Tempest.Providers.Network
 			base.OnDisconnected(e);
 		}
 
-		private void ActivityCallback (object sender, EventArgs e)
+		private void OnActivityTimer (object sender, EventArgs e)
 		{
-			#if !SILVERLIGHT
-			long now = Stopwatch.GetTimestamp();
-			#else
-			long now = DateTime.Now.Ticks;
-			#endif
-
-			//if ((now - this.lastActivity) > (this.pingFrequency * 10000) * 2)
-			//    Disconnect (ConnectionResult.TimedOut);
+			Ping();
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

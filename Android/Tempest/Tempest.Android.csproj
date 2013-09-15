@@ -154,6 +154,9 @@
     <Compile Include="..\..\Desktop\Tempest\MessageHeader.cs">
       <Link>MessageHeader.cs</Link>
     </Compile>
+    <Compile Include="..\..\Desktop\Tempest\MessageResponseManager.cs">
+      <Link>MessageResponseManager.cs</Link>
+    </Compile>
     <Compile Include="..\..\Desktop\Tempest\MutableLookup.cs">
       <Link>MutableLookup.cs</Link>
     </Compile>

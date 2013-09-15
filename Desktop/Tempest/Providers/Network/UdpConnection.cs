@@ -99,7 +99,7 @@ namespace Tempest.Providers.Network
 
 		public int ResponseTime
 		{
-			get { throw new NotImplementedException(); }
+			get { return -1; }
 		}
 
 		public event EventHandler<MessageEventArgs> MessageReceived;

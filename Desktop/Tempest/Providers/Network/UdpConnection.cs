@@ -29,7 +29,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -119,10 +118,9 @@ namespace Tempest.Providers.Network
 			if (!message.MustBeReliable && !message.PreferReliable)
 				throw new NotSupportedException ("Sending unreliable messages for a response is not supported");
 
-			var tcs = new TaskCompletionSource<Message>();
-			SendCore (message, future: tcs);
+			Task<bool> sendTask = SendCore (message);
 
-			return tcs.Task.ContinueWith (t => (TResponse)t.Result, TaskScheduler.Default);
+			return this.responses.Value.SendFor<TResponse> (message, sendTask, timeout);
 		}
 
 		public Task<bool> SendResponseAsync (Message originalMessage, Message response)
@@ -185,7 +183,8 @@ namespace Tempest.Providers.Network
 		protected bool requiresHandshake;
 		internal readonly ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>> partials = new ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>>();
 
-		private readonly Dictionary<int, TaskCompletionSource<Message>> messageResponses = new Dictionary<int, TaskCompletionSource<Message>>();
+		private readonly Lazy<MessageResponseManager> responses =
+			new Lazy<MessageResponseManager> (() => new MessageResponseManager());
 
 		protected abstract bool IsConnecting
 		{
@@ -200,7 +199,7 @@ namespace Tempest.Providers.Network
 				message.Header.MessageId = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
 		}
 
-		protected Task<bool> SendCore (Message message, bool dontSetId = false, TaskCompletionSource<Message> future = null)
+		protected Task<bool> SendCore (Message message, bool dontSetId = false)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -208,18 +207,12 @@ namespace Tempest.Providers.Network
 			Socket sock = this.socket;
 			MessageSerializer mserialzier = this.serializer;
 
-			TaskCompletionSource<bool> tcs = null;
-			if (future == null)
-				tcs = new TaskCompletionSource<bool> (message);
+			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool> (message);
 
 			if (sock == null || mserialzier == null || (!IsConnected && !IsConnecting))
 			{
-				if (future != null)
-					future.TrySetResult (null);
-				else
-					tcs.TrySetResult (false);
-				
-				return (tcs != null) ? tcs.Task : null;
+				tcs.TrySetResult (false);
+				return tcs.Task;
 			}
 
 			if (message.Header == null)
@@ -227,12 +220,6 @@ namespace Tempest.Providers.Network
 
 			if (!dontSetId)
 				SetMessageId (message);
-
-			if (future != null)
-			{
-				lock (this.messageResponses)
-					this.messageResponses.Add (message.Header.MessageId, future);
-			}
 
 			int length;
 			byte[] buffer = mserialzier.GetBytes (message, out length, new byte[2048]);
@@ -286,8 +273,7 @@ namespace Tempest.Providers.Network
 					}
 					catch (ObjectDisposedException)
 					{
-						if (tcs != null)
-							tcs.TrySetResult (false);
+						tcs.TrySetResult (false);
 					}
 				} while (remaining > 0);
 			}
@@ -312,12 +298,11 @@ namespace Tempest.Providers.Network
 				}
 				catch (ObjectDisposedException)
 				{
-					if (tcs != null)
-						tcs.TrySetResult (false);
+					tcs.TrySetResult (false);
 				}
 			}
 
-			return (tcs != null) ? tcs.Task : null;
+			return tcs.Task;
 		}
 
 		protected virtual void Cleanup()
@@ -334,13 +319,8 @@ namespace Tempest.Providers.Network
 			this.rqueue.Clear();
 			this.partials.Clear();
 
-			lock (this.messageResponses)
-			{
-				foreach (var kvp in this.messageResponses)
-					kvp.Value.TrySetResult (null);
-
-				this.messageResponses.Clear();
-			}
+			if (this.responses.IsValueCreated)
+				this.responses.Value.Clear();
 
 			lock (this.pendingAck)
 				this.pendingAck.Clear();
@@ -374,6 +354,12 @@ namespace Tempest.Providers.Network
 				handler (this, e);
 		}
 
+		internal void CheckPendingTimeouts()
+		{
+			if (this.responses.IsValueCreated)
+				this.responses.Value.CheckTimeouts();
+		}
+
 		internal void ResendPending()
 		{
 			TimeSpan span = TimeSpan.FromSeconds (1);
@@ -393,13 +379,7 @@ namespace Tempest.Providers.Network
 			}
 
 			foreach (Message message in resending)
-			{
-				TaskCompletionSource<Message> future;
-				lock (this.messageResponses)
-					this.messageResponses.TryGetValue (message.Header.MessageId, out future);
-
-				SendCore (message, dontSetId: true, future: future);
-			}
+				SendCore (message, dontSetId: true);
 		}
 
 		internal void Receive (Message message, bool fromPartials = false)
@@ -433,15 +413,7 @@ namespace Tempest.Providers.Network
 				OnMessageReceived (args);
 
 				if (args.Message.Header.IsResponse)
-				{
-					TaskCompletionSource<Message> tcs;
-					bool found;
-					lock (this.messageResponses)
-						found = this.messageResponses.TryGetValue (args.Message.Header.MessageId, out tcs);
-					
-					if (found)
-						tcs.TrySetResult (args.Message);
-				}
+					this.responses.Value.Receive (args.Message);
 			}
 		}
 

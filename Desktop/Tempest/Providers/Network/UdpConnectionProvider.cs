@@ -160,6 +160,7 @@ namespace Tempest.Providers.Network
 		{
 			foreach (UdpServerConnection connection in this.connections.Values) {
 				connection.ResendPending();
+				connection.CheckPendingTimeouts();
 
 				if ((DateTime.Now - connection.LastPing) > this.pingTimeout)
 					connection.DisconnectAsync (ConnectionResult.TimedOut);

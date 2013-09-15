@@ -249,6 +249,7 @@ namespace Tempest.Providers.Network
 		private void OnDeliveryTimer (object sender, EventArgs e)
 		{
 			ResendPending();
+			CheckPendingTimeouts();
 
 			if (!IsConnected)
 				return;

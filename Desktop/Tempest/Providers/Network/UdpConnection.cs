@@ -110,18 +110,22 @@ namespace Tempest.Providers.Network
 			return SendCore (message);
 		}
 
-		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
-			where TResponse : Message
+		public Task<Message> SendFor (Message message, int timeout = 0)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
 			if (!message.MustBeReliable && !message.PreferReliable)
 				throw new NotSupportedException ("Sending unreliable messages for a response is not supported");
 
-			Task<bool> sendTask = SendCore (message);
+			Task<Message> responseTask;
+			SendCore (message, false, true, timeout, out responseTask);
+			return responseTask;
+		}
 
-			return this.responses.Value.SendFor (message, sendTask, timeout)
-				.ContinueWith (t => (TResponse)t.Result, TaskScheduler.Default);
+		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
+			where TResponse : Message
+		{
+			return SendFor (message, timeout).ContinueWith (t => (TResponse)t.Result, TaskScheduler.Default);
 		}
 
 		public Task<bool> SendResponseAsync (Message originalMessage, Message response)
@@ -192,6 +196,11 @@ namespace Tempest.Providers.Network
 			get;
 		}
 
+		protected MessageResponseManager Responses
+		{
+			get { return this.responses.Value; }
+		}
+
 		private void SetMessageId (Message message)
 		{
 			if (message.MustBeReliable || message.PreferReliable)
@@ -202,8 +211,16 @@ namespace Tempest.Providers.Network
 
 		protected Task<bool> SendCore (Message message, bool dontSetId = false)
 		{
+			Task<Message> messageTask;
+			return SendCore (message, dontSetId, false, 0, out messageTask);
+		}
+
+		protected Task<bool> SendCore (Message message, bool dontSetId, bool responseRequested, int timeout, out Task<Message> responseTask)
+		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
+
+			responseTask = null;
 
 			Socket sock = this.socket;
 			MessageSerializer mserialzier = this.serializer;
@@ -213,14 +230,25 @@ namespace Tempest.Providers.Network
 			if (sock == null || mserialzier == null || (!IsConnected && !IsConnecting))
 			{
 				tcs.TrySetResult (false);
+
+				if (responseRequested) {
+					var responseTcs = new TaskCompletionSource<Message>();
+					responseTcs.SetCanceled();
+					responseTask = responseTcs.Task;
+				}
+
 				return tcs.Task;
 			}
 
 			if (message.Header == null)
 				message.Header = new MessageHeader();
 
-			if (!dontSetId)
+			if (!dontSetId) {
 				SetMessageId (message);
+
+				if (responseRequested)
+					responseTask = Responses.SendFor (message, tcs.Task, timeout);
+			}
 
 			int length;
 			byte[] buffer = mserialzier.GetBytes (message, out length, new byte[2048]);

@@ -35,19 +35,17 @@ namespace Tempest
 {
 	public sealed class MessageResponseManager
 	{
-		public Task<T> SendFor<T> (Message message, Task<bool> sendTask)
-			where T : Message
+		public Task<Message> SendFor (Message message, Task<bool> sendTask)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
 			if (message.Header == null)
 				throw new ArgumentNullException ("message", "Message.Header is null");
 
-			return SendForCore<T> (message, sendTask);
+			return SendForCore (message, sendTask);
 		}
 
-		public Task<T> SendFor<T> (Message message, Task<bool> sendTask, int timeout)
-			where T : Message
+		public Task<Message> SendFor (Message message, Task<bool> sendTask, int timeout)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -59,11 +57,10 @@ namespace Tempest
 					throw new InvalidOperationException ("Message already waiting response");
 			}
 
-			return SendForCore<T> (message, sendTask);
+			return SendForCore (message, sendTask);
 		}
 
-		public Task<T> SendFor<T> (Message message, Task<bool> sendTask, CancellationToken cancelToken)
-			where T : Message
+		public Task<Message> SendFor (Message message, Task<bool> sendTask, CancellationToken cancelToken)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -79,7 +76,7 @@ namespace Tempest
 					cancelTcs.TrySetCanceled();
 			});
 
-			return SendForCore<T> (message, sendTask);
+			return SendForCore (message, sendTask);
 		}
 
 		public void Receive (Message message)
@@ -145,8 +142,7 @@ namespace Tempest
 		private readonly ConcurrentDictionary<int, int> timeouts = new ConcurrentDictionary<int, int>();
 		private DateTime lastTimeoutCheck = DateTime.Now;
 
-		private Task<T> SendForCore<T> (Message message, Task<bool> sendTask)
-			where T : Message
+		private Task<Message> SendForCore (Message message, Task<bool> sendTask)
 		{
 			int id = message.Header.MessageId;
 
@@ -164,7 +160,7 @@ namespace Tempest
 					cancelTcs.TrySetCanceled();
 			}, TaskScheduler.Default);
 
-			return tcs.Task.ContinueWith (t => (T)t.Result, TaskScheduler.Default);
+			return tcs.Task;
 		}
 	}
 }

@@ -45,7 +45,7 @@ namespace Tempest.Tests
 
 			var msg = new BlankMessage { Header = new MessageHeader { MessageId = 1 } };
 
-			Task<BlankMessage> response = mrm.SendFor<BlankMessage> (msg, tcs.Task);
+			Task<Message> response = mrm.SendFor (msg, tcs.Task);
 
 			var responseMsg = new BlankMessage {
 				Header = new MessageHeader {
@@ -72,7 +72,7 @@ namespace Tempest.Tests
 
 			var msg = new BlankMessage { Header = new MessageHeader { MessageId = 1 } };
 
-			Task<BlankMessage> response = mrm.SendFor<BlankMessage> (msg, tcs.Task);
+			Task<Message> response = mrm.SendFor (msg, tcs.Task);
 
 			try {
 				if (!response.Wait (10000))
@@ -80,6 +80,7 @@ namespace Tempest.Tests
 
 				Assert.Fail ("Did not throw cancel exception");
 			} catch (AggregateException aex) {
+				Assert.IsTrue (response.IsCanceled);
 				Assert.That (aex.Flatten().InnerException, Is.InstanceOf<OperationCanceledException>());
 			}
 		}
@@ -94,7 +95,7 @@ namespace Tempest.Tests
 
 			var msg = new BlankMessage { Header = new MessageHeader { MessageId = 1 } };
 
-			Task<BlankMessage> response = mrm.SendFor<BlankMessage> (msg, tcs.Task, 1000);
+			Task<Message> response = mrm.SendFor (msg, tcs.Task, 1000);
 
 			Thread.Sleep (2000);
 
@@ -106,6 +107,7 @@ namespace Tempest.Tests
 
 				Assert.Fail ("Did not throw cancel exception");
 			} catch (AggregateException aex) {
+				Assert.IsTrue (response.IsCanceled);
 				Assert.That (aex.Flatten().InnerException, Is.InstanceOf<OperationCanceledException>());
 			}
 		}
@@ -120,7 +122,7 @@ namespace Tempest.Tests
 
 			var msg = new BlankMessage { Header = new MessageHeader { MessageId = 1 } };
 
-			Task<BlankMessage> response = mrm.SendFor<BlankMessage> (msg, tcs.Task, 0);
+			Task<Message> response = mrm.SendFor (msg, tcs.Task, 0);
 
 			mrm.CheckTimeouts();
 
@@ -149,7 +151,7 @@ namespace Tempest.Tests
 
 			var msg = new BlankMessage { Header = new MessageHeader { MessageId = 1 } };
 
-			Task<BlankMessage> response = mrm.SendFor<BlankMessage> (msg, tcs.Task, 1000);
+			Task<Message> response = mrm.SendFor (msg, tcs.Task, 1000);
 
 			var responseMsg = new BlankMessage {
 				Header = new MessageHeader {
@@ -180,7 +182,7 @@ namespace Tempest.Tests
 
 			var source = new CancellationTokenSource();
 
-			Task<BlankMessage> response = mrm.SendFor<BlankMessage> (msg, tcs.Task, source.Token);
+			Task<Message> response = mrm.SendFor (msg, tcs.Task, source.Token);
 
 			source.Cancel();
 
@@ -190,6 +192,7 @@ namespace Tempest.Tests
 
 				Assert.Fail ("Did not throw cancel exception");
 			} catch (AggregateException aex) {
+				Assert.IsTrue (response.IsCanceled);
 				Assert.That (aex.Flatten().InnerException, Is.InstanceOf<OperationCanceledException>());
 			}
 		}
@@ -206,7 +209,7 @@ namespace Tempest.Tests
 
 			var source = new CancellationTokenSource();
 
-			Task<BlankMessage> response = mrm.SendFor<BlankMessage> (msg, tcs.Task, source.Token);
+			Task<Message> response = mrm.SendFor (msg, tcs.Task, source.Token);
 
 			var responseMsg = new BlankMessage {
 				Header = new MessageHeader {

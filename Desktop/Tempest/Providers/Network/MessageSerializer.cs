@@ -392,16 +392,16 @@ namespace Tempest.Providers.Network
 					break;
 				}
 
-				if (header == null || header.Message == null)
-				{
+				if (header == null || header.Message == null) {
+					header = null;
 					Disconnect();
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (header not found)", callCategory);
 					return null;
 				}
 
 				length = header.MessageLength;
-				if (length > MaxMessageSize)
-				{
+				if (length > MaxMessageSize) {
+					header = null;
 					Disconnect();
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (bad message size)", callCategory);
 					return null;
@@ -414,8 +414,8 @@ namespace Tempest.Providers.Network
 					continue;
 				}
 
-				if (messageIdCallback != null && !messageIdCallback (header))
-				{
+				if (messageIdCallback != null && !messageIdCallback (header)) {
+					header = null;
 					Disconnect();
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (message id callback was false)", callCategory);
 					return null;
@@ -453,9 +453,8 @@ namespace Tempest.Providers.Network
 							return null;
 						}
 					}
-				}
-				catch (Exception ex)
-				{
+				} catch (Exception ex) {
+					header = null;
 					Disconnect();
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting for error: " + ex, callCategory);
 					return null;

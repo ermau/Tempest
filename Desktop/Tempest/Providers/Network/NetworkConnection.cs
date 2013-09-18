@@ -373,7 +373,7 @@ namespace Tempest.Providers.Network
 		protected void Ping()
 		{
 			var now = DateTime.Now;
-			var last = (now - lastPing);
+			var last = (now - this.lastPing);
 
 			//if (this.pingsOut >= 2)
 			//{
@@ -383,6 +383,7 @@ namespace Tempest.Providers.Network
 			//}
 
 			if (last.TotalMilliseconds >= PingFrequency) {
+				this.lastPing = now;
 				Interlocked.Increment (ref this.pingsOut);
 
 				long sent = Stopwatch.GetTimestamp();

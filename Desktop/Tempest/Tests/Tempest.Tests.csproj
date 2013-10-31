@@ -49,6 +49,7 @@
     <Compile Include="BufferReaderWriterTests.cs" />
     <Compile Include="MessageBuffer.cs" />
     <Compile Include="MessageResponseManagerTests.cs" />
+    <Compile Include="Mocks\MockConnectionProvider.cs" />
     <Compile Include="TempestClientTests.cs" />
     <Compile Include="ConnectionProviderExtensions.cs" />
     <Compile Include="ConnectionProviderTests.cs" />
@@ -57,7 +58,6 @@
     <Compile Include="InternalProtocolMessageTests.cs" />
     <Compile Include="MessageExtensions.cs" />
     <Compile Include="MessageFactoryTests.cs" />
-    <Compile Include="MockConnectionProvider.cs" />
     <Compile Include="MockConnectionProviderTests.cs" />
     <Compile Include="MockMessage.cs" />
     <Compile Include="MutableLookupTest.cs" />

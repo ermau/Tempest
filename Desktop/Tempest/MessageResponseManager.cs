@@ -27,7 +27,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,6 +34,50 @@ namespace Tempest
 {
 	public sealed class MessageResponseManager
 	{
+		public Task<Message> SendFor (Message message, Func<Message, Task<bool>> sender)
+		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+			if (message.Header == null)
+				throw new ArgumentNullException ("message", "Message.Header is null");
+
+			return SendForCore (message, sender);
+		}
+
+		public Task<Message> SendFor (Message message, Func<Message, Task<bool>> sender, int timeout)
+		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+			if (message.Header == null)
+				throw new ArgumentNullException ("message", "Message.Header is null");
+
+			if (timeout > 0) {
+				if (!this.timeouts.TryAdd (message.Header.MessageId, timeout))
+					throw new InvalidOperationException ("Message already waiting response");
+			}
+
+			return SendForCore (message, sender);
+		}
+
+		public Task<Message> SendFor (Message message, Func<Message, Task<bool>> sender, CancellationToken cancelToken)
+		{
+			if (message == null)
+				throw new ArgumentNullException ("message");
+			if (message.Header == null)
+				throw new ArgumentNullException ("message", "Message.Header is null");
+			if (sender == null)
+				throw new ArgumentNullException ("sender");
+
+			int id = message.Header.MessageId;
+			cancelToken.Register (() => {
+				TaskCompletionSource<Message> cancelTcs;
+				if (this.messageResponses.TryRemove (id, out cancelTcs))
+					cancelTcs.TrySetCanceled();
+			});
+
+			return SendForCore (message, sender);
+		}
+
 		public Task<Message> SendFor (Message message, Task<bool> sendTask)
 		{
 			if (message == null)
@@ -42,7 +85,7 @@ namespace Tempest
 			if (message.Header == null)
 				throw new ArgumentNullException ("message", "Message.Header is null");
 
-			return SendForCore (message, sendTask);
+			return SendForCore (message, sendTask: sendTask);
 		}
 
 		public Task<Message> SendFor (Message message, Task<bool> sendTask, int timeout)
@@ -57,7 +100,7 @@ namespace Tempest
 					throw new InvalidOperationException ("Message already waiting response");
 			}
 
-			return SendForCore (message, sendTask);
+			return SendForCore (message, sendTask: sendTask);
 		}
 
 		public Task<Message> SendFor (Message message, Task<bool> sendTask, CancellationToken cancelToken)
@@ -76,7 +119,7 @@ namespace Tempest
 					cancelTcs.TrySetCanceled();
 			});
 
-			return SendForCore (message, sendTask);
+			return SendForCore (message, sendTask: sendTask);
 		}
 
 		public void Receive (Message message)
@@ -142,7 +185,7 @@ namespace Tempest
 		private readonly ConcurrentDictionary<int, int> timeouts = new ConcurrentDictionary<int, int>();
 		private DateTime lastTimeoutCheck = DateTime.Now;
 
-		private Task<Message> SendForCore (Message message, Task<bool> sendTask)
+		private Task<Message> SendForCore (Message message, Func<Message, Task<bool>> sender = null, Task<bool> sendTask = null)
 		{
 			int id = message.Header.MessageId;
 
@@ -150,6 +193,9 @@ namespace Tempest
 			
 			if (!this.messageResponses.TryAdd (id, tcs))
 				throw new InvalidOperationException ("Message already waiting response");
+
+			if (sender != null)
+				sendTask = sender (message);
 
 			sendTask.ContinueWith (t => {
 				if (!t.IsFaulted && t.Result)

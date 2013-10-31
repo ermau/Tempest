@@ -195,6 +195,7 @@ namespace Tempest.Tests
 
 			response.Header = new MessageHeader();
 			response.Header.MessageId = originalMessage.Header.MessageId;
+			response.Header.IsResponse = true;
 			
 			connection.ReceiveResponse (new MessageEventArgs (connection, response));
 
@@ -392,8 +393,7 @@ namespace Tempest.Tests
 			var tcs = new TaskCompletionSource<bool>();
 			tcs.SetResult (true);
 
-			message.Header = new MessageHeader();
-			message.Header.MessageId = Interlocked.Increment (ref this.messageId);
+			PrepareMessage (message);
 
 			return tcs.Task;
 		}
@@ -405,8 +405,9 @@ namespace Tempest.Tests
 			if (message == null)
 				throw new ArgumentNullException ("message");
 
-			Task<bool> sendTask = SendAsync (message);
-			return this.responses.SendFor (message, sendTask, timeout);
+			PrepareMessage (message);
+
+			return this.responses.SendFor (message, SendAsync, timeout);
 		}
 
 		public  Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
@@ -429,6 +430,15 @@ namespace Tempest.Tests
 		public Task DisconnectAsync (ConnectionResult reason, string customReason = null)
 		{
 			return Disconnect (reason, customReason);
+		}
+
+		private void PrepareMessage (Message message)
+		{
+			if (message.Header != null)
+				return;
+
+			message.Header = new MessageHeader();
+			message.Header.MessageId = Interlocked.Increment (ref this.messageId);
 		}
 
 		protected internal virtual Task Disconnect (ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)

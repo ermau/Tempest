@@ -91,14 +91,26 @@
     <Compile Include="..\..\..\Desktop\Tempest\Tests\MessageFactoryTests.cs">
       <Link>Tests\MessageFactoryTests.cs</Link>
     </Compile>
-    <Compile Include="..\..\..\Desktop\Tempest\Tests\MockConnectionProvider.cs">
-      <Link>Tests\MockConnectionProvider.cs</Link>
-    </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\MockConnectionProviderTests.cs">
       <Link>Tests\MockConnectionProviderTests.cs</Link>
     </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\MockMessage.cs">
       <Link>Tests\MockMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\Mocks\MockAsymmetricKey.cs">
+      <Link>Tests\Mocks\MockAsymmetricKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\Mocks\MockClientConnection.cs">
+      <Link>Tests\Mocks\MockClientConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\Mocks\MockConnection.cs">
+      <Link>Tests\Mocks\MockConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\Mocks\MockConnectionProvider.cs">
+      <Link>Tests\Mocks\MockConnectionProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\Mocks\MockServerConnection.cs">
+      <Link>Tests\Mocks\MockServerConnection.cs</Link>
     </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\NetworkProviderTests.cs">
       <Link>Tests\NetworkProviderTests.cs</Link>

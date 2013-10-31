@@ -49,7 +49,11 @@
     <Compile Include="BufferReaderWriterTests.cs" />
     <Compile Include="MessageBuffer.cs" />
     <Compile Include="MessageResponseManagerTests.cs" />
+    <Compile Include="Mocks\MockAsymmetricKey.cs" />
+    <Compile Include="Mocks\MockClientConnection.cs" />
+    <Compile Include="Mocks\MockConnection.cs" />
     <Compile Include="Mocks\MockConnectionProvider.cs" />
+    <Compile Include="Mocks\MockServerConnection.cs" />
     <Compile Include="TempestClientTests.cs" />
     <Compile Include="ConnectionProviderExtensions.cs" />
     <Compile Include="ConnectionProviderTests.cs" />

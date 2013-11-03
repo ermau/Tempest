@@ -27,7 +27,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
@@ -53,18 +52,12 @@ namespace Tempest
 			this.connection.Connected += OnConnectionConnected;
 			this.connection.Disconnected += OnConnectionDisconnected;
 
-			if ((this.connection.Modes & MessagingModes.Inline) == MessagingModes.Inline && (Environment.ProcessorCount == 1 || (this.connection.Modes & MessagingModes.Async) != MessagingModes.Async))
-				this.mode = MessagingModes.Inline;
-			else
-			{
-				#if NET_4
-				this.mqueue = new ConcurrentQueue<MessageEventArgs>();
-				#else
-				this.mqueue = new Queue<MessageEventArgs>();
-				#endif
-				this.connection.MessageReceived += ConnectionOnMessageReceived;
-				this.mode = MessagingModes.Async;
-			}
+			#if NET_4
+			this.mqueue = new ConcurrentQueue<MessageEventArgs>();
+			#else
+			this.mqueue = new Queue<MessageEventArgs>();
+			#endif
+			this.connection.MessageReceived += ConnectionOnMessageReceived;
 
 			this.polling = poll;
 		}
@@ -104,13 +97,10 @@ namespace Tempest
 			if (target == null)
 				throw new ArgumentNullException ("target");
 
-			if (this.mode == MessagingModes.Async)
-			{
-				var newWait = new AutoResetEvent (false);
-				AutoResetEvent oldWait = Interlocked.Exchange (ref this.mwait, newWait);
-				if (oldWait != null)
-					oldWait.Set();
-			}
+			var newWait = new AutoResetEvent (false);
+			AutoResetEvent oldWait = Interlocked.Exchange (ref this.mwait, newWait);
+			if (oldWait != null)
+				oldWait.Set();
 
 			return this.connection.ConnectAsync (target, this.messageTypes);
 		}
@@ -128,52 +118,8 @@ namespace Tempest
 			return Disconnect (reason, customReason);
 		}
 
-		/// <summary>
-		/// Manually polls the connection and invokes message handlers.
-		/// </summary>
-		public void Poll()
-		{
-			if (!IsConnected)
-				return;
-
-			List<MessageEventArgs> messages;
-			if (this.mode == MessagingModes.Async)
-			{
-				messages = new List<MessageEventArgs> (mqueue.Count * 2);
-
-				#if NET_4
-				MessageEventArgs e;
-				while (this.mqueue.TryDequeue (out e))
-					messages.Add (e);
-				#else
-				lock (this.mqueue)
-				{
-					while (this.mqueue.Count > 0)
-						messages.Add (this.mqueue.Dequeue());
-				}
-				#endif
-			}
-			else
-				messages = this.connection.Tick().ToList();
-
-			for (int i = 0; i < messages.Count; ++i)
-			{
-				var m = messages[i];
-				var mhandlers = GetHandlers (m.Message);
-				if (mhandlers == null)
-					continue;
-
-				for (int n = 0; n < mhandlers.Count; ++n)
-					mhandlers[n] (m);
-			}
-
-			if (this.disconnecting)
-				DisconnectAsync();
-		}
-
 		private bool disconnecting;
 		private readonly IClientConnection connection;
-		private readonly MessagingModes mode;
 		private readonly bool polling;
 
 		#if NET_4
@@ -194,25 +140,23 @@ namespace Tempest
 
 			this.running = false;
 
-			if (this.mode == MessagingModes.Async)
-			{
-				AutoResetEvent wait = Interlocked.Exchange (ref this.mwait, null);
-				if (wait != null)
-					wait.Set();
+			AutoResetEvent wait = Interlocked.Exchange (ref this.mwait, null);
+			if (wait != null)
+				wait.Set();
 
-				#if NET_4
-				MessageEventArgs e;
-				while (this.mqueue.TryDequeue (out e)) ;
-				#else
-				lock (this.mqueue)
-					this.mqueue.Clear();
-				#endif
+			#if NET_4
+			MessageEventArgs e;
+			while (this.mqueue.TryDequeue (out e)) {
 			}
+			#else
+			lock (this.mqueue)
+				this.mqueue.Clear();
+			#endif
 
 			Thread runner = Interlocked.Exchange (ref this.messageRunner, null);
 			if (runner != null)
 				task = task.ContinueWith (t => runner.Join());
-			
+
 			this.disconnecting = false;
 			return task;
 		}
@@ -227,50 +171,7 @@ namespace Tempest
 				wait.Set();
 		}
 
-		private void InlineMessageRunner()
-		{
-			#if NET_4
-			SpinWait wait = new SpinWait();
-			#endif
-
-		    while (this.running)
-		    {
-				List<MessageEventArgs> messages = this.connection.Tick().ToList();
-				if (this.running && messages.Count > 0)
-				{
-					#if NET_4
-					wait.Reset();
-					#endif
-
-					foreach (MessageEventArgs e in messages)
-					{
-						if (!this.running)
-							break;
-
-						var mhandlers = GetHandlers (e.Message);
-						if (mhandlers == null)
-							continue;
-
-						for (int i = 0; i < mhandlers.Count; ++i)
-							mhandlers[i] (e);
-					}
-				}
-
-				if (this.disconnecting)
-				{
-					DisconnectAsync();
-					return;
-				}
-
-				#if NET_4
-				wait.SpinOnce();
-				#else
-				Thread.Sleep (1);
-				#endif
-		    }
-		}
-
-		private void AsyncMessageRunner ()
+		private void MessageRunner ()
 		{
 			#if NET_4
 			ConcurrentQueue<MessageEventArgs> q = this.mqueue;			
@@ -337,9 +238,10 @@ namespace Tempest
 				while (this.messageRunner != null)
 					Thread.Sleep (0);
 
-				Thread runner = (this.mode == MessagingModes.Inline) ? new Thread (InlineMessageRunner) : new Thread (AsyncMessageRunner);
-				runner.Name = "Client Message Runner";
-				runner.IsBackground = true;
+				Thread runner = new Thread (MessageRunner) {
+					Name = "Client Message Runner",
+					IsBackground = true
+				};
 				runner.Start();
 
 				this.messageRunner = runner;

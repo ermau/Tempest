@@ -303,49 +303,12 @@ namespace Tempest.Tests
 			test.Assert (5000);
 		}
 
-		[Test]
-		public void InlineSupport()
-		{
-			var c = GetNewClientConnection();
-			
-			if ((c.Modes & MessagingModes.Inline) == MessagingModes.Inline)
-			{
-				Assert.DoesNotThrow (() => c.Tick());
-			}
-			else
-			{
-				Assert.Throws<NotSupportedException> (() => c.Tick());
-			}
-		}
-
-		[Test]
-		public void ClientSendMessageInline()
-		{
-			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Inline) != MessagingModes.Inline)
-				Assert.Ignore();
-
-			throw new NotImplementedException();
-		}
-
-		[Test]
-		public void ServerSendMessageInline()
-		{
-			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Inline) != MessagingModes.Inline)
-				Assert.Ignore();
-
-			throw new NotImplementedException();
-		}
-
 		[Test, Repeat (3)]
 		public void ClientSendMessageAsync()
 		{
 			const string content = "Oh, hello there.";
 
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 
 			IServerConnection connection = null;
 
@@ -379,8 +342,6 @@ namespace Tempest.Tests
 			const string content = "Oh, hello there.";
 
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 
 			IServerConnection connection = null;
 
@@ -414,8 +375,6 @@ namespace Tempest.Tests
 			const string content = "Oh, hello there.";
 
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 
 			var test = new AsyncTest();
 
@@ -443,8 +402,6 @@ namespace Tempest.Tests
 			const string content = "Oh, hello there.";
 
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 
 			var test = new AsyncTest (e =>
 			{
@@ -473,8 +430,6 @@ namespace Tempest.Tests
 			string content = TestHelpers.GetLongString (random, MaxPayloadSize - sizeof (int));
 
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 
 			var test = new AsyncTest (e =>
 			{
@@ -501,8 +456,6 @@ namespace Tempest.Tests
 		public void Stress()
 		{
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 
 			const int messages = 1000;
 			int message = 0;
@@ -549,8 +502,6 @@ namespace Tempest.Tests
 		public void StressConcurrentSends()
 		{
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 
 			const int messages = 10000;
 			var test = new AsyncTest (e =>
@@ -605,8 +556,6 @@ namespace Tempest.Tests
 		public void StressAuthenticatedAndEncrypted()
 		{
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 
 			const int messages = 1000;
 			int number = 0;
@@ -675,8 +624,6 @@ namespace Tempest.Tests
 		public void StressRandomLongAuthenticatedMessage()
 		{
 			var c = GetNewClientConnection();
-			if ((c.Modes & MessagingModes.Async) != MessagingModes.Async)
-				Assert.Ignore();
 
 			const int messages = 1000;
 			int number = 0;

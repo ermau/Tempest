@@ -62,11 +62,6 @@ namespace Tempest.Tests
 			get { return -1; }
 		}
 
-		public MessagingModes Modes
-		{
-			get { return MessagingModes.Async; }
-		}
-
 		public Target RemoteTarget
 		{
 			get;

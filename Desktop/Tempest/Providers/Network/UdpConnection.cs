@@ -74,11 +74,6 @@ namespace Tempest.Providers.Network
 			get { return this.serializer.Protocols; }
 		}
 
-		public MessagingModes Modes
-		{
-			get { return MessagingModes.Async; }
-		}
-
 		public Target RemoteTarget
 		{
 			get;

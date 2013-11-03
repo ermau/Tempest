@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010-2012 Eric Maupin
+// Copyright (c) 2010-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,30 +26,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Tempest
 {
-	[Flags]
-	public enum MessagingModes
-	{
-		/// <summary>
-		/// Event based messaging.
-		/// </summary>
-		Async = 1,
-
-		/// <summary>
-		/// Poll based messaging.
-		/// </summary>
-		Inline = 2,
-
-		/// <summary>
-		/// Both.
-		/// </summary>
-		Both = Async | Inline
-	}
-
 	/// <summary>
 	/// Base connection contract.
 	/// </summary>
@@ -70,11 +50,6 @@ namespace Tempest
 		/// Gets the protocols the connection has enabled/negotiated.
 		/// </summary>
 		IEnumerable<Protocol> Protocols { get; }
-
-		/// <summary>
-		/// The supported modes for the connection.
-		/// </summary>
-		MessagingModes Modes { get; }
 
 		/// <summary>
 		/// Gets the remote target for this connection.
@@ -168,13 +143,6 @@ namespace Tempest
 		/// message may fail to send in which case the future's result will be <c>false</c>.
 		/// </remarks>
 		Task<bool> SendResponseAsync (Message originalMessage, Message response);
-
-		/// <summary>
-		/// Sends and receives all pending messages.
-		/// </summary>
-		/// <returns>An enumerable of pending message events, <c>Enumerable.Empty&lt;MessageEventArgs&gt;()</c> if none (or not connected).</returns>
-		/// <exception cref="NotSupportedException"><see cref="Modes"/> is not <see cref="MessagingModes.Inline"/>.</exception>
-		IEnumerable<MessageEventArgs> Tick();
 
 		/// <summary>
 		/// Asynchronously closes the connection.

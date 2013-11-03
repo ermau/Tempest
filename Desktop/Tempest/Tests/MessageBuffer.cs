@@ -1,9 +1,32 @@
-﻿using System;
+﻿//
+// MessageBuffer.cs
+//
+// Author:
+//   Eric Maupin <me@ermau.com>
+//
+// Copyright (c) 2011-2013 Eric Maupin
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -41,11 +64,6 @@ namespace Tempest.Tests
 			get { return this.connection.Protocols; }
 		}
 
-		public MessagingModes Modes
-		{
-			get { return this.connection.Modes; }
-		}
-
 		public Target RemoteTarget
 		{
 			get { return this.connection.RemoteTarget; }
@@ -67,7 +85,6 @@ namespace Tempest.Tests
 		}
 
 		public event EventHandler<MessageEventArgs> MessageReceived;
-		public event EventHandler<MessageEventArgs> MessageSent;
 		public event EventHandler<DisconnectedEventArgs> Disconnected;
 
 		public Task<bool> SendAsync (Message message)
@@ -88,11 +105,6 @@ namespace Tempest.Tests
 		public Task<bool> SendResponseAsync (Message originalMessage, Message response)
 		{
 			return this.connection.SendResponseAsync (originalMessage, response);
-		}
-
-		public IEnumerable<MessageEventArgs> Tick ()
-		{
-			return this.connection.Tick();
 		}
 
 		public Task DisconnectAsync ()

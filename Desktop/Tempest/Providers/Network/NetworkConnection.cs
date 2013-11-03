@@ -198,11 +198,6 @@ namespace Tempest.Providers.Network
 			get { return this.bytesReceived; }
 		}
 
-		public MessagingModes Modes
-		{
-			get { return MessagingModes.Async; }
-		}
-
 		public Target RemoteTarget
 		{
 			get;

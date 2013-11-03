@@ -195,7 +195,7 @@ namespace Tempest.Tests
 			}
 		}
 
-		protected internal void OnDisconnected (DisconnectedEventArgs e)
+		protected void OnDisconnected (DisconnectedEventArgs e)
 		{
 			var handler = this.Disconnected;
 			if (handler != null)

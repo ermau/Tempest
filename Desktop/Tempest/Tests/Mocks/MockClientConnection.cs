@@ -110,11 +110,20 @@ namespace Tempest.Tests
 
 		protected internal override Task Disconnect (ConnectionResult reason = ConnectionResult.FailedUnknown, string customReason = null)
 		{
-			return base.Disconnect (reason, customReason).ContinueWith (t => {
-				var c = Interlocked.Exchange (ref this.connection, null);
-				if (c != null)
-					c.Disconnect (reason, customReason).Wait();
-			});
+			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+			if (!this.connected) {
+				tcs.SetResult (true);
+			} else {
+				base.Disconnect (reason, customReason).ContinueWith (t => {
+					var c = Interlocked.Exchange (ref this.connection, null);
+					if (c != null)
+						c.Disconnect (reason, customReason).ContinueWith (t2 => tcs.SetResult (true));
+					else
+						tcs.SetResult (false);
+				});
+			}
+
+			return tcs.Task;
 		}
 
 		private void OnConnected (ClientConnectionEventArgs e)

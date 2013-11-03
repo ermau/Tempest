@@ -118,7 +118,6 @@ namespace Tempest
 			return Disconnect (reason, customReason);
 		}
 
-		private bool disconnecting;
 		private readonly IClientConnection connection;
 		private readonly bool polling;
 
@@ -135,7 +134,6 @@ namespace Tempest
 
 		private Task Disconnect (ConnectionResult reason, string customReason)
 		{
-			this.disconnecting = true;
 			Task task = this.connection.DisconnectAsync (reason, customReason);
 
 			this.running = false;
@@ -157,7 +155,6 @@ namespace Tempest
 			if (runner != null)
 				task = task.ContinueWith (t => runner.Join());
 
-			this.disconnecting = false;
 			return task;
 		}
 
@@ -205,17 +202,13 @@ namespace Tempest
 						mhandlers[i] (e);
 				}
 
-				if (this.disconnecting)
-				{
-					DisconnectAsync();
-					return;
-				}
-
 				if (q.Count == 0)
 				{
 					AutoResetEvent wait = this.mwait;
 					if (wait != null)
 						wait.WaitOne();
+					else
+						return;
 				}
 			}
 		}

@@ -412,7 +412,10 @@ namespace Tempest.Providers.Network
 
 			if (!fromPartials && message.Header.MessageId != 0 && (args.Message.MustBeReliable || args.Message.PreferReliable)) {
 				// We generally always need to ACK. partials have their pieces acked individually.
-				SendAsync (new AcknowledgeMessage { MessageIds = new[] { message.Header.MessageId } });
+				var ack = new AcknowledgeMessage { MessageIds = new[] { message.Header.MessageId } };
+				bool isConnect = (message is ConnectMessage);
+				if (!isConnect)
+					SendAsync (ack);
 
 				List<MessageEventArgs> messages;
 				if (this.rqueue.TryEnqueue (args, out messages)) {
@@ -420,10 +423,12 @@ namespace Tempest.Providers.Network
 						foreach (MessageEventArgs messageEventArgs in messages)
 							RouteMessage (messageEventArgs);
 					}
-
 				}
-			}
-			else
+
+				// We ACK for Connect after it's routed so it can setup the serializers
+				if (isConnect)
+					SendAsync (ack);
+			} else
 				RouteMessage (args);
 		}
 

@@ -28,7 +28,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Tempest
+namespace System.Collections.Concurrent
 {
 	[DebuggerDisplay ("Count={Count}")]
 	internal class ConcurrentDictionary<TKey, TValue> : IDictionary<TKey, TValue>,

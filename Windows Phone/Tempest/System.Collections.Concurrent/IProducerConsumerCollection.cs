@@ -27,7 +27,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Tempest
+namespace System.Collections.Concurrent
 {
 	internal interface IProducerConsumerCollection<T> : IEnumerable<T>, ICollection, IEnumerable
 	{

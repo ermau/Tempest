@@ -142,15 +142,28 @@ namespace Tempest.Providers.Network
 				messageId |= ResponseFlag;
 
 			BufferValueWriter writer = new BufferValueWriter (buffer);
+			writer.EnsureAdditionalCapacity (15);
+			
+			int cid = (connection != null) ? connection.ConnectionId : 0;
+			#if SAFE
 			writer.WriteByte (message.Protocol.id);
 
-			int cid = (connection != null) ? connection.ConnectionId : 0;
 			writer.WriteInt32 (cid); // TODO: Change to variable length later
 
 			writer.WriteUInt16 (message.MessageType);
 			writer.Length += sizeof (int); // length placeholder
 
 			writer.WriteInt32 (messageId);
+			#else
+			fixed (byte* bptr = writer.Buffer) {
+				*bptr = message.Protocol.id;
+				*((int*) (bptr + 1)) = cid;
+				*((ushort*) (bptr + 5)) = message.MessageType;
+				*((int*) (bptr + 11)) = messageId;
+			}
+
+			writer.Extend (15);
+			#endif
 
 			if (this.serializationContext == null) {
 				if (this.connection != null)

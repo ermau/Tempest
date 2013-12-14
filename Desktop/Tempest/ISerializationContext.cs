@@ -41,12 +41,13 @@ namespace Tempest
 		IConnection Connection { get; }
 
 		/// <summary>
-		/// Gets the protocol for this serialization.
+		/// Gets the protocols being used in this connection.
 		/// </summary>
 		/// <remarks>
-		/// This is not necessarily the same <see cref="Protocol"/> as <see cref="Message.Protocol"/>, as
-		/// this represents the actual version of the protocol negotiated to communicate with.
+		/// These protocols represent the agreed upon version of the protocols
+		/// by the client and the server. You can use the version of each protocol to
+		/// conditionally serialize to support multiple versions of the protocol.
 		/// </remarks>
-		Protocol Protocol { get; }
+		IReadOnlyDictionary<byte, Protocol> Protocols { get; }
 	}
 }

@@ -77,7 +77,7 @@ namespace Tempest.Providers.Network
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
 
-			this.connection = connection;			
+			this.connection = connection;
 		}
 
 		public MessageSerializer (MessageSerializer serializer)
@@ -152,13 +152,14 @@ namespace Tempest.Providers.Network
 
 			writer.WriteInt32 (messageId);
 
-			SerializationContext context;
-			if (this.connection != null)
-				context = new SerializationContext (this.connection, this.protocols[message.Protocol.id]);
-			else
-				context = new SerializationContext (this.protocols[message.Protocol.id]);
+			if (this.serializationContext == null) {
+				if (this.connection != null)
+					this.serializationContext = new SerializationContext (this.connection, this.protocols);
+				else
+					this.serializationContext = new SerializationContext (this.protocols);
+			}
 
-			message.WritePayload (context, writer);
+			message.WritePayload (this.serializationContext, writer);
 
 			int headerLength = BaseHeaderLength;
 
@@ -233,10 +234,14 @@ namespace Tempest.Providers.Network
 
 					header.Protocol = p;
 					header.State = HeaderState.Protocol;
-					if (this.connection != null)
-						header.SerializationContext = new SerializationContext (this.connection, p);
-					else
-						header.SerializationContext = new SerializationContext (p);
+					if (this.serializationContext == null) {
+						if (this.connection != null)
+							this.serializationContext = new SerializationContext (this.connection, this.protocols);
+						else
+							this.serializationContext = new SerializationContext (this.protocols);
+					}
+
+					header.SerializationContext = this.serializationContext;
 				}
 
 				if (header.State < HeaderState.CID)
@@ -533,6 +538,7 @@ namespace Tempest.Providers.Network
 		}
 		#endif
 
+		protected ISerializationContext serializationContext;
 		protected const int ResponseFlag = 16777216;
 		protected const int MaxMessageId = 8388608;
 		protected const int BaseHeaderLength = 15;

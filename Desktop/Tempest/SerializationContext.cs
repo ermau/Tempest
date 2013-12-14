@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
 namespace Tempest
 {
@@ -35,16 +36,16 @@ namespace Tempest
 		{
 		}
 
-		public SerializationContext (Protocol protocol)
+		public SerializationContext (IReadOnlyDictionary<byte, Protocol> protocols)
 		{
-			if (protocol == null)
-				throw new ArgumentNullException ("protocol");
+			if (protocols == null)
+				throw new ArgumentNullException ("protocols");
 
-			Protocol = protocol;
+			Protocols = protocols;
 		}
 
-		public SerializationContext (IConnection connection, Protocol protocol)
-			: this (protocol)
+		public SerializationContext (IConnection connection, IReadOnlyDictionary<byte, Protocol> protocols)
+			: this (protocols)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
@@ -58,7 +59,7 @@ namespace Tempest
 			private set;
 		}
 
-		public Protocol Protocol
+		public IReadOnlyDictionary<byte, Protocol> Protocols
 		{
 			get;
 			private set;
@@ -69,7 +70,7 @@ namespace Tempest
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
 
-			return new SerializationContext (connection, Protocol);
+			return new SerializationContext (connection, Protocols);
 		}
 	}
 }

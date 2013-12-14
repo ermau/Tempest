@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -33,14 +35,15 @@ namespace Tempest.Tests
 	{
 		public static ISerializationContext GetContext (Protocol protocol)
 		{
-			return new SerializationContext (new MockClientConnection (new MockConnectionProvider (protocol)), protocol);
+			return new SerializationContext (new MockClientConnection (new MockConnectionProvider (protocol)),
+				new Dictionary<byte, Protocol> { { protocol.id, protocol } });
 		}
 
 		[Test]
 		public void CtorNull()
 		{
 			Assert.Throws<ArgumentNullException> (() => new SerializationContext (null));
-			Assert.Throws<ArgumentNullException> (() => new SerializationContext (null, MockProtocol.Instance));
+			Assert.Throws<ArgumentNullException> (() => new SerializationContext (null, new Dictionary<byte, Protocol>()));
 			Assert.Throws<ArgumentNullException> (() => new SerializationContext (new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance)), null));
 		}
 
@@ -49,9 +52,13 @@ namespace Tempest.Tests
 		{
 			var c = new MockClientConnection (new MockConnectionProvider (MockProtocol.Instance));
 
-			var context = new SerializationContext (c, MockProtocol.Instance);
+			var protocols = new Dictionary<byte, Protocol> {
+				{ MockProtocol.Instance.id, MockProtocol.Instance }
+			};
+
+			var context = new SerializationContext (c, protocols);
 			Assert.AreSame (c, context.Connection);
-			Assert.AreSame (MockProtocol.Instance, context.Protocol);
+			Assert.AreSame (MockProtocol.Instance, context.Protocols.First().Value);
 		}
 	}
 }

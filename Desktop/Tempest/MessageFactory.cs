@@ -128,10 +128,14 @@ namespace Tempest
 		public Message Create (ushort messageType)
 		{
 			Func<Message> mCtor;
+			#if !NET_4
 			lock (this.messageCtors) {
+			#endif
 				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
 					return null;
+			#if !NET_4
 			}
+			#endif
 
 			return mCtor();
 		}

@@ -389,21 +389,12 @@ namespace Tempest.Providers.Network
 			TimeSpan span = TimeSpan.FromSeconds (1);
 			DateTime now = DateTime.UtcNow;
 
-			List<Message> resending = new List<Message>();
-			lock (this.pendingAck)
-			{
-				foreach (Tuple<DateTime, Message> pending in this.pendingAck.Values)
-				{
-					if (now - pending.Item1 > span)
-						resending.Add (pending.Item2);
+			lock (this.pendingAck) {
+				foreach (Tuple<DateTime, Message> pending in this.pendingAck.Values.Where (pending => now - pending.Item1 > span).ToArray()) {
+					this.pendingAck.Remove (pending.Item2.Header.MessageId);
+					SendCore (pending.Item2, dontSetId: true);
 				}
-
-				foreach (Message message in resending)
-					this.pendingAck.Remove (message.Header.MessageId);
 			}
-
-			foreach (Message message in resending)
-				SendCore (message, dontSetId: true);
 		}
 
 		internal void Receive (Message message, bool fromPartials = false)

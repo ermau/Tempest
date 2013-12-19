@@ -169,6 +169,9 @@
     <Compile Include="..\..\Desktop\Tempest\Protocol.cs">
       <Link>Protocol.cs</Link>
     </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\BufferPool.cs">
+      <Link>Providers\Network\BufferPool.cs</Link>
+    </Compile>
     <Compile Include="..\..\Desktop\Tempest\Providers\Network\ClientMessageSerializer.cs">
       <Link>Providers\Network\ClientMessageSerializer.cs</Link>
     </Compile>

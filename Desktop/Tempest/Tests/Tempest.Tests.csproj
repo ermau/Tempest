@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="AsyncTest.cs" />
     <Compile Include="AsyncTestTests.cs" />
+    <Compile Include="BufferPoolTests.cs" />
     <Compile Include="BufferReaderWriterTests.cs" />
     <Compile Include="MessageBuffer.cs" />
     <Compile Include="MessageResponseManagerTests.cs" />

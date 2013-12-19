@@ -67,6 +67,9 @@
     <Compile Include="..\..\..\Desktop\Tempest\Tests\AsyncTestTests.cs">
       <Link>Tests\AsyncTestTests.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\Desktop\Tempest\Tests\BufferPoolTests.cs">
+      <Link>Tests\BufferPoolTests.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\Desktop\Tempest\Tests\BufferReaderWriterTests.cs">
       <Link>Tests\BufferReaderWriterTests.cs</Link>
     </Compile>

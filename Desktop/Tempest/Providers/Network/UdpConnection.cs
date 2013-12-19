@@ -248,7 +248,7 @@ namespace Tempest.Providers.Network
 			int length;
 			byte[] buffer = mserialzier.GetBytes (message, out length, new byte[2048]);
 
-			if (length > 497)
+			if (!(message is PartialMessage) && length > 497)
 			{
 				byte count = (byte)Math.Ceiling ((length / 497f));
 

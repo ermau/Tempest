@@ -38,7 +38,6 @@ namespace Tempest.Providers.Network
 		internal UdpServerConnection (int connectionId, EndPoint remoteEndpoint, UdpConnectionProvider provider)
 			: base (provider.protocols.Values)
 		{
-			LastPing = DateTime.Now;
 			ConnectionId = connectionId;
 			RemoteTarget = remoteEndpoint.ToTarget();
 			this.provider = provider;
@@ -49,7 +48,6 @@ namespace Tempest.Providers.Network
 		internal UdpServerConnection (int connectionId, EndPoint remoteEndpoint, UdpConnectionProvider provider, RSACrypto remoteCrypto, RSACrypto localCrypto, RSAAsymmetricKey key)
 			: base (provider.protocols.Values)
 		{
-			LastPing = DateTime.Now;
 			this.remoteCrypto = remoteCrypto;
 			this.localCrypto = localCrypto;
 			LocalKey = key;
@@ -63,12 +61,6 @@ namespace Tempest.Providers.Network
 
 		private readonly UdpConnectionProvider provider;
 		private bool receivedProtocols;
-
-		internal DateTime LastPing
-		{
-			get;
-			private set;
-		}
 
 		protected override void Cleanup()
 		{
@@ -93,12 +85,6 @@ namespace Tempest.Providers.Network
 				case (ushort)TempestMessageType.FinalConnect:
 					OnFinalConnectMessage ((FinalConnectMessage)e.Message);
 					break;
-
-				case (ushort)TempestMessageType.UnreliablePing: {
-					LastPing = DateTime.Now;
-					SendAsync (new UnreliablePongMessage());
-					break;
-				}
 
 				default:
 					base.OnTempestMessage (e);

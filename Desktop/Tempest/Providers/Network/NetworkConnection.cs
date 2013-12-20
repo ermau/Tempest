@@ -382,7 +382,7 @@ namespace Tempest.Providers.Network
 				Interlocked.Increment (ref this.pingsOut);
 
 				long sent = Stopwatch.GetTimestamp();
-				SendFor (new ReliablePingMessage { Interval = this.pingFrequency }).ContinueWith (t => {
+				SendFor (new PingMessage { Interval = this.pingFrequency }).ContinueWith (t => {
 					long responseTime = Stopwatch.GetTimestamp() - sent;
 					ResponseTime = (int)TimeSpan.FromTicks (responseTime).TotalMilliseconds;
 				}, TaskScheduler.Current);
@@ -715,13 +715,13 @@ namespace Tempest.Providers.Network
 		{
 			switch (e.Message.MessageType)
 			{
-				case (ushort)TempestMessageType.ReliablePing:
-					var ping = (ReliablePingMessage)e.Message;
+				case (ushort)TempestMessageType.Ping:
+					var ping = (PingMessage)e.Message;
 					this.pingFrequency = ping.Interval;
-					SendResponseAsync (e.Message, new ReliablePongMessage());
+					SendResponseAsync (e.Message, new PongMessage());
 					break;
 
-				case (ushort)TempestMessageType.ReliablePong:
+				case (ushort)TempestMessageType.Pong:
 					this.pingsOut = 0;
 					break;
 

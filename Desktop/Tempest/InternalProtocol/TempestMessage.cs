@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011-2012 Eric Maupin
+// Copyright (c) 2011-2013 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,12 +38,12 @@ namespace Tempest.InternalProtocol
 		/// <summary>
 		/// Ping over reliable connections.
 		/// </summary>
-		ReliablePing = 1,
+		Ping = 1,
 
 		/// <summary>
 		/// Pong over reliable connections.
 		/// </summary>
-		ReliablePong = 2,
+		Pong = 2,
 
 		/// <summary>
 		/// Disconnect with reason.
@@ -69,16 +69,6 @@ namespace Tempest.InternalProtocol
 		/// Client finalize connection
 		/// </summary>
 		FinalConnect = 7,
-		
-		/// <summary>
-		/// Ping over unreliable connections.
-		/// </summary>
-		UnreliablePing = 8,
-
-		/// <summary>
-		/// Pong over unreliable connections.
-		/// </summary>
-		UnreliablePong = 9,
 
 		/// <summary>
 		/// Acknowledge message received.
@@ -107,10 +97,8 @@ namespace Tempest.InternalProtocol
 		{
 			InternalProtocol.Register (new []
 			{
-				new KeyValuePair<Type, Func<Message>> (typeof(ReliablePingMessage), () => new ReliablePingMessage()),
-				new KeyValuePair<Type, Func<Message>> (typeof(ReliablePongMessage), () => new ReliablePongMessage()),
-				new KeyValuePair<Type, Func<Message>> (typeof(UnreliablePingMessage), () => new UnreliablePingMessage()),
-				new KeyValuePair<Type, Func<Message>> (typeof(UnreliablePongMessage), () => new UnreliablePongMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(PingMessage), () => new PingMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof(PongMessage), () => new PongMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(DisconnectMessage), () => new DisconnectMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(ConnectMessage), () => new ConnectMessage()),
 				new KeyValuePair<Type, Func<Message>> (typeof(AcknowledgeConnectMessage), () => new AcknowledgeConnectMessage()),

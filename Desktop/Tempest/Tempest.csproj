@@ -65,8 +65,6 @@
     <Compile Include="InternalProtocol\FinalConnectMessage.cs" />
     <Compile Include="InternalProtocol\PartialMessage.cs" />
     <Compile Include="InternalProtocol\ReliablePongMessage.cs" />
-    <Compile Include="InternalProtocol\UnreliablePingMessage.cs" />
-    <Compile Include="InternalProtocol\UnreliablePongMessage.cs" />
     <Compile Include="ISerializable.cs" />
     <Compile Include="ISerializationContext.cs" />
     <Compile Include="ISerializer.cs" />

@@ -254,11 +254,12 @@ namespace Tempest.Providers.Network
 			if (!IsConnected)
 				return;
 
-			if ((DateTime.Now - this.lastPing) > this.pingInterval) {
+			if ((DateTime.Now - this.lastSendActivity) > this.pingInterval) {
 				this.lastPing = DateTime.Now;
 
-				SendAsync (new UnreliablePingMessage());
-			} else if (DateTime.Now - this.lastPong > this.pingTimeout) {
+				SendAsync (new PingMessage());
+			} else if (DateTime.Now - this.lastReceiveActivity > this.pingTimeout) {
+				Trace.WriteLineIf (NTrace.TraceWarning, "Disconnected due to ping timeout");
 				DisconnectAsync (ConnectionResult.TimedOut);
 			}
 		}
@@ -296,11 +297,6 @@ namespace Tempest.Providers.Network
 		{
 			switch (e.Message.MessageType)
 			{
-				case (ushort)TempestMessageType.UnreliablePong: {
-					this.lastPong = DateTime.Now;
-					break;
-				}
-
 				case (ushort)TempestMessageType.AcknowledgeConnect:
 				{
 					var msg = (AcknowledgeConnectMessage)e.Message;

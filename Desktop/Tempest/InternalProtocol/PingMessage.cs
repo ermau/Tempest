@@ -1,10 +1,10 @@
 ﻿//
-// UnreliablePongMessage.cs
+// PingMessage.cs
 //
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012-2013 Eric Maupin
+// Copyright (c) 2011 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,30 +26,44 @@
 
 namespace Tempest.InternalProtocol
 {
-	public sealed class UnreliablePongMessage
+	/// <summary>
+	/// Internal Tempest protocol ping message.
+	/// </summary>
+	public sealed class PingMessage
 		: TempestMessage
 	{
-		internal UnreliablePongMessage()
-			: base (TempestMessageType.UnreliablePong)
+		public PingMessage()
+			: base (TempestMessageType.Ping)
 		{
+		}
+
+		/// <summary>
+		/// Gets or sets the ping interval.
+		/// </summary>
+		public int Interval
+		{
+			get;
+			set;
 		}
 
 		public override bool MustBeReliable
 		{
-			get { return false; }
+			get { return true; }
 		}
 
 		public override bool PreferReliable
 		{
-			get { return false; }
+			get { return true; }
 		}
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
+			writer.WriteInt32 (Interval);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
+			Interval = reader.ReadInt32();
 		}
 	}
 }

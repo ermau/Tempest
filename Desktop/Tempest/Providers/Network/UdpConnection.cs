@@ -183,6 +183,9 @@ namespace Tempest.Providers.Network
 		protected bool requiresHandshake;
 		internal readonly ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>> partials = new ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>>();
 
+		internal DateTime lastSendActivity;
+		internal DateTime lastReceiveActivity;
+
 		private readonly Lazy<MessageResponseManager> responses =
 			new Lazy<MessageResponseManager> (() => new MessageResponseManager());
 
@@ -290,21 +293,18 @@ namespace Tempest.Providers.Network
 					} else
 						args.Completed += (o, s) => s.Dispose();
 
-					try
-					{
+					try {
+						this.lastSendActivity = DateTime.Now;
 						if (!sock.SendToAsync (args) && remaining == 0)
 							OnSendCompleted (this, args);
-					}
-					catch (ObjectDisposedException)
-					{
+					} catch (ObjectDisposedException) {
 						tcs.TrySetResult (false);
 					}
 				} while (remaining > 0);
 			}
 			else
 			{
-				if (message.PreferReliable || message.MustBeReliable)
-				{
+				if (message.PreferReliable || message.MustBeReliable) {
 					lock (this.pendingAck)
 						this.pendingAck.Add (message.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, message));
 				}
@@ -315,13 +315,11 @@ namespace Tempest.Providers.Network
 				args.Completed += OnSendCompleted;
 				args.UserToken = tcs;
 
-				try
-				{
+				try {
+					this.lastSendActivity = DateTime.Now;
 					if (!sock.SendToAsync (args))
 						OnSendCompleted (this, args);
-				}
-				catch (ObjectDisposedException)
-				{
+				} catch (ObjectDisposedException) {
 					tcs.TrySetResult (false);
 				}
 			}
@@ -399,6 +397,7 @@ namespace Tempest.Providers.Network
 
 		internal void Receive (Message message, bool fromPartials = false)
 		{
+			this.lastReceiveActivity = DateTime.Now;
 			var args = new MessageEventArgs (this, message);
 
 			if (!fromPartials && message.Header.MessageId != 0 && (args.Message.MustBeReliable || args.Message.PreferReliable)) {

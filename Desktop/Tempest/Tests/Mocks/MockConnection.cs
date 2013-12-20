@@ -181,11 +181,11 @@ namespace Tempest.Tests
 		{
 			switch (e.Message.MessageType)
 			{
-				case (ushort)TempestMessageType.ReliablePing:
-					SendAsync (new ReliablePongMessage());
+				case (ushort)TempestMessageType.Ping:
+					SendAsync (new PongMessage());
 					break;
 
-				case (ushort)TempestMessageType.ReliablePong:
+				case (ushort)TempestMessageType.Pong:
 					break;
 
 				case (ushort)TempestMessageType.Disconnect:

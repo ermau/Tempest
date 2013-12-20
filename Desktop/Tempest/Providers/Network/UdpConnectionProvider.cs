@@ -162,7 +162,7 @@ namespace Tempest.Providers.Network
 				connection.ResendPending();
 				connection.CheckPendingTimeouts();
 
-				if ((DateTime.Now - connection.LastPing) > this.pingTimeout)
+				if ((DateTime.Now - connection.lastReceiveActivity) > this.pingTimeout)
 					connection.DisconnectAsync (ConnectionResult.TimedOut);
 			}
 		}

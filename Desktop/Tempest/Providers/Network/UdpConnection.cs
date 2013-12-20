@@ -139,11 +139,6 @@ namespace Tempest.Providers.Network
 			return SendCore (response, dontSetId: true);
 		}
 
-		public IEnumerable<MessageEventArgs> Tick()
-		{
-			throw new NotSupportedException();
-		}
-
 		public Task DisconnectAsync()
 		{
 			return DisconnectAsync (ConnectionResult.FailedUnknown);

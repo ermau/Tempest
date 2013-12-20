@@ -386,7 +386,7 @@ namespace Tempest.Providers.Network
 
 		internal void ResendPending()
 		{
-			TimeSpan span = TimeSpan.FromSeconds (1);
+			TimeSpan span = TimeSpan.FromMilliseconds (600);
 			DateTime now = DateTime.UtcNow;
 
 			lock (this.pendingAck) {

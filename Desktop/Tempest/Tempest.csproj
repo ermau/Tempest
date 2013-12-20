@@ -64,7 +64,7 @@
     <Compile Include="InternalProtocol\DisconnectMessage.cs" />
     <Compile Include="InternalProtocol\FinalConnectMessage.cs" />
     <Compile Include="InternalProtocol\PartialMessage.cs" />
-    <Compile Include="InternalProtocol\ReliablePongMessage.cs" />
+    <Compile Include="InternalProtocol\PongMessage.cs" />
     <Compile Include="ISerializable.cs" />
     <Compile Include="ISerializationContext.cs" />
     <Compile Include="ISerializer.cs" />
@@ -72,7 +72,7 @@
     <Compile Include="MessageHeader.cs" />
     <Compile Include="MessageResponseManager.cs" />
     <Compile Include="ObjectSerializer.cs" />
-    <Compile Include="InternalProtocol\ReliablePingMessage.cs" />
+    <Compile Include="InternalProtocol\PingMessage.cs" />
     <Compile Include="Providers\Network\BufferPool.cs" />
     <Compile Include="Providers\Network\ClientMessageSerializer.cs" />
     <Compile Include="Providers\Network\UdpClientConnection.cs">

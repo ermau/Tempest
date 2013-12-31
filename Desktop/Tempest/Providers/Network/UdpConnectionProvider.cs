@@ -124,7 +124,7 @@ namespace Tempest.Providers.Network
 
 		private Timer deliveryTimer;
 
-		private readonly TimeSpan pingTimeout = TimeSpan.FromSeconds (15);
+		private readonly TimeSpan pingTimeout = TimeSpan.FromDays (15);
 
 		protected override bool TryGetConnection (int connectionId, out UdpConnection connection)
 		{

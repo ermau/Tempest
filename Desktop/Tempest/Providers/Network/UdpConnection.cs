@@ -29,6 +29,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -181,6 +182,20 @@ namespace Tempest.Providers.Network
 		internal DateTime lastSendActivity;
 		internal DateTime lastReceiveActivity;
 
+		static UdpConnection()
+		{
+			BufferPool = new BufferPool (512) {
+				AutoSizeLimit = true,
+				AutoSizeFactor = 2
+			};
+		}
+
+		internal static BufferPool BufferPool
+		{
+			get;
+			private set;
+		}
+
 		private readonly Lazy<MessageResponseManager> responses =
 			new Lazy<MessageResponseManager> (() => new MessageResponseManager());
 
@@ -243,8 +258,14 @@ namespace Tempest.Providers.Network
 					responseTask = Responses.SendFor (message, tcs.Task, timeout);
 			}
 
+			SocketAsyncEventArgs e;
+			if (BufferPool.TryGetBuffer (out e))
+				e.Completed -= OnSendCompleted;
+
+			EndPoint endPoint = RemoteTarget.ToEndPoint();
+
 			int length;
-			byte[] buffer = mserialzier.GetBytes (message, out length, new byte[2048]);
+			byte[] buffer = mserialzier.GetBytes (message, out length, e.Buffer);
 
 			if (!(message is PartialMessage) && length > 497)
 			{
@@ -275,25 +296,33 @@ namespace Tempest.Providers.Network
 
 					byte[] pbuffer = mserialzier.GetBytes (partial, out length, new byte[600]);
 
-					SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-					args.SetBuffer (pbuffer, 0, length);
-					args.RemoteEndPoint = RemoteTarget.ToEndPoint();
+					if (e.Buffer != buffer)
+						e.SetBuffer (pbuffer, 0, length);
+					else
+						e.SetBuffer (0, length);
+
+					e.RemoteEndPoint = endPoint;
 
 					remaining -= len;
 					i += len;
 
 					if (remaining == 0) {
-						args.Completed += OnSendCompleted;
-						args.UserToken = tcs;
+						e.Completed += OnSendCompleted;
+						e.UserToken = tcs;
 					} else
-						args.Completed += (o, s) => s.Dispose();
+						e.Completed += (o, s) => BufferPool.PushBuffer (s);
 
 					try {
 						this.lastSendActivity = DateTime.Now;
-						if (!sock.SendToAsync (args) && remaining == 0)
-							OnSendCompleted (this, args);
+						if (!sock.SendToAsync (e) && remaining == 0)
+							OnSendCompleted (this, e);
 					} catch (ObjectDisposedException) {
 						tcs.TrySetResult (false);
+					}
+
+					if (remaining > 0) {
+						if (BufferPool.TryGetBuffer (out e))
+							e.Completed -= OnSendCompleted;
 					}
 				} while (remaining > 0);
 			}
@@ -304,16 +333,15 @@ namespace Tempest.Providers.Network
 						this.pendingAck.Add (message.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, message));
 				}
 
-				SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-				args.SetBuffer (buffer, 0, length);
-				args.RemoteEndPoint = RemoteTarget.ToEndPoint();
-				args.Completed += OnSendCompleted;
-				args.UserToken = tcs;
+				e.SetBuffer (0, length);
+				e.RemoteEndPoint = endPoint;
+				e.Completed += OnSendCompleted;
+				e.UserToken = tcs;
 
 				try {
 					this.lastSendActivity = DateTime.Now;
-					if (!sock.SendToAsync (args))
-						OnSendCompleted (this, args);
+					if (!sock.SendToAsync (e))
+						OnSendCompleted (this, e);
 				} catch (ObjectDisposedException) {
 					tcs.TrySetResult (false);
 				}
@@ -496,7 +524,7 @@ namespace Tempest.Providers.Network
 			if (tcs != null)
 				tcs.TrySetResult (true);
 
-			e.Dispose();
+			BufferPool.PushBuffer (e);
 		}
 
 		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "UdpConnectionProvider");

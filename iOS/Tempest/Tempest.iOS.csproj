@@ -132,20 +132,14 @@
     <Compile Include="..\..\Desktop\Tempest\InternalProtocol\PartialMessage.cs">
       <Link>Providers\Network\PartialMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ReliablePingMessage.cs">
-      <Link>InternalProtocol\ReliablePingMessage.cs</Link>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\PingMessage.cs">
+      <Link>InternalProtocol\PingMessage.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ReliablePongMessage.cs">
-      <Link>InternalProtocol\ReliablePongMessage.cs</Link>
+    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\PongMessage.cs">
+      <Link>InternalProtocol\PongMessage.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\InternalProtocol\TempestMessage.cs">
       <Link>InternalProtocol\TempestMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\UnreliablePingMessage.cs">
-      <Link>InternalProtocol\UnreliablePingMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\UnreliablePongMessage.cs">
-      <Link>InternalProtocol\UnreliablePongMessage.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\ISerializable.cs">
       <Link>ISerializable.cs</Link>

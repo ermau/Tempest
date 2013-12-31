@@ -14,29 +14,22 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
+	<array/>
 	<key>MinimumOSVersion</key>
 	<string>3.2</string>
 	<key>CFBundleDisplayName</key>
-	<string></string>
+	<string>Tempest</string>
 	<key>CFBundleIdentifier</key>
-	<string></string>
+	<string>com.ermau.tempest.tests</string>
 	<key>CFBundleVersion</key>
 	<string></string>
 	<key>NSMainNibFile</key>
 	<string></string>
 	<key>NSMainNibFile~ipad</key>
 	<string></string>
-	<key>MKDirectionsApplicationSupportedModes</key>
-	<array/>
 	<key>CFBundleIconFiles</key>
 	<array>
-		<string>Resources/Default-568h@2x.png</string>
+		<string>Default-568h@2x.png</string>
 	</array>
 </dict>
 </plist>

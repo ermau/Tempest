@@ -319,7 +319,7 @@ namespace Tempest.Providers.Network
 				if (tempestMessage != null)
 					OnConnectionlessTempestMessage (tempestMessage, args.RemoteEndPoint.ToTarget());
 				else
-					OnConnectionlessMessageReceived (new ConnectionlessMessageEventArgs (m, args.RemoteEndPoint.ToTarget()));
+					OnConnectionlessMessageReceived (new ConnectionlessMessageEventArgs (m, args.RemoteEndPoint.ToTarget(), this));
 			}
 		}
 

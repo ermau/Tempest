@@ -325,9 +325,9 @@ namespace Tempest.Providers.Network
 						BufferPool.PushBuffer (e);
 
 						if (remaining == 0)
-							e.Completed -= OnSendCompleted;
+							CleanupSend (e);
 						else
-							e.Completed -= OnPartialSendCompleted;
+							CleanupPartialSend (e);
 
 						tcs.TrySetResult (false);
 					}
@@ -353,7 +353,7 @@ namespace Tempest.Providers.Network
 					if (!sock.SendToAsync (e))
 						OnSendCompleted (this, e);
 				} catch (ObjectDisposedException) {
-					OnPartialSendCompleted (this, e);
+					CleanupSend (e);
 					tcs.TrySetResult (false);
 				}
 			}
@@ -531,16 +531,26 @@ namespace Tempest.Providers.Network
 				DisconnectAsync();
 		}
 
-		private void OnPartialSendCompleted (object sender, SocketAsyncEventArgs e)
+		private void CleanupPartialSend (SocketAsyncEventArgs e)
 		{
 			e.Completed -= OnPartialSendCompleted;
 			BufferPool.PushBuffer (e);
 		}
 
-		private void OnSendCompleted (object sender, SocketAsyncEventArgs e)
+		private void OnPartialSendCompleted (object sender, SocketAsyncEventArgs e)
+		{
+			CleanupPartialSend (e);
+		}
+
+		private void CleanupSend (SocketAsyncEventArgs e)
 		{
 			e.Completed -= OnSendCompleted;
 			BufferPool.PushBuffer (e);
+		}
+
+		private void OnSendCompleted (object sender, SocketAsyncEventArgs e)
+		{
+			CleanupSend (e);
 
 			var tcs = e.UserToken as TaskCompletionSource<bool>;
 			if (tcs != null)

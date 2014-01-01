@@ -291,7 +291,7 @@ namespace Tempest
 		[MethodImpl (MethodImplOptions.AggressiveInlining)]
 		public void EnsureAdditionalCapacity (int additionalCapacity)
 		{
-			if (this.position + additionalCapacity < this.buffer.Length)
+			if (this.position + additionalCapacity <= this.buffer.Length)
 				return;
 
 			int curLength = this.buffer.Length;

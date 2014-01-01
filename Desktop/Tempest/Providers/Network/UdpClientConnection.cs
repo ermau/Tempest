@@ -199,9 +199,6 @@ namespace Tempest.Providers.Network
 		private Timer connectTimer;
 		private Timer deliveryTimer;
 
-		private DateTime lastPing = DateTime.MinValue;
-		private DateTime lastPong = DateTime.MinValue;
-
 		private readonly TimeSpan pingInterval = TimeSpan.FromSeconds (5);
 		private readonly TimeSpan pingTimeout = TimeSpan.FromSeconds (15);
 
@@ -255,8 +252,6 @@ namespace Tempest.Providers.Network
 				return;
 
 			if ((DateTime.Now - this.lastSendActivity) > this.pingInterval) {
-				this.lastPing = DateTime.Now;
-
 				SendAsync (new PingMessage());
 			} else if (DateTime.Now - this.lastReceiveActivity > this.pingTimeout) {
 				Trace.WriteLineIf (NTrace.TraceWarning, "Disconnected due to ping timeout");
@@ -332,7 +327,6 @@ namespace Tempest.Providers.Network
 					
 					ConnectionId = msg.ConnectionId;
 
-					this.lastPong = DateTime.Now;
 					this.formallyConnected = true;
 
 					Timer t = Interlocked.Exchange (ref this.connectTimer, null);

@@ -524,7 +524,11 @@ namespace Tempest.Providers.Network
 				offset += partialPayload.Length;
 			}
 
-			List<Message> messages = this.serializer.BufferMessages (payload);
+			MessageSerializer srlzr = this.serializer;
+			if (srlzr == null)
+				return;
+
+			List<Message> messages = srlzr.BufferMessages (payload);
 			if (messages != null && messages.Count == 1)
 				Receive (messages[0], fromPartials: true);
 			else

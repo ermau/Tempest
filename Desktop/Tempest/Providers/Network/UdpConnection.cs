@@ -268,16 +268,16 @@ namespace Tempest.Providers.Network
 			int length;
 			byte[] buffer = mserialzier.GetBytes (message, out length, e.Buffer);
 
-			if (!(message is PartialMessage) && length > 497)
+			if (!(message is PartialMessage) && length > 490)
 			{
-				byte count = (byte)Math.Ceiling ((length / 497f));
+				byte count = (byte)Math.Ceiling ((length / 490f));
 
 				int i = 0;
 				
 				int remaining = length;
 				do
 				{
-					int len = Math.Min (497, remaining);
+					int payloadLen = Math.Min (490, remaining);
 
 					var partial = new PartialMessage
 					{

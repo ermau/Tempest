@@ -78,6 +78,10 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("connection");
 
 			this.connection = connection;
+
+			#if TRACE
+			this.connectionType = this.connection.GetType().Name;
+			#endif
 		}
 
 		public MessageSerializer (MessageSerializer serializer)
@@ -87,6 +91,10 @@ namespace Tempest.Providers.Network
 
 			this.protocols = serializer.protocols;
 			this.connection = serializer.connection;
+
+			#if TRACE
+			this.connectionType = this.connection.GetType().Name;
+			#endif
 			
 			if (serializer.AES != null)
 			{
@@ -137,6 +145,14 @@ namespace Tempest.Providers.Network
 		public unsafe byte[] GetBytes (Message message, out int length, byte[] buffer)
 		#endif
 		{
+			string callCategory = null;
+			#if TRACE
+			int c = GetNextCallId();
+			callCategory = String.Format ("{0} {1}:GetBytes({2},{3})", this.connectionType, c, message, buffer.Length);
+			#endif
+
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
+
 			int messageId = message.Header.MessageId;
 			if (message.Header.IsResponse)
 				messageId |= ResponseFlag;
@@ -206,6 +222,8 @@ namespace Tempest.Providers.Network
 				*((int*) (mptr + LengthOffset)) = len;
 			#endif
 
+			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting. Length: {0}", length), callCategory);
+
 			return rawMessage;
 		}
 
@@ -214,7 +232,7 @@ namespace Tempest.Providers.Network
 			string callCategory = null;
 			#if TRACE
 			int c = GetNextCallId();
-			callCategory = String.Format ("{0}:TryGetHeader({1},{2})", c, reader.Position, remaining);
+			callCategory = String.Format ("{0} {1}:TryGetHeader({2},{3})", this.connectionType, c, reader.Position, remaining);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Entering {0}", (header == null) ? "without existing header" : "with existing header"), callCategory);
 
@@ -395,7 +413,7 @@ namespace Tempest.Providers.Network
 			string callCategory = null;
 			#if TRACE
 			int c = GetNextCallId();
-			callCategory = String.Format ("{0}:BufferMessages({1},{2},{3},{4},{5})", c, buffer.Length, bufferOffset, messageOffset, remainingData, reader.Position);
+			callCategory = String.Format ("{0} {1}:BufferMessages({2},{3},{4},{5},{6})", this.connectionType, c, buffer.Length, bufferOffset, messageOffset, remainingData, reader.Position);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
@@ -561,7 +579,6 @@ namespace Tempest.Providers.Network
 		protected Dictionary<byte, Protocol> protocols;
 		private string signingHashAlgorithm = "SHA256";
 
-
 		private Task Disconnect (ConnectionResult result = ConnectionResult.FailedUnknown)
 		{
 			if (this.connection == null)
@@ -574,6 +591,7 @@ namespace Tempest.Providers.Network
 			return this.connection.DisconnectAsync (result);
 		}
 
+		#if TRACE
 		#if NETFX_CORE
 		private static readonly TraceSwitch NTrace = new TraceSwitch (true);
 
@@ -592,6 +610,9 @@ namespace Tempest.Providers.Network
 		{
 			return NetworkConnection.GetNextCallId();
 		}
+		#endif
+
+		private string connectionType;
 		#endif
 
 		protected void EncryptMessage (BufferValueWriter writer, ref int headerLength)
@@ -663,7 +684,7 @@ namespace Tempest.Providers.Network
 			string callCategory = null;
 			#if TRACE
 			int c = GetNextCallId();
-			callCategory = String.Format ("{0}:SignMessage ({1},{2})", c, hashAlg, writer.Length);
+			callCategory = String.Format ("{0} {1}:SignMessage ({2},{3})", this.connectionType, c, hashAlg, writer.Length);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 
@@ -683,7 +704,7 @@ namespace Tempest.Providers.Network
 			string callCategory = null;
 			#if TRACE
 			int c = GetNextCallId();
-			callCategory = String.Format ("{0}:VerifyMessage({1},{2},{3},{4},{5},{6})", c, hashAlg, message, signature.Length, data.Length, moffset, length);
+			callCategory = String.Format ("{0} {1}:VerifyMessage({2},{3},{4},{5},{6},{7})", this.connectionType, c, hashAlg, message, signature.Length, data.Length, moffset, length);
 			#endif
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Entering", callCategory);
 

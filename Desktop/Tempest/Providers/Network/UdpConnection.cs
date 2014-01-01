@@ -295,13 +295,9 @@ namespace Tempest.Providers.Network
 					lock (this.pendingAck)
 						this.pendingAck.Add (partial.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, partial));
 
-					byte[] pbuffer = mserialzier.GetBytes (partial, out length, e.Buffer);
+					mserialzier.GetBytes (partial, out length, e.Buffer);
 
-					if (e.Buffer != buffer)
-						e.SetBuffer (pbuffer, 0, length);
-					else
-						e.SetBuffer (0, length);
-
+					e.SetBuffer (0, length);
 					e.RemoteEndPoint = endPoint;
 
 					remaining -= payloadLen;

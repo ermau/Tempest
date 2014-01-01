@@ -48,6 +48,8 @@ namespace Tempest.Providers.Network
 				ps.Add (TempestMessage.InternalProtocol);
 
 			this.originalProtocols = ps;
+
+			BufferPool.AddConnection();
 		}
 
 		internal UdpConnection (IEnumerable<Protocol> protocols, RSACrypto remoteCrypto, RSACrypto localCrypto, RSAAsymmetricKey localKey)
@@ -259,8 +261,7 @@ namespace Tempest.Providers.Network
 			}
 
 			SocketAsyncEventArgs e;
-			if (BufferPool.TryGetBuffer (out e))
-				e.Completed -= OnSendCompleted;
+			BufferPool.TryGetBuffer (out e);
 
 			EndPoint endPoint = RemoteTarget.ToEndPoint();
 
@@ -285,7 +286,7 @@ namespace Tempest.Providers.Network
 						Header = new MessageHeader()
 					};
 
-					partial.SetPayload (buffer, i, len);
+					partial.SetPayload (buffer, i, payloadLen);
 					if (i == 0) // We have to fill the gap the original id uses for reliability
 						partial.Header.MessageId = message.Header.MessageId;
 					else
@@ -294,7 +295,7 @@ namespace Tempest.Providers.Network
 					lock (this.pendingAck)
 						this.pendingAck.Add (partial.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, partial));
 
-					byte[] pbuffer = mserialzier.GetBytes (partial, out length, new byte[600]);
+					byte[] pbuffer = mserialzier.GetBytes (partial, out length, e.Buffer);
 
 					if (e.Buffer != buffer)
 						e.SetBuffer (pbuffer, 0, length);
@@ -303,27 +304,36 @@ namespace Tempest.Providers.Network
 
 					e.RemoteEndPoint = endPoint;
 
-					remaining -= len;
-					i += len;
+					remaining -= payloadLen;
+					i += payloadLen;
 
 					if (remaining == 0) {
 						e.Completed += OnSendCompleted;
 						e.UserToken = tcs;
 					} else
-						e.Completed += (o, s) => BufferPool.PushBuffer (s);
+						e.Completed += OnPartialSendCompleted;
 
 					try {
 						this.lastSendActivity = DateTime.Now;
-						if (!sock.SendToAsync (e) && remaining == 0)
-							OnSendCompleted (this, e);
+						if (!sock.SendToAsync (e)) {
+							if (remaining == 0)
+								OnSendCompleted (this, e);
+							else
+								OnPartialSendCompleted (this, e);
+						}
 					} catch (ObjectDisposedException) {
+						BufferPool.PushBuffer (e);
+
+						if (remaining == 0)
+							e.Completed -= OnSendCompleted;
+						else
+							e.Completed -= OnPartialSendCompleted;
+
 						tcs.TrySetResult (false);
 					}
 
-					if (remaining > 0) {
-						if (BufferPool.TryGetBuffer (out e))
-							e.Completed -= OnSendCompleted;
-					}
+					if (remaining > 0)
+						BufferPool.TryGetBuffer (out e);
 				} while (remaining > 0);
 			}
 			else
@@ -343,6 +353,7 @@ namespace Tempest.Providers.Network
 					if (!sock.SendToAsync (e))
 						OnSendCompleted (this, e);
 				} catch (ObjectDisposedException) {
+					OnPartialSendCompleted (this, e);
 					tcs.TrySetResult (false);
 				}
 			}
@@ -369,6 +380,8 @@ namespace Tempest.Providers.Network
 
 			lock (this.pendingAck)
 				this.pendingAck.Clear();
+
+			BufferPool.RemoveConnection();
 		}
 
 		protected virtual Task Disconnect (ConnectionResult reason, string customReason = null)
@@ -518,13 +531,20 @@ namespace Tempest.Providers.Network
 				DisconnectAsync();
 		}
 
+		private void OnPartialSendCompleted (object sender, SocketAsyncEventArgs e)
+		{
+			e.Completed -= OnPartialSendCompleted;
+			BufferPool.PushBuffer (e);
+		}
+
 		private void OnSendCompleted (object sender, SocketAsyncEventArgs e)
 		{
+			e.Completed -= OnSendCompleted;
+			BufferPool.PushBuffer (e);
+
 			var tcs = e.UserToken as TaskCompletionSource<bool>;
 			if (tcs != null)
 				tcs.TrySetResult (true);
-
-			BufferPool.PushBuffer (e);
 		}
 
 		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "UdpConnectionProvider");

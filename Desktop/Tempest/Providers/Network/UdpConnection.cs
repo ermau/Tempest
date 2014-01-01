@@ -338,15 +338,15 @@ namespace Tempest.Providers.Network
 			}
 			else
 			{
-				if (message.PreferReliable || message.MustBeReliable) {
-					lock (this.pendingAck)
-						this.pendingAck.Add (message.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, message));
-				}
-
 				e.SetBuffer (0, length);
 				e.RemoteEndPoint = endPoint;
 				e.Completed += OnSendCompleted;
 				e.UserToken = tcs;
+
+				if (message.PreferReliable || message.MustBeReliable) {
+					lock (this.pendingAck)
+						this.pendingAck.Add (message.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, message));
+				}
 
 				try {
 					this.lastSendActivity = DateTime.Now;

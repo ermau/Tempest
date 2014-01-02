@@ -198,10 +198,8 @@ namespace Tempest.Providers.Network
 
 		private int pendingAsync;
 
-		protected internal Socket GetSocket (Target target)
+		protected internal Socket GetSocket (EndPoint endPoint)
 		{
-			EndPoint endPoint = target.ToEndPoint();
-	
 			if (endPoint.AddressFamily == AddressFamily.InterNetwork)
 				return this.socket4;
 			else if (endPoint.AddressFamily == AddressFamily.InterNetworkV6)

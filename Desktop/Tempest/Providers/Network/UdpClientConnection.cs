@@ -117,7 +117,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		public Task<ClientConnectionResult> ConnectAsync (Target target, MessageTypes messageTypes)
+		public async Task<ClientConnectionResult> ConnectAsync (Target target, MessageTypes messageTypes)
 		{
 			if (target == null)
 				throw new ArgumentNullException ("target");
@@ -125,6 +125,16 @@ namespace Tempest.Providers.Network
 				throw new ArgumentOutOfRangeException ("messageTypes");
 
 			EndPoint endPoint = target.ToEndPoint();
+			var dns = endPoint as DnsEndPoint;
+			if (dns != null) {
+				try {
+					IPHostEntry entry = await Dns.GetHostEntryAsync (dns.Host).ConfigureAwait (false);
+					endPoint = new IPEndPoint (entry.AddressList.First(), dns.Port);
+				} catch (SocketException) {
+					return new ClientConnectionResult (ConnectionResult.ConnectionFailed, null);
+				}
+			}
+
 			if (endPoint.AddressFamily != AddressFamily.InterNetwork && endPoint.AddressFamily != AddressFamily.InterNetworkV6)
 				throw new ArgumentException ("Unsupported endpoint AddressFamily");
 
@@ -148,7 +158,7 @@ namespace Tempest.Providers.Network
 
 				Start (messageTypes);
 
-				this.socket = this.listener.GetSocket (target);
+				this.socket = this.listener.GetSocket (endPoint);
 
 				Timer dtimer = new Timer (100);
 				dtimer.TimesUp += OnDeliveryTimer;
@@ -184,7 +194,7 @@ namespace Tempest.Providers.Network
 				});
 			});
 
-			return ntcs.Task;
+			return await ntcs.Task.ConfigureAwait (false);
 		}
 
 		public override void Dispose()

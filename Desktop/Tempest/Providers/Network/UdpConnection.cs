@@ -170,6 +170,7 @@ namespace Tempest.Providers.Network
 
 		protected RSACrypto remoteCrypto;
 
+		protected IPEndPoint IPEndPoint;
 		protected Socket socket;
 
 		protected int nextReliableMessageId;
@@ -263,8 +264,6 @@ namespace Tempest.Providers.Network
 			SocketAsyncEventArgs e;
 			BufferPool.TryGetBuffer (out e);
 
-			EndPoint endPoint = RemoteTarget.ToEndPoint();
-
 			int length;
 			byte[] buffer = mserialzier.GetBytes (message, out length, e.Buffer);
 
@@ -298,7 +297,7 @@ namespace Tempest.Providers.Network
 					mserialzier.GetBytes (partial, out length, e.Buffer);
 
 					e.SetBuffer (0, length);
-					e.RemoteEndPoint = endPoint;
+					e.RemoteEndPoint = IPEndPoint;
 
 					remaining -= payloadLen;
 					i += payloadLen;
@@ -335,7 +334,7 @@ namespace Tempest.Providers.Network
 			else
 			{
 				e.SetBuffer (0, length);
-				e.RemoteEndPoint = endPoint;
+				e.RemoteEndPoint = IPEndPoint;
 				e.Completed += OnSendCompleted;
 				e.UserToken = tcs;
 
@@ -359,6 +358,7 @@ namespace Tempest.Providers.Network
 
 		protected virtual void Cleanup()
 		{
+			IPEndPoint = null;
 			RemoteKey = null;
 
 			ConnectionId = 0;

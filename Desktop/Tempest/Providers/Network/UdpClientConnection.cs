@@ -124,8 +124,8 @@ namespace Tempest.Providers.Network
 			if (!Enum.IsDefined (typeof (MessageTypes), messageTypes))
 				throw new ArgumentOutOfRangeException ("messageTypes");
 
-			IPEndPoint endPoint = await target.ToIPEndPointAsync().ConfigureAwait (false);
-			if (endPoint.AddressFamily != AddressFamily.InterNetwork && endPoint.AddressFamily != AddressFamily.InterNetworkV6)
+			IPEndPoint = await target.ToIPEndPointAsync().ConfigureAwait (false);
+			if (IPEndPoint.AddressFamily != AddressFamily.InterNetwork && IPEndPoint.AddressFamily != AddressFamily.InterNetworkV6)
 				throw new ArgumentException ("Unsupported endpoint AddressFamily");
 
 			var ntcs = new TaskCompletionSource<ClientConnectionResult>();
@@ -148,7 +148,7 @@ namespace Tempest.Providers.Network
 
 				Start (messageTypes);
 
-				this.socket = this.listener.GetSocket (endPoint);
+				this.socket = this.listener.GetSocket (IPEndPoint);
 
 				Timer dtimer = new Timer (100);
 				dtimer.TimesUp += OnDeliveryTimer;

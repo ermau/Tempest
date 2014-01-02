@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2012-2014 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 // THE SOFTWARE.
 
 using System;
-using System.Net;
+using System.Threading.Tasks;
 
 namespace Tempest
 {
@@ -43,6 +43,6 @@ namespace Tempest
 		/// <param name="message">The message to send.</param>
 		/// <param name="target">The target to send the message to.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="message"/> or <paramref name="target"/> is <c>null</c>.</exception>
-		void SendConnectionlessMessage (Message message, Target target);
+		Task SendConnectionlessMessageAsync (Message message, Target target);
 	}
 }

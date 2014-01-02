@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2013 Eric Maupin
+// Copyright (c) 2013-2014 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using Tempest.InternalProtocol;
 
 namespace Tempest.Providers.Network
@@ -112,7 +113,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		public void SendConnectionlessMessage (Message message, Target target)
+		public async Task SendConnectionlessMessageAsync (Message message, Target target)
 		{
 			if (message == null)
 				throw new ArgumentNullException ("message");
@@ -122,20 +123,17 @@ namespace Tempest.Providers.Network
 			if (message.MustBeReliable)
 				throw new NotSupportedException ("Reliable messages can not be sent connectionlessly");
 
-			EndPoint endPoint = target.ToEndPoint();
-			/*if (endPoint.AddressFamily == AddressFamily.InterNetwork && !Socket.OSSupportsIPv4)
-				throw new NotSupportedException ("endPoint's AddressFamily not supported on this OS.");
-			else*/ if (endPoint.AddressFamily == AddressFamily.InterNetworkV6 && !Socket.OSSupportsIPv6)
+			if (!this.running)
+				return;
+
+			IPEndPoint endPoint = await target.ToIPEndPointAsync().ConfigureAwait (false);
+			
+			if (endPoint.AddressFamily == AddressFamily.InterNetworkV6 && !Socket.OSSupportsIPv6)
 				throw new NotSupportedException ("endPoint's AddressFamily not supported on this OS.");
 			else if (endPoint.AddressFamily != AddressFamily.InterNetwork && endPoint.AddressFamily != AddressFamily.InterNetworkV6)
 				throw new NotSupportedException ("endPoint's AddressFamily not supported on this provider.");
 
-			if (!this.running)
-				return;
-
-			Socket socket = (endPoint.AddressFamily == AddressFamily.InterNetwork) ? this.socket4 : this.socket6;
-			if (socket == null)
-				return;
+			Socket socket = GetSocket (endPoint);
 
 			if (message.Header == null)
 				message.Header = new MessageHeader();
@@ -144,12 +142,15 @@ namespace Tempest.Providers.Network
 			byte[] buffer = new byte[512];
 			buffer = this.connectionlessSerializer.GetBytes (message, out length, buffer);
 
+			var tcs = new TaskCompletionSource<bool>();
+
 			var args = new SocketAsyncEventArgs();
 			args.SetBuffer (buffer, 0, length);
 			args.RemoteEndPoint = endPoint;
-			args.Completed += (sender, eventArgs) => {
+			args.Completed += (sender, e) => {
+				tcs.SetResult (e.SocketError == SocketError.Success);
 				Interlocked.Decrement (ref this.pendingAsync);
-				eventArgs.Dispose();
+				e.Dispose();
 			};
 
 			try
@@ -164,6 +165,8 @@ namespace Tempest.Providers.Network
 			{
 				Interlocked.Decrement (ref this.pendingAsync);
 			}
+
+			await tcs.Task.ConfigureAwait (false);
 		}
 
 		public virtual void Stop()

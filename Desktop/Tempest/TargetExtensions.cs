@@ -25,7 +25,10 @@
 // THE SOFTWARE.
 
 using System;
+using System.Linq;
 using System.Net;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace Tempest
 {
@@ -41,6 +44,26 @@ namespace Tempest
 				return new IPEndPoint (ip, self.Port);
 
 			return new DnsEndPoint (self.Hostname, self.Port);
+		}
+
+		public static async Task<IPEndPoint> ToIPEndPointAsync (this Target self)
+		{
+			EndPoint endPoint = self.ToEndPoint();
+			IPEndPoint ipEndPoint = endPoint as IPEndPoint;
+			if (ipEndPoint != null)
+				return ipEndPoint;
+
+			var dns = endPoint as DnsEndPoint;
+			if (dns == null)
+				throw new ArgumentException();
+
+
+			try {
+				IPHostEntry entry = await Dns.GetHostEntryAsync (dns.Host).ConfigureAwait (false);
+				return new IPEndPoint (entry.AddressList.First(), dns.Port);
+			} catch (SocketException) {
+				return null;
+			}
 		}
 
 		public static Target ToTarget (this EndPoint endPoint)

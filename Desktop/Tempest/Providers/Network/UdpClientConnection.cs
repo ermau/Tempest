@@ -83,11 +83,11 @@ namespace Tempest.Providers.Network
 			get { return this.listener.LocalTargets; }
 		}
 
-		public void SendConnectionlessMessage (Message message, Target target)
+		public async Task SendConnectionlessMessageAsync (Message message, Target target)
 		{
 			IConnectionlessMessenger messenger = this.listener;
 			if (messenger != null)
-				messenger.SendConnectionlessMessage (message, target);
+				await messenger.SendConnectionlessMessageAsync (message, target).ConfigureAwait (false);
 		}
 
 		public bool IsRunning
@@ -124,17 +124,7 @@ namespace Tempest.Providers.Network
 			if (!Enum.IsDefined (typeof (MessageTypes), messageTypes))
 				throw new ArgumentOutOfRangeException ("messageTypes");
 
-			EndPoint endPoint = target.ToEndPoint();
-			var dns = endPoint as DnsEndPoint;
-			if (dns != null) {
-				try {
-					IPHostEntry entry = await Dns.GetHostEntryAsync (dns.Host).ConfigureAwait (false);
-					endPoint = new IPEndPoint (entry.AddressList.First(), dns.Port);
-				} catch (SocketException) {
-					return new ClientConnectionResult (ConnectionResult.ConnectionFailed, null);
-				}
-			}
-
+			IPEndPoint endPoint = await target.ToIPEndPointAsync().ConfigureAwait (false);
 			if (endPoint.AddressFamily != AddressFamily.InterNetwork && endPoint.AddressFamily != AddressFamily.InterNetworkV6)
 				throw new ArgumentException ("Unsupported endpoint AddressFamily");
 

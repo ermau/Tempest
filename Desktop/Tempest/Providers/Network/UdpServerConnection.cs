@@ -39,6 +39,7 @@ namespace Tempest.Providers.Network
 			: base (provider.protocols.Values)
 		{
 			ConnectionId = connectionId;
+			IPEndPoint = (IPEndPoint)remoteEndpoint;
 			RemoteTarget = remoteEndpoint.ToTarget();
 			this.provider = provider;
 
@@ -53,6 +54,7 @@ namespace Tempest.Providers.Network
 			LocalKey = key;
 
 			ConnectionId = connectionId;
+			IPEndPoint = (IPEndPoint)remoteEndpoint;
 			RemoteTarget = remoteEndpoint.ToTarget();
 			this.provider = provider;
 

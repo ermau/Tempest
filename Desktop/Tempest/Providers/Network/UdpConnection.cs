@@ -362,6 +362,7 @@ namespace Tempest.Providers.Network
 			this.formallyConnected = false;
 			this.nextMessageId = 0;
 			this.nextReliableMessageId = 0;
+			this.lastReceiveActivity = default(DateTime);
 
 			this.serializer = null;
 

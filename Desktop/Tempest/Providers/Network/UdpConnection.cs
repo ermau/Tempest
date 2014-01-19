@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012-2013 Eric Maupin
+// Copyright (c) 2012-2014 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -182,7 +182,6 @@ namespace Tempest.Providers.Network
 		protected bool requiresHandshake;
 		internal readonly ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>> partials = new ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>>();
 
-		internal DateTime lastSendActivity;
 		internal DateTime lastReceiveActivity;
 
 		static UdpConnection()
@@ -309,7 +308,6 @@ namespace Tempest.Providers.Network
 						e.Completed += OnPartialSendCompleted;
 
 					try {
-						this.lastSendActivity = DateTime.Now;
 						if (!sock.SendToAsync (e)) {
 							if (remaining == 0)
 								OnSendCompleted (this, e);
@@ -344,7 +342,6 @@ namespace Tempest.Providers.Network
 				}
 
 				try {
-					this.lastSendActivity = DateTime.Now;
 					if (!sock.SendToAsync (e))
 						OnSendCompleted (this, e);
 				} catch (ObjectDisposedException) {

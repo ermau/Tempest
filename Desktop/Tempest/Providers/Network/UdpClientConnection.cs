@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012-2013 Eric Maupin
+// Copyright (c) 2012-2014 Eric Maupin
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +28,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Tempest.InternalProtocol;
@@ -251,11 +249,12 @@ namespace Tempest.Providers.Network
 			if (!IsConnected)
 				return;
 
-			if ((DateTime.Now - this.lastSendActivity) > this.pingInterval) {
-				SendAsync (new PingMessage());
-			} else if (DateTime.Now - this.lastReceiveActivity > this.pingTimeout) {
+			TimeSpan sinceLastReceive = (DateTime.Now - this.lastReceiveActivity);
+			if (sinceLastReceive > this.pingTimeout) {
 				Trace.WriteLineIf (NTrace.TraceWarning, "Disconnected due to ping timeout");
 				DisconnectAsync (ConnectionResult.TimedOut);
+			} else if (sinceLastReceive > this.pingInterval) {
+				SendAsync (new PingMessage());
 			}
 		}
 

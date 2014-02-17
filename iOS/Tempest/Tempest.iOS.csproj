@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\iPhoneSimulator\Debug</OutputPath>
-    <DefineConstants>DEBUG;NET_4;NOEMIT;SAFE</DefineConstants>
+    <DefineConstants>TRACE;__IOS__;__MOBILE__;DEBUG;NET_4;NOEMIT;SAFE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
@@ -49,7 +49,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\iPhone\Debug</OutputPath>
-    <DefineConstants>DEBUG;NET_4;NOEMIT;SAFE</DefineConstants>
+    <DefineConstants>TRACE;__IOS__;__MOBILE__;DEBUG;NET_4;NOEMIT;SAFE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
@@ -270,7 +270,6 @@
     <Compile Include="..\..\Desktop\Tempest\TypeMap.cs">
       <Link>TypeMap.cs</Link>
     </Compile>
-    <Compile Include="DnsEndPoint.cs" />
     <Compile Include="TraceSwitch.cs" />
   </ItemGroup>
   <ItemGroup>

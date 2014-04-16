@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012 Eric Maupin
+// Copyright (c) 2012-2014 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -211,15 +211,12 @@ namespace Tempest.Providers.Network
 
 			byte[] rawMessage = writer.Buffer;
 			length = writer.Length;
-			int len = length << 1;
-			if (message.Header.IsContinued)
-				len |= 1;
 
 			#if SAFE
 			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, LengthOffset, sizeof(int));
 			#else
 			fixed (byte* mptr = rawMessage)
-				*((int*) (mptr + LengthOffset)) = len;
+				*((int*) (mptr + LengthOffset)) = length;
 			#endif
 
 			Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Exiting. Length: {0}", length), callCategory);
@@ -309,13 +306,10 @@ namespace Tempest.Providers.Network
 				if (header.State >= HeaderState.Length)
 				{
 					mlen = header.MessageLength;
-					isContinued = header.IsContinued;
 				}
 				else
 				{
 					mlen = reader.ReadInt32();
-					isContinued = (mlen & 1) == 1;
-					mlen >>= 1;
 
 					if (mlen <= 0)
 					{
@@ -324,7 +318,6 @@ namespace Tempest.Providers.Network
 					}
 
 					header.MessageLength = mlen;
-					header.IsContinued = isContinued;
 					header.State = HeaderState.Length;
 
 					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Have message of length: {0}", mlen), callCategory);

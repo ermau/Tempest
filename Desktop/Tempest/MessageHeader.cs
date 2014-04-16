@@ -4,7 +4,8 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010-2012 Eric Maupin
+// Copyright (c) 2010-2011 Eric Maupin
+// Copyright (c) 2011-2014 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -95,15 +96,6 @@ namespace Tempest
 		/// Gets the total length of the message (including <see cref="HeaderLength"/>).
 		/// </summary>
 		public int MessageLength
-		{
-			get;
-			internal set;
-		}
-
-		/// <summary>
-		/// Gets whether the message is continued in the next message
-		/// </summary>
-		public bool IsContinued
 		{
 			get;
 			internal set;

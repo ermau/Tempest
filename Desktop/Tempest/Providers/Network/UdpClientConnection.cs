@@ -253,7 +253,7 @@ namespace Tempest.Providers.Network
 			if (sinceLastReceive > this.pingTimeout) {
 				Trace.WriteLineIf (NTrace.TraceWarning, "Disconnected due to ping timeout");
 				DisconnectAsync (ConnectionResult.TimedOut);
-			} else if ((DateTime.Now - this.lastSendActivity) > this.pingInterval) {
+			} else if ((DateTime.Now - this.lastReliableSendActivity) > this.pingInterval) {
 				SendAsync (new PingMessage());
 			}
 		}

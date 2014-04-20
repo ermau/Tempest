@@ -182,7 +182,7 @@ namespace Tempest.Providers.Network
 		protected bool requiresHandshake;
 		internal readonly ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>> partials = new ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>>();
 
-		internal DateTime lastReceiveActivity, lastSendActivity;
+		internal DateTime lastReceiveActivity, lastReliableSendActivity;
 
 		static UdpConnection()
 		{
@@ -308,7 +308,7 @@ namespace Tempest.Providers.Network
 						e.Completed += OnPartialSendCompleted;
 
 					try {
-						this.lastSendActivity = DateTime.Now;
+						this.lastReliableSendActivity = DateTime.Now;
 						if (!sock.SendToAsync (e)) {
 							if (remaining == 0)
 								OnSendCompleted (this, e);
@@ -338,12 +338,13 @@ namespace Tempest.Providers.Network
 				e.UserToken = tcs;
 
 				if (message.PreferReliable || message.MustBeReliable) {
+					this.lastReliableSendActivity = DateTime.Now;
+
 					lock (this.pendingAck)
 						this.pendingAck.Add (message.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, message));
 				}
 
 				try {
-					this.lastSendActivity = DateTime.Now;
 					if (!sock.SendToAsync (e))
 						OnSendCompleted (this, e);
 				} catch (ObjectDisposedException) {

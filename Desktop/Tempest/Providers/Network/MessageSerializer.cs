@@ -606,6 +606,8 @@ namespace Tempest.Providers.Network
 		#endif
 
 		private string connectionType;
+		#else
+		private static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "MessageSerializer");
 		#endif
 
 		protected void EncryptMessage (BufferValueWriter writer, ref int headerLength)

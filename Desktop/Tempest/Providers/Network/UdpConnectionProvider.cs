@@ -158,11 +158,16 @@ namespace Tempest.Providers.Network
 
 		private void OnDeliveryTimer (object sender, EventArgs eventArgs)
 		{
+			DateTime now = DateTime.Now;
+
 			foreach (UdpServerConnection connection in this.connections.Values) {
+				if (!connection.IsConnected)
+					continue;
+
 				connection.ResendPending();
 				connection.CheckPendingTimeouts();
 
-				if ((DateTime.Now - connection.lastReceiveActivity) > this.pingTimeout)
+				if ((now - connection.lastReceiveActivity) > this.pingTimeout)
 					connection.DisconnectAsync (ConnectionResult.TimedOut);
 			}
 		}

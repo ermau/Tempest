@@ -61,8 +61,8 @@ namespace Tempest.Tests
 		{
 			var tcs = new TaskCompletionSource<bool>();
 
-			response.Header = new MessageHeader();
-			response.Header.MessageId = originalMessage.Header.MessageId;
+			PrepareMessage (response);
+			response.Header.ResponseMessageId = originalMessage.Header.MessageId;
 			response.Header.IsResponse = true;
 			
 			this.connection.ReceiveResponse (new MessageEventArgs (this.connection, response));

@@ -127,7 +127,7 @@ namespace Tempest.Tests
 			return Disconnect (reason, customReason);
 		}
 
-		private void PrepareMessage (Message message)
+		protected void PrepareMessage (Message message)
 		{
 			if (message.Header != null)
 				return;

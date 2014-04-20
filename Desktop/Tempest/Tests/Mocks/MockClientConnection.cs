@@ -98,9 +98,11 @@ namespace Tempest.Tests
 
 		public override Task<bool> SendResponseAsync (Message originalMessage, Message response)
 		{
+			PrepareMessage (response);
+
 			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
 
-			response.Header.MessageId = originalMessage.Header.MessageId;
+			response.Header.ResponseMessageId = originalMessage.Header.MessageId;
 			this.connection.ReceiveResponse (new MessageEventArgs (this.connection, response));
 			tcs.SetResult (true);
 			return tcs.Task;

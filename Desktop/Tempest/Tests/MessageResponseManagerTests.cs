@@ -49,7 +49,8 @@ namespace Tempest.Tests
 
 			var responseMsg = new BlankMessage {
 				Header = new MessageHeader {
-					MessageId = 1,
+					MessageId = 2,
+					ResponseMessageId = 1,
 					IsResponse = true
 				}
 			};
@@ -128,7 +129,8 @@ namespace Tempest.Tests
 
 			var responseMsg = new BlankMessage {
 				Header = new MessageHeader {
-					MessageId = 1,
+					MessageId = 2,
+					ResponseMessageId = 1,
 					IsResponse = true
 				}
 			};
@@ -155,7 +157,8 @@ namespace Tempest.Tests
 
 			var responseMsg = new BlankMessage {
 				Header = new MessageHeader {
-					MessageId = 1,
+					MessageId = 2,
+					ResponseMessageId = 1,
 					IsResponse = true
 				}
 			};
@@ -213,7 +216,8 @@ namespace Tempest.Tests
 
 			var responseMsg = new BlankMessage {
 				Header = new MessageHeader {
-					MessageId = 1,
+					MessageId = 2,
+					ResponseMessageId = 1,
 					IsResponse = true
 				}
 			};

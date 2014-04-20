@@ -132,7 +132,7 @@ namespace Tempest
 				throw new ArgumentException ("message is not a response message", "message");
 
 			TaskCompletionSource<Message> tcs;
-			if (!this.messageResponses.TryRemove (message.Header.MessageId, out tcs))
+			if (!this.messageResponses.TryRemove (message.Header.ResponseMessageId, out tcs))
 				return;
 
 			tcs.TrySetResult (message);

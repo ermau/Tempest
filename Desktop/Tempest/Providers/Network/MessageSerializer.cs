@@ -4,7 +4,8 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012-2014 Xamarin Inc.
+// Copyright (c) 2010-2011 Eric Maupin
+// Copyright (c) 2011-2014 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -161,6 +162,8 @@ namespace Tempest.Providers.Network
 			writer.EnsureAdditionalCapacity (15);
 			
 			int cid = (connection != null) ? connection.ConnectionId : 0;
+			int headerLength = BaseHeaderLength;
+
 			#if SAFE
 			writer.WriteByte (message.Protocol.id);
 
@@ -170,15 +173,25 @@ namespace Tempest.Providers.Network
 			writer.Length += sizeof (int); // length placeholder
 
 			writer.WriteInt32 (messageId);
+
+			if (message.Header.IsResponse) {
+				writer.WriteInt32 (message.Header.ResponseMessageId);
+				headerLength += sizeof(int);
+			}
 			#else
 			fixed (byte* bptr = writer.Buffer) {
 				*bptr = message.Protocol.id;
 				*((int*) (bptr + 1)) = cid;
 				*((ushort*) (bptr + 5)) = message.MessageType;
 				*((int*) (bptr + 11)) = messageId;
+
+				if (message.Header.IsResponse) {
+					*((int*) (bptr + 15)) = message.Header.ResponseMessageId;
+					headerLength += sizeof(int);
+				}
 			}
 
-			writer.Extend (15);
+			writer.Extend (headerLength);
 			#endif
 
 			if (this.serializationContext == null) {
@@ -189,8 +202,6 @@ namespace Tempest.Providers.Network
 			}
 
 			message.WritePayload (this.serializationContext, writer);
-
-			int headerLength = BaseHeaderLength;
 
 			if (message.Encrypted)
 			{
@@ -367,9 +378,16 @@ namespace Tempest.Providers.Network
 					header.MessageId = identV & ~ResponseFlag;
 					header.IsResponse = (identV & ResponseFlag) == ResponseFlag;
 
-					header.State = HeaderState.Complete;
+					header.State = (header.IsResponse) ? HeaderState.MessageId : HeaderState.Complete;
 
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Have message ID: " + header.MessageId, callCategory);
+				}
+
+				if (header.State < HeaderState.ResponseMessageId) {
+					header.ResponseMessageId = reader.ReadInt32();
+					header.State = HeaderState.Complete;
+
+					Trace.WriteLineIf (NTrace.TraceVerbose, "Have message in resoponse to ID: " + header.ResponseMessageId);
 				}
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", callCategory);

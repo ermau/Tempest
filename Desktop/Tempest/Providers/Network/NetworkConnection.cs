@@ -268,8 +268,10 @@ namespace Tempest.Providers.Network
 			if (response == null)
 				throw new ArgumentNullException ("response");
 
-			response.Header = new MessageHeader();
-			response.Header.MessageId = originalMessage.Header.MessageId;
+			response.Header = new MessageHeader {
+				IsResponse = true,
+				ResponseMessageId = originalMessage.Header.MessageId
+			};
 
 			return SendMessage (response, isResponse: true);
 		}
@@ -523,19 +525,14 @@ namespace Tempest.Providers.Network
 			Trace.WriteLineIf (NTrace.TraceVerbose, "Have writer args", callCategory);
 
 			bool sent;
-			try
-			{
-				if (!isResponse)
-				{
+			lock (this.sendSync) {
+				if (message.Header == null)
 					message.Header = new MessageHeader();
-					Monitor.Enter (this.sendSync);
-					message.Header.MessageId = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
 
-					if (requestingResponse)
-						responseTask = Responses.SendFor (message, tcs.Task, responseTimeout);
-				}
-				else
-					message.Header.IsResponse = true;
+				message.Header.MessageId = MessageSerializer.GetNextMessageId (ref this.nextMessageId);
+
+				if (requestingResponse)
+					responseTask = Responses.SendFor (message, tcs.Task, responseTimeout);
 
 				MessageSerializer slzr = this.serializer;
 				if (slzr == null)
@@ -578,11 +575,6 @@ namespace Tempest.Providers.Network
 
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Sending", callCategory);
 				sent = !this.reliableSocket.SendAsync (eargs);
-			}
-			finally
-			{
-				if (!isResponse)
-					Monitor.Exit (this.sendSync);
 			}
 
 			if (sent)

@@ -137,9 +137,9 @@ namespace Tempest.Providers.Network
 				response.Header = new MessageHeader();
 
 			response.Header.IsResponse = true;
-			response.Header.MessageId = originalMessage.Header.MessageId;
+			response.Header.ResponseMessageId = originalMessage.Header.MessageId;
 
-			return SendCore (response, dontSetId: true);
+			return SendCore (response);
 		}
 
 		public Task DisconnectAsync()

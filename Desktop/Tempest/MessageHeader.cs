@@ -67,6 +67,11 @@ namespace Tempest
 		MessageId = 6,
 
 		/// <summary>
+		/// The message ID of a message being responded to.
+		/// </summary>
+		ResponseMessageId = 7,
+
+		/// <summary>
 		/// The header has been completely read.
 		/// </summary>
 		Complete = 8
@@ -129,6 +134,15 @@ namespace Tempest
 		/// Gets whether the message is a response to another message or not.
 		/// </summary>
 		public bool IsResponse
+		{
+			get;
+			internal set;
+		}
+
+		/// <summary>
+		/// Gets or sets the message being responded to
+		/// </summary>
+		public int ResponseMessageId
 		{
 			get;
 			internal set;

@@ -260,12 +260,17 @@ namespace Tempest.Providers.Network
 					responseTask = Responses.SendFor (message, tcs.Task, timeout);
 			}
 
+			IPEndPoint endPoint = IPEndPoint;
+			if (endPoint == null) {
+				tcs.SetResult (false);
+				return tcs.Task;
+			}
+
 			SocketAsyncEventArgs e;
 			BufferPool.TryGetBuffer (out e);
 
 			int length;
 			byte[] buffer = mserialzier.GetBytes (message, out length, e.Buffer);
-
 			if (!(message is PartialMessage) && length > 490)
 			{
 				byte count = (byte)Math.Ceiling ((length / 490f));
@@ -296,7 +301,7 @@ namespace Tempest.Providers.Network
 					mserialzier.GetBytes (partial, out length, e.Buffer);
 
 					e.SetBuffer (0, length);
-					e.RemoteEndPoint = IPEndPoint;
+					e.RemoteEndPoint = endPoint;
 
 					remaining -= payloadLen;
 					i += payloadLen;
@@ -333,7 +338,7 @@ namespace Tempest.Providers.Network
 			else
 			{
 				e.SetBuffer (0, length);
-				e.RemoteEndPoint = IPEndPoint;
+				e.RemoteEndPoint = endPoint;
 				e.Completed += OnSendCompleted;
 				e.UserToken = tcs;
 

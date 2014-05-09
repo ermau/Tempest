@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -124,7 +125,7 @@ namespace Tempest.Providers.Network
 
 		private Timer deliveryTimer;
 
-		private readonly TimeSpan pingTimeout = TimeSpan.FromSeconds (15);
+		private readonly long pingTimeout = Stopwatch.Frequency * 15;
 
 		protected override bool TryGetConnection (int connectionId, out UdpConnection connection)
 		{
@@ -158,7 +159,7 @@ namespace Tempest.Providers.Network
 
 		private void OnDeliveryTimer (object sender, EventArgs eventArgs)
 		{
-			DateTime now = DateTime.Now;
+			long now = Stopwatch.GetTimestamp();
 
 			foreach (UdpServerConnection connection in this.connections.Values) {
 				if (!connection.IsConnected)

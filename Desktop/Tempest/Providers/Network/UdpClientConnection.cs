@@ -197,8 +197,8 @@ namespace Tempest.Providers.Network
 		private Timer connectTimer;
 		private Timer deliveryTimer;
 
-		private readonly TimeSpan pingInterval = TimeSpan.FromSeconds (5);
-		private readonly TimeSpan pingTimeout = TimeSpan.FromSeconds (15);
+		private readonly long pingInterval = Stopwatch.Frequency * 5;
+		private readonly long pingTimeout = Stopwatch.Frequency * 15;
 
 		private class UdpClientConnectionlessListener
 			: UdpConnectionlessListener
@@ -249,11 +249,13 @@ namespace Tempest.Providers.Network
 			if (!IsConnected)
 				return;
 
-			TimeSpan sinceLastReceive = (DateTime.Now - this.lastReceiveActivity);
+			long timestamp = Stopwatch.GetTimestamp();
+
+			long sinceLastReceive = (timestamp - this.lastReceiveActivity);
 			if (sinceLastReceive > this.pingTimeout) {
 				Trace.WriteLineIf (NTrace.TraceWarning, "Disconnected due to ping timeout");
 				DisconnectAsync (ConnectionResult.TimedOut);
-			} else if ((DateTime.Now - this.lastReliableSendActivity) > this.pingInterval) {
+			} else if ((timestamp - this.lastReliableSendActivity) > this.pingInterval) {
 				SendAsync (new PingMessage());
 			}
 		}

@@ -182,7 +182,7 @@ namespace Tempest.Providers.Network
 		protected bool requiresHandshake;
 		internal readonly ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>> partials = new ConcurrentDictionary<ushort, ConcurrentQueue<PartialMessage>>();
 
-		internal DateTime lastReceiveActivity, lastReliableSendActivity;
+		internal long lastReceiveActivity, lastReliableSendActivity;
 
 		static UdpConnection()
 		{
@@ -313,7 +313,7 @@ namespace Tempest.Providers.Network
 						e.Completed += OnPartialSendCompleted;
 
 					try {
-						this.lastReliableSendActivity = DateTime.Now;
+						this.lastReliableSendActivity = Stopwatch.GetTimestamp();
 						if (!sock.SendToAsync (e)) {
 							if (remaining == 0)
 								OnSendCompleted (this, e);
@@ -343,7 +343,7 @@ namespace Tempest.Providers.Network
 				e.UserToken = tcs;
 
 				if (message.PreferReliable || message.MustBeReliable) {
-					this.lastReliableSendActivity = DateTime.Now;
+					this.lastReliableSendActivity = Stopwatch.GetTimestamp();
 
 					lock (this.pendingAck)
 						this.pendingAck.Add (message.Header.MessageId, new Tuple<DateTime, Message> (DateTime.UtcNow, message));
@@ -370,7 +370,7 @@ namespace Tempest.Providers.Network
 			this.formallyConnected = false;
 			this.nextMessageId = 0;
 			this.nextReliableMessageId = 0;
-			this.lastReceiveActivity = default(DateTime);
+			this.lastReceiveActivity = 0;
 
 			this.serializer = null;
 
@@ -435,7 +435,7 @@ namespace Tempest.Providers.Network
 
 		internal void Receive (Message message, bool fromPartials = false)
 		{
-			this.lastReceiveActivity = DateTime.Now;
+			this.lastReceiveActivity = Stopwatch.GetTimestamp();
 			var args = new MessageEventArgs (this, message);
 
 			if (!fromPartials && message.Header.MessageId != 0 && (args.Message.MustBeReliable || args.Message.PreferReliable)) {

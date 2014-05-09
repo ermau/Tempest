@@ -224,7 +224,7 @@ namespace Tempest.Providers.Network
 			length = writer.Length;
 
 			#if SAFE
-			Buffer.BlockCopy (BitConverter.GetBytes (len), 0, rawMessage, LengthOffset, sizeof(int));
+			Buffer.BlockCopy (BitConverter.GetBytes (length), 0, rawMessage, LengthOffset, sizeof(int));
 			#else
 			fixed (byte* mptr = rawMessage)
 				*((int*) (mptr + LengthOffset)) = length;

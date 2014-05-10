@@ -45,6 +45,7 @@ namespace Tempest
 				throw new ArgumentNullException ("buffer");
 
 			this.buffer = buffer;
+			this.length = buffer.Length;
 		}
 
 		public int Length
@@ -291,17 +292,18 @@ namespace Tempest
 		[MethodImpl (MethodImplOptions.AggressiveInlining)]
 		public void EnsureAdditionalCapacity (int additionalCapacity)
 		{
-			if (this.position + additionalCapacity <= this.buffer.Length)
+			if (this.position + additionalCapacity <= this.length)
 				return;
 
-			int curLength = this.buffer.Length;
+			int curLength = this.length;
 			int newLength = curLength * 2;
 			while (newLength <= curLength + additionalCapacity)
 				newLength *= 2;
 
 			byte[] newbuffer = new byte[newLength];
-			Buff.BlockCopy (this.buffer, 0, newbuffer, 0, Length);
+			Buff.BlockCopy (this.buffer, 0, newbuffer, 0, this.position);
 			this.buffer = newbuffer;
+			this.length = newLength;
 		}
 
 		/// <summary>
@@ -314,6 +316,7 @@ namespace Tempest
 			this.position += bytes;
 		}
 
+		private int length;
 		private byte[] buffer;
 		private int position;
 	}

@@ -3,7 +3,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2012-2013 Eric Maupin
+// Copyright (c) 2012-2014 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -197,7 +197,7 @@ namespace Tempest.Providers.Network
 			{
 				UdpServerConnection connection;
 				if (this.authKey != null)
-					connection = new UdpServerConnection(GetConnectionId(), target.ToEndPoint(), this, new RSACrypto(), this.crypto, this.authKey);
+					connection = new UdpServerConnection (GetConnectionId(), target.ToEndPoint(), this, new RSACrypto(), this.crypto, this.authKey);
 				else
 					connection = new UdpServerConnection (GetConnectionId(), target.ToEndPoint(), this);
 

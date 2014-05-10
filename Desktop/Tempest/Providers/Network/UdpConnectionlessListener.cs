@@ -290,16 +290,13 @@ namespace Tempest.Providers.Network
 					return;
 			}
 
-			header.SerializationContext = ((SerializationContext)header.SerializationContext).WithConnection (connection);
-
 			List<Message> messages = serializer.BufferMessages (ref buffer, ref offset, ref moffset, ref remaining, ref header, ref reader);
-			if (messages != null)
-			{
+			if (messages != null) {
 				foreach (Message message in messages)
 					connection.Receive (message);
 			}
 
-			reader = new BufferValueReader (buffer);
+			reader.Position = 0;
 		}
 
 		private void HandleConnectionlessMessage (SocketAsyncEventArgs args, MessageHeader header, ref BufferValueReader reader)

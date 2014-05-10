@@ -4,7 +4,7 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2013-2014 Eric Maupin
+// Copyright (c) 2013-2014 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -236,8 +236,9 @@ namespace Tempest.Providers.Network
 			Socket socket = cnd.Item1;
 			BufferValueReader reader = cnd.Item2;
 
-			if (args.BytesTransferred == 0 || args.SocketError != SocketError.Success)
-			{
+			if (args.BytesTransferred == 0 || args.SocketError != SocketError.Success) {
+				reader.Dispose();
+				args.Dispose();
 				Interlocked.Decrement (ref this.pendingAsync);
 				return;
 			}
@@ -248,8 +249,7 @@ namespace Tempest.Providers.Network
 			MessageHeader header = null;
 			
 			// We don't currently support partial messages, so an incomplete message is a bad one.
-			if (!this.connectionlessSerializer.TryGetHeader (reader, args.BytesTransferred, ref header) || header.Message == null)
-			{
+			if (!this.connectionlessSerializer.TryGetHeader (reader, args.BytesTransferred, ref header) || header.Message == null) {
 				Interlocked.Decrement (ref this.pendingAsync);
 				StartReceive (socket, args, reader);
 				return;

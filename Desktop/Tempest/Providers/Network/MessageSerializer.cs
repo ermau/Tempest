@@ -551,8 +551,9 @@ namespace Tempest.Providers.Network
 				}
 
 				byte[] destinationBuffer = buffer;
-				if (knownRoomNeeded > buffer.Length)
-				{
+				if (knownRoomNeeded > buffer.Length) {
+					reader.Dispose();
+
 					destinationBuffer = new byte[header.MessageLength];
 					reader = new BufferValueReader (destinationBuffer);
 				}

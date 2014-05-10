@@ -39,6 +39,11 @@ namespace Tempest.Providers.Network
 	public abstract class NetworkConnection
 		: IConnection
 	{
+		static NetworkConnection()
+		{
+			MaxMessageSize = 1048576;
+		}
+
 		/// <summary>
 		/// Gets or sets the global limit for number of send buffers (for both <see cref="NetworkServerConnection"/> and <see cref="NetworkClientConnection" />).
 		/// (Default: <see cref="Environment.ProcessorCount"/>.)
@@ -88,8 +93,8 @@ namespace Tempest.Providers.Network
 		/// </remarks>
 		public static int MaxMessageSize
 		{
-			get { return maxMessageSize; }
-			set { maxMessageSize = value; }
+			get;
+			set;
 		}
 
 		protected NetworkConnection (IEnumerable<Protocol> protocols, RSAAsymmetricKey authKey, bool generateKey)
@@ -855,7 +860,6 @@ namespace Tempest.Providers.Network
 		private static volatile int bufferCount = 0;
 
 		internal static readonly TraceSwitch NTrace = new TraceSwitch ("Tempest.Networking", "NetworkConnectionProvider");
-		internal static int maxMessageSize = 1048576;
 		internal static int sendBufferLimit = Environment.ProcessorCount;
 		private static bool autoSizeSendBufferLimit = true;
 		private static int autoSizeFactor = 1;

@@ -61,6 +61,10 @@ namespace Tempest.Tests
 		{
 			var tcs = new TaskCompletionSource<bool>();
 
+			// Sometimes we manually construct messages to test handlers, we'll go ahead and build a header
+			// for those automatically to save ourselves time.
+			PrepareMessage (originalMessage);
+
 			PrepareMessage (response);
 			response.Header.ResponseMessageId = originalMessage.Header.MessageId;
 			response.Header.IsResponse = true;

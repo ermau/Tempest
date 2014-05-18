@@ -98,6 +98,10 @@ namespace Tempest.Tests
 
 		public override Task<bool> SendResponseAsync (Message originalMessage, Message response)
 		{
+			// Sometimes we manually construct messages to test handlers, we'll go ahead and build a header
+			// for those automatically to save ourselves time.
+			PrepareMessage (originalMessage);
+
 			PrepareMessage (response);
 
 			TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();

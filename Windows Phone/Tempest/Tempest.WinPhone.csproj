@@ -211,6 +211,9 @@
     <Compile Include="..\..\Desktop\Tempest\Protocol.cs">
       <Link>Protocol.cs</Link>
     </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\BufferPool.cs">
+      <Link>Providers\Network\BufferPool.cs</Link>
+    </Compile>
     <Compile Include="..\..\Desktop\Tempest\Providers\Network\ClientMessageSerializer.cs">
       <Link>Providers\Network\ClientMessageSerializer.cs</Link>
     </Compile>
@@ -222,6 +225,18 @@
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\Providers\Network\NetworkConnection.cs">
       <Link>Providers\Network\NetworkConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\ReliableQueue.cs">
+      <Link>Providers\Network\ReliableQueue.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\UdpClientConnection.cs">
+      <Link>Providers\Network\UdpClientConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\UdpConnection.cs">
+      <Link>Providers\Network\UdpConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Desktop\Tempest\Providers\Network\UdpConnectionlessListener.cs">
+      <Link>Providers\Network\UdpConnectionlessListener.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\RSAAsymmetricKey.cs">
       <Link>RSAAsymmetricKey.cs</Link>

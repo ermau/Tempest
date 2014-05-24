@@ -81,7 +81,9 @@ namespace Tempest.Providers.Network
 			//if (Socket.OSSupportsIPv4)
 			{
 				this.socket4 = new Socket (AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+				#if !WINDOWS_PHONE
 				this.socket4.EnableBroadcast = true;
+				#endif
 				this.socket4.Bind (new IPEndPoint (IPAddress.Any, this.port));
 
 				var args = new SocketAsyncEventArgs();
@@ -98,7 +100,9 @@ namespace Tempest.Providers.Network
 			if (Socket.OSSupportsIPv6)
 			{
 				this.socket6 = new Socket (AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
+				#if !WINDOWS_PHONE
 				this.socket6.EnableBroadcast = true;
+				#endif
 				this.socket6.Bind (new IPEndPoint (IPAddress.IPv6Any, this.port));
 
 				var args = new SocketAsyncEventArgs();

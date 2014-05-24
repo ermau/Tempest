@@ -57,12 +57,14 @@ namespace Tempest
 			#endif
 		}
 
+		#if !SAFE
 		public BufferValueReader (byte[] buffer, int offset, int length)
 			: this (buffer)
 		{
 			this.ptr += offset;
 			this.length = length;
 		}
+		#endif
 
 		/// <summary>
 		/// Gets the underlying buffer.

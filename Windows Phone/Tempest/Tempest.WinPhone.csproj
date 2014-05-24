@@ -275,6 +275,14 @@
     <Compile Include="System.Threading\SpinWait.cs" />
     <Compile Include="System.Threading\Watch.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="PhoneNetTools">
+      <HintPath>..\..\packages\PhoneNetTools.0.6.1\lib\sl4-wp71\PhoneNetTools.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).$(TargetFrameworkVersion).Overrides.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).CSharp.targets" />
   <ProjectExtensions>

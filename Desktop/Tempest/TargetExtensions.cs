@@ -25,10 +25,16 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+
+#if WINDOWS_PHONE
+using PhoneNetTools.Dns;
+#endif
 
 namespace Tempest
 {
@@ -58,12 +64,23 @@ namespace Tempest
 				throw new ArgumentException();
 
 
+			#if !WINDOWS_PHONE
 			try {
 				IPHostEntry entry = await Dns.GetHostEntryAsync (dns.Host).ConfigureAwait (false);
 				return new IPEndPoint (entry.AddressList.First(), dns.Port);
 			} catch (SocketException) {
 				return null;
 			}
+			#else
+			var helper = new DnsHelper();
+			IAsyncResult result = helper.BeginGetHostEntry (dns.Host, null, null);
+			var addresses = await Task<IEnumerable<IPAddress>>.Factory.FromAsync (result, helper.EndGetHostEntry).ConfigureAwait (false);
+			var address = addresses.FirstOrDefault();
+			if (address == null)
+				return null;
+
+			return new IPEndPoint (address, dns.Port);
+			#endif
 		}
 
 		public static Target ToTarget (this EndPoint endPoint)

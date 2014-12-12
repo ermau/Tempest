@@ -93,6 +93,11 @@ namespace Tempest
 			}
 		}
 
+		public override string ToString ()
+		{
+			return string.Format ("{0}:{1}", Hostname, Port);
+		}
+
 		public static bool operator == (Target left, Target right)
 		{
 			return Equals (left, right);

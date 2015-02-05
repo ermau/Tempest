@@ -697,7 +697,7 @@ namespace Tempest.Providers.Network
 
 				this.lastMessageId = (header.MessageId != MaxMessageId) ? header.MessageId : 0; // BUG: Skipped messages will break this
 			}
-			else if (header.MessageId > this.nextMessageId)
+			else if (header.ResponseMessageId > this.nextMessageId)
 			{
 				Disconnect();
 				return false;

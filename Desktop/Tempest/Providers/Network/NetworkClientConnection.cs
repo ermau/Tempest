@@ -195,7 +195,7 @@ namespace Tempest.Providers.Network
 				if (tcs != null)
 				{
 					ConnectionResult result = GetConnectFromError (e.SocketError);
-					tcs.SetResult (new ClientConnectionResult (result, null));
+					tcs.TrySetResult (new ClientConnectionResult (result, null));
 				}
 
 				return;
@@ -303,7 +303,7 @@ namespace Tempest.Providers.Network
 
 					var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
 					if (tcs != null)
-						tcs.SetResult (new ClientConnectionResult (ConnectionResult.Success, this.serverAuthenticationKey));
+						tcs.TrySetResult (new ClientConnectionResult (ConnectionResult.Success, this.serverAuthenticationKey));
 
 					break;
 

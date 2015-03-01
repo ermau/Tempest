@@ -205,7 +205,7 @@ namespace Tempest
 				return;
 
 			lock (this.connections)
-				this.connections.Add (e.Connection, ExecutionMode.ConnectionOrder);
+				this.connections [e.Connection] = ExecutionMode.ConnectionOrder;
 			
 			e.Connection.MessageReceived += OnConnectionMessageReceived;
 			e.Connection.Disconnected += OnConnectionDisconnected;
@@ -221,7 +221,7 @@ namespace Tempest
 				return;
 
 			lock (this.connections)
-				this.connections.Add (e.Connection, ExecutionMode.GlobalOrder);
+				this.connections [e.Connection] = ExecutionMode.GlobalOrder;
 			
 			e.Connection.MessageReceived += OnGlobalMessageReceived;
 			e.Connection.Disconnected += OnConnectionDisconnectedGlobal;

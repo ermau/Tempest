@@ -377,12 +377,12 @@ namespace Tempest.Providers.Network
 			var now = DateTime.Now;
 			var last = (now - this.lastPing);
 
-			//if (this.pingsOut >= 2)
-			//{
+			if (this.pingsOut >= 2)
+			{
 			//    Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (" + this.pingsOut + " pings out)", callCategory);
-			//    Disconnect(); // Connection timed out
-			//    return;
-			//}
+			    Disconnect(); // Connection timed out
+			    return;
+			}
 
 			if (last.TotalMilliseconds >= PingFrequency) {
 				this.lastPing = now;

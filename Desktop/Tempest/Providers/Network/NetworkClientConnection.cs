@@ -138,8 +138,7 @@ namespace Tempest.Providers.Network
 
 			return ntcs.Task;
 		}
-		
-		private int pingFrequency;
+
 		private Timer activityTimer;
 
 		internal RSACrypto serverAuthentication;
@@ -249,7 +248,7 @@ namespace Tempest.Providers.Network
 			{
 				case (ushort)TempestMessageType.Ping:
 					var ping = (PingMessage)e.Message;
-					if (this.pingFrequency == 0 || this.activityTimer == null)
+					if (PingFrequency == 0 || this.activityTimer == null)
 					{
 						if (this.activityTimer != null)
 							this.activityTimer.Dispose();
@@ -261,10 +260,10 @@ namespace Tempest.Providers.Network
 							this.activityTimer.Start();
 						}
 					}
-					else if (ping.Interval != this.pingFrequency)
+					else if (ping.Interval != PingFrequency)
 						this.activityTimer.Interval = ping.Interval;
-					
-					this.pingFrequency = ((PingMessage)e.Message).Interval;
+
+					base.OnTempestMessageReceived (e);
 					break;
 
 				case (ushort)TempestMessageType.AcknowledgeConnect:

@@ -405,18 +405,32 @@ namespace Tempest.Providers.Network
 
 			if (!this.running || e.SocketError != SocketError.Success)
 			{
-				if (!this.running)
-					e.Dispose();
-				else
+				try
 				{
-					#if !SILVERLIGHT
-					e.AcceptSocket.Shutdown (SocketShutdown.Both);
-					e.AcceptSocket.Disconnect (true);
-					//    ReliableSockets.Push (this.reliableSocket);
-					#else
-					e.ConnectSocket.Dispose();
-					#endif
-					BeginAccepting (e);
+					if (!this.running)
+						e.Dispose();
+					else
+					{
+						#if !SILVERLIGHT
+						e.AcceptSocket.Shutdown (SocketShutdown.Both);
+						e.AcceptSocket.Disconnect (true);
+						//    ReliableSockets.Push (this.reliableSocket);
+						#else
+						e.ConnectSocket.Dispose();
+						#endif
+					}
+				}
+				catch (Exception ex)
+				{
+					// At this point, we already have a socket error.
+					//  There's nothing else we can do if an Exception is thrown shutting down.
+					Trace.WriteLineIf (NetworkConnection.NTrace.TraceError, "Exiting (error): " + ex, String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));
+					return;
+				}
+				finally
+				{
+					if (this.running)
+						BeginAccepting (e);
 				}
 
 				Trace.WriteLineIf (NetworkConnection.NTrace.TraceVerbose, "Exiting", String.Format ("NetworkConnectionProvider Accept({0},{1})", e.BytesTransferred, e.SocketError));

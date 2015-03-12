@@ -95,47 +95,50 @@ namespace Tempest.Providers.Network
 			
 			ThreadPool.QueueUserWorkItem (s =>
 			{
-				Target t = (Target)s;
+				try {
+					Target t = (Target)s;
 
-				SocketAsyncEventArgs args;
-				bool connected;
+					SocketAsyncEventArgs args;
+					bool connected;
 
-				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), category);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Waiting for pending ({0}) async..", this.pendingAsync), category);
 
-				while (this.pendingAsync > 0 || Interlocked.CompareExchange (ref this.connectCompletion, ntcs, null) != null)
-					Thread.Sleep (0);
+					while (this.pendingAsync > 0 || Interlocked.CompareExchange (ref this.connectCompletion, ntcs, null) != null)
+						Thread.Sleep (0);
 
-				lock (this.stateSync)
-				{
-					if (IsConnected)
-						throw new InvalidOperationException ("Already connected");
+					lock (this.stateSync)
+					{
+						if (IsConnected)
+							throw new InvalidOperationException ("Already connected");
 
-					RemoteTarget = t;
+						RemoteTarget = t;
 
-					args = new SocketAsyncEventArgs();
-					args.RemoteEndPoint = t.ToEndPoint();
-					args.Completed += ConnectCompleted;
+						args = new SocketAsyncEventArgs();
+						args.RemoteEndPoint = t.ToEndPoint();
+						args.Completed += ConnectCompleted;
 
-					this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+						this.reliableSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-					int p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), category);
-					connected = !this.reliableSocket.ConnectAsync (args);
+						int p = Interlocked.Increment (ref this.pendingAsync);
+						Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), category);
+						connected = !this.reliableSocket.ConnectAsync (args);
+					}
+
+					if (connected)
+					{
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Connected synchronously", category);
+						ConnectCompleted (this.reliableSocket, args);
+					}
+					else
+						Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", category);
+				} catch (Exception ex) {
+					ntcs.TrySetException (ex);
 				}
-
-				if (connected)
-				{
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Connected synchronously", category);
-					ConnectCompleted (this.reliableSocket, args);
-				}
-				else
-					Trace.WriteLineIf (NTrace.TraceVerbose, "Connecting asynchronously", category);
 			}, target);
 
 			return ntcs.Task;
 		}
-		
-		private int pingFrequency;
+
 		private Timer activityTimer;
 
 		internal RSACrypto serverAuthentication;
@@ -191,7 +194,7 @@ namespace Tempest.Providers.Network
 				if (tcs != null)
 				{
 					ConnectionResult result = GetConnectFromError (e.SocketError);
-					tcs.SetResult (new ClientConnectionResult (result, null));
+					tcs.TrySetResult (new ClientConnectionResult (result, null));
 				}
 
 				return;
@@ -245,7 +248,7 @@ namespace Tempest.Providers.Network
 			{
 				case (ushort)TempestMessageType.Ping:
 					var ping = (PingMessage)e.Message;
-					if (this.pingFrequency == 0 || this.activityTimer == null)
+					if (PingFrequency == 0 || this.activityTimer == null)
 					{
 						if (this.activityTimer != null)
 							this.activityTimer.Dispose();
@@ -257,10 +260,10 @@ namespace Tempest.Providers.Network
 							this.activityTimer.Start();
 						}
 					}
-					else if (ping.Interval != this.pingFrequency)
+					else if (ping.Interval != PingFrequency)
 						this.activityTimer.Interval = ping.Interval;
-					
-					this.pingFrequency = ((PingMessage)e.Message).Interval;
+
+					base.OnTempestMessageReceived (e);
 					break;
 
 				case (ushort)TempestMessageType.AcknowledgeConnect:
@@ -299,7 +302,7 @@ namespace Tempest.Providers.Network
 
 					var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
 					if (tcs != null)
-						tcs.SetResult (new ClientConnectionResult (ConnectionResult.Success, this.serverAuthenticationKey));
+						tcs.TrySetResult (new ClientConnectionResult (ConnectionResult.Success, this.serverAuthenticationKey));
 
 					break;
 

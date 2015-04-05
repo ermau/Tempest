@@ -39,7 +39,7 @@ namespace Tempest
 	public class TempestClient
 		: MessageHandler, IClientContext, INotifyPropertyChanged
 	{
-		public TempestClient (IClientConnection connection, MessageTypes mtypes, bool poll = false)
+		public TempestClient (IClientConnection connection, MessageTypes mtypes)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
@@ -54,8 +54,6 @@ namespace Tempest
 
 			this.mqueue = new ConcurrentQueue<MessageEventArgs>();
 			this.connection.MessageReceived += ConnectionOnMessageReceived;
-
-			this.polling = poll;
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -115,7 +113,6 @@ namespace Tempest
 		}
 
 		private readonly IClientConnection connection;
-		private readonly bool polling;
 		private readonly ConcurrentQueue<MessageEventArgs> mqueue;
 
 		private AutoResetEvent mwait;
@@ -198,19 +195,16 @@ namespace Tempest
 
 			this.running = true;
 
-			if (!this.polling)
-			{
-				while (this.messageRunner != null)
-					Thread.Sleep (0);
+			while (this.messageRunner != null)
+				Thread.Sleep (0);
 
-				Thread runner = new Thread (MessageRunner) {
-					Name = "Client Message Runner",
-					IsBackground = true
-				};
-				runner.Start();
+			Thread runner = new Thread (MessageRunner) {
+				Name = "Client Message Runner",
+				IsBackground = true
+			};
+			runner.Start();
 
-				this.messageRunner = runner;
-			}
+			this.messageRunner = runner;
 
 			OnConnected (e);
 		}

@@ -156,7 +156,7 @@ namespace Tempest
 
 		private void MessageRunner ()
 		{
-			Queue<MessageEventArgs> q = this.mqueue;
+			ConcurrentQueue<MessageEventArgs> q = this.mqueue;
 
 			while (this.running)
 			{

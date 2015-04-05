@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace Tempest
 {
@@ -151,12 +152,13 @@ namespace Tempest
 
 			this.running = true;
 
-			lock (this.providers)
-			{
-				foreach (var kvp in this.providers)
-				{
-					if (kvp.Value == ExecutionMode.GlobalOrder && this.messageRunnerThread == null)
-						(this.messageRunnerThread = new Thread (MessageRunner) { IsBackground = true }).Start();
+			lock (this.providers) {
+				if (this.cancelSource == null)
+					this.cancelSource = new CancellationTokenSource();
+
+				foreach (var kvp in this.providers) {
+					if (kvp.Value == ExecutionMode.GlobalOrder && this.messageRunnerTask == null)
+						this.messageRunnerTask = Task.Factory.StartNew (() => MessageRunner (this.cancelSource.Token), this.cancelSource.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
 					kvp.Key.Start (this.messageTypes);
 				}
@@ -176,11 +178,15 @@ namespace Tempest
 				{
 					kvp.Key.Stop();
 
-					if (kvp.Value == ExecutionMode.GlobalOrder && this.messageRunnerThread != null)
+					if (kvp.Value == ExecutionMode.GlobalOrder && this.messageRunnerTask != null)
 					{
 						this.wait.Set();
-						this.messageRunnerThread.Join();
-						this.messageRunnerThread = null;
+						if (this.cancelSource != null) {
+							this.cancelSource.Cancel();
+							this.cancelSource = null;
+						}
+
+						this.messageRunnerTask = null;
 					}
 				}
 			}
@@ -189,7 +195,10 @@ namespace Tempest
 				this.connections.Clear();
 		}
 
+		private Task messageRunnerTask;
+		private CancellationTokenSource cancelSource;
 		private volatile bool running = false;
+		private readonly AutoResetEvent wait = new AutoResetEvent (false);
 		private readonly Dictionary<IConnection, ExecutionMode> connections = new Dictionary<IConnection, ExecutionMode>();
 		private readonly Dictionary<IConnectionProvider, ExecutionMode> providers = new Dictionary<IConnectionProvider, ExecutionMode>();
 		private readonly MessageTypes messageTypes;
@@ -280,9 +289,6 @@ namespace Tempest
 			this.wait.Set();
 		}
 
-		private Thread messageRunnerThread;
-		private readonly AutoResetEvent wait = new AutoResetEvent (false);
-
 		private void HandleInlineEvent (EventArgs e)
 		{
 			var margs = (e as MessageEventArgs);
@@ -309,9 +315,9 @@ namespace Tempest
 		}
 		
 		private ConcurrentQueue<EventArgs> mqueue;
-		private void MessageRunner()
+		private void MessageRunner (CancellationToken cancelToken)
 		{
-			while (this.running)
+			while (this.running && !cancelToken.IsCancellationRequested)
 			{
 				this.wait.WaitOne();
 

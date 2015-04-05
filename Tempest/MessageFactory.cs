@@ -129,23 +129,13 @@ namespace Tempest
 		public Message Create (ushort messageType)
 		{
 			Func<Message> mCtor;
-			#if !NET_4
-			lock (this.messageCtors) {
-			#endif
-				if (!this.messageCtors.TryGetValue (messageType, out mCtor))
-					return null;
-			#if !NET_4
-			}
-			#endif
+			if (!this.messageCtors.TryGetValue (messageType, out mCtor))
+				return null;
 
 			return mCtor();
 		}
 
-		#if !NET_4
-		private readonly Dictionary<ushort, Func<Message>> messageCtors = new Dictionary<ushort, Func<Message>>();
-		#else
 		private readonly ConcurrentDictionary<ushort, Func<Message>> messageCtors = new ConcurrentDictionary<ushort, Func<Message>>();
-		#endif
 
 		#if !NOEMIT
 		private void RegisterTypes (IEnumerable<Type> messageTypes, bool ignoreDupes)
@@ -184,14 +174,11 @@ namespace Tempest
 			if (messageTypes == null)
 				throw new ArgumentNullException ("messageTypes");
 
-			Type mtype = typeof (Message);
+			TypeInfo mtype = typeof (Message).GetTypeInfo();
 
-			#if !NET_4
-			lock (messageCtors)
-			#endif
 			foreach (var kvp in messageTypes)
 			{
-				if (!mtype.IsAssignableFrom (kvp.Key))
+				if (!mtype.IsAssignableFrom (kvp.Key.GetTypeInfo()))
 					throw new ArgumentException (String.Format ("{0} is not an implementation of Message", kvp.Key.Name), "messageTypes");
 				if (kvp.Key.GetTypeInfo().IsGenericType || kvp.Key.GetTypeInfo().IsGenericTypeDefinition)
 					throw new ArgumentException (String.Format ("{0} is a generic type which is unsupported", kvp.Key.Name), "messageTypes");
@@ -203,25 +190,12 @@ namespace Tempest
 				if (m.Authenticated || m.Encrypted)
 					RequiresHandshake = true;
 
-				#if !NET_4
-				if (this.messageCtors.ContainsKey (m.MessageType))
-				{
+				if (!this.messageCtors.TryAdd (m.MessageType, kvp.Value)) {
 					if (ignoreDupes)
 						continue;
 
 					throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
 				}
-
-				this.messageCtors.Add (m.MessageType, kvp.Value);
-				#else
-				if (!this.messageCtors.TryAdd (m.MessageType, kvp.Value))
-				{
-					if (ignoreDupes)
-						continue;
-
-					throw new ArgumentException (String.Format ("A message of type {0} has already been registered.", m.MessageType), "messageTypes");
-				}
-				#endif
 			}
 		}
 

@@ -52,11 +52,7 @@ namespace Tempest
 			this.connection.Connected += OnConnectionConnected;
 			this.connection.Disconnected += OnConnectionDisconnected;
 
-			#if NET_4
 			this.mqueue = new ConcurrentQueue<MessageEventArgs>();
-			#else
-			this.mqueue = new Queue<MessageEventArgs>();
-			#endif
 			this.connection.MessageReceived += ConnectionOnMessageReceived;
 
 			this.polling = poll;
@@ -120,12 +116,7 @@ namespace Tempest
 
 		private readonly IClientConnection connection;
 		private readonly bool polling;
-
-		#if NET_4
 		private readonly ConcurrentQueue<MessageEventArgs> mqueue;
-		#else
-		private readonly Queue<MessageEventArgs> mqueue;
-		#endif
 
 		private AutoResetEvent mwait;
 		private Thread messageRunner;
@@ -142,14 +133,9 @@ namespace Tempest
 			if (wait != null)
 				wait.Set();
 
-			#if NET_4
 			MessageEventArgs e;
 			while (this.mqueue.TryDequeue (out e)) {
 			}
-			#else
-			lock (this.mqueue)
-				this.mqueue.Clear();
-			#endif
 
 			Thread runner = Interlocked.Exchange (ref this.messageRunner, null);
 			if (runner != null)
@@ -170,29 +156,15 @@ namespace Tempest
 
 		private void MessageRunner ()
 		{
-			#if NET_4
-			ConcurrentQueue<MessageEventArgs> q = this.mqueue;			
-			#else
 			Queue<MessageEventArgs> q = this.mqueue;
-			#endif		
 
 			while (this.running)
 			{
 				while (q.Count > 0 && this.running)
 				{
 					MessageEventArgs e;
-					#if NET_4
 					if (!q.TryDequeue (out e))
 						continue;
-					#else
-					lock (q)
-					{
-						if (q.Count == 0)
-							continue;
-
-						e = q.Dequeue();
-					}
-					#endif
 
 					List<Action<MessageEventArgs>> mhandlers = GetHandlers (e.Message);
 					if (mhandlers == null)

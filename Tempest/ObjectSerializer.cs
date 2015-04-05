@@ -4,7 +4,8 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011-2012 Eric Maupin
+// Copyright (c) 2010-2011 Eric Maupin
+// Copyright (c) 2011-2015 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -386,11 +387,7 @@ namespace Tempest
 			return this.deserializer (context, reader, skipHeader);
 		}
 
-		#if NET_4
 		private static readonly ConcurrentDictionary<Type, ObjectSerializer> Serializers = new ConcurrentDictionary<Type, ObjectSerializer>();
-		#else
-		private static readonly Dictionary<Type, ObjectSerializer> Serializers = new Dictionary<Type, ObjectSerializer> ();
-		#endif
 
 		internal ObjectSerializer GetSerializerInternal (Type stype)
 		{
@@ -408,26 +405,7 @@ namespace Tempest
 			if (type == typeof(object) || ti.IsInterface || ti.IsAbstract)
 				return baseSerializer;
 
-			ObjectSerializer serializer;
-			#if NET_4
-			serializer = Serializers.GetOrAdd (type, t => new ObjectSerializer (t));
-			#else
-			bool exists;
-			lock (Serializers)
-				exists = Serializers.TryGetValue (type, out serializer);
-
-			if (!exists)
-			{
-				serializer = new ObjectSerializer (type);
-				lock (Serializers)
-				{
-					if (!Serializers.ContainsKey (type))
-						Serializers.Add (type, serializer);
-				}
-			}
-			#endif
-
-			return serializer;
+			return Serializers.GetOrAdd (type, t => new ObjectSerializer (t));
 		}
 	}
 }

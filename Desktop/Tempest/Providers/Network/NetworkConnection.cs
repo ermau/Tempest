@@ -4,7 +4,8 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010-2013 Eric Maupin
+// Copyright (c) 2010-2011 Eric Maupin
+// Copyright (c) 2011-2015 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -103,7 +104,7 @@ namespace Tempest.Providers.Network
 				throw new ArgumentNullException ("protocols");
 
 			this.authenticationKey = authKey;
-			this.requiresHandshake = protocols.Any (p => p.RequiresHandshake);
+			this.requiresHandshake = protocols.Any (p => p.id != 1 && p.RequiresHandshake);
 			if (this.requiresHandshake)
 			{
 				ThreadPool.QueueUserWorkItem (s =>

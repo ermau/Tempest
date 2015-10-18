@@ -379,9 +379,9 @@ namespace Tempest.Providers.Network
 
 			if (this.pingsOut >= 2)
 			{
-			//    Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (" + this.pingsOut + " pings out)", callCategory);
-			    Disconnect(); // Connection timed out
-			    return;
+				// Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting (" + this.pingsOut + " pings out)", callCategory);
+				Disconnect (ConnectionResult.TimedOut); // Connection timed out
+				return;
 			}
 
 			if (last.TotalMilliseconds >= PingFrequency) {

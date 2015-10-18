@@ -61,13 +61,13 @@ namespace Tempest
 		/// Gets the remote authentication key for this connection.
 		/// </summary>
 		/// <remarks><c>null</c> if the transport did not handshake.</remarks>
-		RSAAsymmetricKey RemoteKey { get; }
+		IAsymmetricKey RemoteKey { get; }
 
 		/// <summary>
 		/// Gets the local authentication key for this connection.
 		/// </summary>
 		/// <remarks><c>null</c> if the transport did not handshake.</remarks>
-		RSAAsymmetricKey LocalKey { get; }
+		IAsymmetricKey LocalKey { get; }
 
 		/// <summary>
 		/// Gets the response time in milliseconds for the connection. -1 if unsupported.

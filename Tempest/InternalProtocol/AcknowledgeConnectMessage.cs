@@ -60,13 +60,13 @@ namespace Tempest.InternalProtocol
 			set;
 		}
 
-		public RSAAsymmetricKey PublicEncryptionKey
+		public IAsymmetricKey PublicEncryptionKey
 		{
 			get;
 			set;
 		}
 
-		public RSAAsymmetricKey PublicAuthenticationKey
+		public IAsymmetricKey PublicAuthenticationKey
 		{
 			get;
 			set;
@@ -83,8 +83,10 @@ namespace Tempest.InternalProtocol
 
 			writer.WriteInt32 (ConnectionId);
 
-			writer.Write (context, PublicEncryptionKey);
-			writer.Write (context, PublicAuthenticationKey);
+			writer.WriteString (PublicEncryptionKey.GetType().GetSimplestName());
+			PublicEncryptionKey.Serialize (context, writer);
+			writer.WriteString (PublicAuthenticationKey.GetType().GetSimplestName());
+			PublicAuthenticationKey.Serialize (context, writer);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
@@ -99,8 +101,20 @@ namespace Tempest.InternalProtocol
 
 			ConnectionId = reader.ReadInt32();
 
-			PublicEncryptionKey = reader.Read<RSAAsymmetricKey> (context);
-			PublicAuthenticationKey = reader.Read<RSAAsymmetricKey> (context);
+			PublicEncryptionKey = ReadKey (context, reader);
+			PublicAuthenticationKey = ReadKey (context, reader);
+		}
+
+		private IAsymmetricKey ReadKey (ISerializationContext context, IValueReader reader)
+		{
+			string keyType = reader.ReadString();
+			Type encryptionKeyType = Type.GetType (keyType, true);
+			if (!typeof (IAsymmetricKey).IsAssignableFrom (encryptionKeyType))
+				throw new InvalidOperationException ("An invalid asymmetric key type was sent.");
+
+			IAsymmetricKey encryptionKey = (IAsymmetricKey)Activator.CreateInstance (encryptionKeyType);
+			encryptionKey.Deserialize (context, reader);
+			return encryptionKey;
 		}
 	}
 }

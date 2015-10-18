@@ -203,7 +203,7 @@ namespace Tempest.Providers.Network
 			get { return this.provider.pkEncryption; }
 		}
 
-		RSAAsymmetricKey IAuthenticatedConnection.LocalKey
+		IAsymmetricKey IAuthenticatedConnection.LocalKey
 		{
 			get { return LocalKey; }
 			set { LocalKey = value; }
@@ -214,7 +214,7 @@ namespace Tempest.Providers.Network
 			get { return this.remoteCrypto; }
 		}
 
-		RSAAsymmetricKey IAuthenticatedConnection.RemoteKey
+		IAsymmetricKey IAuthenticatedConnection.RemoteKey
 		{
 			get { return RemoteKey; }
 			set { RemoteKey = value; }

@@ -31,6 +31,7 @@ using System.Security.Cryptography;
 namespace Tempest
 {
 	public class RSACrypto
+		: IAsymmetricCrypto
 	{
 		private readonly int keySize;
 
@@ -72,7 +73,7 @@ namespace Tempest
 			this.algs = nalgs;
 		}
 
-		public IEnumerable<String> SupportedHashAlgs
+		public IEnumerable<string> SupportedHashAlgs
 		{
 			get { return this.algs; }
 		}

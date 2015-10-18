@@ -68,13 +68,13 @@ namespace Tempest.Tests
 			private set;
 		}
 
-		public RSAAsymmetricKey RemoteKey
+		public IAsymmetricKey RemoteKey
 		{
 			get { return new MockAsymmetricKey(); }
 		}
 
 		private MockAsymmetricKey key = new MockAsymmetricKey();
-		public RSAAsymmetricKey LocalKey
+		public IAsymmetricKey LocalKey
 		{
 			get { return this.key; }
 		}

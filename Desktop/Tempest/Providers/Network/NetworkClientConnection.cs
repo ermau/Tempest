@@ -75,7 +75,7 @@ namespace Tempest.Providers.Network
 		public event EventHandler<ClientConnectionEventArgs> Connected;
 		public event EventHandler<ClientConnectionEventArgs> ConnectionFailed;
 
-		public override RSAAsymmetricKey RemoteKey
+		public override IAsymmetricKey RemoteKey
 		{
 			get { return this.serverAuthenticationKey; }
 		}
@@ -270,14 +270,14 @@ namespace Tempest.Providers.Network
 					ConnectionId = msg.ConnectionId;
 
 					this.serverEncryption = new RSACrypto();
-					this.serverEncryption.ImportKey (msg.PublicEncryptionKey);
-					this.serverEncryptionKey = msg.PublicEncryptionKey;
+					this.serverEncryption.ImportKey ((RSAAsymmetricKey) msg.PublicEncryptionKey);
+					this.serverEncryptionKey = (RSAAsymmetricKey) msg.PublicEncryptionKey;
 
 					var encryption = new AesManaged { KeySize = 256 };
 					encryption.GenerateKey();
 					
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
-					this.publicAuthenticationKey.Serialize (authKeyWriter, this.serverEncryption);
+					this.publicAuthenticationKey.Serialize (this.serializer.SerializationContext, authKeyWriter, this.serverEncryption);
 
 					this.serializer.AES = encryption;
 					this.serializer.HMAC = new HMACSHA256 (encryption.Key);
@@ -348,10 +348,10 @@ namespace Tempest.Providers.Network
 			get { return this.pkAuthentication; }
 		}
 
-		RSAAsymmetricKey IAuthenticatedConnection.LocalKey
+		IAsymmetricKey IAuthenticatedConnection.LocalKey
 		{
 			get { return LocalKey; }
-			set { this.authenticationKey = value; }
+			set { this.authenticationKey = (RSAAsymmetricKey)value; }
 		}
 
 		RSACrypto IAuthenticatedConnection.RemoteCrypto
@@ -365,10 +365,10 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		RSAAsymmetricKey IAuthenticatedConnection.RemoteKey
+		IAsymmetricKey IAuthenticatedConnection.RemoteKey
 		{
-			get { return this.RemoteKey; }
-			set { this.serverAuthenticationKey = value; }
+			get { return RemoteKey; }
+			set { this.serverAuthenticationKey = (RSAAsymmetricKey)value; }
 		}
 
 		RSACrypto IAuthenticatedConnection.Encryption

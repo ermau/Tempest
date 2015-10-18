@@ -52,7 +52,7 @@ namespace Tempest
 	#endif
 
 	public class RSAAsymmetricKey
-		: ISerializable
+		: IAsymmetricKey
 	{
 		public RSAAsymmetricKey()
 		{
@@ -150,16 +150,16 @@ namespace Tempest
 			writer.WriteInt32 (this.exponentOffset);
 		}
 
-		public void Serialize (IValueWriter writer, RSACrypto crypto)
+		public void Serialize (ISerializationContext context, IValueWriter writer, IAsymmetricCrypto crypto)
 		{
 			if (!writer.WriteBool (this.publicKey != null))
 				return;
 
-			writer.WriteBytes (crypto.Encrypt (this.Exponent));
+			writer.WriteBytes (crypto.Encrypt (Exponent));
 
 			int first = this.Modulus.Length / 2;
-			writer.WriteBytes (crypto.Encrypt (this.Modulus.Copy (0, first)));
-			writer.WriteBytes (crypto.Encrypt (this.Modulus.Copy (first, this.Modulus.Length - first)));
+			writer.WriteBytes (crypto.Encrypt (Modulus.Copy (0, first)));
+			writer.WriteBytes (crypto.Encrypt (Modulus.Copy (first, Modulus.Length - first)));
 		}
 
 		public void Deserialize (ISerializationContext context, IValueReader reader)

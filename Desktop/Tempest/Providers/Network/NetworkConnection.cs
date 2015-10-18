@@ -209,12 +209,12 @@ namespace Tempest.Providers.Network
 			protected set;
 		}
 
-		public abstract RSAAsymmetricKey RemoteKey
+		public abstract IAsymmetricKey RemoteKey
 		{
 			get;
 		}
 
-		public RSAAsymmetricKey LocalKey
+		public IAsymmetricKey LocalKey
 		{
 			get
 			{

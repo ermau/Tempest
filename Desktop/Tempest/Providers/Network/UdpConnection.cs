@@ -83,13 +83,13 @@ namespace Tempest.Providers.Network
 			protected set;
 		}
 
-		public RSAAsymmetricKey RemoteKey
+		public IAsymmetricKey RemoteKey
 		{
 			get;
 			protected set;
 		}
 
-		public RSAAsymmetricKey LocalKey
+		public IAsymmetricKey LocalKey
 		{
 			get;
 			protected set;

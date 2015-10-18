@@ -72,7 +72,7 @@ namespace Tempest
 		/// <param name="connection">The newly made connection.</param>
 		/// <param name="publicKey">The clients public authentication key.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="connection"/> is <c>null</c>.</exception>
-		public ConnectionMadeEventArgs (IServerConnection connection, RSAAsymmetricKey publicKey)
+		public ConnectionMadeEventArgs (IServerConnection connection, IAsymmetricKey publicKey)
 		{
 			if (connection == null)
 				throw new ArgumentNullException ("connection");
@@ -84,7 +84,7 @@ namespace Tempest
 		/// <summary>
 		/// Gets the clients public authentication key, if present.
 		/// </summary>
-		public RSAAsymmetricKey ClientPublicKey
+		public IAsymmetricKey ClientPublicKey
 		{
 			get;
 			private set;

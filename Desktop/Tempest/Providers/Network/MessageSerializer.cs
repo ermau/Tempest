@@ -41,10 +41,10 @@ namespace Tempest.Providers.Network
 		: IConnection
 	{
 		RSACrypto LocalCrypto { get; }
-		new RSAAsymmetricKey LocalKey { get; set; }
+		new IAsymmetricKey LocalKey { get; set; }
 
 		RSACrypto RemoteCrypto { get; }
-		new RSAAsymmetricKey RemoteKey { get; set; }
+		new IAsymmetricKey RemoteKey { get; set; }
 
 		RSACrypto Encryption { get; }
 	}
@@ -138,6 +138,11 @@ namespace Tempest.Providers.Network
 		{
 			get { return this.signingHashAlgorithm; }
 			set { this.signingHashAlgorithm = value; }
+		}
+
+		public ISerializationContext SerializationContext
+		{
+			get { return this.serializationContext; }
 		}
 
 		#if SAFE

@@ -69,12 +69,12 @@ namespace Tempest.Tests
 			get { return this.connection.RemoteTarget; }
 		}
 
-		public RSAAsymmetricKey RemoteKey
+		public IAsymmetricKey RemoteKey
 		{
 			get { return this.connection.RemoteKey; }
 		}
 
-		public RSAAsymmetricKey LocalKey
+		public IAsymmetricKey LocalKey
 		{
 			get { return this.connection.LocalKey; }
 		}

@@ -301,13 +301,13 @@ namespace Tempest.Providers.Network
 					ConnectionId = msg.ConnectionId;
 
 					this.remoteEncryption = new RSACrypto();
-					this.remoteEncryption.ImportKey (msg.PublicEncryptionKey);
+					this.remoteEncryption.ImportKey ((RSAAsymmetricKey) msg.PublicEncryptionKey);
 
 					var encryption = new AesManaged { KeySize = 256 };
 					encryption.GenerateKey();
 
 					BufferValueWriter authKeyWriter = new BufferValueWriter (new byte[1600]);
-					LocalKey.Serialize (authKeyWriter, this.remoteEncryption);
+					LocalKey.Serialize (this.serializer.SerializationContext, authKeyWriter, this.remoteEncryption);
 
 					SendAsync (new FinalConnectMessage
 					{
@@ -362,7 +362,7 @@ namespace Tempest.Providers.Network
 			get { return this.localCrypto; }
 		}
 
-		RSAAsymmetricKey IAuthenticatedConnection.RemoteKey
+		IAsymmetricKey IAuthenticatedConnection.RemoteKey
 		{
 			get { return RemoteKey; }
 			set { RemoteKey = value; }
@@ -380,7 +380,7 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		RSAAsymmetricKey IAuthenticatedConnection.LocalKey
+		IAsymmetricKey IAuthenticatedConnection.LocalKey
 		{
 			get { return LocalKey; }
 			set { LocalKey = value; }

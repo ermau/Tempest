@@ -62,7 +62,7 @@ namespace Tempest.Providers.Network
 				var msg = (AcknowledgeConnectMessage)message;
 
 				this.connection.RemoteKey = msg.PublicAuthenticationKey;
-				this.connection.RemoteCrypto.ImportKey (this.connection.RemoteKey);
+				this.connection.RemoteCrypto.ImportKey ((RSAAsymmetricKey) this.connection.RemoteKey);
 
 				SigningHashAlgorithm = msg.SignatureHashAlgorithm;
 				return this.connection.RemoteCrypto.VerifySignedHash (SigningHashAlgorithm, resized, signature);

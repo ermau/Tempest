@@ -99,6 +99,14 @@ namespace Tempest
 		}
 
 		/// <summary>
+		/// Gets the unique identifier for this protocol.
+		/// </summary>
+		public byte Id
+		{
+			get { return this.id; }
+		}
+
+		/// <summary>
 		/// Gets the version of this protocol.
 		/// </summary>
 		public int Version

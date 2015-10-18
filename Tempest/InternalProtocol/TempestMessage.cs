@@ -93,7 +93,7 @@ namespace Tempest.InternalProtocol
 		{
 		}
 
-		internal static readonly Protocol InternalProtocol = new Protocol (0) { id = 1 }; // Error check bypass hack
+		public static readonly Protocol InternalProtocol = new Protocol (0, 2) { id = 1 }; // Error check bypass hack
 		static TempestMessage()
 		{
 			InternalProtocol.Register (new []

@@ -54,13 +54,13 @@ namespace Tempest.Tests
 			provider.Start (MessageTypes.Reliable);
 
 			connection = new MockClientConnection (provider);
-			client = new TempestClient (connection, MessageTypes.All, false);
+			client = new TempestClient (connection, MessageTypes.All);
 		}
 
 		[Test]
 		public void CtorInvalid()
 		{
-			Assert.Throws<ArgumentNullException> (() => new TempestClient (null, MessageTypes.All, true));
+			Assert.Throws<ArgumentNullException> (() => new TempestClient (null, MessageTypes.All));
 			Assert.Throws<ArgumentException> (() => new TempestClient (connection, (MessageTypes)9999));
 		}
 

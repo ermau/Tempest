@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration ("")]
 [assembly: AssemblyCompany ("Eric Maupin")]
 [assembly: AssemblyProduct ("Tempest")]
-[assembly: AssemblyCopyright ("Copyright © Eric Maupin 2010-2013")]
+[assembly: AssemblyCopyright ("Copyright © Eric Maupin 2010-2015")]
 [assembly: AssemblyTrademark ("")]
 [assembly: AssemblyCulture ("")]
 

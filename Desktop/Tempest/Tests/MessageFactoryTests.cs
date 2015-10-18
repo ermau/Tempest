@@ -44,60 +44,9 @@ namespace Tempest.Tests
 			protocol = new Protocol (MockProtocol.Instance.id, MockProtocol.Instance.Version);
 		}
 
-		#if !NOEMIT
-		[Test]
-		public void DiscoverNull()
-		{
-			Assert.Throws<ArgumentNullException> (() => protocol.Discover (null));
-		}
-		
-		[Test]
-		public void Discover()
-		{
-			protocol.Discover();
-
-			Message m = protocol.Create (1);
-			Assert.IsNotNull (m);
-			Assert.That (m, Is.TypeOf<MockMessage>());
-		}
-
-		[Test]
-		public void DiscoverAssembly()
-		{
-			protocol.Discover (typeof(MessageFactoryTests).GetTypeInfo().Assembly);
-
-			Message m = protocol.Create (1);
-			Assert.IsNotNull (m);
-			Assert.That (m, Is.TypeOf<MockMessage>());
-		}
-
-		[Test]
-		public void DiscoverFromAssymblyOf()
-		{
-			protocol.DiscoverFromAssemblyOf<MessageFactoryTests>();
-
-			Message m = protocol.Create (1);
-			Assert.IsNotNull (m);
-			Assert.That (m, Is.TypeOf<MockMessage>());
-		}
-
-		[Test]
-		public void DiscoverAssemblyNothing()
-		{
-			protocol.Discover (typeof(string).GetTypeInfo().Assembly);
-
-			Message m = protocol.Create (1);
-			Assert.IsNull (m);
-		}
-		#endif
-
 		[Test]
 		public void RegisterNull()
 		{
-			#if !NOEMIT
-			Assert.Throws<ArgumentNullException> (() => protocol.Register ((IEnumerable<Type>)null));
-			#endif
-
 			Assert.Throws<ArgumentNullException> (() => protocol.Register ((IEnumerable<KeyValuePair<Type, Func<Message>>>)null));
 		}
 
@@ -143,22 +92,6 @@ namespace Tempest.Tests
 			}
 		}
 
-		#if !NOEMIT
-		[Test]
-		public void RegisterTypeInvalid()
-		{
-			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (GenericMessage<string>) }));
-			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (PrivateMessage) }));
-			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (int) }));
-			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (string) }));
-		}
-
-		[Test]
-		public void RegisterTypeDuplicates()
-		{
-			Assert.Throws<ArgumentException> (() => protocol.Register (new[] { typeof (MockMessage), typeof (MockMessage) }));
-		}
-		#endif
 
 		[Test]
 		public void RegisterTypeAndCtorsInvalid()
@@ -179,18 +112,6 @@ namespace Tempest.Tests
 					new KeyValuePair<Type, Func<Message>> (typeof (MockMessage), () => new MockMessage ()),
 				}));
 		}
-
-		#if !NOEMIT
-		[Test]
-		public void RegisterType()
-		{
-			protocol.Register (new[] { typeof(MockMessage) });
-
-			Message m = protocol.Create (1);
-			Assert.IsNotNull (m);
-			Assert.That (m, Is.TypeOf<MockMessage>());
-		}
-		#endif
 
 		[Test]
 		public void RegisterTypeWithCtor()

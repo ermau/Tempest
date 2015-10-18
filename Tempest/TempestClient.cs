@@ -4,7 +4,8 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2011-2013 Eric Maupin
+// Copyright (c) 2010-2011 Eric Maupin
+// Copyright (c) 2011-2015 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -104,23 +105,23 @@ namespace Tempest
 		/// </summary>
 		public virtual Task DisconnectAsync()
 		{
-			return Disconnect (ConnectionResult.Custom, "Requested");
+			return DisconnectAsyncCore (ConnectionResult.Custom, "Requested");
 		}
 
 		public virtual Task DisconnectAsync (ConnectionResult reason, string customReason = null)
 		{
-			return Disconnect (reason, customReason);
+			return DisconnectAsyncCore (reason, customReason);
 		}
 
 		private readonly IClientConnection connection;
 		private readonly ConcurrentQueue<MessageEventArgs> mqueue;
 
 		private AutoResetEvent mwait;
-		private Thread messageRunner;
+		private Task messageRunnerTask;
 		private volatile bool running;
 		private readonly MessageTypes messageTypes;
 
-		private Task Disconnect (ConnectionResult reason, string customReason)
+		private Task DisconnectAsyncCore (ConnectionResult reason, string customReason)
 		{
 			Task task = this.connection.DisconnectAsync (reason, customReason);
 
@@ -134,17 +135,16 @@ namespace Tempest
 			while (this.mqueue.TryDequeue (out e)) {
 			}
 
-			Thread runner = Interlocked.Exchange (ref this.messageRunner, null);
-			if (runner != null)
-				task = task.ContinueWith (t => runner.Join());
+			Task runnerTask = Interlocked.Exchange (ref this.messageRunnerTask, null);
+			if (runnerTask != null)
+				task = Task.WhenAll (task, runnerTask);
 
 			return task;
 		}
 
 		private void ConnectionOnMessageReceived (object sender, MessageEventArgs e)
 		{
-			lock (this.mqueue)
-				this.mqueue.Enqueue (e);
+			this.mqueue.Enqueue (e);
 
 			AutoResetEvent wait = this.mwait;
 			if (wait != null)
@@ -185,7 +185,7 @@ namespace Tempest
 		private void OnConnectionDisconnected (object sender, DisconnectedEventArgs e)
 		{
 			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
-			Disconnect (e.Result, e.CustomReason);
+			DisconnectAsyncCore (e.Result, e.CustomReason);
 			OnDisconnected (new ClientDisconnectedEventArgs (e.Result == ConnectionResult.Custom, e.Result, e.CustomReason));
 		}
 
@@ -195,16 +195,11 @@ namespace Tempest
 
 			this.running = true;
 
-			while (this.messageRunner != null)
-				Thread.Sleep (0);
+			SpinWait wait = new SpinWait();
+			while (this.messageRunnerTask != null)
+				wait.SpinOnce();
 
-			Thread runner = new Thread (MessageRunner) {
-				Name = "Client Message Runner",
-				IsBackground = true
-			};
-			runner.Start();
-
-			this.messageRunner = runner;
+			this.messageRunnerTask = Task.Factory.StartNew (MessageRunner, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
 			OnConnected (e);
 		}

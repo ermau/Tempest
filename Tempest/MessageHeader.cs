@@ -88,13 +88,13 @@ namespace Tempest
 		public Protocol Protocol
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		public Message Message
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		/// <summary>
@@ -103,31 +103,31 @@ namespace Tempest
 		public int MessageLength
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		public int HeaderLength
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		public ISerializationContext SerializationContext
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		public byte[] IV
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		public bool IsStillEncrypted
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		/// <summary>
@@ -136,7 +136,7 @@ namespace Tempest
 		public bool IsResponse
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		/// <summary>
@@ -145,19 +145,19 @@ namespace Tempest
 		public int ResponseMessageId
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		public int MessageId
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		public int ConnectionId
 		{
 			get;
-			internal set;
+			set;
 		}
 	}
 }

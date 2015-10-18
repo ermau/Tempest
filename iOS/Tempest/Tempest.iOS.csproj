@@ -10,7 +10,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Tempest</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>Tempest</AssemblyName>
+    <AssemblyName>Tempest.iOS</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
     <DebugSymbols>true</DebugSymbols>
@@ -69,9 +69,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\Desktop\Tempest\AnonymousSerializer.cs">
-      <Link>AnonymousSerializer.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\ArrayExtensions.cs">
       <Link>ArrayExtensions.cs</Link>
     </Compile>
@@ -87,107 +84,8 @@
     <Compile Include="..\..\Desktop\Tempest\ConnectionExtensions.cs">
       <Link>ConnectionExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\DisconnectedEventArgs.cs">
-      <Link>DisconnectedEventArgs.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IClientConnection.cs">
-      <Link>IClientConnection.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IClientContext.cs">
-      <Link>IClientContext.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IConnection.cs">
-      <Link>IConnection.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IConnectionlessMessenger.cs">
-      <Link>IConnectionlessMessenger.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IConnectionProvider.cs">
-      <Link>IConnectionProvider.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IContext.cs">
-      <Link>IContext.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IListener.cs">
-      <Link>IListener.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\AcknowledgeConnectMessage.cs">
-      <Link>InternalProtocol\AcknowledgeConnectMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\AcknowledgeMessage.cs">
-      <Link>InternalProtocol\AcknowledgeMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ConnectedMessage.cs">
-      <Link>InternalProtocol\ConnectedMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\ConnectMessage.cs">
-      <Link>InternalProtocol\ConnectMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\DisconnectMessage.cs">
-      <Link>InternalProtocol\DisconnectMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\FinalConnectMessage.cs">
-      <Link>InternalProtocol\FinalConnectMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\PartialMessage.cs">
-      <Link>Providers\Network\PartialMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\PingMessage.cs">
-      <Link>InternalProtocol\PingMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\PongMessage.cs">
-      <Link>InternalProtocol\PongMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\InternalProtocol\TempestMessage.cs">
-      <Link>InternalProtocol\TempestMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\ISerializable.cs">
-      <Link>ISerializable.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\ISerializationContext.cs">
-      <Link>ISerializationContext.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\ISerializer.cs">
-      <Link>ISerializer.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IServerConnection.cs">
-      <Link>IServerConnection.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IServerContext.cs">
-      <Link>IServerContext.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IValueReader.cs">
-      <Link>IValueReader.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\IValueWriter.cs">
-      <Link>IValueWriter.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\Message.cs">
-      <Link>Message.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\MessageFactory.cs">
-      <Link>MessageFactory.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\MessageHandler.cs">
-      <Link>MessageHandler.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\MessageHeader.cs">
-      <Link>MessageHeader.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\MessageResponseManager.cs">
-      <Link>MessageResponseManager.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\MutableLookup.cs">
-      <Link>MutableLookup.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\ObjectSerializer.cs">
-      <Link>ObjectSerializer.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\Properties\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\Protocol.cs">
-      <Link>Protocol.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\Providers\Network\BufferPool.cs">
       <Link>Providers\Network\BufferPool.cs</Link>
@@ -237,35 +135,11 @@
     <Compile Include="..\..\Desktop\Tempest\RSACrypto.cs">
       <Link>RSACrypto.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\SerializationContext.cs">
-      <Link>SerializationContext.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\SerializerExtensions.cs">
-      <Link>SerializerExtensions.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\StreamValueReader.cs">
-      <Link>StreamValueReader.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\StreamValueWriter.cs">
-      <Link>StreamValueWriter.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\Target.cs">
-      <Link>Target.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\TargetExtensions.cs">
       <Link>TargetExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\..\Desktop\Tempest\TempestClient.cs">
-      <Link>TempestClient.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\TempestServer.cs">
-      <Link>TempestServer.cs</Link>
-    </Compile>
     <Compile Include="..\..\Desktop\Tempest\Timer.cs">
       <Link>Timer.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Desktop\Tempest\TypeExtensions.cs">
-      <Link>TypeExtensions.cs</Link>
     </Compile>
     <Compile Include="..\..\Desktop\Tempest\TypeMap.cs">
       <Link>TypeMap.cs</Link>
@@ -273,6 +147,10 @@
     <Compile Include="TraceSwitch.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Tempest\Tempest.csproj">
+      <Project>{546f259d-cd47-49d6-8aa1-5d0059d8c390}</Project>
+      <Name>Tempest</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

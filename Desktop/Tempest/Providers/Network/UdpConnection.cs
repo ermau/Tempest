@@ -43,7 +43,7 @@ namespace Tempest.Providers.Network
 		internal UdpConnection (IEnumerable<Protocol> protocols)
 		{
 			var ps = protocols.ToList();
-			this.requiresHandshake = ps.Any (p => p.id != 1 && p.RequiresHandshake);
+			this.requiresHandshake = ps.Any (p => p.Id != 1 && p.RequiresHandshake);
 			if (!ps.Contains (TempestMessage.InternalProtocol))
 				ps.Add (TempestMessage.InternalProtocol);
 

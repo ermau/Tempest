@@ -35,10 +35,6 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Collections.Concurrent;
 
-#if !SILVERLIGHT && !NETFX_CORE
-using System.Runtime.Serialization.Formatters.Binary;
-#endif
-
 #if !SAFE
 using System.Reflection.Emit;
 #endif

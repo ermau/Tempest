@@ -64,7 +64,7 @@ namespace Tempest.Tests
 			Assert.AreEqual (len, reader.Position);
 		}
 
-		#if !SILVERLIGHT
+		#if !SILVERLIGHT && !NETFX_CORE
 		[Test]
 		public void Serializable()
 		{

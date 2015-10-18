@@ -89,9 +89,13 @@
     <Compile Include="UdpConnectionProviderTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Tempest.csproj">
-      <Project>{D6A2003C-CBB2-47B0-B306-521141D3068D}</Project>
+    <ProjectReference Include="..\..\..\Tempest\Tempest.csproj">
+      <Project>{546f259d-cd47-49d6-8aa1-5d0059d8c390}</Project>
       <Name>Tempest</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Tempest.Desktop.csproj">
+      <Project>{D6A2003C-CBB2-47B0-B306-521141D3068D}</Project>
+      <Name>Tempest.Desktop</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

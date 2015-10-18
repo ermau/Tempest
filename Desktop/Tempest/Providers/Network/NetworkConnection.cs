@@ -349,7 +349,6 @@ namespace Tempest.Providers.Network
 
 		private readonly object sendSync = new object();
 
-		#if !SILVERLIGHT
 		private readonly Lazy<MessageResponseManager> responses =
 			new Lazy<MessageResponseManager> (() => new MessageResponseManager());
 
@@ -357,14 +356,6 @@ namespace Tempest.Providers.Network
 		{
 			get { return this.responses.Value; }
 		}
-		#else
-		private readonly MessageResponseManager responses = new MessageResponseManager();
-
-		protected MessageResponseManager Responses
-		{
-			get { return this.responses; }
-		}
-		#endif
 
 		private int pingFrequency;
 		protected virtual int PingFrequency

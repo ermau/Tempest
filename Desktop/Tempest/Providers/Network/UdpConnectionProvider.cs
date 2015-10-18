@@ -98,7 +98,6 @@ namespace Tempest.Providers.Network
 			base.Start (types);
 
 			Timer timer = new Timer (100);
-			timer = new Timer (100);
 			timer.TimesUp += OnDeliveryTimer;
 			timer.Start();
 			this.deliveryTimer = timer;

@@ -38,7 +38,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnonymousSerializer.cs" />
-    <Compile Include="Connection.cs" />
     <Compile Include="DisconnectedEventArgs.cs" />
     <Compile Include="IAsymmetricCrypto.cs" />
     <Compile Include="IAsymmetricKey.cs" />

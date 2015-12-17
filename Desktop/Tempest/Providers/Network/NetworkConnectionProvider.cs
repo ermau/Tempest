@@ -4,7 +4,8 @@
 // Author:
 //   Eric Maupin <me@ermau.com>
 //
-// Copyright (c) 2010-2012 Eric Maupin
+// Copyright (c) 2010-2011 Eric Maupin
+// Copyright (c) 2011-2015 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -358,16 +359,16 @@ namespace Tempest.Providers.Network
 			    bool atMax = (this.pendingConnections.Count + this.serverConnections.Count == MaxConnections);
 
 				bool connected = this.serverConnections.Remove (connection);
-				if (connected && NetworkConnection.AutoSizeSendBufferLimit)
-					Interlocked.Add (ref NetworkConnection.sendBufferLimit, NetworkConnection.AutoSizeFactor * -1);
+				if (connected) {
+					this.pingTimer.TimesUp -= connection.PingTimerCallback;
 
-			    if ((connected || this.pendingConnections.Remove (connection)) && atMax)
-			    {
-					if (connected)
-						this.pingTimer.TimesUp -= connection.PingTimerCallback;
+					if (NetworkConnection.AutoSizeSendBufferLimit)
+						Interlocked.Add (ref NetworkConnection.sendBufferLimit, NetworkConnection.AutoSizeFactor * -1);
+				}
 
-			    	BeginAccepting (null);
-			    }
+				if ((connected || this.pendingConnections.Remove (connection)) && atMax) {
+					BeginAccepting (null);
+				}
 			}
 		}
 

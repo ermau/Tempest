@@ -1320,6 +1320,23 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
+		[Test]
+		public async Task SendForRaisesCanceledNotAggregate()
+		{
+			var c = GetNewClientConnection();
+			await c.ConnectAsync (Target, MessageTypes);
+			Task send = c.SendFor<MockMessage> (new MockMessage());
+			await c.DisconnectAsync();
+
+			try {
+				await send;
+			} catch (OperationCanceledException) {
+				Assert.Pass();
+			} catch (Exception ex) {
+				Assert.Fail ("Instead of a canceled exception, got a {0}", ex);
+			}
+		}
+
 		private void AssertMessageReceived<T> (T message, Action<T> testResults)
 			where T : Message
 		{

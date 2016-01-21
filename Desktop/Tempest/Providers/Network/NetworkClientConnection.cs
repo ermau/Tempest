@@ -181,12 +181,14 @@ namespace Tempest.Providers.Network
 
 			if (e.SocketError != SocketError.Success)
 			{
+				// We do this _before_ we decrement so we can't accidentally overwrite a rapid second connect attempt
+				var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
+
 				p = Interlocked.Decrement (ref this.pendingAsync);
 				Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Decrement pending: {0}", p), String.Format ("{2}:{3} {4}:ConnectCompleted({0},{1})", e.BytesTransferred, e.SocketError, this.typeName, connectionId, c));
 				DisconnectAsync (ConnectionResult.ConnectionFailed);
 				OnConnectionFailed (new ClientConnectionEventArgs (this));
 
-				var tcs = Interlocked.Exchange (ref this.connectCompletion, null);
 				if (tcs != null)
 				{
 					ConnectionResult result = GetConnectFromError (e.SocketError);

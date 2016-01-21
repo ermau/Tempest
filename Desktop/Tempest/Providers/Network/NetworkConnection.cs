@@ -747,6 +747,8 @@ namespace Tempest.Providers.Network
 				ntask.Wait();
 			}
 
+			var args = new SocketAsyncEventArgs();
+
 			lock (this.stateSync)
 			{
 				Trace.WriteLineIf (NTrace.TraceVerbose, "Shutting down socket", category);
@@ -759,30 +761,24 @@ namespace Tempest.Providers.Network
 				}
 
 				this.disconnecting = true;
+				this.disconnectingReason = reason;
+				this.disconnectingCustomReason = customReason;
+
+				int p = Interlocked.Increment (ref this.pendingAsync);
+					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), category);
 
 				if (!this.reliableSocket.Connected)
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Socket not connected, finishing cleanup.", category);
 
-					while (this.pendingAsync > 1) // If called from *Completed, there'll be a pending.
+					while (this.pendingAsync > 2) // If called from *Completed, there'll be a pending, plus our own.
 						Thread.Sleep (0);
-
-					// Shouldn't cleanup while we're still running messages.
-					Recycle();
-
-					this.disconnecting = false;
 
 					tcs.SetResult (true);
 				}
 				else
 				{
 					Trace.WriteLineIf (NTrace.TraceVerbose, "Disconnecting asynchronously.", category);
-
-					this.disconnectingReason = reason;
-					this.disconnectingCustomReason = customReason;
-
-					int p = Interlocked.Increment (ref this.pendingAsync);
-					Trace.WriteLineIf (NTrace.TraceVerbose, String.Format ("Increment pending: {0}", p), category);
 
 					ThreadPool.QueueUserWorkItem (s =>
 					{
@@ -792,16 +788,10 @@ namespace Tempest.Providers.Network
 							Thread.Sleep (0);
 
 						Trace.WriteLineIf (NTrace.TraceVerbose, "Finished waiting, disconnecting async.", category);
-
-						#if !SILVERLIGHT
-						var args = new SocketAsyncEventArgs();// { DisconnectReuseSocket = true };
 						args.Completed += OnDisconnectCompleted;
 						
 						if (!this.reliableSocket.DisconnectAsync (args))				
 							OnDisconnectCompleted (this.reliableSocket, args);
-						#else
-						this.reliableSocket.Close();
-						#endif
 
 						tcs.SetResult (true);
 					});
@@ -810,8 +800,8 @@ namespace Tempest.Providers.Network
 				}
 			}
 
-			OnDisconnected (new DisconnectedEventArgs (this, reason, customReason));
-			Trace.WriteLineIf (NTrace.TraceVerbose, "Raised Disconnected, exiting", category);
+			OnDisconnectCompleted (this, args);
+			Trace.WriteLineIf (NTrace.TraceVerbose, "Exiting", category);
 
 			return tcs.Task;
 		}

@@ -172,9 +172,13 @@ namespace Tempest.Providers.Network
 						while (!this.authReady)
 							Thread.Sleep(0);
 
+						MessageSerializer s = this.serializer;
+						if (s == null)
+							return;
+
 						e.Connection.SendAsync (new AcknowledgeConnectMessage
 						{
-							SignatureHashAlgorithm = this.serializer.SigningHashAlgorithm,
+							SignatureHashAlgorithm = s.SigningHashAlgorithm,
 							EnabledProtocols = this.protocols.Values,
 							ConnectionId = ConnectionId,
 							PublicAuthenticationKey = this.provider.PublicAuthenticationKey,

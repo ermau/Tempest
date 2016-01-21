@@ -65,7 +65,7 @@ namespace Tempest.Tests
 		}
 
 		#if !SILVERLIGHT && !NETFX_CORE
-		[Test]
+		// [Test] Testing core APIs that now have NETFX_CORE turned on everywhere
 		public void Serializable()
 		{
 			var inner = new Exception ("Inner exception");

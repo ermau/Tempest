@@ -59,6 +59,7 @@ namespace Tempest
 		/// </summary>
 		/// <param name="value">The value to write.</param>
 		/// <exception cref="ArgumentNullException"><paramref name="value"/> is <c>null</c>.</exception>
+		[Obsolete]
 		void WriteBytes (byte[] value);
 
 		/// <summary>

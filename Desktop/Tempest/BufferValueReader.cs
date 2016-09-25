@@ -120,6 +120,19 @@ namespace Tempest
 			return b;
 		}
 
+		public void ReadBytesInto (byte[] target, int offset, int count)
+		{
+			if (target == null)
+				throw new ArgumentNullException (nameof (target));
+			if (offset < 0 || offset >= target.Length)
+				throw new ArgumentOutOfRangeException (nameof (offset), "offset must be in the bounds of the target");
+			if (count < 0 || offset + count > target.Length)
+				throw new ArgumentOutOfRangeException (nameof (count));
+
+			Buff.BlockCopy (this.buffer, Position, target, offset, count);
+			Position += count;
+		}
+
 		public sbyte ReadSByte()
 		{
 			#if !SAFE

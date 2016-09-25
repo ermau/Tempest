@@ -128,11 +128,32 @@ namespace Tempest.Tests
 			writer.WriteBytes (data, 2, 3);
 			writer.Flush();
 
-			data = GetReader (writer).ReadBytes();
+			data = GetReader (writer).ReadBytes (3);
 			Assert.AreEqual (3, data.Length);
 			Assert.AreEqual (0xF, data[0]);
 			Assert.AreEqual (0x10, data[1]);
 			Assert.AreEqual (0x17, data[2]);
+		}
+
+		[Test]
+		public void ReadInto()
+		{
+			IValueWriter writer = GetWriter();
+			byte[] data = new byte[] { 0x4, 0x8, 0xF, 0x10, 0x17, 0x2A };
+			writer.WriteBytes (data, 0, data.Length);
+			writer.Flush ();
+
+			IValueReader reader = GetReader (writer);
+			byte[] newData = new byte[8];
+
+			const int offset = 1;
+			reader.ReadBytesInto (newData, offset, data.Length);
+			for (int i = 0; i < newData.Length; i++) {
+				if (i >= offset && i < data.Length + offset)
+					Assert.AreEqual (data[i-offset], newData[i]);
+				else
+					Assert.AreEqual (0x0, newData[i]);
+			}
 		}
 
 		[Test]

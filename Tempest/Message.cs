@@ -109,6 +109,24 @@ namespace Tempest
 		}
 
 		/// <summary>
+		/// Gets or sets whether the message is reusable.
+		/// </summary>
+		public bool Reusable
+		{
+			get;
+			set;
+		}
+
+		/// <summary>
+		/// Gets whether the message being read into is a reused.
+		/// </summary>
+		public bool Reused
+		{
+			get;
+			internal set;
+		}
+
+		/// <summary>
 		/// Writes the message payload with <paramref name="writer"/>.
 		/// </summary>
 		/// <param name="context"></param>

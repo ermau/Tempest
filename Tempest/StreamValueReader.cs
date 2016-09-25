@@ -75,6 +75,22 @@ namespace Tempest
 			return buffer;
 		}
 
+		public void ReadBytesInto (byte[] target, int offset, int count)
+		{
+			if (target == null)
+				throw new ArgumentNullException (nameof (target));
+			if (offset < 0 || offset >= target.Length)
+				throw new ArgumentOutOfRangeException (nameof (offset), "offset must be in the bounds of the target");
+			if (count < 0 || offset + count > target.Length)
+				throw new ArgumentOutOfRangeException (nameof (count));
+
+			int bytes = 0;
+			while ((bytes = this.stream.Read (target, offset, count)) > 0) {
+				count -= bytes;
+				offset += bytes;
+			}
+		}
+
 		public sbyte ReadSByte()
 		{
 			return (sbyte)this.stream.ReadByte();

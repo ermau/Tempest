@@ -65,6 +65,15 @@ namespace Tempest
 		/// <returns>A new instance of the <paramref name="messageType"/>, or <c>null</c> if this type has not been registered.</returns>
 		public Message Create (ushort messageType)
 		{
+			ConcurrentStack<Message> reuseables;
+			if (this.reuseables.TryGetValue (messageType, out reuseables)) {
+				Message reusedMessage;
+				if (reuseables.TryPop (out reusedMessage)) {
+					reusedMessage.Reused = true;
+					return reusedMessage;
+				}
+			}
+
 			Func<Message> mCtor;
 			if (!this.messageCtors.TryGetValue (messageType, out mCtor))
 				return null;
@@ -72,6 +81,22 @@ namespace Tempest
 			return mCtor();
 		}
 
+		public void Reuse (Message message)
+		{
+			if (message == null)
+				throw new ArgumentNullException (nameof (message));
+			if (!message.Reusable)
+				throw new ArgumentException ("Message not marked as reusable", nameof (message));
+
+			message.Reused = false;
+			message.Reusable = false;
+			message.Header = null;
+
+			var stack = this.reuseables.GetOrAdd (message.MessageType, type => new ConcurrentStack<Message>());
+			stack.Push (message);
+		}
+
+		private readonly ConcurrentDictionary<ushort, ConcurrentStack<Message>> reuseables = new ConcurrentDictionary<ushort, ConcurrentStack<Message>>();
 		private readonly ConcurrentDictionary<ushort, Func<Message>> messageCtors = new ConcurrentDictionary<ushort, Func<Message>>();
 
 		private void RegisterTypesWithCtors (IEnumerable<KeyValuePair<Type, Func<Message>>> messageTypes, bool ignoreDupes)
@@ -103,7 +128,5 @@ namespace Tempest
 				}
 			}
 		}
-
-		private static readonly Type[] EmptyTypes = new Type[0];
 	}
 }

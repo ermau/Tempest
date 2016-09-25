@@ -80,10 +80,9 @@ namespace Tempest
 				throw new ArgumentNullException ("value");
 			if (offset < 0 || offset >= value.Length)
 				throw new ArgumentOutOfRangeException ("offset", "offset can not negative or >=data.Length");
-			if (length < 0 || offset + length >= value.Length)
+			if (length < 0 || offset + length > value.Length)
 				throw new ArgumentOutOfRangeException ("length", "length can not be negative or combined with offset longer than the array");
 
-			WriteInt32 (length);
 			this.stream.Write (value, offset, length);
 		}
 

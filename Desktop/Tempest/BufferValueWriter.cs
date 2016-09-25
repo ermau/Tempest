@@ -100,19 +100,7 @@ namespace Tempest
 
 		public void WriteBytes (byte[] value, int offset, int length)
 		{
-			if (value == null)
-				throw new ArgumentNullException ("value");
-			if (offset < 0 || offset >= value.Length)
-				throw new ArgumentOutOfRangeException ("offset", "offset can not negative or >=data.Length");
-			if (length < 0 || offset + length > value.Length)
-				throw new ArgumentOutOfRangeException ("length", "length can not be negative or combined with offset longer than the array");
-
-			EnsureAdditionalCapacity (sizeof (int) + length);
-
-			Buff.BlockCopy (BitConverter.GetBytes (length), 0, this.buffer, this.position, sizeof (int));
-			this.position += sizeof (int);
-			Buff.BlockCopy (value, offset, this.buffer, this.position, length);
-			this.position += length;
+			InsertBytes (this.position, value, offset, length);
 		}
 
 		public void InsertBytes (int offset, byte[] value, int valueOffset, int length)

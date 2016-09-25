@@ -90,7 +90,8 @@ namespace Tempest.Tests
 				new KeyValuePair<Type, Func<Message>> (typeof (BlankMessage), () => new BlankMessage()), 
 				new KeyValuePair<Type, Func<Message>> (typeof (AuthenticatedMessage), () => new AuthenticatedMessage()), 
 				new KeyValuePair<Type, Func<Message>> (typeof (EncryptedMessage), () => new EncryptedMessage()), 
-				new KeyValuePair<Type, Func<Message>> (typeof (AuthenticatedAndEncryptedMessage), () => new AuthenticatedAndEncryptedMessage()), 
+				new KeyValuePair<Type, Func<Message>> (typeof (AuthenticatedAndEncryptedMessage), () => new AuthenticatedAndEncryptedMessage()),
+				new KeyValuePair<Type, Func<Message>> (typeof (ReusedMessage), () => new ReusedMessage()), 
 			});
 		}
 	}
@@ -252,6 +253,42 @@ namespace Tempest.Tests
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
+		}
+	}
+
+	public class ReusedMessage
+		: Message
+	{
+		public ReusedMessage()
+			: base (MockProtocol.Instance, 6)
+		{
+		}
+
+		public byte[] Data
+		{
+			get;
+			set;
+		}
+
+		public int DataLength
+		{
+			get;
+			set;
+		}
+
+		public override void WritePayload (ISerializationContext context, IValueWriter writer)
+		{
+			writer.WriteInt32 (DataLength);
+			writer.WriteBytes (Data, 0, DataLength);
+		}
+
+		public override void ReadPayload (ISerializationContext context, IValueReader reader)
+		{
+			DataLength = reader.ReadInt32();
+			if (Reused)
+				reader.ReadBytesInto (Data, 0, DataLength);
+			else
+				Data = reader.ReadBytes (DataLength);
 		}
 	}
 }

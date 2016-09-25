@@ -649,6 +649,9 @@ namespace Tempest.Providers.Network
 							if (message.Header.IsResponse)
 								Responses.Receive (message);
 						}
+
+						if (message.Reusable)
+							message.Protocol.Reuse (message);
 					}
 				}
 

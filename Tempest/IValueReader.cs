@@ -40,6 +40,7 @@ namespace Tempest
 		/// <summary>
 		/// Reads an array of unsigned bytes from the transport.
 		/// </summary>
+		[Obsolete ("Use ReadBytes (int) instead and read the size manually.")]
 		byte[] ReadBytes ();
 
 		/// <summary>
@@ -48,6 +49,14 @@ namespace Tempest
 		/// <param name="count">The number of bytes to read.</param>
 		/// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is &lt; 0.</exception>
 		byte[] ReadBytes (int count);
+
+		/// <summary>
+		/// Reads the next <paramref name="count"/> bytes from the transport into the <paramref name="target"/>.
+		/// </summary>
+		/// <param name="target">The array to copy into.</param>
+		/// <param name="offset">The index of <paramref name="target"/> to start from.</param>
+		/// <param name="count">The number of bytes to copy.</param>
+		void ReadBytesInto (byte[] target, int offset, int count);
 
 		/// <summary>
 		/// Reads a signed byte (SByte) from the transport.

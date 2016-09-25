@@ -28,6 +28,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Tempest.InternalProtocol;
@@ -444,6 +445,46 @@ namespace Tempest.Tests
 
 			this.provider.Start (MessageTypes);
 			this.provider.ConnectionMade += (sender, e) => e.Connection.SendAsync (new MockMessage { Content = content });
+
+			c.Disconnected += test.FailHandler;
+			c.MessageReceived += test.PassHandler;
+			c.ConnectAsync (Target, MessageTypes);
+
+			test.Assert (30000);
+		}
+
+		[Test, Repeat (3)]
+		public void ReceiveReusedMessage()
+		{
+			byte[] data = Encoding.Unicode.GetBytes (TestHelpers.GetLongString (this.random, 200));
+			byte[] data2 = Encoding.Unicode.GetBytes (TestHelpers.GetLongString (this.random, 200));
+
+			var c = GetNewClientConnection();
+
+			int count = 0;
+			var test = new AsyncTest (e => {
+				var me = (e as MessageEventArgs);
+				Assert.IsNotNull (me);
+				Assert.IsInstanceOf<ReusedMessage> (me.Message);
+				CollectionAssert.AreEqual (count++ == 0 ? data : data2, ((ReusedMessage)me.Message).Data);
+
+				me.Message.Reusable = true;
+			});
+
+			this.provider.Start (MessageTypes);
+			this.provider.ConnectionMade += async (sender, e) => {
+				var msg = new ReusedMessage {
+					Data = data,
+					DataLength = data.Length
+				};
+				await e.Connection.SendAsync (msg);
+
+				msg = new ReusedMessage {
+					Data = data2,
+					DataLength = data.Length
+				};
+				await e.Connection.SendAsync (msg);
+			};
 
 			c.Disconnected += test.FailHandler;
 			c.MessageReceived += test.PassHandler;

@@ -76,6 +76,8 @@ namespace Tempest.InternalProtocol
 		{
 			writer.WriteUInt16 (OriginalMessageId);
 			writer.WriteByte (Count);
+
+			writer.WriteInt32 (this.length);
 			writer.WriteBytes (Payload, this.offset, this.length);
 		}
 
@@ -83,7 +85,9 @@ namespace Tempest.InternalProtocol
 		{
 			OriginalMessageId = reader.ReadUInt16();
 			Count = reader.ReadByte();
-			Payload = reader.ReadBytes();
+
+			int payloadLength = reader.ReadInt32();
+			Payload = reader.ReadBytes (payloadLength);
 		}
 
 		private int offset;

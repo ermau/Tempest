@@ -69,16 +69,24 @@ namespace Tempest.InternalProtocol
 
 		public override void WritePayload (ISerializationContext context, IValueWriter writer)
 		{
-			writer.WriteBytes (AESKey);
+			writer.WriteInt32 (AESKey.Length);
+			writer.WriteBytes (AESKey, 0, AESKey.Length);
+
 			writer.WriteString (PublicAuthenticationKeyType.GetSimplestName());
-			writer.WriteBytes (PublicAuthenticationKey);
+
+			writer.WriteInt32 (PublicAuthenticationKey.Length);
+			writer.WriteBytes (PublicAuthenticationKey, 0, PublicAuthenticationKey.Length);
 		}
 
 		public override void ReadPayload (ISerializationContext context, IValueReader reader)
 		{
-			AESKey = reader.ReadBytes();
+			int aesLen = reader.ReadInt32();
+			AESKey = reader.ReadBytes (aesLen);
+
 			PublicAuthenticationKeyType = Type.GetType (reader.ReadString());
-			PublicAuthenticationKey = reader.ReadBytes();
+
+			int pakLen = reader.ReadInt32();
+			PublicAuthenticationKey = reader.ReadBytes (pakLen);
 		}
 	}
 }

@@ -5,6 +5,7 @@
 //   Eric Maupin <me@ermau.com>
 //
 // Copyright (c) 2012-2013 Eric Maupin
+// Copyright © 2017 Microsoft
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +29,7 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace Tempest.Tests
@@ -312,6 +314,39 @@ namespace Tempest.Tests
 
 			client.ConnectAsync (new Target (Target.AnyIP, 0));
 			connection.Receive (new MessageEventArgs (connection, new MockMessage2 { Content = "hi" }));
+
+			test.Assert (10000);
+		}
+
+		[Test, Repeat (3)]
+		public async Task ProcessesMessagesAfterInternalReconnect ()
+		{
+			var target = new Target (Target.AnyIP, 0);
+
+			var result = await this.client.ConnectAsync (target);
+			Assume.That (result.Result, Is.EqualTo (ConnectionResult.Success));
+
+			await this.connection.DisconnectAsync ();
+			Assume.That (this.client.IsConnected, Is.False);
+
+			await this.connection.ConnectAsync (target, MessageTypes.All);
+			Assume.That (this.client.IsConnected, Is.True);
+
+			const string content = "hi";
+
+			var test = new AsyncTest (e => {
+				var me = (MessageEventArgs<MockMessage>) e;
+				Assert.AreSame (this.connection, me.Connection);
+				Assert.AreEqual (content, me.Message.Content);
+			});
+
+			bool received = false;
+			Action<MessageEventArgs<MockMessage>> handler = e => test.PassHandler (test, e);
+			this.client.RegisterMessageHandler (handler);
+
+			this.connection.Receive (new MessageEventArgs (this.connection, new MockMessage {
+				Content = content
+			}));
 
 			test.Assert (10000);
 		}

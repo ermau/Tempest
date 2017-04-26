@@ -6,6 +6,7 @@
 //
 // Copyright (c) 2010-2011 Eric Maupin
 // Copyright (c) 2011-2015 Xamarin Inc.
+// Copyright © 2017 Microsoft
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -92,11 +93,6 @@ namespace Tempest
 			if (target == null)
 				throw new ArgumentNullException ("target");
 
-			var newWait = new AutoResetEvent (false);
-			AutoResetEvent oldWait = Interlocked.Exchange (ref this.mwait, newWait);
-			if (oldWait != null)
-				oldWait.Set();
-
 			return this.connection.ConnectAsync (target, this.messageTypes);
 		}
 
@@ -116,7 +112,6 @@ namespace Tempest
 		private readonly IClientConnection connection;
 		private readonly ConcurrentQueue<MessageEventArgs> mqueue;
 
-		private AutoResetEvent mwait;
 		private Task messageRunnerTask;
 		private volatile bool running;
 		private readonly MessageTypes messageTypes;
@@ -127,17 +122,15 @@ namespace Tempest
 
 			this.running = false;
 
-			AutoResetEvent wait = Interlocked.Exchange (ref this.mwait, null);
-			if (wait != null)
-				wait.Set();
+			Task runner = Interlocked.Exchange (ref this.messageRunnerTask, null);
+			((AutoResetEvent)runner?.AsyncState)?.Set ();
 
 			MessageEventArgs e;
 			while (this.mqueue.TryDequeue (out e)) {
 			}
 
-			Task runnerTask = Interlocked.Exchange (ref this.messageRunnerTask, null);
-			if (runnerTask != null)
-				task = Task.WhenAll (task, runnerTask);
+			if (runner != null)
+				task = Task.WhenAll (task, runner);
 
 			return task;
 		}
@@ -146,13 +139,13 @@ namespace Tempest
 		{
 			this.mqueue.Enqueue (e);
 
-			AutoResetEvent wait = this.mwait;
-			if (wait != null)
-				wait.Set();
+			Task runner = this.messageRunnerTask;
+			((AutoResetEvent) runner?.AsyncState)?.Set ();
 		}
 
-		private void MessageRunner ()
+		private void MessageRunner (object state)
 		{
+			AutoResetEvent wait = (AutoResetEvent) state;
 			ConcurrentQueue<MessageEventArgs> q = this.mqueue;
 
 			while (this.running)
@@ -172,13 +165,7 @@ namespace Tempest
 				}
 
 				if (q.Count == 0)
-				{
-					AutoResetEvent wait = this.mwait;
-					if (wait != null)
-						wait.WaitOne();
-					else
-						return;
-				}
+					wait.WaitOne();
 			}
 		}
 
@@ -193,13 +180,15 @@ namespace Tempest
 		{
 			OnPropertyChanged (new PropertyChangedEventArgs ("IsConnected"));
 
+			Task oldRunner = Interlocked.Exchange (ref this.messageRunnerTask, null);
+			if (oldRunner != null) {
+				((AutoResetEvent) oldRunner.AsyncState).Set ();
+				oldRunner.Wait ();
+			}
+
 			this.running = true;
-
-			SpinWait wait = new SpinWait();
-			while (this.messageRunnerTask != null)
-				wait.SpinOnce();
-
-			this.messageRunnerTask = Task.Factory.StartNew (MessageRunner, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+			Task newRunner = Task.Factory.StartNew (MessageRunner, new AutoResetEvent (false), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+			Interlocked.Exchange (ref this.messageRunnerTask, newRunner);
 
 			OnConnected (e);
 		}

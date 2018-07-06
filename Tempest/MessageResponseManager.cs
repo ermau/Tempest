@@ -52,7 +52,7 @@ namespace Tempest
 				throw new ArgumentNullException ("message", "Message.Header is null");
 
 			if (timeout > 0) {
-				if (!this.timeouts.TryAdd (message.Header.MessageId, timeout))
+				if (!this.timeouts.TryAdd (message.Header.MessageId, DateTime.Now + TimeSpan.FromMilliseconds (timeout)))
 					throw new InvalidOperationException ("Message already waiting response");
 			}
 
@@ -96,7 +96,7 @@ namespace Tempest
 				throw new ArgumentNullException ("message", "Message.Header is null");
 
 			if (timeout > 0) {
-				if (!this.timeouts.TryAdd (message.Header.MessageId, timeout))
+				if (!this.timeouts.TryAdd (message.Header.MessageId, DateTime.Now + TimeSpan.FromMilliseconds (timeout)))
 					throw new InvalidOperationException ("Message already waiting response");
 			}
 
@@ -137,7 +137,7 @@ namespace Tempest
 
 			tcs.TrySetResult (message);
 
-			int timeout;
+			DateTime timeout;
 			this.timeouts.TryRemove (message.Header.MessageId, out timeout);
 		}
 
@@ -156,13 +156,11 @@ namespace Tempest
 		/// </summary>
 		public void CheckTimeouts()
 		{
-			var timespan = DateTime.Now - this.lastTimeoutCheck;
-			this.lastTimeoutCheck = DateTime.Now;
-
+			var now = DateTime.Now;
 			List<int> remove = new List<int>();
 
 			foreach (var kvp in this.timeouts) {
-				if (timespan.TotalMilliseconds < kvp.Value)
+				if (now < kvp.Value)
 					continue;
 
 				TaskCompletionSource<Message> tcs;
@@ -174,7 +172,7 @@ namespace Tempest
 
 			foreach (int id in remove) {
 				TaskCompletionSource<Message> tcs;
-				int timeout;
+				DateTime timeout;
 
 				this.timeouts.TryRemove (id, out timeout);
 				this.messageResponses.TryRemove (id, out tcs);
@@ -182,8 +180,7 @@ namespace Tempest
 		}
 
 		private readonly ConcurrentDictionary<int, TaskCompletionSource<Message>> messageResponses = new ConcurrentDictionary<int, TaskCompletionSource<Message>>();
-		private readonly ConcurrentDictionary<int, int> timeouts = new ConcurrentDictionary<int, int>();
-		private DateTime lastTimeoutCheck = DateTime.Now;
+		private readonly ConcurrentDictionary<int, DateTime> timeouts = new ConcurrentDictionary<int, DateTime>();
 
 		private Task<Message> SendForCore (Message message, Func<Message, Task<bool>> sender = null, Task<bool> sendTask = null)
 		{

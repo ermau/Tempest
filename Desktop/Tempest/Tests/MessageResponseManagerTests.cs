@@ -98,9 +98,11 @@ namespace Tempest.Tests
 
 			Task<Message> response = mrm.SendFor (msg, tcs.Task, 1000);
 
-			Thread.Sleep (2000);
-
-			mrm.CheckTimeouts();
+			DateTime start = DateTime.Now;
+			while ((DateTime.Now - start) < TimeSpan.FromSeconds (2)) {
+				mrm.CheckTimeouts();
+				Thread.Sleep (1);
+			}
 
 			try {
 				if (!response.Wait (10000))

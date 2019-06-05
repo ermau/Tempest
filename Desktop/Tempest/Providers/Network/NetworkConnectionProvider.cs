@@ -149,7 +149,11 @@ namespace Tempest.Providers.Network
 
 		public IEnumerable<Target> LocalTargets
 		{
-			get { return new[] { Target }; }
+			get
+			{
+				if (this.reliableSocket != null && this.reliableSocket.IsBound)
+					yield return this.reliableSocket.LocalEndPoint.ToTarget ();
+			}
 		}
 
 		/// <summary>

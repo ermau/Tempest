@@ -47,7 +47,7 @@ namespace Tempest
 
 			try
 			{
-				if (CryptoConfig.CreateFromName ("System.Security.Cryptography.SHA256CryptoServiceProvider") != null)
+				if (CryptoConfig.CreateFromName ("SHA256") != null)
 					nalgs.Add ("SHA256");
 			}
 			catch
@@ -56,7 +56,7 @@ namespace Tempest
 
 			try
 			{
-				if (CryptoConfig.CreateFromName ("System.Security.Cryptography.SHA1CryptoServiceProvider") != null)
+				if (CryptoConfig.CreateFromName ("SHA1") != null)
 					nalgs.Add ("SHA1");
 			}
 			catch

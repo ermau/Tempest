@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29911.84
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempest", "Tempest\Tempest.csproj", "{2901C841-9CE8-4A2F-A822-4E371297BD55}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tempest.Tests", "Tempest.Tests\Tempest.Tests.csproj", "{8692D301-BEAF-4A83-BBD4-91C10BE0D839}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{2901C841-9CE8-4A2F-A822-4E371297BD55}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2901C841-9CE8-4A2F-A822-4E371297BD55}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2901C841-9CE8-4A2F-A822-4E371297BD55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8692D301-BEAF-4A83-BBD4-91C10BE0D839}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8692D301-BEAF-4A83-BBD4-91C10BE0D839}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8692D301-BEAF-4A83-BBD4-91C10BE0D839}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8692D301-BEAF-4A83-BBD4-91C10BE0D839}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

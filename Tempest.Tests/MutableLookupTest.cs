@@ -50,17 +50,15 @@ namespace Cadenza.Collections.Tests
 		}
 
 		[Test]
-		[ExpectedException (typeof (ArgumentNullException))]
 		public void CtorNull()
 		{
-			new MutableLookup<string, string> ((ILookup<string,string>)null);
+			Assert.That (() => new MutableLookup<string, string> ((ILookup<string,string>)null), Throws.InstanceOf<ArgumentNullException>());
 		}
 
 		[Test]
-		[ExpectedException (typeof (ArgumentNullException))]
 		public void CtorEqualityComparerNull()
 		{
-			new MutableLookup<string, string> ((IEqualityComparer<string>)null);
+			Assert.That (() => new MutableLookup<string, string> ((IEqualityComparer<string>)null), Throws.InstanceOf<ArgumentNullException>());
 		}
 
 		[Test]

@@ -31,26 +31,6 @@ using System.Security.Cryptography;
 
 namespace Tempest
 {
-	#if SILVERLIGHT
-	public enum MemoryProtectionScope
-	{
-		SameProcess
-	}
-
-	public static class ProtectedMemory
-	{
-		[Conditional ("DEBUG")]
-		public static void Protect (byte[] data, MemoryProtectionScope scope)
-		{
-		}
-
-		[Conditional ("DEBUG")]
-		public static void Unprotect (byte[] data, MemoryProtectionScope scope)
-		{
-		}
-	}
-	#endif
-
 	public class RSAAsymmetricKey
 		: IAsymmetricKey
 	{

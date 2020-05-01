@@ -45,7 +45,6 @@ namespace Tempest
 			this.keySize = keySize;
 			List<string> nalgs = new List<string>();
 
-			#if !SILVERLIGHT
 			try
 			{
 				if (CryptoConfig.CreateFromName ("System.Security.Cryptography.SHA256CryptoServiceProvider") != null)
@@ -63,11 +62,6 @@ namespace Tempest
 			catch
 			{
 			}
-			
-			#else
-			nalgs.Add ("SHA256");
-			nalgs.Add ("SHA1");
-			#endif
 
 			this.rsaCrypto = new RSACryptoServiceProvider (keySize);
 			this.algs = nalgs;
@@ -106,21 +100,7 @@ namespace Tempest
 			if (data == null)
 				throw new ArgumentNullException ("data");
 
-			#if !SILVERLIGHT
 			var hasher = CryptoConfig.CreateFromName (hashAlg) as HashAlgorithm;
-			#else
-			HashAlgorithm hasher = null;
-			switch (hashAlg) {
-				case "SHA1":
-					hasher = new SHA1Managed();
-					break;
-
-				case "SHA256":
-					hasher = new SHA256Managed();
-					break;
-			}
-			#endif
-
 			if (hasher == null)
 				throw new ArgumentException ("Hash algorithm not found", "hashAlg");
 			

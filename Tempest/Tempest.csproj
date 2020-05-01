@@ -1,93 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{546F259D-CD47-49D6-8AA1-5D0059D8C390}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Tempest</RootNamespace>
-    <AssemblyName>Tempest</AssemblyName>
-    <DefaultLanguage>en-US</DefaultLanguage>
-    <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <TargetFrameworkProfile>Profile111</TargetFrameworkProfile>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NOEMIT;NETFX_CORE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;NOEMIT;NETFX_CORE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <ItemGroup>
-    <!-- A reference to the entire .NET Framework is automatically included -->
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AnonymousSerializer.cs" />
-    <Compile Include="DisconnectedEventArgs.cs" />
-    <Compile Include="IAsymmetricCrypto.cs" />
-    <Compile Include="IAsymmetricKey.cs" />
-    <Compile Include="IClientConnection.cs" />
-    <Compile Include="IClientContext.cs" />
-    <Compile Include="IConnection.cs" />
-    <Compile Include="IConnectionlessMessenger.cs" />
-    <Compile Include="IConnectionProvider.cs" />
-    <Compile Include="IContext.cs" />
-    <Compile Include="IListener.cs" />
-    <Compile Include="InternalProtocol\AcknowledgeConnectMessage.cs" />
-    <Compile Include="InternalProtocol\AcknowledgeMessage.cs" />
-    <Compile Include="InternalProtocol\ConnectedMessage.cs" />
-    <Compile Include="InternalProtocol\ConnectMessage.cs" />
-    <Compile Include="InternalProtocol\DisconnectMessage.cs" />
-    <Compile Include="InternalProtocol\FinalConnectMessage.cs" />
-    <Compile Include="InternalProtocol\PartialMessage.cs" />
-    <Compile Include="InternalProtocol\PingMessage.cs" />
-    <Compile Include="InternalProtocol\PongMessage.cs" />
-    <Compile Include="InternalProtocol\TempestMessage.cs" />
-    <Compile Include="ISerializable.cs" />
-    <Compile Include="ISerializationContext.cs" />
-    <Compile Include="ISerializer.cs" />
-    <Compile Include="IServerConnection.cs" />
-    <Compile Include="IServerContext.cs" />
-    <Compile Include="IValueReader.cs" />
-    <Compile Include="IValueWriter.cs" />
-    <Compile Include="Message.cs" />
-    <Compile Include="MessageFactory.cs" />
-    <Compile Include="MessageHandler.cs" />
-    <Compile Include="MessageHeader.cs" />
-    <Compile Include="MessageResponseManager.cs" />
-    <Compile Include="ObjectSerializer.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Protocol.cs" />
-    <Compile Include="SerializationContext.cs" />
-    <Compile Include="SerializerExtensions.cs" />
-    <Compile Include="StreamValueReader.cs" />
-    <Compile Include="StreamValueWriter.cs" />
-    <Compile Include="Target.cs" />
-    <Compile Include="TempestClient.cs" />
-    <Compile Include="TempestServer.cs" />
-    <Compile Include="TypeExtensions.cs" />
-  </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>

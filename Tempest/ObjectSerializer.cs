@@ -34,6 +34,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Collections.Concurrent;
+using System.Runtime.Serialization.Formatters.Binary;
 
 #if !SAFE
 using System.Reflection.Emit;
@@ -331,13 +332,8 @@ namespace Tempest
 			if (this.ctor != null)
 				return;
 
-			#if !NETFX_CORE
 			this.ctor = t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new[] { typeof (ISerializationContext), typeof (IValueReader) }, null)
 						?? t.GetConstructor (BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, Type.EmptyTypes, null);
-			#else
-			this.ctor = t.GetConstructor (new[] { typeof (ISerializationContext), typeof (IValueReader) })
-						?? t.GetConstructor (new Type[0]);
-			#endif
 
 			if (this.ctor == null)
 				throw new ArgumentException ("No empty or (ISerializationContext,IValueReader) constructor found for " + t.Name);
@@ -345,7 +341,6 @@ namespace Tempest
 			this.deserializingConstructor = this.ctor.GetParameters().Length == 2;
 		}
 
-		#if !SILVERLIGHT && !NETFX_CORE
 		private object SerializableDeserializer (IValueReader reader)
 		{
 			bool isNull = false;
@@ -357,7 +352,7 @@ namespace Tempest
 
 			byte[] data = reader.ReadBytes();
 			using (MemoryStream stream = new MemoryStream (data))
-				return new BinaryFormatter().Deserialize (stream, null);
+				return new BinaryFormatter().Deserialize (stream);
 		}
 		
 		private void SerializableSerializer (IValueWriter writer, object value)
@@ -371,7 +366,6 @@ namespace Tempest
 				writer.WriteBytes (stream.ToArray());
 			}
 		}
-		#endif
 
 		private void Serialize (ISerializationContext context, IValueWriter writer, object value, bool skipHeader)
 		{

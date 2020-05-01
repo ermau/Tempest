@@ -79,7 +79,7 @@ namespace Tempest
 			if (messageTypes == null)
 				throw new ArgumentNullException ("messageTypes");
 
-			TypeInfo mtype = typeof (Message).GetTypeInfo();
+			Type mtype = typeof (Message);
 
 			foreach (var kvp in messageTypes)
 			{

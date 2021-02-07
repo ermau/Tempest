@@ -225,7 +225,7 @@ namespace Tempest.Providers.Network
 			try
 			{
 				args.SetBuffer (0, args.Buffer.Length);
-				while (!socket.ReceiveFromAsync (args))
+				if (!socket.ReceiveFromAsync (args))
 					Receive (this, args);
 			}
 			catch (ObjectDisposedException) // Socket is disposed, we're done.

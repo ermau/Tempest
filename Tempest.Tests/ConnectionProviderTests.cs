@@ -887,37 +887,6 @@ namespace Tempest.Tests
 			test.Assert (10000);
 		}
 
-		[Test, Repeat (3)]
-		public void DisconnectAndReconnect()
-		{
-			var wait = new ManualResetEvent (false);
-
-			var c = GetNewClientConnection();
-			c.Connected += (sender, e) => wait.Set();
-			c.Disconnected += (sender, e) => wait.Set();
-
-			this.provider.Start (MessageTypes);
-
-			for (int i = 0; i < 5; ++i)
-			{
-				Trace.WriteLine ("Connecting " + i);
-
-				wait.Reset();
-				c.ConnectAsync (Target, MessageTypes);
-				if (!wait.WaitOne (100))
-					Assert.Fail ("Failed to connect. Attempt {0}.", i);
-
-				Trace.WriteLine ("Connected & disconnecting " + i);
-
-				wait.Reset();
-				c.DisconnectAsync();
-				if (!wait.WaitOne (100))
-					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
-
-				Trace.WriteLine ("Disconnected " + i);
-			}
-		}
-
 		[Test, Repeat (100)]
 		public void DisconnectAndReconnectAsync()
 		{

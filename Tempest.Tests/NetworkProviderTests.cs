@@ -165,6 +165,7 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
+		[SlowTest]
 		public void PingPong()
 		{
 			AsyncTest test = new AsyncTest();

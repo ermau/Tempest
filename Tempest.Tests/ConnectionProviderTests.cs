@@ -499,6 +499,7 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
+		[SlowTest]
 		public void StressConcurrentSends()
 		{
 			var c = GetNewClientConnection();
@@ -621,6 +622,7 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
+		[SlowTest]
 		public void StressRandomLongAuthenticatedMessage()
 		{
 			var c = GetNewClientConnection();

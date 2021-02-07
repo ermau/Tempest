@@ -904,21 +904,21 @@ namespace Tempest.Tests
 
 				wait.Reset();
 				c.ConnectAsync (Target, MessageTypes);
-				if (!wait.WaitOne (10000))
+				if (!wait.WaitOne (100))
 					Assert.Fail ("Failed to connect. Attempt {0}.", i);
 
 				Trace.WriteLine ("Connected & disconnecting " + i);
 
 				wait.Reset();
 				c.DisconnectAsync();
-				if (!wait.WaitOne (10000))
+				if (!wait.WaitOne (100))
 					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
 
 				Trace.WriteLine ("Disconnected " + i);
 			}
 		}
 
-		[Test, Repeat (3)]
+		[Test, Repeat (100)]
 		public void DisconnectAndReconnectAsync()
 		{
 			AutoResetEvent wait = new AutoResetEvent (false);
@@ -934,20 +934,20 @@ namespace Tempest.Tests
 				Trace.WriteLine ("Connecting " + i);
 
 				c.ConnectAsync (Target, MessageTypes);
-				if (!wait.WaitOne (10000))
+				if (!wait.WaitOne (100))
 					Assert.Fail ("Failed to connect. Attempt {0}.", i);
 
 				Trace.WriteLine ("Connected & disconnecting " + i);
 
 				c.DisconnectAsync();
-				if (!wait.WaitOne (10000))
+				if (!wait.WaitOne (100))
 					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
 
 				Trace.WriteLine ("Disconnected " + i);
 			}
 		}
 
-		[Test, Repeat (3)]
+		[Test, Repeat (100)]
 		public void DisconnectAyncWithReason()
 		{
 			var test = new AsyncTest (e => ((DisconnectedEventArgs)e).Result == ConnectionResult.IncompatibleVersion, 2);
@@ -965,7 +965,7 @@ namespace Tempest.Tests
 			c.Disconnected += test.PassHandler;
 			c.ConnectAsync (Target, MessageTypes);
 
-			test.Assert (10000);
+			test.Assert (100);
 		}
 
 		[Test, Repeat (3)]

@@ -120,10 +120,10 @@ namespace Tempest.Providers.Network
 			return responseTask;
 		}
 
-		public Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
+		public async Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0)
 			where TResponse : Message
 		{
-			return SendFor (message, timeout).ContinueWith (t => (TResponse)t.Result, TaskScheduler.Default);
+			return (TResponse)await SendFor (message, timeout);
 		}
 
 		public Task<bool> SendResponseAsync (Message originalMessage, Message response)

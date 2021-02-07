@@ -105,9 +105,9 @@ namespace Tempest.Tests
 			return this.responses.SendFor (message, SendAsync, timeout);
 		}
 
-		public  Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
+		public async Task<TResponse> SendFor<TResponse> (Message message, int timeout = 0) where TResponse : Message
 		{
-			return SendFor (message, timeout).ContinueWith (t => (TResponse)t.Result, TaskScheduler.Default);
+			return (TResponse)await SendFor (message, timeout);
 		}
 
 		public abstract Task<bool> SendResponseAsync (Message originalMessage, Message response);

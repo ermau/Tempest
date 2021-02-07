@@ -1321,15 +1321,18 @@ namespace Tempest.Tests
 		}
 
 		[Test]
-		public async Task SendForRaisesCanceledNotAggregate()
+		public async Task SendForRaisesCanceled()
 		{
 			var c = GetNewClientConnection();
+			this.provider.Start (MessageTypes.Reliable);
 			await c.ConnectAsync (Target, MessageTypes);
+
 			Task send = c.SendFor<MockMessage> (new MockMessage());
 			await c.DisconnectAsync();
 
 			try {
 				await send;
+				Assert.Fail ("No exception was thrown");
 			} catch (OperationCanceledException) {
 				Assert.Pass();
 			} catch (Exception ex) {

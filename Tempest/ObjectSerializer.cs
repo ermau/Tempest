@@ -36,10 +36,6 @@ using System.Text;
 using System.Collections.Concurrent;
 using System.Runtime.Serialization.Formatters.Binary;
 
-#if !SAFE
-using System.Reflection.Emit;
-#endif
-
 namespace Tempest
 {
 	internal class ObjectSerializer

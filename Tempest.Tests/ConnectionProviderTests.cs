@@ -600,7 +600,7 @@ namespace Tempest.Tests
 			test.Assert (80000);
 		}
 
-		[Test, Repeat (3)]
+		[Test]
 		public void ConnectionFailed()
 		{
 			Assert.IsFalse (provider.IsRunning);

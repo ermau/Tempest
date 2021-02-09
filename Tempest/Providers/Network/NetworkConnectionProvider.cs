@@ -360,7 +360,8 @@ namespace Tempest.Providers.Network
 
 				bool connected = this.serverConnections.Remove (connection);
 				if (connected) {
-					this.pingTimer.TimesUp -= connection.PingTimerCallback;
+					if (this.pingTimer != null)
+						this.pingTimer.TimesUp -= connection.PingTimerCallback;
 
 					if (NetworkConnection.AutoSizeSendBufferLimit)
 						Interlocked.Add (ref NetworkConnection.sendBufferLimit, NetworkConnection.AutoSizeFactor * -1);

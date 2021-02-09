@@ -502,6 +502,8 @@ namespace Tempest.Tests
 		[SlowTest]
 		public void StressConcurrentSends()
 		{
+			if (this is UdpConnectionProviderTests)
+				throw new IgnoreException ("UDP is not stable enough for this test");
 			var c = GetNewClientConnection();
 
 			const int messages = 10000;
@@ -625,6 +627,8 @@ namespace Tempest.Tests
 		[SlowTest]
 		public void StressRandomLongAuthenticatedMessage()
 		{
+			if (this is UdpConnectionProviderTests)
+				throw new IgnoreException ("UDP is not stable enough for this test");
 			var c = GetNewClientConnection();
 
 			const int messages = 1000;

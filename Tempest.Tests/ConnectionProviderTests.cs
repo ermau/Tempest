@@ -499,7 +499,6 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
-		[SlowTest]
 		public void StressConcurrentSends()
 		{
 			if (this is UdpConnectionProviderTests)
@@ -624,7 +623,6 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (3)]
-		[SlowTest]
 		public void StressRandomLongAuthenticatedMessage()
 		{
 			if (this is UdpConnectionProviderTests)

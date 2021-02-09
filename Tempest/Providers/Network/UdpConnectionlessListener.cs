@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -90,11 +91,9 @@ namespace Tempest.Providers.Network
 				byte[] buffer = new byte[65507];
 				args.SetBuffer (buffer, 0, buffer.Length);
 				args.UserToken = new Tuple<Socket, BufferValueReader> (this.socket4, new BufferValueReader (buffer));
-				args.Completed += Receive;
+				args.Completed += ReceiveFromAsync;
 				args.RemoteEndPoint = new IPEndPoint (IPAddress.Any, this.port);
-
-				while (!this.socket4.ReceiveFromAsync (args))
-					Receive (this, args);
+				StartReceive (this.socket4, args);
 			}
 
 			if (Socket.OSSupportsIPv6)
@@ -109,11 +108,9 @@ namespace Tempest.Providers.Network
 				byte[] buffer = new byte[65507];
 				args.SetBuffer (buffer, 0, buffer.Length);
 				args.UserToken = new Tuple<Socket, BufferValueReader> (this.socket6, new BufferValueReader (buffer));
-				args.Completed += Receive;
+				args.Completed += ReceiveFromAsync;
 				args.RemoteEndPoint = new IPEndPoint (IPAddress.IPv6Any, this.port);
-
-				while (!this.socket6.ReceiveFromAsync (args))
-					Receive (this, args);
+				StartReceive (this.socket6, args);
 			}
 		}
 
@@ -175,8 +172,7 @@ namespace Tempest.Providers.Network
 
 		public virtual void Stop()
 		{
-			while (this.pendingAsync > 0)
-				Thread.Sleep (0);
+			this.running = false;
 
 			Socket four = Interlocked.Exchange (ref this.socket4, null);
 			if (four != null)
@@ -185,8 +181,6 @@ namespace Tempest.Providers.Network
 			Socket six = Interlocked.Exchange (ref this.socket6, null);
 			if (six != null)
 				six.Dispose();
-
-			this.running = false;
 		}
 
 		public void Dispose()
@@ -215,18 +209,22 @@ namespace Tempest.Providers.Network
 				throw new ArgumentException();
 		}
 
-		private void StartReceive (Socket socket, SocketAsyncEventArgs args, BufferValueReader reader)
+		private void StartReceive (Socket socket, SocketAsyncEventArgs args)
 		{
 			if (!this.running)
 				return;
 
-			Interlocked.Increment (ref this.pendingAsync);
-
 			try
 			{
 				args.SetBuffer (0, args.Buffer.Length);
-				if (!socket.ReceiveFromAsync (args))
-					Receive (this, args);
+				while (this.running)
+				{
+					Interlocked.Increment (ref this.pendingAsync);
+					bool isAsync = socket.ReceiveFromAsync (args);
+					if (isAsync)
+						break;
+					Receive (this, args, false);
+				}
 			}
 			catch (ObjectDisposedException) // Socket is disposed, we're done.
 			{
@@ -234,38 +232,57 @@ namespace Tempest.Providers.Network
 			}
 		}
 
-		private void Receive (object sender, SocketAsyncEventArgs args)
+		private void ReceiveFromAsync (object sender, SocketAsyncEventArgs args)
+		{
+			Receive (sender, args, true);
+		}
+
+		private void Receive (object sender, SocketAsyncEventArgs args, bool startAgain)
 		{
 			var cnd = (Tuple<Socket, BufferValueReader>)args.UserToken;
 			Socket socket = cnd.Item1;
 			BufferValueReader reader = cnd.Item2;
 
-			if (args.BytesTransferred == 0 || args.SocketError != SocketError.Success) {
-				reader.Dispose();
-				args.Dispose();
-				Interlocked.Decrement (ref this.pendingAsync);
-				return;
+			int bytesTransferred;
+			switch (args.SocketError)
+			{
+				case SocketError.Success:
+					bytesTransferred = args.BytesTransferred;
+					break;
+				case SocketError.ConnectionReset:
+				case SocketError.OperationAborted:
+					Trace.WriteLine ($"UdpConnectionlessListener.Receive recoverable error: {args.SocketError}");
+					bytesTransferred = 0;
+					break;
+				default:
+					Trace.WriteLine ($"UdpConnectionlessListener.Receive UNRECOVERABLE error: {args.SocketError}");
+					reader.Dispose();
+					args.Dispose();
+					Interlocked.Decrement (ref this.pendingAsync);
+					return;
 			}
 
-			int offset = args.Offset;
-			reader.Position = offset;
+			if (bytesTransferred > 0)
+			{
+				int offset = args.Offset;
+				reader.Position = offset;
 
-			MessageHeader header = null;
-			
-			// We don't currently support partial messages, so an incomplete message is a bad one.
-			if (!this.connectionlessSerializer.TryGetHeader (reader, args.BytesTransferred, ref header) || header.Message == null) {
-				Interlocked.Decrement (ref this.pendingAsync);
-				StartReceive (socket, args, reader);
-				return;
+				MessageHeader header = null;
+
+				// We don't currently support partial messages, so an incomplete message is a bad one.
+				if (this.connectionlessSerializer.TryGetHeader (reader, bytesTransferred, ref header) && header.Message != null)
+				{
+					if (header.ConnectionId == 0)
+						HandleConnectionlessMessage (args, header, ref reader);
+					else
+						HandleConnectionMessage (args, header, ref reader);
+				}
+
 			}
-
-			if (header.ConnectionId == 0)
-				HandleConnectionlessMessage (args, header, ref reader);
-			else
-				HandleConnectionMessage (args, header, ref reader);
 
 			Interlocked.Decrement (ref this.pendingAsync);
-			StartReceive (socket, args, reader);
+			if (startAgain)
+				StartReceive (socket, args);
 		}
 
 		protected abstract bool TryGetConnection (int connectionId, out UdpConnection connection);

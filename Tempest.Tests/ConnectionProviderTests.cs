@@ -892,31 +892,65 @@ namespace Tempest.Tests
 		}
 
 		[Test, Repeat (100)]
-		public void DisconnectAndReconnectAsync()
+		public async Task DisconnectAndReconnectAsync()
 		{
-			AutoResetEvent wait = new AutoResetEvent (false);
+			int attempt = 0;
+			string prefix () => $"Attempt:{attempt} Thread:{Thread.CurrentThread.ManagedThreadId}";
+			Trace.WriteLine ($"{prefix()} {this.GetType().Name}.DisconnectAndReconnectAsync");
+
+			var connectWait = new AutoResetEvent (false);
+			var disconnectWait = new AutoResetEvent (false);
+			int numConnects = 0;
+			int numDisconnects = 0;
 
 			var c = GetNewClientConnection();
-			c.Connected += (sender, e) => wait.Set();
-			c.Disconnected += (sender, e) => wait.Set();
+			c.Connected += (sender, e) => {
+				Interlocked.Increment (ref numConnects);
+				Trace.WriteLine ($"{prefix()} Connected event {numConnects}: {e.Connection.ConnectionId}");
+				connectWait.Set ();
+				Trace.WriteLine ($"{prefix()} connectWait.Set()");
+			};
+			c.Disconnected += (sender, e) => {
+				int disc = Interlocked.Increment (ref numDisconnects);
+				Trace.WriteLine ($"{prefix()} Disconnected event {disc}: {e.Connection.ConnectionId} {e.Result} {e.CustomReason}");
+				disconnectWait.Set ();
+				Trace.WriteLine ($"{prefix()} disconnectWait.Set()");
+				if (disc > attempt)
+				{
+					Trace.WriteLine ($"Too many disconnect events! {disc} > {attempt}");
+				}
+			};
 
 			this.provider.Start (MessageTypes);
 
-			for (int i = 0; i < 5; ++i)
+			while (attempt++ < 5)
 			{
-				Trace.WriteLine ("Connecting " + i);
+				Trace.WriteLine ($"{prefix()} Connecting {attempt} ...");
 
-				c.ConnectAsync (Target, MessageTypes);
-				if (!wait.WaitOne (100))
-					Assert.Fail ("Failed to connect. Attempt {0}.", i);
+				var connectResult = await c.ConnectAsync (Target, MessageTypes);
+				Trace.WriteLine ($"{prefix()} {connectResult} {connectResult.Result}");
+				Assert.AreEqual (ConnectionResult.Success, connectResult.Result);
+				await Task.Yield (); // To let OnConnect fire
 
-				Trace.WriteLine ("Connected & disconnecting " + i);
+				if (!connectWait.WaitOne (1000))
+				{
+					Trace.WriteLine ($"{prefix()} About to fail connecting :(");
+					Assert.Fail ($"{prefix ()} No connect event for attempt {attempt}");
+				}
 
-				c.DisconnectAsync();
-				if (!wait.WaitOne (100))
-					Assert.Fail ("Failed to disconnect. Attempt {0}.", i);
+				Trace.WriteLine ($"{prefix()} Checking numbers...");
+				Assert.AreEqual (attempt, numConnects);
+				Assert.AreEqual (attempt - 1, numDisconnects);
 
-				Trace.WriteLine ("Disconnected " + i);
+				Trace.WriteLine ($"{prefix()} Connected! Disconnecting {attempt}...");
+
+				await c.DisconnectAsync ();
+				await Task.Yield (); // To let OnDisconnect fire
+				if (!disconnectWait.WaitOne (1000))
+					Assert.Fail ($"{prefix()} No disconnect event for attempt {attempt}");
+				Assert.AreEqual (attempt, numConnects);
+				Assert.AreEqual (attempt, numDisconnects);
+				Trace.WriteLine ($"{prefix()} Disconnected {attempt}!");
 			}
 		}
 

@@ -386,25 +386,26 @@ namespace Tempest.Providers.Network
 			BufferPool.RemoveConnection();
 		}
 
+		object _disconnectLock = new object ();
 		protected virtual Task Disconnect (ConnectionResult reason, string customReason = null)
 		{
-			bool raise = IsConnected || IsConnecting;
-
-			var tcs = new TaskCompletionSource<bool>();
-
-			if (raise)
+			lock (_disconnectLock)
 			{
-				SendAsync (new DisconnectMessage { Reason = reason, CustomReason = customReason })
-					.Wait();
+				bool raise = IsConnected || IsConnecting;
+
+				if (raise)
+				{
+					SendAsync (new DisconnectMessage { Reason = reason, CustomReason = customReason })
+						.Wait ();
+				}
+
+				Cleanup ();
+
+				if (raise)
+					OnDisconnected (new DisconnectedEventArgs (this, reason, customReason));
 			}
 
-			Cleanup();
-
-			if (raise)
-				OnDisconnected (new DisconnectedEventArgs (this, reason, customReason));
-
-			tcs.SetResult (true);
-			return tcs.Task;
+			return Task.CompletedTask;
 		}
 
 		protected virtual void OnDisconnected (DisconnectedEventArgs e)
